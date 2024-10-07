@@ -74,6 +74,7 @@ class Security_Key extends Component implements Security_Key_Const_Interface {
 		$this->file = defender_wp_config_path();
 		$this->add_hooks();
 		$this->get_options();
+		$this->cron_schedule();
 	}
 
 	/**

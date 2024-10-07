@@ -928,6 +928,9 @@ class Scan extends Event {
 			'notification' => $report->to_string(),
 			'next_run'     => $report->get_next_run_as_string(),
 			'misc'         => $misc,
+			'upsell'       => array(
+				'scan'      => $this->get_scan_upsell( 'scan' ),
+			),
 		);
 
 		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {

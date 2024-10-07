@@ -182,7 +182,9 @@ class Blacklist extends Controller {
 	 * @defender_route
 	 */
 	public function save_settings( Request $request ) {
-		$data = $request->get_data(
+		$curr_blacklist = $this->model->get_list( 'blocklist' );
+		$curr_allowlist = $this->model->get_list( 'allowlist' );
+		$data           = $request->get_data(
 			array(
 				'country_blacklist'  => array(
 					'type' => 'array',
@@ -228,6 +230,18 @@ class Blacklist extends Controller {
 				)
 			);
 		}
+
+		$after_validate_blacklist = $this->model->get_list( 'blocklist' );
+		$after_validate_allowlist = $this->model->get_list( 'allowlist' );
+		if (
+			! defender_are_arrays_equal( $curr_blacklist, $after_validate_blacklist ) ||
+			! defender_are_arrays_equal( $curr_allowlist, $after_validate_allowlist )
+		) {
+			$this->model->save();
+			Config_Hub_Helper::set_clear_active_flag();
+		}
+
+		$this->model->import( $data );
 
 		return new Response(
 			false,

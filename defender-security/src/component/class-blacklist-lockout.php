@@ -158,9 +158,8 @@ class Blacklist_Lockout extends Component {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
-		$contents = $wp_filesystem->get_contents( $file );
-		$lines    = explode( "\n", $contents );
-		$data     = array();
+		$lines = $wp_filesystem->get_contents_array( $file );
+		$data  = array();
 		foreach ( $lines as $line ) {
 			$line = str_getcsv( $line );
 			if ( count( $line ) !== 2 ) {

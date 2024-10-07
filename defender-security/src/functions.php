@@ -506,24 +506,32 @@ function defender_maybe_echo_json( $data, $success, $is_return ) {
 }
 
 /**
- * Find all the strings from .mo file.
- * `defender-security` is our text domain.
+ * Get translations for the 'defender-security' text domain.
  *
- * @return array
+ * @return array List of words/phrases and their translations.
+ * @global Mo[] $l10n An array of all currently loaded text domains.
  */
 function defender_gettext_translations(): array {
 	global $l10n;
 
+	// Check if the 'defender-security' text domain is loaded.
 	if ( ! isset( $l10n['defender-security'] ) ) {
 		return array();
 	}
 
 	$items = array();
 
-	foreach ( $l10n['defender-security']->entries as $key => $value ) {
-		$items[ $key ] = count( $value->translations ) ? $value->translations[0] : $key;
+	/**
+	 * Go through all the translation entries in the 'defender-security' text domain.
+	 *
+	 * @var Translation_Entry $value
+	 */
+	foreach ( $l10n['defender-security']->entries as $value ) {
+		// If there's a translation, use it; otherwise, use the original word/phrase.
+		$items[ $value->key() ] = empty( $value->translations ) ? $value->key() : $value->translations[0];
 	}
 
+	// Return the list of words/phrases and their translations.
 	return $items;
 }
 
@@ -710,4 +718,24 @@ if ( ! function_exists( 'defender_get_data_from_request' ) ) {
 
 		return sanitize_text_field( $data[ $key ] ?? '' );
 	}
+}
+
+/**
+ * Check if arrays are same.
+ *
+ * @param  array $array1  The first array to compare.
+ * @param  array $array2  The second array to compare.
+ *
+ * @return bool True if arrays are equal, false otherwise.
+ */
+function defender_are_arrays_equal( $array1, $array2 ): bool {
+	if ( count( $array1 ) !== count( $array2 ) ) {
+		return false;
+	}
+
+	// Sort both arrays.
+	sort( $array1 );
+	sort( $array2 );
+
+	return $array1 === $array2;
 }

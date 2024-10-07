@@ -42,7 +42,7 @@ Defender.showNotification = function (type, message, autoClose = false) {
  * Filter default wp.i18n.__ function
  * `defender-security` is our domain
  */
-wp.hooks.addFilter( 'i18n.gettext_wpdef', 'defender', function ( translation, text ) {
+wp.hooks.addFilter( 'i18n.gettext_defender-security', 'defender', function ( translation, text ) {
     if ( defenderGetText && defenderGetText[ text ] ) {
         return defenderGetText[ text ];
     }

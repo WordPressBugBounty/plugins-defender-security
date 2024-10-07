@@ -299,8 +299,11 @@ trait Plugin {
 	 * @return string Return plugin relative path.
 	 */
 	public function get_plugin_relative_path( $file_path ): string {
-		strtok( plugin_basename( $file_path ), DIRECTORY_SEPARATOR );
-
+		// Normalize the directory separators for cross-platform compatibility.
+		$normalized_path = str_replace( '\\', '/', plugin_basename( $file_path ) );
+		// Initialize strtok.
+		strtok( $normalized_path, '/' );
+		// Now fetch the next token, if available, otherwise return an empty string.
 		return (string) strtok( '' );
 	}
 
@@ -367,13 +370,18 @@ trait Plugin {
 	 * @return string The URL of the file.
 	 */
 	private function get_file_url( string $directory_name, string $version, string $file_path ): string {
+		// First try to use the version number provided.
 		$file_url = $this->get_version_url( $directory_name, $version, $file_path );
-
-		if ( ! $this->is_origin_file_exists( $file_url ) ) {
-			return $this->get_trunk_url( $directory_name, $file_path );
+		if ( $this->is_origin_file_exists( $file_url ) ) {
+			return $file_url;
 		}
-
-		return $file_url;
+		// If that does not exist, try to use the version number with a `.0` suffix.
+		$file_url = $this->get_version_url( $directory_name, $version . '.0', $file_path );
+		if ( $this->is_origin_file_exists( $file_url ) ) {
+			return $file_url;
+		}
+		// If all else fails, use the trunk of the plugin.
+		return $this->get_trunk_url( $directory_name, $file_path );
 	}
 
 	/**

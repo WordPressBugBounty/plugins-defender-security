@@ -31,8 +31,23 @@ class Core_Integrity extends Behavior {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$data            = $this->owner->raw_data;
-		$file            = $data['file'];
+		$data = $this->owner->raw_data;
+		$file = $data['file'];
+
+		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
+			return array(
+				'id'         => $this->owner->id,
+				'type'       => Scan_Item::TYPE_INTEGRITY,
+				'file_name'  => pathinfo( $file, PATHINFO_BASENAME ),
+				'full_path'  => $file,
+				'date_added' => 'n/a',
+				'size'       => 'n/a',
+				'scenario'   => $data['type'],
+				'deleted'    => true,
+				'short_desc' => $this->get_short_description(),
+			);
+		}
+
 		$file_created_at = filemtime( $file );
 		if ( $file_created_at ) {
 			$file_created_at = $this->format_date_time( $file_created_at );
@@ -54,6 +69,7 @@ class Core_Integrity extends Behavior {
 			'date_added' => $file_created_at,
 			'size'       => $file_size,
 			'scenario'   => $data['type'],
+			'deleted'    => false,
 			'short_desc' => $this->get_short_description(),
 		);
 	}
@@ -165,7 +181,15 @@ class Core_Integrity extends Behavior {
 	public function delete() {
 		$data = $this->owner->raw_data;
 		$scan = Scan::get_last();
+
+		// Check if the file exists and is readable. If not, remove it from the scan result and log the result.
 		$file = $data['file'];
+		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
+			$scan->remove_issue( $this->owner->id );
+			$this->log( sprintf( '%s is not readable and will be removed from the scan result', $file ), 'scan.log' );
+
+			return array( 'message' => esc_html__( 'This item has been deleted.', 'defender-security' ) );
+		}
 		if ( 'unversion' === $data['type'] && $this->delete_infected_file( $file ) ) {
 			return $this->after_delete( $file, $scan, 'core_integrity' );
 		} elseif ( 'dir' === $data['type'] && $this->delete_dir( $file ) ) {

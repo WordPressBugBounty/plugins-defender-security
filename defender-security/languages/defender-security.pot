@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 4.9.0\n"
+"Project-Id-Version: Defender Pro 4.10.0\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
-"POT-Creation-Date: 2024-09-02 07:45:51+00:00\n"
+"POT-Creation-Date: 2024-10-01 09:57:27+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -339,8 +339,8 @@ msgstr ""
 #: src/controller/class-mask-login.php:872
 #: src/controller/class-password-protection.php:356
 #: src/controller/class-password-protection.php:375
-#: src/controller/class-recaptcha.php:1259 src/controller/class-scan.php:992
-#: src/controller/class-scan.php:1031
+#: src/controller/class-recaptcha.php:1259 src/controller/class-scan.php:995
+#: src/controller/class-scan.php:1034
 #: src/controller/class-security-headers.php:237
 #: src/controller/class-two-factor.php:1173
 #: src/controller/class-two-factor.php:1188
@@ -1723,7 +1723,8 @@ msgid "Disable Usage Tracking?"
 msgstr ""
 
 #: languages/vue-js.php:1342
-#: src/component/security-tweaks/class-disable-xml-rpc.php:92
+#: src/component/security-tweaks/class-disable-xml-rpc.php:231
+#: src/component/security-tweaks/class-disable-xml-rpc.php:244
 msgid "Disable XML-RPC"
 msgstr ""
 
@@ -2037,7 +2038,7 @@ msgid "Fetching your domain info..."
 msgstr ""
 
 #: languages/vue-js.php:1592 src/model/setting/class-scan.php:135
-#: src/model/setting/class-scan.php:177 src/traits/defender-hub-client.php:672
+#: src/model/setting/class-scan.php:177 src/traits/defender-hub-client.php:675
 msgid "File change detection"
 msgstr ""
 
@@ -2216,64 +2217,68 @@ msgid "Global IP Blocker"
 msgstr ""
 
 #: languages/vue-js.php:1734
-msgid "Go to the %sHub settings%s to edit the global IPs."
+msgid "Global IP Blocker is activated."
 msgstr ""
 
 #: languages/vue-js.php:1737
+msgid "Go to the %sHub settings%s to edit the global IPs."
+msgstr ""
+
+#: languages/vue-js.php:1740
 msgid ""
 "Go to the <a target=\"_blank\" href=\"%s\">Hub settings</a> to edit the "
 "global IPs."
 msgstr ""
 
-#: languages/vue-js.php:1741
+#: languages/vue-js.php:1744
 msgid "Google Authenticator"
 msgstr ""
 
-#: languages/vue-js.php:1744
+#: languages/vue-js.php:1747
 msgid ""
 "Google maintains an HSTS preload service. By following the guidelines and "
 "successfully submitting your domain, browsers will never connect to your "
 "domain using an insecure connection."
 msgstr ""
 
-#: languages/vue-js.php:1751 src/model/setting/class-recaptcha.php:373
+#: languages/vue-js.php:1754 src/model/setting/class-recaptcha.php:373
 msgid "Google reCAPTCHA"
 msgstr ""
 
-#: languages/vue-js.php:1754
+#: languages/vue-js.php:1757
 msgid ""
 "Great, we've activated and pre-configured everything to our recommended "
 "defaults. Now you can fine-tune your settings if you need to."
 msgstr ""
 
-#: languages/vue-js.php:1757
+#: languages/vue-js.php:1760
 msgid "Great! Access to the quarantine folder is forbidden."
 msgstr ""
 
-#: languages/vue-js.php:1760
+#: languages/vue-js.php:1763
 msgid "Greek"
 msgstr ""
 
-#: languages/vue-js.php:1763
+#: languages/vue-js.php:1766
 msgid "Gujarati"
 msgstr ""
 
-#: languages/vue-js.php:1766
+#: languages/vue-js.php:1769
 msgid "Has your site been hacked or infected?"
 msgstr ""
 
-#: languages/vue-js.php:1769
+#: languages/vue-js.php:1772
 msgid "Hebrew"
 msgstr ""
 
-#: languages/vue-js.php:1772
+#: languages/vue-js.php:1775
 msgid ""
 "Help us improve Defender, by sharing anonymous, and non-sensitive usage "
 "data. See <a target=\"_blank\" href=\"%s\">more info</a> about the data we "
 "collect."
 msgstr ""
 
-#: languages/vue-js.php:1775
+#: languages/vue-js.php:1778
 msgid ""
 "Help us improve Defender, minimize errors, and enhance the user experience "
 "by sharing anonymous, and non-sensitive usage data. You can change this "
@@ -2281,129 +2286,129 @@ msgid ""
 "about the data we collect."
 msgstr ""
 
-#: languages/vue-js.php:1778
+#: languages/vue-js.php:1781
 msgid "Help us protect your site from malware and hackers"
 msgstr ""
 
-#: languages/vue-js.php:1781
+#: languages/vue-js.php:1784
 msgid ""
 "Here are your latest event logs showing what's been happening behind the "
 "scenes."
 msgstr ""
 
-#: languages/vue-js.php:1784
+#: languages/vue-js.php:1787
 msgid ""
 "Here is a list of files you have chosen to quarantine. These files will "
 "automatically be deleted after %1$s. You can update this duration in %2$s."
 msgstr ""
 
-#: languages/vue-js.php:1787
+#: languages/vue-js.php:1790
 msgid ""
 "Here is a list of the countries with the highest number of blocked IPs in "
 "the last 7 days."
 msgstr ""
 
-#: languages/vue-js.php:1790
+#: languages/vue-js.php:1793
 msgid "Here is a list of the suspicious files you have chosen to ignore."
 msgstr ""
 
-#: languages/vue-js.php:1793
+#: languages/vue-js.php:1796
 msgid ""
 "Here's a list of IP addresses that are currently temporarily blocked for "
 "bad behavior. Select the IPs you want to unblock below."
 msgstr ""
 
-#: languages/vue-js.php:1796
+#: languages/vue-js.php:1799
 msgid ""
 "Here's a list of potentially harmful files Defender thinks could be "
 "suspicious. In a lot of cases the scan will pick up harmless files, but in "
 "some cases you may wish to remove files that look suspicious."
 msgstr ""
 
-#: languages/vue-js.php:1800
+#: languages/vue-js.php:1803
 msgid ""
 "Here’s a quick link to see which of your users have enabled two-factor "
 "authentication."
 msgstr ""
 
-#: languages/vue-js.php:1803
+#: languages/vue-js.php:1806
 msgid ""
 "Here's your comprehensive lockout log. You can allowlist or ban IPs and "
 "user agents here."
 msgstr ""
 
-#: languages/vue-js.php:1806
+#: languages/vue-js.php:1809
 msgid "High"
 msgstr ""
 
-#: languages/vue-js.php:1809 src/model/setting/class-main-setting.php:120
+#: languages/vue-js.php:1812 src/model/setting/class-main-setting.php:120
 msgid "High Contrast Mode"
 msgstr ""
 
-#: languages/vue-js.php:1812
+#: languages/vue-js.php:1815
 msgid "Hindi"
 msgstr ""
 
-#: languages/vue-js.php:1816
+#: languages/vue-js.php:1819
 msgid "Hours"
 msgstr ""
 
-#: languages/vue-js.php:1830
+#: languages/vue-js.php:1833
 msgid "How to fix"
 msgstr ""
 
-#: languages/vue-js.php:1833
+#: languages/vue-js.php:1836
 msgid "HSTS Maximum Age"
 msgstr ""
 
-#: languages/vue-js.php:1836 src/model/setting/class-security-headers.php:157
+#: languages/vue-js.php:1839 src/model/setting/class-security-headers.php:157
 msgid "HSTS Preload"
 msgstr ""
 
-#: languages/vue-js.php:1839
+#: languages/vue-js.php:1842
 msgid "Hummingbird Page Speed Optimization"
 msgstr ""
 
-#: languages/vue-js.php:1842
+#: languages/vue-js.php:1845
 msgid "Hungarain"
 msgstr ""
 
-#: languages/vue-js.php:1845
+#: languages/vue-js.php:1848
 msgid "Icelandic"
 msgstr ""
 
-#: languages/vue-js.php:1848
+#: languages/vue-js.php:1851
 msgid ""
 "Identifies modifications to the WordPress core and plugin files by "
 "comparing them with the official WP Repository"
 msgstr ""
 
-#: languages/vue-js.php:1851
+#: languages/vue-js.php:1854
 msgid ""
 "If a cross-site scripting attack is detected, the browser will sanitize the "
 "page (remove the unsafe parts)."
 msgstr ""
 
-#: languages/vue-js.php:1854
+#: languages/vue-js.php:1857
 msgid ""
 "If the same bot or user agent appears in both the allowlist and blocklist, "
 "the allowlist will override the blocklist. Regex support is available for "
 "bots and user agents."
 msgstr ""
 
-#: languages/vue-js.php:1858
+#: languages/vue-js.php:1861
 msgid ""
 "If the same file, folder, or file extension appears in both the allowlist "
 "and blocklist, the allowlist will override the blocklist."
 msgstr ""
 
-#: languages/vue-js.php:1861
+#: languages/vue-js.php:1864
 msgid ""
 "If this optional parameter is specified, this rule applies to all of the "
 "site's subdomains as well."
 msgstr ""
 
-#: languages/vue-js.php:1864
+#: languages/vue-js.php:1867
 msgid ""
 "If you are using the WordPress mobile app, want to make connections to "
 "services like IFTTT, or want to access and publish to your blog remotely, "
@@ -2411,81 +2416,81 @@ msgid ""
 "hackers to target and exploit."
 msgstr ""
 
-#: languages/vue-js.php:1867
+#: languages/vue-js.php:1870
 msgid ""
 "If you don’t need to stay logged in for %d days, we recommend you reduce "
 "this duration to 7 days or less."
 msgstr ""
 
-#: languages/vue-js.php:1870
+#: languages/vue-js.php:1873
 msgid ""
 "If you know a common file, folder or file type on your website is missing, "
 "you can record it here so it doesn't count towards a lockout record."
 msgstr ""
 
-#: languages/vue-js.php:1873
+#: languages/vue-js.php:1876
 msgid ""
 "If you no longer want to add reCAPTCHA you can turn it off. You can "
 "activate again at any time."
 msgstr ""
 
-#: languages/vue-js.php:1880
+#: languages/vue-js.php:1883
 msgid "If you no longer want to use this feature you can turn it off at any time."
 msgstr ""
 
-#: languages/vue-js.php:1885
+#: languages/vue-js.php:1888
 msgid ""
 "If you see any errors in the preview, make sure the keys you've entered are "
 "valid, and you've listed your domain name while generating the keys."
 msgstr ""
 
-#: languages/vue-js.php:1888
+#: languages/vue-js.php:1891
 msgid ""
 "If you wish to delete your current logs simply hit delete and this will "
 "wipe your logs clean."
 msgstr ""
 
-#: languages/vue-js.php:1891
+#: languages/vue-js.php:1894
 msgid ""
 "If you’re getting too many emails from IPs who are repeatedly being locked "
 "out, you can turn them off for a period of time."
 msgstr ""
 
-#: languages/vue-js.php:1898
+#: languages/vue-js.php:1901
 msgid "Ignore"
 msgstr ""
 
-#: languages/vue-js.php:1901
+#: languages/vue-js.php:1904
 msgid "Ignore All"
 msgstr ""
 
-#: languages/vue-js.php:1909 src/model/setting/class-security-tweaks.php:123
+#: languages/vue-js.php:1912 src/model/setting/class-security-tweaks.php:123
 msgid "Ignored"
 msgstr ""
 
-#: languages/vue-js.php:1913
+#: languages/vue-js.php:1916
 msgid "IIS"
 msgstr ""
 
-#: languages/vue-js.php:1919
+#: languages/vue-js.php:1922
 msgid "Import"
 msgstr ""
 
-#: languages/vue-js.php:1923
+#: languages/vue-js.php:1926
 msgid "Import your blocklist and allowlist from another website."
 msgstr ""
 
-#: languages/vue-js.php:1926
+#: languages/vue-js.php:1929
 msgid "Importing..."
 msgstr ""
 
-#: languages/vue-js.php:1929
+#: languages/vue-js.php:1932
 msgid ""
 "In the past, there were security concerns with XML-RPC so we recommend "
 "making sure this feature is fully disabled if you don’t need it active."
 msgstr ""
 
-#: languages/vue-js.php:1940 src/component/class-backup-settings.php:1221
+#: languages/vue-js.php:1943 src/component/class-backup-settings.php:1221
 #: src/component/class-backup-settings.php:1223
 #: src/component/class-backup-settings.php:1232
 #: src/component/class-backup-settings.php:1450
@@ -2498,451 +2503,451 @@ msgstr ""
 #: src/controller/class-password-protection.php:356
 #: src/controller/class-password-protection.php:370
 #: src/controller/class-password-protection.php:376
-#: src/controller/class-recaptcha.php:1259 src/controller/class-scan.php:994
-#: src/controller/class-scan.php:1032
+#: src/controller/class-recaptcha.php:1259 src/controller/class-scan.php:997
+#: src/controller/class-scan.php:1035
 #: src/controller/class-security-headers.php:237
 #: src/controller/class-two-factor.php:1173
 #: src/controller/class-two-factor.php:1188
 msgid "Inactive"
 msgstr ""
 
-#: languages/vue-js.php:1944
+#: languages/vue-js.php:1947
 msgid "Inactive feature"
 msgstr ""
 
-#: languages/vue-js.php:1947
+#: languages/vue-js.php:1950
 msgid "Inactive features"
 msgstr ""
 
-#: languages/vue-js.php:1950
+#: languages/vue-js.php:1953
 msgid "Include recipients"
 msgstr ""
 
-#: languages/vue-js.php:1953 src/model/setting/class-security-headers.php:158
+#: languages/vue-js.php:1956 src/model/setting/class-security-headers.php:158
 msgid "Include Subdomains"
 msgstr ""
 
-#: languages/vue-js.php:1956
+#: languages/vue-js.php:1959
 msgid ""
 "Increase the visibility and accessibility of elements and components of "
 "this plugin's interface to meet WCAG AAA requirements."
 msgstr ""
 
-#: languages/vue-js.php:1959
+#: languages/vue-js.php:1962
 msgid "Indonesian"
 msgstr ""
 
-#: languages/vue-js.php:1962
+#: languages/vue-js.php:1965
 msgid "Insert custom graphic from URL"
 msgstr ""
 
-#: languages/vue-js.php:1965
+#: languages/vue-js.php:1968
 msgid "Instagram"
 msgstr ""
 
-#: languages/vue-js.php:1971
+#: languages/vue-js.php:1974
 msgid "Instructions"
 msgstr ""
 
-#: languages/vue-js.php:1974
+#: languages/vue-js.php:1977
 msgid "Invalid image URL. Please use a valid one."
 msgstr ""
 
-#: languages/vue-js.php:1977
+#: languages/vue-js.php:1980
 msgid "Invalid license key."
 msgstr ""
 
-#: languages/vue-js.php:1982
+#: languages/vue-js.php:1985
 msgid "Invite by email"
 msgstr ""
 
-#: languages/vue-js.php:1986
+#: languages/vue-js.php:1989
 msgid "Invite Recipients"
 msgstr ""
 
-#: languages/vue-js.php:1989
+#: languages/vue-js.php:1992
 msgid "Ip Address"
 msgstr ""
 
-#: languages/vue-js.php:1995 src/component/class-table-lockout.php:115
+#: languages/vue-js.php:1998 src/component/class-table-lockout.php:115
 msgid "IP Address"
 msgstr ""
 
-#: languages/vue-js.php:1998
+#: languages/vue-js.php:2001
 msgid "IP Address:"
 msgstr ""
 
-#: languages/vue-js.php:2001
+#: languages/vue-js.php:2004
 msgid "IP Addresses"
 msgstr ""
 
-#: languages/vue-js.php:2006
+#: languages/vue-js.php:2009
 msgid "IP Banning"
 msgstr ""
 
-#: languages/vue-js.php:2009
+#: languages/vue-js.php:2012
 msgid "IP Settings"
 msgstr ""
 
-#: languages/vue-js.php:2015
+#: languages/vue-js.php:2018
 msgid "Issue Details"
 msgstr ""
 
-#: languages/vue-js.php:2020
+#: languages/vue-js.php:2023
 msgid "Issues"
 msgstr ""
 
-#: languages/vue-js.php:2025
+#: languages/vue-js.php:2028
 msgid ""
 "It filters requests against a highly optimized managed ruleset covering "
 "common attacks (OWASP top ten) and performs virtual patching of WordPress "
 "core, plugin, and theme vulnerabilities."
 msgstr ""
 
-#: languages/vue-js.php:2028
+#: languages/vue-js.php:2031
 msgid ""
 "It is highly recommended you avoid using the default username 'admin'. Use "
 "this tool to automatically lockout and ban users who try to login with "
 "common usernames."
 msgstr ""
 
-#: languages/vue-js.php:2031
+#: languages/vue-js.php:2034
 msgid ""
 "It may take up to five minutes for the MaxMind license key to be activated. "
 "Please give it some time before clicking on the Download button."
 msgstr ""
 
-#: languages/vue-js.php:2034
+#: languages/vue-js.php:2037
 msgid "Italian"
 msgstr ""
 
-#: languages/vue-js.php:2037
+#: languages/vue-js.php:2040
 msgid "Japanese"
 msgstr ""
 
-#: languages/vue-js.php:2040
+#: languages/vue-js.php:2043
 msgid "Kannada"
 msgstr ""
 
-#: languages/vue-js.php:2044
+#: languages/vue-js.php:2047
 msgid "Keep"
 msgstr ""
 
-#: languages/vue-js.php:2052 src/model/setting/class-scan.php:138
-#: src/traits/defender-hub-client.php:675
+#: languages/vue-js.php:2055 src/model/setting/class-scan.php:138
+#: src/traits/defender-hub-client.php:678
 msgid "Known vulnerabilities"
 msgstr ""
 
-#: languages/vue-js.php:2055
+#: languages/vue-js.php:2058
 msgid "Korean"
 msgstr ""
 
-#: languages/vue-js.php:2059 src/model/setting/class-recaptcha.php:317
+#: languages/vue-js.php:2062 src/model/setting/class-recaptcha.php:317
 msgid "Language"
 msgstr ""
 
-#: languages/vue-js.php:2062
+#: languages/vue-js.php:2065
 msgid "Laothian"
 msgstr ""
 
-#: languages/vue-js.php:2065
+#: languages/vue-js.php:2068
 msgid "Last event logged"
 msgstr ""
 
-#: languages/vue-js.php:2069
+#: languages/vue-js.php:2072
 msgid "Last lockout"
 msgstr ""
 
-#: languages/vue-js.php:2072
+#: languages/vue-js.php:2075
 msgid "Last Lockout"
 msgstr ""
 
-#: languages/vue-js.php:2075
+#: languages/vue-js.php:2078
 msgid "Last scan"
 msgstr ""
 
-#: languages/vue-js.php:2080
+#: languages/vue-js.php:2083
 msgid "Last synced:"
 msgstr ""
 
-#: languages/vue-js.php:2083
+#: languages/vue-js.php:2086
 msgid "Latvian"
 msgstr ""
 
-#: languages/vue-js.php:2086
+#: languages/vue-js.php:2089
 msgid "Learn more"
 msgstr ""
 
-#: languages/vue-js.php:2089
+#: languages/vue-js.php:2092
 msgid ""
 "Learn more about <a target=\"_blank\" href=\"%s\">user agents</a>, and why "
 "some are bad."
 msgstr ""
 
-#: languages/vue-js.php:2092
+#: languages/vue-js.php:2095
 msgid "Let's get started"
 msgstr ""
 
-#: languages/vue-js.php:2095
+#: languages/vue-js.php:2098
 msgid "License Key"
 msgstr ""
 
-#: languages/vue-js.php:2098
+#: languages/vue-js.php:2101
 msgid "Light"
 msgstr ""
 
-#: languages/vue-js.php:2101
+#: languages/vue-js.php:2104
 #: src/model/notification/class-firewall-notification.php:295
 msgid "Limit email notifications for repeat lockouts"
 msgstr ""
 
-#: languages/vue-js.php:2104 src/model/setting/class-two-fa.php:299
+#: languages/vue-js.php:2107 src/model/setting/class-two-fa.php:299
 msgid "Link Graphic"
 msgstr ""
 
-#: languages/vue-js.php:2108
+#: languages/vue-js.php:2111
 msgid "LiteSpeed"
 msgstr ""
 
-#: languages/vue-js.php:2111
+#: languages/vue-js.php:2114
 msgid "Lithuanian"
 msgstr ""
 
-#: languages/vue-js.php:2114
+#: languages/vue-js.php:2117
 msgid "Loading data..."
 msgstr ""
 
-#: languages/vue-js.php:2118
+#: languages/vue-js.php:2121
 msgid "Loading file"
 msgstr ""
 
-#: languages/vue-js.php:2121
+#: languages/vue-js.php:2124
 msgid "Loading file..."
 msgstr ""
 
-#: languages/vue-js.php:2124
+#: languages/vue-js.php:2127
 msgid "Loading global IP addresses"
 msgstr ""
 
-#: languages/vue-js.php:2129
+#: languages/vue-js.php:2132
 msgid "Location"
 msgstr ""
 
-#: languages/vue-js.php:2133
+#: languages/vue-js.php:2136
 msgid "Locations"
 msgstr ""
 
-#: languages/vue-js.php:2137
+#: languages/vue-js.php:2140
 msgid "Lockout notifications are "
 msgstr ""
 
-#: languages/vue-js.php:2140
+#: languages/vue-js.php:2143
 msgid "Lockout Type"
 msgstr ""
 
-#: languages/vue-js.php:2143
+#: languages/vue-js.php:2146
 msgid "Login duration"
 msgstr ""
 
-#: languages/vue-js.php:2146
+#: languages/vue-js.php:2149
 msgid "Login lockouts in the past 7 days"
 msgstr ""
 
-#: languages/vue-js.php:2149
+#: languages/vue-js.php:2152
 msgid "Login lockouts this week"
 msgstr ""
 
-#: languages/vue-js.php:2153 src/model/setting/class-login-lockout.php:178
+#: languages/vue-js.php:2156 src/model/setting/class-login-lockout.php:178
 msgid "Login Protection"
 msgstr ""
 
-#: languages/vue-js.php:2156
+#: languages/vue-js.php:2159
 msgid "Login protection is enabled. There are no lockouts logged yet."
 msgstr ""
 
-#: languages/vue-js.php:2159
+#: languages/vue-js.php:2162
 #: src/model/notification/class-firewall-notification.php:291
 msgid "Login Protection Lockout"
 msgstr ""
 
-#: languages/vue-js.php:2164
+#: languages/vue-js.php:2167
 msgid "Logs"
 msgstr ""
 
-#: languages/vue-js.php:2167
+#: languages/vue-js.php:2170
 msgid "Logs Storage"
 msgstr ""
 
-#: languages/vue-js.php:2170
+#: languages/vue-js.php:2173
 msgid "Low"
 msgstr ""
 
-#: languages/vue-js.php:2173
+#: languages/vue-js.php:2176
 msgid "Malay"
 msgstr ""
 
-#: languages/vue-js.php:2176
+#: languages/vue-js.php:2179
 msgid "Malayalam"
 msgstr ""
 
-#: languages/vue-js.php:2179
+#: languages/vue-js.php:2182
 msgid "Malware Removal"
 msgstr ""
 
-#: languages/vue-js.php:2182
+#: languages/vue-js.php:2185
 msgid "Malware Scan Issues"
 msgstr ""
 
-#: languages/vue-js.php:2191 src/component/class-backup-settings.php:1300
+#: languages/vue-js.php:2194 src/component/class-backup-settings.php:1300
 #: src/component/class-mail.php:60 src/controller/class-scan.php:72
 #: src/model/notification/class-malware-notification.php:244
 msgid "Malware Scanning"
 msgstr ""
 
-#: languages/vue-js.php:2195 src/model/notification/class-malware-report.php:44
+#: languages/vue-js.php:2198 src/model/notification/class-malware-report.php:44
 #: src/model/notification/class-malware-report.php:146
 msgid "Malware Scanning - Reporting"
 msgstr ""
 
-#: languages/vue-js.php:2198
+#: languages/vue-js.php:2201
 msgid ""
 "Manage allowlists and blocklists centrally from the Hub, eliminating the "
 "need to manage them individually for each site."
 msgstr ""
 
-#: languages/vue-js.php:2201
+#: languages/vue-js.php:2204
 msgid "Manage Configs"
 msgstr ""
 
-#: languages/vue-js.php:2205
+#: languages/vue-js.php:2208
 msgid "Manage multiple sites IPs from one central list"
 msgstr ""
 
-#: languages/vue-js.php:2208
+#: languages/vue-js.php:2211
 msgid "Manage Notifications"
 msgstr ""
 
-#: languages/vue-js.php:2211
+#: languages/vue-js.php:2214
 msgid "Manage the global IP address blocklist."
 msgstr ""
 
-#: languages/vue-js.php:2214
+#: languages/vue-js.php:2217
 msgid ""
 "Manage the global IP allowlist/blocklist directly from the Hub eliminating "
 "the need to manually add IP addresses to the allowlist/blocklist in every "
 "site."
 msgstr ""
 
-#: languages/vue-js.php:2217
+#: languages/vue-js.php:2220
 msgid "Manual"
 msgstr ""
 
-#: languages/vue-js.php:2220
+#: languages/vue-js.php:2223
 msgid "Manual IP Detection"
 msgstr ""
 
-#: languages/vue-js.php:2223
+#: languages/vue-js.php:2226
 msgid "Marathi"
 msgstr ""
 
-#: languages/vue-js.php:2233 src/model/setting/class-mask-login.php:271
+#: languages/vue-js.php:2236 src/model/setting/class-mask-login.php:271
 msgid "Mask Login Area"
 msgstr ""
 
-#: languages/vue-js.php:2236
+#: languages/vue-js.php:2239
 msgid "Masking is currently active at "
 msgstr ""
 
-#: languages/vue-js.php:2239
+#: languages/vue-js.php:2242
 msgid ""
 "Masking is currently inactive. Choose your URL and save your settings to "
 "finish setup."
 msgstr ""
 
-#: languages/vue-js.php:2242
+#: languages/vue-js.php:2245
 msgid "Masking URL slug"
 msgstr ""
 
-#: languages/vue-js.php:2246 src/model/setting/class-scan.php:140
+#: languages/vue-js.php:2249 src/model/setting/class-scan.php:140
 msgid "Max included file size"
 msgstr ""
 
-#: languages/vue-js.php:2249 src/component/class-rate.php:95
+#: languages/vue-js.php:2252 src/component/class-rate.php:95
 msgid "Maybe later"
 msgstr ""
 
-#: languages/vue-js.php:2252
+#: languages/vue-js.php:2255
 msgid "Medium"
 msgstr ""
 
-#: languages/vue-js.php:2255 src/component/audit/class-options-audit.php:157
+#: languages/vue-js.php:2258 src/component/audit/class-options-audit.php:157
 msgid "Membership"
 msgstr ""
 
-#: languages/vue-js.php:2262 src/model/setting/class-password-reset.php:97
+#: languages/vue-js.php:2265 src/model/setting/class-password-reset.php:97
 #: src/model/setting/class-user-agent-lockout.php:149
 msgid "Message"
 msgstr ""
 
-#: languages/vue-js.php:2266
+#: languages/vue-js.php:2269
 msgid "Microsoft Authenticator"
 msgstr ""
 
-#: languages/vue-js.php:2270
+#: languages/vue-js.php:2273
 msgid "Migrate my site"
 msgstr ""
 
-#: languages/vue-js.php:2274
+#: languages/vue-js.php:2277
 msgid "Minutes"
 msgstr ""
 
-#: languages/vue-js.php:2277
+#: languages/vue-js.php:2280
 msgid "Modified on:"
 msgstr ""
 
-#: languages/vue-js.php:2280
+#: languages/vue-js.php:2283
 msgid "Mongolian"
 msgstr ""
 
-#: languages/vue-js.php:2283
+#: languages/vue-js.php:2286
 msgid "Monitor 404s from logged in users"
 msgstr ""
 
-#: languages/vue-js.php:2286
+#: languages/vue-js.php:2289
 msgid ""
 "Monitor your website's backend with Audit Logging. Get this feature as part "
 "of a WPMU DEV membership."
 msgstr ""
 
-#: languages/vue-js.php:2293
+#: languages/vue-js.php:2296
 msgid "Monthly"
 msgstr ""
 
-#: languages/vue-js.php:2296
+#: languages/vue-js.php:2299
 msgid ""
 "Move <strong>%1$s</strong> to quarantine.<span class=\"sui-tag sui-tag-sm "
 "sui-tag-pro min-h-full\">Pro</span>"
 msgstr ""
 
-#: languages/vue-js.php:2299
+#: languages/vue-js.php:2302
 msgid ""
 "Move <strong>%1$s</strong> to quarantine.<span class=\"sui-tag "
 "sui-tag-sm\">Recommended</span>"
 msgstr ""
 
-#: languages/vue-js.php:2303
+#: languages/vue-js.php:2306
 msgid ""
 "Need the app? Here’s links to the official iOS and Android authenticator "
 "applications."
 msgstr ""
 
-#: languages/vue-js.php:2306
+#: languages/vue-js.php:2309
 msgid ""
 "Needing to start fresh? Use this button to roll back to the default "
 "settings."
 msgstr ""
 
-#: languages/vue-js.php:2309 src/component/class-notification.php:409
+#: languages/vue-js.php:2312 src/component/class-notification.php:409
 #: src/component/class-notification.php:424
 #: src/component/ip/class-global-ip.php:246
 #: src/component/ip/class-global-ip.php:249
@@ -2952,103 +2957,103 @@ msgstr ""
 msgid "Never"
 msgstr ""
 
-#: languages/vue-js.php:2312
+#: languages/vue-js.php:2315
 msgid "New admin username"
 msgstr ""
 
-#: languages/vue-js.php:2315
+#: languages/vue-js.php:2318
 msgid "New Login URL slug"
 msgstr ""
 
-#: languages/vue-js.php:2320
+#: languages/vue-js.php:2323
 msgid "New Scan"
 msgstr ""
 
-#: languages/vue-js.php:2323
+#: languages/vue-js.php:2326
 msgid "Next"
 msgstr ""
 
-#: languages/vue-js.php:2329
+#: languages/vue-js.php:2332
 msgid "Next scheduled report: %s"
 msgstr ""
 
-#: languages/vue-js.php:2332
+#: languages/vue-js.php:2335
 msgid "Next scheduled reporting"
 msgstr ""
 
-#: languages/vue-js.php:2336
+#: languages/vue-js.php:2339
 msgid "Nginx"
 msgstr ""
 
-#: languages/vue-js.php:2339
+#: languages/vue-js.php:2342
 msgid "Nice work! These vulnerabilities have been addressed."
 msgstr ""
 
-#: languages/vue-js.php:2343
+#: languages/vue-js.php:2346
 msgid "No"
 msgstr ""
 
-#: languages/vue-js.php:2346
+#: languages/vue-js.php:2349
 msgid "No Graphic"
 msgstr ""
 
-#: languages/vue-js.php:2349
+#: languages/vue-js.php:2352
 msgid "No icon will be displayed on two-factor form."
 msgstr ""
 
-#: languages/vue-js.php:2352
+#: languages/vue-js.php:2355
 msgid "No IP address has been blocked in any country."
 msgstr ""
 
-#: languages/vue-js.php:2355
+#: languages/vue-js.php:2358
 msgid "No thanks"
 msgstr ""
 
-#: languages/vue-js.php:2359
+#: languages/vue-js.php:2362
 msgid "No user records found!"
 msgstr ""
 
-#: languages/vue-js.php:2366
+#: languages/vue-js.php:2369
 msgid "None"
 msgstr ""
 
-#: languages/vue-js.php:2369
+#: languages/vue-js.php:2372
 msgid "Normal"
 msgstr ""
 
-#: languages/vue-js.php:2372
+#: languages/vue-js.php:2375
 msgid "Norwegian"
 msgstr ""
 
-#: languages/vue-js.php:2375
+#: languages/vue-js.php:2378
 msgid "Not found"
 msgstr ""
 
-#: languages/vue-js.php:2378
+#: languages/vue-js.php:2381
 msgid ""
 "Not using your language, or have improvements? Help us improve translations "
 "by providing your own improvements <a target=\"_blank\" "
 "href=\"%s\">here</a>."
 msgstr ""
 
-#: languages/vue-js.php:2382
+#: languages/vue-js.php:2385
 msgid "Note: At least one of the types of files above needs to be included."
 msgstr ""
 
-#: languages/vue-js.php:2385
+#: languages/vue-js.php:2388
 msgid ""
 "Note: Defender will instantly remove all past event logs, you will not be "
 "able to get them back."
 msgstr ""
 
-#: languages/vue-js.php:2388
+#: languages/vue-js.php:2391
 msgid ""
 "Note: Defender will permanently remove all lockout records from your "
 "database. This means that all locked-out users will be able to access your "
 "site again."
 msgstr ""
 
-#: languages/vue-js.php:2391
+#: languages/vue-js.php:2394
 msgid ""
 "Note: Do not include the preload directive by default if you maintain a "
 "project that provides HTTPS configuration advice or provides an option to "
@@ -3057,140 +3062,140 @@ msgid ""
 "target=\"_blank\" href=\"%s\">here</a> for more information."
 msgstr ""
 
-#: languages/vue-js.php:2394
+#: languages/vue-js.php:2397
 msgid ""
 "Note: Each user must enable two-factor authentication via their user "
 "profile in order to use this security feature."
 msgstr ""
 
-#: languages/vue-js.php:2398
+#: languages/vue-js.php:2401
 msgid ""
 "Note: If you do not have access to your Apache config files, you will need "
 "to contact your hosting provider to make these changes."
 msgstr ""
 
-#: languages/vue-js.php:2402
+#: languages/vue-js.php:2405
 msgid ""
 "Note: If you do not have access to your LiteSpeed config files, you will "
 "need to contact your hosting provider to make these changes."
 msgstr ""
 
-#: languages/vue-js.php:2406
+#: languages/vue-js.php:2409
 msgid ""
 "Note: If you do not have access to your NGINX config files, you will need "
 "to contact your hosting provider to make these changes."
 msgstr ""
 
-#: languages/vue-js.php:2409
+#: languages/vue-js.php:2412
 msgid ""
 "Note: Imported IP addresses will be added to the existing blocklist and "
 "allowlist."
 msgstr ""
 
-#: languages/vue-js.php:2412
+#: languages/vue-js.php:2415
 msgid ""
 "Note: Imported user agents will be added to the existing blocklist and "
 "allowlist."
 msgstr ""
 
-#: languages/vue-js.php:2415
+#: languages/vue-js.php:2418
 msgid ""
 "Note: Make sure this IP is not a legitimate operation, banning the IP will "
 "result in being permanently locked out from accessing your website."
 msgstr ""
 
-#: languages/vue-js.php:2418
+#: languages/vue-js.php:2421
 msgid ""
 "Note: Make sure this user agent is not a legitimate operation, banning the "
 "user agent will result in being permanently locked out from accessing your "
 "website."
 msgstr ""
 
-#: languages/vue-js.php:2421
+#: languages/vue-js.php:2424
 msgid ""
 "Note: Recommendations listed below can be configured manually. You can "
 "still bulk ignore them if you don’t want to action."
 msgstr ""
 
-#: languages/vue-js.php:2424
+#: languages/vue-js.php:2427
 msgid ""
 "Note: Registration and Password Reset emails have hardcoded URLs in them. "
 "We will update them automatically to match your new login URL."
 msgstr ""
 
-#: languages/vue-js.php:2427
+#: languages/vue-js.php:2430
 msgid "Note: Select at least one form."
 msgstr ""
 
-#: languages/vue-js.php:2430
+#: languages/vue-js.php:2433
 msgid "Note: This IP address is already in your banned list."
 msgstr ""
 
-#: languages/vue-js.php:2434
+#: languages/vue-js.php:2437
 msgid ""
 "Note: This is shown in the users Profile area indicating they must use "
 "two-factor authentication."
 msgstr ""
 
-#: languages/vue-js.php:2437
+#: languages/vue-js.php:2440
 msgid "Note: This user agent is already in your banned list."
 msgstr ""
 
-#: languages/vue-js.php:2440
+#: languages/vue-js.php:2443
 msgid ""
 "Note: This will instantly revert all settings to their default states but "
 "will leave your data intact."
 msgstr ""
 
-#: languages/vue-js.php:2443
+#: languages/vue-js.php:2446
 msgid ""
 "Note: To reduce the number of false-positive reports, please enable "
 "<strong>File Change Detection</strong> for all scan types."
 msgstr ""
 
-#: languages/vue-js.php:2446
+#: languages/vue-js.php:2449
 msgid ""
 "Note: Usage tracking is completely anonymous and non-sensitive, and we only "
 "track features you are/aren't using to make more informed feature decisions."
 msgstr ""
 
-#: languages/vue-js.php:2450
+#: languages/vue-js.php:2453
 msgid "Note: Users will be forced to set up two-factor when they next login."
 msgstr ""
 
-#: languages/vue-js.php:2453
+#: languages/vue-js.php:2456
 msgid ""
 "Note: Whilst these tweaks should work fine, make sure you have a current "
 "backup just in case something goes wrong."
 msgstr ""
 
-#: languages/vue-js.php:2456
+#: languages/vue-js.php:2459
 msgid "Note: You must select at least one of the forms listed above."
 msgstr ""
 
-#: languages/vue-js.php:2459
+#: languages/vue-js.php:2462
 msgid ""
 "Note: your allowlist will override any country ban, but will still follow "
 "your 404 and login lockout rules."
 msgstr ""
 
-#: languages/vue-js.php:2463
+#: languages/vue-js.php:2466
 msgid "Notification"
 msgstr ""
 
-#: languages/vue-js.php:2469 src/controller/class-notification.php:61
+#: languages/vue-js.php:2472 src/controller/class-notification.php:61
 msgid "Notifications"
 msgstr ""
 
-#: languages/vue-js.php:2472
+#: languages/vue-js.php:2475
 msgid "Notifications will be sent when Defender couldn't trigger a scheduled scan."
 msgstr ""
 
-#: languages/vue-js.php:2475
+#: languages/vue-js.php:2478
 msgid "Off"
 msgstr ""
 
-#: languages/vue-js.php:2478
+#: languages/vue-js.php:2481
 msgid ""
 "Often servers are incorrectly configured, and can allow an attacker to get "
 "access to sensitive files like your config, .htaccess and backup files. "
@@ -3198,11 +3203,11 @@ msgid ""
 "database."
 msgstr ""
 
-#: languages/vue-js.php:2481
+#: languages/vue-js.php:2484
 msgid "On site & iframe"
 msgstr ""
 
-#: languages/vue-js.php:2484
+#: languages/vue-js.php:2487
 msgid ""
 "One of the more common methods for bots and hackers to gain access to your "
 "website is to find out login usernames and brute force the login area with "
@@ -3211,7 +3216,7 @@ msgid ""
 "common weak passwords are!). "
 msgstr ""
 
-#: languages/vue-js.php:2487
+#: languages/vue-js.php:2490
 msgid ""
 "One of the most common methods of gaining access to websites is through "
 "brute force attacks on login areas using default/common usernames and "
@@ -3219,86 +3224,86 @@ msgid ""
 "an important piece of the puzzle hackers need to hijack your website."
 msgstr ""
 
-#: languages/vue-js.php:2491
+#: languages/vue-js.php:2494
 msgid "Only letters, spaces, hyphens and apostrophes allowed."
 msgstr ""
 
-#: languages/vue-js.php:2494
+#: languages/vue-js.php:2497
 msgid ""
 "Only send the origin of the document as the referrer in all cases. The "
 "document https://example.com/page.html will send the referrer "
 "https://example.com/."
 msgstr ""
 
-#: languages/vue-js.php:2497
+#: languages/vue-js.php:2500
 msgid ""
 "Only send the origin of the document as the referrer to a-priori "
 "as-much-secure destination (HTTPS->HTTPS), but don't send it to a less "
 "secure destination (HTTPS->HTTP)."
 msgstr ""
 
-#: languages/vue-js.php:2500
+#: languages/vue-js.php:2503
 msgid "Open search filter"
 msgstr ""
 
-#: languages/vue-js.php:2503
+#: languages/vue-js.php:2506
 msgid "Options"
 msgstr ""
 
-#: languages/vue-js.php:2506
+#: languages/vue-js.php:2509
 msgid "Origin URL"
 msgstr ""
 
-#: languages/vue-js.php:2510
+#: languages/vue-js.php:2513
 msgid "Original WP file"
 msgstr ""
 
-#: languages/vue-js.php:2524
+#: languages/vue-js.php:2527
 msgid "Overview"
 msgstr ""
 
-#: languages/vue-js.php:2530 src/model/setting/class-password-reset.php:119
+#: languages/vue-js.php:2533 src/model/setting/class-password-reset.php:119
 #: src/view/mask-login/reset.php:17
 msgid "Password Reset"
 msgstr ""
 
-#: languages/vue-js.php:2533
+#: languages/vue-js.php:2536
 msgid ""
 "Passwords are checked with <strong><a href=\"%s\" target=\"_blank\">Have I "
 "Been Pwned API</a></strong>."
 msgstr ""
 
-#: languages/vue-js.php:2536
+#: languages/vue-js.php:2539
 msgid "Passwords created before %s are required to be reset."
 msgstr ""
 
-#: languages/vue-js.php:2539
+#: languages/vue-js.php:2542
 msgid "Path:"
 msgstr ""
 
-#: languages/vue-js.php:2542
+#: languages/vue-js.php:2545
 msgid ""
 "Performance Tests, File Optimization & Compression, Page, Browser & "
 "Gravatar Caching, GZIP Compression, CloudFlare Integration & more."
 msgstr ""
 
-#: languages/vue-js.php:2546
+#: languages/vue-js.php:2549
 msgid "Permanent"
 msgstr ""
 
-#: languages/vue-js.php:2549 src/model/setting/class-global-ip-lockout.php:57
+#: languages/vue-js.php:2552 src/model/setting/class-global-ip-lockout.php:57
 msgid "Permanently Blocked IPs"
 msgstr ""
 
-#: languages/vue-js.php:2552
+#: languages/vue-js.php:2555
 msgid "Permanently Delete File?"
 msgstr ""
 
-#: languages/vue-js.php:2555
+#: languages/vue-js.php:2558
 msgid "Persian"
 msgstr ""
 
-#: languages/vue-js.php:2558
+#: languages/vue-js.php:2561
 msgid ""
 "PHP is the software that powers WordPress. It interprets the WordPress code "
 "and generates web pages people view. Naturally, PHP comes in different "
@@ -3307,14 +3312,14 @@ msgid ""
 "versions with fewer bugs."
 msgstr ""
 
-#: languages/vue-js.php:2561
+#: languages/vue-js.php:2564
 msgid ""
 "PHP versions older than %s are no longer supported. For security and "
 "stability we strongly recommend you upgrade your PHP version to version %s "
 "or newer as soon as possible. "
 msgstr ""
 
-#: languages/vue-js.php:2564
+#: languages/vue-js.php:2567
 msgid ""
 "Pingbacks notify a website when it has been mentioned by another website, "
 "like a form of courtesy communication. However, these notifications can be "
@@ -3323,103 +3328,103 @@ msgid ""
 "with spam comments."
 msgstr ""
 
-#: languages/vue-js.php:2567
+#: languages/vue-js.php:2570
 msgid "Platform"
 msgstr ""
 
-#: languages/vue-js.php:2570
+#: languages/vue-js.php:2573
 msgid "Please contact the plugin developer to fix this"
 msgstr ""
 
-#: languages/vue-js.php:2573
+#: languages/vue-js.php:2576
 msgid "Please select at least one option."
 msgstr ""
 
-#: languages/vue-js.php:2576
+#: languages/vue-js.php:2579
 msgid "Plugin"
 msgstr ""
 
-#: languages/vue-js.php:2579
+#: languages/vue-js.php:2582
 msgid "Plugin files"
 msgstr ""
 
-#: languages/vue-js.php:2582
+#: languages/vue-js.php:2585
 msgid "Plugin state"
 msgstr ""
 
-#: languages/vue-js.php:2585
+#: languages/vue-js.php:2588
 msgid "Plugin URL"
 msgstr ""
 
-#: languages/vue-js.php:2588
+#: languages/vue-js.php:2591
 msgid "Plugins"
 msgstr ""
 
-#: languages/vue-js.php:2591
+#: languages/vue-js.php:2594
 msgid "Polish"
 msgstr ""
 
-#: languages/vue-js.php:2596
+#: languages/vue-js.php:2599
 msgid "Portuguese"
 msgstr ""
 
-#: languages/vue-js.php:2599
+#: languages/vue-js.php:2602
 msgid "Preparing..."
 msgstr ""
 
-#: languages/vue-js.php:2602
+#: languages/vue-js.php:2605
 msgid "Preserve"
 msgstr ""
 
-#: languages/vue-js.php:2606
+#: languages/vue-js.php:2609
 msgid "Preset Configs"
 msgstr ""
 
-#: languages/vue-js.php:2609
+#: languages/vue-js.php:2612
 msgid ""
 "Pretty much everything you need for developing and managing WordPress based "
 "websites, and then some."
 msgstr ""
 
-#: languages/vue-js.php:2612
+#: languages/vue-js.php:2615
 msgid "Prev"
 msgstr ""
 
-#: languages/vue-js.php:2615
+#: languages/vue-js.php:2618
 msgid ""
 "Prevent malicious bots and user-agents from accessing your website by "
 "banning them with Defender's User Agent Banning feature."
 msgstr ""
 
-#: languages/vue-js.php:2619
+#: languages/vue-js.php:2622
 msgid "Privacy Policy"
 msgstr ""
 
-#: languages/vue-js.php:2641
+#: languages/vue-js.php:2644
 msgid "Pro"
 msgstr ""
 
-#: languages/vue-js.php:2645
+#: languages/vue-js.php:2648
 msgid "Pro Notifications"
 msgstr ""
 
-#: languages/vue-js.php:2649
+#: languages/vue-js.php:2652
 msgid "Profile page"
 msgstr ""
 
-#: languages/vue-js.php:2652
+#: languages/vue-js.php:2655
 msgid ""
 "Protect your login area and have Defender automatically lockout any "
 "suspicious behavior."
 msgstr ""
 
-#: languages/vue-js.php:2655
+#: languages/vue-js.php:2658
 msgid ""
 "Protect your site against password leak attacks. Block logins from users "
 "using a known compromised password that exists in database breach records."
 msgstr ""
 
-#: languages/vue-js.php:2658
+#: languages/vue-js.php:2661
 msgid ""
 "Protect your site from the risk of being breached by compromised passwords. "
 "All passwords entered in default login or registration forms will be "
@@ -3427,144 +3432,144 @@ msgid ""
 "in a known data breach."
 msgstr ""
 
-#: languages/vue-js.php:2661
+#: languages/vue-js.php:2664
 msgid "Protect your website from hackers with Global IPs Blocker - Activate Now!"
 msgstr ""
 
-#: languages/vue-js.php:2664
+#: languages/vue-js.php:2667
 msgid "Push permanently blocklisted IPs directly to the Hub global IP blocklist"
 msgstr ""
 
-#: languages/vue-js.php:2668
+#: languages/vue-js.php:2671
 msgid ""
 "Put a stop to hackers trying to randomly guess your login credentials. "
 "Defender will lock out users after a set number of failed login attempts."
 msgstr ""
 
-#: languages/vue-js.php:2677
+#: languages/vue-js.php:2680
 #: src/model/setting/class-password-protection.php:113
 msgid "Pwned Passwords"
 msgstr ""
 
-#: languages/vue-js.php:2680
+#: languages/vue-js.php:2683
 msgid "Pwned Passwords check is currently active."
 msgstr ""
 
-#: languages/vue-js.php:2683
+#: languages/vue-js.php:2686
 msgid ""
 "Pwned Passwords check is currently inactive. You need to check at least one "
 "of the options below and save your settings to finish setup."
 msgstr ""
 
-#: languages/vue-js.php:2686
+#: languages/vue-js.php:2689
 msgid "Quarantine Data"
 msgstr ""
 
-#: languages/vue-js.php:2689
+#: languages/vue-js.php:2692
 msgid "Quarantine directory URI"
 msgstr ""
 
-#: languages/vue-js.php:2692
+#: languages/vue-js.php:2695
 msgid "Quarantine file retention period"
 msgstr ""
 
-#: languages/vue-js.php:2695
+#: languages/vue-js.php:2698
 msgid "Quarantine settings"
 msgstr ""
 
-#: languages/vue-js.php:2700
+#: languages/vue-js.php:2703
 msgid "Quarantined"
 msgstr ""
 
-#: languages/vue-js.php:2703
+#: languages/vue-js.php:2706
 msgid "Quarantined By"
 msgstr ""
 
-#: languages/vue-js.php:2706
+#: languages/vue-js.php:2709
 msgid "Quarantined By:"
 msgstr ""
 
-#: languages/vue-js.php:2709
+#: languages/vue-js.php:2712
 msgid "Quarantined Filename:"
 msgstr ""
 
-#: languages/vue-js.php:2712
+#: languages/vue-js.php:2715
 msgid "Quarantined On:"
 msgstr ""
 
-#: languages/vue-js.php:2716
+#: languages/vue-js.php:2719
 msgid "Quick Add"
 msgstr ""
 
-#: languages/vue-js.php:2719
+#: languages/vue-js.php:2722
 msgid "Quick add to allowlist"
 msgstr ""
 
-#: languages/vue-js.php:2722
+#: languages/vue-js.php:2725
 msgid "Quick add to blocklist"
 msgstr ""
 
-#: languages/vue-js.php:2726
+#: languages/vue-js.php:2729
 msgid "Quick Remove"
 msgstr ""
 
-#: languages/vue-js.php:2729
+#: languages/vue-js.php:2732
 msgid "Quick remove from allowlist"
 msgstr ""
 
-#: languages/vue-js.php:2732
+#: languages/vue-js.php:2735
 msgid "Quick remove from blocklist"
 msgstr ""
 
-#: languages/vue-js.php:2735
+#: languages/vue-js.php:2738
 msgid "Quickly add all the nations inside a continent or region."
 msgstr ""
 
-#: languages/vue-js.php:2738
+#: languages/vue-js.php:2741
 msgid "Quickly remove all the nations inside a continent or region."
 msgstr ""
 
-#: languages/vue-js.php:2741 src/class-admin.php:323 src/class-admin.php:326
+#: languages/vue-js.php:2744 src/class-admin.php:323 src/class-admin.php:326
 #: src/component/class-rate.php:94
 msgid "Rate Defender"
 msgstr ""
 
-#: languages/vue-js.php:2745
+#: languages/vue-js.php:2748
 msgid "Re-check status"
 msgstr ""
 
-#: languages/vue-js.php:2750
+#: languages/vue-js.php:2753
 msgid "Re-check Status"
 msgstr ""
 
-#: languages/vue-js.php:2753
+#: languages/vue-js.php:2756
 msgid "Read this article."
 msgstr ""
 
-#: languages/vue-js.php:2756 src/controller/class-recaptcha.php:1158
+#: languages/vue-js.php:2759 src/controller/class-recaptcha.php:1158
 #: src/controller/class-recaptcha.php:1171
 msgid "reCAPTCHA Locations"
 msgstr ""
 
-#: languages/vue-js.php:2761
+#: languages/vue-js.php:2764
 msgid "reCAPTCHA Preview"
 msgstr ""
 
-#: languages/vue-js.php:2764 src/model/setting/class-recaptcha.php:316
+#: languages/vue-js.php:2767 src/model/setting/class-recaptcha.php:316
 msgid "reCAPTCHA V3"
 msgstr ""
 
-#: languages/vue-js.php:2767
+#: languages/vue-js.php:2770
 msgid ""
 "reCAPTCHA v3 returns a score based on user interactions. Choose the score "
 "below which the verification should fail."
 msgstr ""
 
-#: languages/vue-js.php:2771
+#: languages/vue-js.php:2774
 msgid "Recently added"
 msgstr ""
 
-#: languages/vue-js.php:2778 src/model/notification/class-audit-report.php:194
+#: languages/vue-js.php:2781 src/model/notification/class-audit-report.php:194
 #: src/model/notification/class-firewall-notification.php:294
 #: src/model/notification/class-firewall-report.php:187
 #: src/model/notification/class-malware-notification.php:281
@@ -3573,99 +3578,99 @@ msgstr ""
 msgid "Recipients"
 msgstr ""
 
-#: languages/vue-js.php:2784 src/component/class-mail.php:57
+#: languages/vue-js.php:2787 src/component/class-mail.php:57
 #: src/controller/class-main-setting.php:797
 #: src/controller/class-security-tweaks.php:88
 #: src/model/setting/class-security-tweaks.php:122
 msgid "Recommendations"
 msgstr ""
 
-#: languages/vue-js.php:2787
+#: languages/vue-js.php:2790
 msgid "Recommendations "
 msgstr ""
 
-#: languages/vue-js.php:2790
+#: languages/vue-js.php:2793
 msgid "Recommendations - Notification"
 msgstr ""
 
-#: languages/vue-js.php:2795
+#: languages/vue-js.php:2798
 msgid "Recommended"
 msgstr ""
 
-#: languages/vue-js.php:2798 src/model/setting/class-mask-login.php:91
+#: languages/vue-js.php:2801 src/model/setting/class-mask-login.php:91
 msgid "Redirect traffic"
 msgstr ""
 
-#: languages/vue-js.php:2801
+#: languages/vue-js.php:2804
 msgid "Redirect URL"
 msgstr ""
 
-#: languages/vue-js.php:2804 src/model/setting/class-mask-login.php:92
+#: languages/vue-js.php:2807 src/model/setting/class-mask-login.php:92
 msgid "Redirection URL"
 msgstr ""
 
-#: languages/vue-js.php:2807 src/model/setting/class-security-headers.php:161
+#: languages/vue-js.php:2810 src/model/setting/class-security-headers.php:161
 msgid "Referrer Information"
 msgstr ""
 
-#: languages/vue-js.php:2810
+#: languages/vue-js.php:2813
 msgid "Regenerate Keys"
 msgstr ""
 
-#: languages/vue-js.php:2813
+#: languages/vue-js.php:2816
 msgid "Region"
 msgstr ""
 
-#: languages/vue-js.php:2816
+#: languages/vue-js.php:2819
 msgid "Reminder frequency"
 msgstr ""
 
-#: languages/vue-js.php:2820
+#: languages/vue-js.php:2823
 msgid "Remove"
 msgstr ""
 
-#: languages/vue-js.php:2823
+#: languages/vue-js.php:2826
 msgid "Remove file"
 msgstr ""
 
-#: languages/vue-js.php:2828
+#: languages/vue-js.php:2831
 msgid "Remove from allowlist"
 msgstr ""
 
-#: languages/vue-js.php:2831
+#: languages/vue-js.php:2834
 msgid "Remove from blocklist"
 msgstr ""
 
-#: languages/vue-js.php:2834
+#: languages/vue-js.php:2837
 msgid ""
 "Remove our branding and whitelabel two-factor authentication with Defender "
 "Pro. This feature is included in a WPMU DEV membership with 24/7 support "
 "and lots of handy site management tools."
 msgstr ""
 
-#: languages/vue-js.php:2837
+#: languages/vue-js.php:2840
 msgid "Rename"
 msgstr ""
 
-#: languages/vue-js.php:2842
+#: languages/vue-js.php:2845
 msgid "Repair"
 msgstr ""
 
-#: languages/vue-js.php:2845
+#: languages/vue-js.php:2848
 msgid ""
 "Repair cannot be carried out as the original plugin file has been flagged "
 "as suspicious."
 msgstr ""
 
-#: languages/vue-js.php:2849
+#: languages/vue-js.php:2852
 msgid "Repair File?"
 msgstr ""
 
-#: languages/vue-js.php:2852
+#: languages/vue-js.php:2855
 msgid "Repeat Lockouts"
 msgstr ""
 
-#: languages/vue-js.php:2855
+#: languages/vue-js.php:2858
 msgid ""
 "Replace the default <strong>wp-admin</strong> or <strong>wp-login</strong> "
 "with a custom slug below.\n"
@@ -3675,164 +3680,164 @@ msgid ""
 "your login area:"
 msgstr ""
 
-#: languages/vue-js.php:2860
+#: languages/vue-js.php:2863
 msgid "Reporting"
 msgstr ""
 
-#: languages/vue-js.php:2863
+#: languages/vue-js.php:2866
 msgid "Reports"
 msgstr ""
 
-#: languages/vue-js.php:2866
+#: languages/vue-js.php:2869
 msgid ""
 "Reports will run as scheduled, but notifications will not be sent. You can "
 "view any report in the Hub."
 msgstr ""
 
-#: languages/vue-js.php:2869
+#: languages/vue-js.php:2872
 msgid "Reset"
 msgstr ""
 
-#: languages/vue-js.php:2875
+#: languages/vue-js.php:2878
 msgid "Reset Settings"
 msgstr ""
 
-#: languages/vue-js.php:2878
+#: languages/vue-js.php:2881
 msgid ""
 "Resize, optimize and compress all of your images with the incredibly "
 "powerful and award-winning, 100% free WordPress image optimizer."
 msgstr ""
 
-#: languages/vue-js.php:2884
+#: languages/vue-js.php:2887
 msgid "Restore"
 msgstr ""
 
-#: languages/vue-js.php:2887
+#: languages/vue-js.php:2890
 msgid "Restore File"
 msgstr ""
 
-#: languages/vue-js.php:2890
+#: languages/vue-js.php:2893
 msgid ""
 "Restricts REST API calls to find users. Only requests by logged-in users "
 "will be allowed."
 msgstr ""
 
-#: languages/vue-js.php:2893
+#: languages/vue-js.php:2896
 msgid "results"
 msgstr ""
 
-#: languages/vue-js.php:2901
+#: languages/vue-js.php:2904
 msgid "Revert"
 msgstr ""
 
-#: languages/vue-js.php:2905 src/class-admin.php:345 src/class-admin.php:348
+#: languages/vue-js.php:2908 src/class-admin.php:345 src/class-admin.php:348
 msgid "Roadmap"
 msgstr ""
 
-#: languages/vue-js.php:2908
+#: languages/vue-js.php:2911
 msgid "Roaming"
 msgstr ""
 
-#: languages/vue-js.php:2911
+#: languages/vue-js.php:2914
 msgid "Romanian"
 msgstr ""
 
-#: languages/vue-js.php:2915
+#: languages/vue-js.php:2918
 msgid "Run scan"
 msgstr ""
 
-#: languages/vue-js.php:2918
+#: languages/vue-js.php:2921
 msgid "Run Scan"
 msgstr ""
 
-#: languages/vue-js.php:2921
+#: languages/vue-js.php:2924
 msgid "Russian"
 msgstr ""
 
-#: languages/vue-js.php:2925
+#: languages/vue-js.php:2928
 msgid "Safe Repair"
 msgstr ""
 
-#: languages/vue-js.php:2928
+#: languages/vue-js.php:2931
 msgid "Sameorigin"
 msgstr ""
 
-#: languages/vue-js.php:2931
+#: languages/vue-js.php:2934
 msgid "Sanitize"
 msgstr ""
 
-#: languages/vue-js.php:2935
+#: languages/vue-js.php:2938
 msgid "Save"
 msgstr ""
 
-#: languages/vue-js.php:2958
+#: languages/vue-js.php:2961
 msgid "Save Changes"
 msgstr ""
 
-#: languages/vue-js.php:2962
+#: languages/vue-js.php:2965
 msgid "Save Current Config"
 msgstr ""
 
-#: languages/vue-js.php:2966
+#: languages/vue-js.php:2969
 msgid "Save Template"
 msgstr ""
 
-#: languages/vue-js.php:2970
+#: languages/vue-js.php:2973
 msgid ""
 "Save your current Defender settings configuration. You’ll be able to then "
 "download and apply it to your other sites with Defender installed."
 msgstr ""
 
-#: languages/vue-js.php:2973
+#: languages/vue-js.php:2976
 msgid "Saving"
 msgstr ""
 
-#: languages/vue-js.php:2977 src/model/setting/class-scan.php:136
-#: src/traits/defender-hub-client.php:673
+#: languages/vue-js.php:2980 src/model/setting/class-scan.php:136
+#: src/traits/defender-hub-client.php:676
 msgid "Scan core files"
 msgstr ""
 
-#: languages/vue-js.php:2980
+#: languages/vue-js.php:2983
 msgid "Scan in progress"
 msgstr ""
 
-#: languages/vue-js.php:2984 src/model/setting/class-scan.php:137
-#: src/traits/defender-hub-client.php:674
+#: languages/vue-js.php:2987 src/model/setting/class-scan.php:137
+#: src/traits/defender-hub-client.php:677
 msgid "Scan plugin files"
 msgstr ""
 
-#: languages/vue-js.php:2988
+#: languages/vue-js.php:2991
 msgid "Scan Types"
 msgstr ""
 
-#: languages/vue-js.php:2992
+#: languages/vue-js.php:2995
 msgid ""
 "Scan your website for file changes, vulnerabilities and injected code and "
 "get notified about anything suspicious."
 msgstr ""
 
-#: languages/vue-js.php:2995
+#: languages/vue-js.php:2998
 msgid ""
 "Scan your website for file changes, vulnerabilities and injected code and "
 "get notified about anything suspicious. Defender will keep an eye on your "
 "code without you having to worry."
 msgstr ""
 
-#: languages/vue-js.php:2998
+#: languages/vue-js.php:3001
 msgid "Scans plugins and themes in your site for publicly reported vulnerabilities"
 msgstr ""
 
-#: languages/vue-js.php:3006
+#: languages/vue-js.php:3009
 msgid "Schedule"
 msgstr ""
 
-#: languages/vue-js.php:3009
+#: languages/vue-js.php:3012
 msgid ""
 "Schedule daily, weekly or monthly email reports sent directly to your "
 "inbox. Get reporting as part of a WPMU DEV membership."
 msgstr ""
 
-#: languages/vue-js.php:3012
+#: languages/vue-js.php:3015
 msgid ""
 "Schedule Defender to automatically email you a full report about Malware "
 "Scanning, Firewall and Audit Logging reports. This feature is included in a "
@@ -3840,58 +3845,58 @@ msgid ""
 "tools. Unlock Now With Pro!"
 msgstr ""
 
-#: languages/vue-js.php:3015
+#: languages/vue-js.php:3018
 msgid ""
 "Schedule Defender to automatically email you a summary of all your website "
 "events. "
 msgstr ""
 
-#: languages/vue-js.php:3019 src/model/setting/class-scan.php:141
+#: languages/vue-js.php:3022 src/model/setting/class-scan.php:141
 msgid "Scheduled Scanning"
 msgstr ""
 
-#: languages/vue-js.php:3022
+#: languages/vue-js.php:3025
 msgid ""
 "Scheduled scanning must be enabled before <strong>Malware Scanning - "
 "Reporting</strong> can be activated."
 msgstr ""
 
-#: languages/vue-js.php:3025
+#: languages/vue-js.php:3028
 msgid "Scheduled without recipients"
 msgstr ""
 
-#: languages/vue-js.php:3028
+#: languages/vue-js.php:3031
 msgid "Score"
 msgstr ""
 
-#: languages/vue-js.php:3031
+#: languages/vue-js.php:3034
 msgid "Score Threshold"
 msgstr ""
 
-#: languages/vue-js.php:3035
+#: languages/vue-js.php:3038
 msgid "Search users"
 msgstr ""
 
-#: languages/vue-js.php:3039
+#: languages/vue-js.php:3042
 msgid "seconds"
 msgstr ""
 
-#: languages/vue-js.php:3043
+#: languages/vue-js.php:3046
 msgid "Seconds"
 msgstr ""
 
-#: languages/vue-js.php:3048
+#: languages/vue-js.php:3051
 msgid "Secret Key"
 msgstr ""
 
-#: languages/vue-js.php:3051
+#: languages/vue-js.php:3054
 msgid ""
 "Secure your site with Safe Repair and Quarantine: Quarantine suspicious "
 "files and securely replace them with their latest versions from WP.org. "
 "Upgrade to Defender Pro to unlock these features for ultimate protection."
 msgstr ""
 
-#: languages/vue-js.php:3054
+#: languages/vue-js.php:3057
 msgid ""
 "Security doesn't take a break, and Defender is here to help! Get started by "
 "activating all our security features with recommended default settings, "
@@ -3899,30 +3904,30 @@ msgid ""
 "this process and start from scratch."
 msgstr ""
 
-#: languages/vue-js.php:3062 src/model/setting/class-security-headers.php:371
+#: languages/vue-js.php:3065 src/model/setting/class-security-headers.php:371
 msgid "Security Headers"
 msgstr ""
 
-#: languages/vue-js.php:3069 src/component/class-backup-settings.php:1298
+#: languages/vue-js.php:3072 src/component/class-backup-settings.php:1298
 msgid "Security Recommendations"
 msgstr ""
 
-#: languages/vue-js.php:3073
+#: languages/vue-js.php:3076
 msgid "Select the forms in which reCAPTCHA will be deployed."
 msgstr ""
 
-#: languages/vue-js.php:3076
+#: languages/vue-js.php:3079
 msgid ""
 "Select the method the plugin should use to detect your site visitors' IP "
 "addresses. For more information about these methods, see our <a href='%s' "
 "target='_blank'>documentation</a>."
 msgstr ""
 
-#: languages/vue-js.php:3079
+#: languages/vue-js.php:3082
 msgid "Select the page or post your default login URLs will redirect to."
 msgstr ""
 
-#: languages/vue-js.php:3082
+#: languages/vue-js.php:3085
 msgid ""
 "Select when the browser should cache and enforce the Strict Transport "
 "Security policy. The HSTS Maximum Age should be set to at least 30 days. To "
@@ -3930,235 +3935,235 @@ msgid ""
 "target=\"_blank\" href=\"%s\">here</a>."
 msgstr ""
 
-#: languages/vue-js.php:3086
+#: languages/vue-js.php:3089
 msgid "Select which types of files you want to be checked:"
 msgstr ""
 
-#: languages/vue-js.php:3089
+#: languages/vue-js.php:3092
 msgid "Selected Post/Page"
 msgstr ""
 
-#: languages/vue-js.php:3092
+#: languages/vue-js.php:3095
 msgid ""
 "Send a full URL (stripped from parameters) when performing a a same-origin "
 "or cross-origin request."
 msgstr ""
 
-#: languages/vue-js.php:3095
+#: languages/vue-js.php:3098
 msgid ""
 "Send a full URL when performing a same-origin request, but only send the "
 "origin of the document for other cases."
 msgstr ""
 
-#: languages/vue-js.php:3098
+#: languages/vue-js.php:3101
 msgid ""
 "Send a full URL when performing a same-origin request, only send the origin "
 "of the document to a-priori as-much-secure destination (HTTPS->HTTPS), and "
 "send no header to a less secure destination (HTTPS->HTTP)."
 msgstr ""
 
-#: languages/vue-js.php:3101
+#: languages/vue-js.php:3104
 msgid "Send notifications when Defender couldn’t scan the files"
 msgstr ""
 
-#: languages/vue-js.php:3105
+#: languages/vue-js.php:3108
 #: src/model/notification/class-malware-notification.php:270
 #: src/model/notification/class-malware-report.php:147
 msgid "Send notifications when no issues are detected"
 msgstr ""
 
-#: languages/vue-js.php:3108
+#: languages/vue-js.php:3111
 msgid "Send permanently blocked IPs directly to the Hub global IP blocklist."
 msgstr ""
 
-#: languages/vue-js.php:3112
+#: languages/vue-js.php:3115
 msgid "Send Test"
 msgstr ""
 
-#: languages/vue-js.php:3115
+#: languages/vue-js.php:3118
 msgid ""
 "Send visitors and bots who try to visit the default WordPress login URLs to "
 "a separate URL to avoid 404s."
 msgstr ""
 
-#: languages/vue-js.php:3119 src/model/setting/class-two-fa.php:292
+#: languages/vue-js.php:3122 src/model/setting/class-two-fa.php:292
 msgid "Sender"
 msgstr ""
 
-#: languages/vue-js.php:3122
+#: languages/vue-js.php:3125
 msgid "Serbian"
 msgstr ""
 
-#: languages/vue-js.php:3125
+#: languages/vue-js.php:3128
 msgid ""
 "Set a reminder to notify the added recipients when a security "
 "recommendation hasn't been actioned."
 msgstr ""
 
-#: languages/vue-js.php:3129
+#: languages/vue-js.php:3132
 msgid ""
 "Set up a human verification system to keep malicious software from engaging "
 "in abusive activities on your website while helping your legitimate users "
 "to enter with ease."
 msgstr ""
 
-#: languages/vue-js.php:3151 src/component/audit/class-options-audit.php:254
+#: languages/vue-js.php:3154 src/component/audit/class-options-audit.php:254
 #: src/component/class-backup-settings.php:1306
 #: src/controller/class-main-setting.php:59
 msgid "Settings"
 msgstr ""
 
-#: languages/vue-js.php:3154
+#: languages/vue-js.php:3157
 msgid "Setup complete!"
 msgstr ""
 
-#: languages/vue-js.php:3159
+#: languages/vue-js.php:3162
 msgid "Site key"
 msgstr ""
 
-#: languages/vue-js.php:3163
+#: languages/vue-js.php:3166
 msgid "Size"
 msgstr ""
 
-#: languages/vue-js.php:3166
+#: languages/vue-js.php:3169
 msgid "SmartCrawl Search Engine Optimization"
 msgstr ""
 
-#: languages/vue-js.php:3169
+#: languages/vue-js.php:3172
 msgid "Smush Image Compression and Optimization"
 msgstr ""
 
-#: languages/vue-js.php:3172
+#: languages/vue-js.php:3175
 msgid ""
 "Some recipients haven't confirmed their subscription to this email report. "
 "You can resend the confirmation email or remove them from the list."
 msgstr ""
 
-#: languages/vue-js.php:3175
+#: languages/vue-js.php:3178
 msgid "Sorry, we couldn't find any IP Address matching \"<strong>%s</strong>\""
 msgstr ""
 
-#: languages/vue-js.php:3178
+#: languages/vue-js.php:3181
 msgid "Sort by"
 msgstr ""
 
-#: languages/vue-js.php:3181 src/model/setting/class-security-headers.php:164
+#: languages/vue-js.php:3184 src/model/setting/class-security-headers.php:164
 msgid "Specific Origins"
 msgstr ""
 
-#: languages/vue-js.php:3184
+#: languages/vue-js.php:3187
 msgid "Specific types"
 msgstr ""
 
-#: languages/vue-js.php:3187
+#: languages/vue-js.php:3190
 msgid "Specify how many 404 hits on the same file or page will trigger a lockout."
 msgstr ""
 
-#: languages/vue-js.php:3190
+#: languages/vue-js.php:3193
 msgid ""
 "Specify how many failed login attempts within a specific time period will "
 "trigger a lockout."
 msgstr ""
 
-#: languages/vue-js.php:3193
+#: languages/vue-js.php:3196
 msgid "Start from scratch"
 msgstr ""
 
-#: languages/vue-js.php:3221 src/controller/class-blocklist-monitor.php:274
+#: languages/vue-js.php:3224 src/controller/class-blocklist-monitor.php:274
 msgid "Status"
 msgstr ""
 
-#: languages/vue-js.php:3224
+#: languages/vue-js.php:3227
 msgid "Stop oEmbed calls revealing user IDs"
 msgstr ""
 
-#: languages/vue-js.php:3227
+#: languages/vue-js.php:3230
 msgid "Stop REST API User calls"
 msgstr ""
 
-#: languages/vue-js.php:3230
+#: languages/vue-js.php:3233
 msgid "Storage"
 msgstr ""
 
-#: languages/vue-js.php:3233
+#: languages/vue-js.php:3236
 msgid "Style"
 msgstr ""
 
-#: languages/vue-js.php:3240 src/model/setting/class-two-fa.php:290
+#: languages/vue-js.php:3243 src/model/setting/class-two-fa.php:290
 msgid "Subject"
 msgstr ""
 
-#: languages/vue-js.php:3246
+#: languages/vue-js.php:3249
 msgid "Subscribed"
 msgstr ""
 
-#: languages/vue-js.php:3250 src/class-admin.php:327 src/class-admin.php:330
+#: languages/vue-js.php:3253 src/class-admin.php:327 src/class-admin.php:330
 msgid "Support"
 msgstr ""
 
-#: languages/vue-js.php:3256 src/traits/defender-hub-client.php:676
+#: languages/vue-js.php:3259 src/traits/defender-hub-client.php:679
 msgid "Suspicious code"
 msgstr ""
 
-#: languages/vue-js.php:3260 src/model/setting/class-scan.php:139
+#: languages/vue-js.php:3263 src/model/setting/class-scan.php:139
 msgid "Suspicious Code"
 msgstr ""
 
-#: languages/vue-js.php:3263
+#: languages/vue-js.php:3266
 msgid "Sync Global IPs"
 msgstr ""
 
-#: languages/vue-js.php:3267
+#: languages/vue-js.php:3270
 msgid "Sync IPs"
 msgstr ""
 
-#: languages/vue-js.php:3270
+#: languages/vue-js.php:3273
 msgid "Sync your Global IP Allow/Blocklists from your Hub with this site."
 msgstr ""
 
-#: languages/vue-js.php:3274
+#: languages/vue-js.php:3277
 msgid "Temporary"
 msgstr ""
 
-#: languages/vue-js.php:3277
+#: languages/vue-js.php:3280
 msgid "Temporary IP Block List"
 msgstr ""
 
-#: languages/vue-js.php:3281
+#: languages/vue-js.php:3284
 msgid "Terms of Service"
 msgstr ""
 
-#: languages/vue-js.php:3285
+#: languages/vue-js.php:3288
 msgid "The export will include both the blocklist and allowlist."
 msgstr ""
 
-#: languages/vue-js.php:3288
+#: languages/vue-js.php:3291
 msgid ""
 "The feature is allowed for specific origins. Place URLs here "
 "<strong>%s</strong>, one per line."
 msgstr ""
 
-#: languages/vue-js.php:3291
+#: languages/vue-js.php:3294
 msgid "The feature is disabled in top-level and nested browsing contexts."
 msgstr ""
 
-#: languages/vue-js.php:3294
+#: languages/vue-js.php:3297
 msgid ""
 "The feature will be allowed in this document, and all nested browsing "
 "contexts (iframes) regardless of their origin."
 msgstr ""
 
-#: languages/vue-js.php:3297
+#: languages/vue-js.php:3300
 msgid ""
 "The file editor is currently active. If you don’t need it, we recommend "
 "disabling this feature."
 msgstr ""
 
-#: languages/vue-js.php:3301
+#: languages/vue-js.php:3304
 msgid "The Hub"
 msgstr ""
 
-#: languages/vue-js.php:3304
+#: languages/vue-js.php:3307
 msgid ""
 "The most secure method to detect visitors' IP addresses will be chosen "
 "automatically. This prevents spoofing and is compatible with most sites. If "
@@ -4166,13 +4171,13 @@ msgid ""
 "Manual IP Detection."
 msgstr ""
 
-#: languages/vue-js.php:3308
+#: languages/vue-js.php:3311
 msgid ""
 "The necessary core files will be fetched from wp.org and used to replace "
 "the affected files."
 msgstr ""
 
-#: languages/vue-js.php:3314
+#: languages/vue-js.php:3317
 msgid ""
 "The new Web Application Firewall (WAF) filters incoming requests against a "
 "highly optimized managed ruleset to block hackers and bot attacks before "
@@ -4180,53 +4185,53 @@ msgid ""
 "protection."
 msgstr ""
 
-#: languages/vue-js.php:3319
+#: languages/vue-js.php:3322
 msgid ""
 "The new Web Application Firewall (WAF) is a first layer of protection to "
 "block hackers and bot attacks before they reach your site."
 msgstr ""
 
-#: languages/vue-js.php:3322
+#: languages/vue-js.php:3325
 msgid ""
 "The page <strong>%s</strong> will only be displayed in a frame on the "
 "specified origin. One per line."
 msgstr ""
 
-#: languages/vue-js.php:3326
+#: languages/vue-js.php:3329
 msgid ""
 "The page can only be displayed in a frame on the same origin as the page "
 "itself. The spec leaves it up to browser vendors to decide whether this "
 "option applies to the top level, the parent, or the whole chain."
 msgstr ""
 
-#: languages/vue-js.php:3329
+#: languages/vue-js.php:3332
 msgid ""
 "The page can’t be displayed in a frame, regardless of the site attempting "
 "to do so."
 msgstr ""
 
-#: languages/vue-js.php:3332
+#: languages/vue-js.php:3335
 msgid ""
 "The Referer header will be omitted entirely. No referrer information is "
 "sent along with requests."
 msgstr ""
 
-#: languages/vue-js.php:3335
+#: languages/vue-js.php:3338
 msgid ""
 "The status can be cached for 5 minutes, and it's likely the changes you "
 "make in the Hub won't be updated in-plugin immediately. You can wait a "
 "little bit and re-check again to get the updated status."
 msgstr ""
 
-#: languages/vue-js.php:3338
+#: languages/vue-js.php:3341
 msgid "Theme state"
 msgstr ""
 
-#: languages/vue-js.php:3341
+#: languages/vue-js.php:3344
 msgid "There are no IP addresses being blocked at the moment."
 msgstr ""
 
-#: languages/vue-js.php:3344
+#: languages/vue-js.php:3347
 msgid ""
 "There are two sides to this hacking method - the username and the password. "
 "The passwords are random guesses, but (unfortunately) the username is easy "
@@ -4235,71 +4240,71 @@ msgid ""
 "usernames to begin brute force attacks with."
 msgstr ""
 
-#: languages/vue-js.php:3349
+#: languages/vue-js.php:3352
 msgid ""
 "There have been %s lockouts in the last 24 hours. <a "
 "href=\"%s\"><strong>View log</strong></a>."
 msgstr ""
 
-#: languages/vue-js.php:3352
+#: languages/vue-js.php:3355
 msgid "There have been no events logged in the selected time period."
 msgstr ""
 
-#: languages/vue-js.php:3355
+#: languages/vue-js.php:3358
 msgid "There haven’t been any logs during the selected reporting period."
 msgstr ""
 
-#: languages/vue-js.php:3358
+#: languages/vue-js.php:3361
 msgid ""
 "These are common security improvements you can make to enhance your site's "
 "defence against hackers and bots. For most sites, we recommend actioning as "
 "many as possible, but you can always ignore the ones you don't need."
 msgstr ""
 
-#: languages/vue-js.php:3361
+#: languages/vue-js.php:3364
 msgid ""
 "These IPs will be compared when determining the requesting IP via the "
 "<strong>%s</strong> HTTP header. Enter one IP per line."
 msgstr ""
 
-#: languages/vue-js.php:3364
+#: languages/vue-js.php:3367
 msgid ""
 "They will receive email reports as per the schedule you’ve set in Malware "
 "Scanning Settings."
 msgstr ""
 
-#: languages/vue-js.php:3367
+#: languages/vue-js.php:3370
 msgid "They will receive email reports as per the schedule you’ve set."
 msgstr ""
 
-#: languages/vue-js.php:3371
+#: languages/vue-js.php:3374
 msgid ""
 "This email sends a temporary passcode when the user can’t access their "
 "phone."
 msgstr ""
 
-#: languages/vue-js.php:3375
+#: languages/vue-js.php:3378
 msgid "This feature is available to members who host their sites with WPMU DEV."
 msgstr ""
 
-#: languages/vue-js.php:3378
+#: languages/vue-js.php:3381
 msgid "This feature supports only the [woocommerce_checkout] shortcode."
 msgstr ""
 
-#: languages/vue-js.php:3381
+#: languages/vue-js.php:3384
 msgid ""
 "This is the user agent's default behavior if no policy is specified. The "
 "origin is sent as referrer to a-priori as-much-secure destination "
 "(HTTPS->HTTPS), but isn't sent to a less secure destination (HTTPS->HTTP)."
 msgstr ""
 
-#: languages/vue-js.php:3387
+#: languages/vue-js.php:3390
 msgid ""
 "This message will be displayed across your website during the lockout "
 "period. See a quick preview <a target=\"_blank\" href=\"%s\">here</a>."
 msgstr ""
 
-#: languages/vue-js.php:3390
+#: languages/vue-js.php:3393
 msgid ""
 "This plugin is active. To avoid issues, please <a target=\"_blank\" "
 "href=\"%s\">deactivate</a> the plugin and then feel free to delete that "
@@ -4307,31 +4312,31 @@ msgid ""
 "the developers of this plugin before deleting this file."
 msgstr ""
 
-#: languages/vue-js.php:3393
+#: languages/vue-js.php:3396
 msgid ""
 "This product includes GeoLite2 data created by MaxMind, available from <a "
 "target='_blank' href='%s'>https://www.maxmind.com</a>."
 msgstr ""
 
-#: languages/vue-js.php:3396
+#: languages/vue-js.php:3399
 msgid ""
 "This security recommendation locks down your website by preventing the "
 "redirect, making it much harder for bots to get your usernames. We highly "
 "advise actioning this recommendation."
 msgstr ""
 
-#: languages/vue-js.php:3399
+#: languages/vue-js.php:3402
 msgid "This site has WAF protection enabled."
 msgstr ""
 
-#: languages/vue-js.php:3402
+#: languages/vue-js.php:3405
 msgid ""
 "This site has WAF protection enabled. Please keep in mind that the status "
 "can be cached for 5 minutes, and it's likely the changes you make in the "
 "Hub won't be updated in-plugin immediately."
 msgstr ""
 
-#: languages/vue-js.php:3405
+#: languages/vue-js.php:3408
 msgid ""
 "This theme is active on your website. To avoid issues, please <a "
 "target=\"_blank\" href=\"%s\">change the theme</a> before deleting the "
@@ -4339,52 +4344,52 @@ msgid ""
 "the developers of this theme before deleting this file."
 msgstr ""
 
-#: languages/vue-js.php:3409
+#: languages/vue-js.php:3412
 msgid ""
 "This will permanently remove the selected file/folder. Are you sure you "
 "want to continue?"
 msgstr ""
 
-#: languages/vue-js.php:3414
+#: languages/vue-js.php:3417
 msgid "Threshold"
 msgstr ""
 
-#: languages/vue-js.php:3417
+#: languages/vue-js.php:3420
 msgid "Time"
 msgstr ""
 
-#: languages/vue-js.php:3421
+#: languages/vue-js.php:3424
 msgid "Timeframe"
 msgstr ""
 
-#: languages/vue-js.php:3424
+#: languages/vue-js.php:3427
 msgid "To delete all the records in the lockout table, simply hit delete."
 msgstr ""
 
-#: languages/vue-js.php:3428
+#: languages/vue-js.php:3431
 msgid "to finish setting up authentication."
 msgstr ""
 
-#: languages/vue-js.php:3431
+#: languages/vue-js.php:3434
 msgid "to scan for vulnerabilities and suspicious codes on your site."
 msgstr ""
 
-#: languages/vue-js.php:3435 src/controller/class-advanced-tools.php:32
+#: languages/vue-js.php:3438 src/controller/class-advanced-tools.php:32
 msgid "Tools"
 msgstr ""
 
-#: languages/vue-js.php:3438
+#: languages/vue-js.php:3441
 msgid "Top Blocked Countries"
 msgstr ""
 
-#: languages/vue-js.php:3441
+#: languages/vue-js.php:3444
 msgid ""
 "Track and log each and every event when changes are made to your site and "
 "get detailed reports on what's going on behind the scenes, including any "
 "hacking attempts on your site."
 msgstr ""
 
-#: languages/vue-js.php:3444
+#: languages/vue-js.php:3447
 msgid ""
 "Track and log each and every event when changes are made to your site and "
 "get detailed reports on what's going on behind the scenes, including any "
@@ -4392,300 +4397,300 @@ msgid ""
 "active WPMU DEV membership. Unlock Now With Pro!"
 msgstr ""
 
-#: languages/vue-js.php:3447
+#: languages/vue-js.php:3450
 msgid ""
 "Track and log events when changes are made to your website giving you full "
 "visibility of what's going on behind the scenes."
 msgstr ""
 
-#: languages/vue-js.php:3450
+#: languages/vue-js.php:3453
 msgid ""
 "Track and log events when changes are made to your website, giving you full "
 "visibility over what's going on behind the scenes."
 msgstr ""
 
-#: languages/vue-js.php:3453
+#: languages/vue-js.php:3456
 #: src/component/security-tweaks/class-disable-trackback.php:151
 msgid ""
 "Trackbacks and pingbacks can lead to DDos attacks and tons of spam "
 "comments. If you don’t require this feature, we recommend turning it off."
 msgstr ""
 
-#: languages/vue-js.php:3456 src/model/setting/class-main-setting.php:116
+#: languages/vue-js.php:3459 src/model/setting/class-main-setting.php:116
 msgid "Translations"
 msgstr ""
 
-#: languages/vue-js.php:3459
+#: languages/vue-js.php:3462
 msgid "Trusted IP Presets"
 msgstr ""
 
-#: languages/vue-js.php:3462 src/controller/class-tutorial.php:34
+#: languages/vue-js.php:3465 src/controller/class-tutorial.php:34
 msgid "Tutorials"
 msgstr ""
 
-#: languages/vue-js.php:3465
+#: languages/vue-js.php:3468
 msgid "Tweaks"
 msgstr ""
 
-#: languages/vue-js.php:3468
+#: languages/vue-js.php:3471
 msgid "Twitter"
 msgstr ""
 
-#: languages/vue-js.php:3473 src/component/class-mail.php:73
+#: languages/vue-js.php:3476 src/component/class-mail.php:73
 #: src/component/class-two-fa.php:508 src/model/setting/class-two-fa.php:322
 #: src/view/two-fa/user-options.php:16
 msgid "Two-Factor Authentication"
 msgstr ""
 
-#: languages/vue-js.php:3477
+#: languages/vue-js.php:3480
 msgid ""
 "Two-factor authentication is currently inactive. Configure and save your "
 "settings to finish setup."
 msgstr ""
 
-#: languages/vue-js.php:3481
+#: languages/vue-js.php:3484
 msgid "Two-factor authentication is now active."
 msgstr ""
 
-#: languages/vue-js.php:3484
+#: languages/vue-js.php:3487
 msgid ""
 "Two-factor authentication is now active. User roles with this feature "
 "enabled must visit their <a href='%s'>Profile page</a> to finish setting up "
 "authentication."
 msgstr ""
 
-#: languages/vue-js.php:3489 src/controller/class-audit-logging.php:147
+#: languages/vue-js.php:3492 src/controller/class-audit-logging.php:147
 #: src/controller/class-firewall-logs.php:243
 #: src/model/class-lockout-log.php:623 src/model/class-lockout-log.php:643
 #: src/view/two-fa/user-options.php:101 src/view/two-fa/user-options.php:115
 msgid "Type"
 msgstr ""
 
-#: languages/vue-js.php:3492
+#: languages/vue-js.php:3495
 msgid "Unban IP"
 msgstr ""
 
-#: languages/vue-js.php:3495
+#: languages/vue-js.php:3498
 msgid "Unban User Agent"
 msgstr ""
 
-#: languages/vue-js.php:3498
+#: languages/vue-js.php:3501
 msgid "Unblock"
 msgstr ""
 
-#: languages/vue-js.php:3501
+#: languages/vue-js.php:3504
 msgid "Unblock All"
 msgstr ""
 
-#: languages/vue-js.php:3505
+#: languages/vue-js.php:3508
 msgid "Undo"
 msgstr ""
 
-#: languages/vue-js.php:3508
+#: languages/vue-js.php:3511
 msgid "Undo force password reset"
 msgstr ""
 
-#: languages/vue-js.php:3511
+#: languages/vue-js.php:3514
 msgid "Uninstallation"
 msgstr ""
 
-#: languages/vue-js.php:3514
+#: languages/vue-js.php:3517
 msgid "Unknown"
 msgstr ""
 
-#: languages/vue-js.php:3517
+#: languages/vue-js.php:3520
 msgid "Unlock"
 msgstr ""
 
-#: languages/vue-js.php:3520
+#: languages/vue-js.php:3523
 msgid "Unlock ips"
 msgstr ""
 
-#: languages/vue-js.php:3523
+#: languages/vue-js.php:3526
 msgid "Unlock with Pro"
 msgstr ""
 
-#: languages/vue-js.php:3527 src/component/class-notification.php:283
+#: languages/vue-js.php:3530 src/component/class-notification.php:283
 #: src/component/class-notification.php:290
 msgid "Unsubscribed"
 msgstr ""
 
-#: languages/vue-js.php:3532
+#: languages/vue-js.php:3535
 msgid "Update"
 msgstr ""
 
-#: languages/vue-js.php:3535
+#: languages/vue-js.php:3538
 msgid "Update .htaccess file"
 msgstr ""
 
-#: languages/vue-js.php:3538
+#: languages/vue-js.php:3541
 msgid "Update blocked countries"
 msgstr ""
 
-#: languages/vue-js.php:3541
+#: languages/vue-js.php:3544
 msgid "Update Duration"
 msgstr ""
 
-#: languages/vue-js.php:3544
+#: languages/vue-js.php:3547
 msgid "Update Username"
 msgstr ""
 
-#: languages/vue-js.php:3547
+#: languages/vue-js.php:3550
 msgid "Update WordPress"
 msgstr ""
 
-#: languages/vue-js.php:3550
+#: languages/vue-js.php:3553
 msgid "Updating %s"
 msgstr ""
 
-#: languages/vue-js.php:3553
+#: languages/vue-js.php:3556
 msgid "Upgrade to Pro"
 msgstr ""
 
-#: languages/vue-js.php:3556
+#: languages/vue-js.php:3559
 msgid "Upgrade to Pro "
 msgstr ""
 
-#: languages/vue-js.php:3559
+#: languages/vue-js.php:3562
 msgid "Upgrade to Unlock Quarantine"
 msgstr ""
 
-#: languages/vue-js.php:3562
+#: languages/vue-js.php:3565
 msgid ""
 "Upgrade your PHP version to %s or above. Currently the latest stable "
 "version of PHP is %s."
 msgstr ""
 
-#: languages/vue-js.php:3565
+#: languages/vue-js.php:3568
 msgid "Upload file"
 msgstr ""
 
-#: languages/vue-js.php:3568 src/model/setting/class-two-fa.php:298
+#: languages/vue-js.php:3571 src/model/setting/class-two-fa.php:298
 msgid "Upload Graphic"
 msgstr ""
 
-#: languages/vue-js.php:3572
+#: languages/vue-js.php:3575
 msgid "Upload the blocklist and allowlist CSV file exported from another website."
 msgstr ""
 
-#: languages/vue-js.php:3575
+#: languages/vue-js.php:3578
 msgid "URL already exists. Please enter a different slug."
 msgstr ""
 
-#: languages/vue-js.php:3578 src/model/setting/class-main-setting.php:117
+#: languages/vue-js.php:3581 src/model/setting/class-main-setting.php:117
 msgid "Usage Tracking"
 msgstr ""
 
-#: languages/vue-js.php:3581
+#: languages/vue-js.php:3584
 msgid ""
 "Use configs to save preset configurations of Defender's settings, then "
 "upload and apply them to your other sites in just a few clicks! P.S. Save "
 "as many of them as you like - you can have unlimited preset configs."
 msgstr ""
 
-#: languages/vue-js.php:3584
+#: languages/vue-js.php:3587
 msgid ""
 "Use the Cloudflare CF-Connecting-IP HTTP header. Choose this option only if "
 "you are routing your domain through Cloudflare."
 msgstr ""
 
-#: languages/vue-js.php:3587
+#: languages/vue-js.php:3590
 msgid ""
 "Use the REMOTE_ADDR built-in PHP function only. It offers a high level of "
 "security if it is compatible with your website."
 msgstr ""
 
-#: languages/vue-js.php:3590
+#: languages/vue-js.php:3593
 msgid ""
 "Use the Safe Quarantine feature to quarantine suspicious files on your site "
 "for a number of days before they are permanently deleted. <a href=\"%1$s\" "
 "class=\"activate-quarantine\">Activate Quarantine.</a>"
 msgstr ""
 
-#: languages/vue-js.php:3593
+#: languages/vue-js.php:3596
 msgid ""
 "Use the Safe Repair feature to quarantine suspicious files on your site for "
 "a number of days before they are permanently deleted. <a href=\"%s\" "
 "class=\"activate-quarantine\">Learn more.</a>"
 msgstr ""
 
-#: languages/vue-js.php:3596
+#: languages/vue-js.php:3599
 msgid ""
 "Use this feature to bulk apply security recommendations. These will be "
 "applied with recommended settings and shouldn't break your site."
 msgstr ""
 
-#: languages/vue-js.php:3599 src/controller/class-audit-logging.php:149
+#: languages/vue-js.php:3602 src/controller/class-audit-logging.php:149
 msgid "User"
 msgstr ""
 
-#: languages/vue-js.php:3603 src/controller/class-firewall-logs.php:496
+#: languages/vue-js.php:3606 src/controller/class-firewall-logs.php:496
 #: src/model/setting/class-user-agent-lockout.php:296
 msgid "User Agent Banning"
 msgstr ""
 
-#: languages/vue-js.php:3606
+#: languages/vue-js.php:3609
 msgid "User agent banning is enabled. There are no lockouts logged yet."
 msgstr ""
 
-#: languages/vue-js.php:3609 src/component/class-table-lockout.php:68
+#: languages/vue-js.php:3612 src/component/class-table-lockout.php:68
 #: src/component/class-table-lockout.php:100
 #: src/model/notification/class-firewall-notification.php:293
 #: src/view/email/firewall-report.php:110
 msgid "User Agent Lockout"
 msgstr ""
 
-#: languages/vue-js.php:3612
+#: languages/vue-js.php:3615
 msgid "User agent lockouts in the past 7 days"
 msgstr ""
 
-#: languages/vue-js.php:3615
+#: languages/vue-js.php:3618
 msgid "User agent lockouts this week"
 msgstr ""
 
-#: languages/vue-js.php:3618
+#: languages/vue-js.php:3621
 msgid "User Agents"
 msgstr ""
 
-#: languages/vue-js.php:3624
+#: languages/vue-js.php:3627
 msgid "User role"
 msgstr ""
 
-#: languages/vue-js.php:3628
+#: languages/vue-js.php:3631
 msgid "User roles"
 msgstr ""
 
-#: languages/vue-js.php:3636 src/model/setting/class-password-protection.php:91
+#: languages/vue-js.php:3639 src/model/setting/class-password-protection.php:91
 #: src/model/setting/class-password-reset.php:96
 msgid "User Roles"
 msgstr ""
 
-#: languages/vue-js.php:3640
+#: languages/vue-js.php:3643
 msgid "User roles with this feature enabled must visit their "
 msgstr ""
 
-#: languages/vue-js.php:3643
+#: languages/vue-js.php:3646
 msgid "Username"
 msgstr ""
 
-#: languages/vue-js.php:3646
+#: languages/vue-js.php:3649
 msgid "Username:"
 msgstr ""
 
-#: languages/vue-js.php:3649
+#: languages/vue-js.php:3652
 msgid ""
 "Users will be forced to reset their password and will not be allowed to "
 "visit other pages until their password is changed."
 msgstr ""
 
-#: languages/vue-js.php:3652
+#: languages/vue-js.php:3655
 msgid ""
 "Users with the selected role(s), including logged-in users who will be "
 "automatically logged-out, will be forced to reset their password and will "
 "not be allowed to visit other pages until that is done."
 msgstr ""
 
-#: languages/vue-js.php:3655
+#: languages/vue-js.php:3658
 msgid ""
 "Using the default admin username is widely considered bad practice and "
 "opens you up to the easiest form of entry to your website. We recommend "
@@ -4694,95 +4699,95 @@ msgid ""
 "attempt first."
 msgstr ""
 
-#: languages/vue-js.php:3658 src/model/setting/class-recaptcha.php:314
+#: languages/vue-js.php:3661 src/model/setting/class-recaptcha.php:314
 msgid "V2 Checkbox"
 msgstr ""
 
-#: languages/vue-js.php:3661 src/model/setting/class-recaptcha.php:315
+#: languages/vue-js.php:3664 src/model/setting/class-recaptcha.php:315
 msgid "V2 Invisible"
 msgstr ""
 
-#: languages/vue-js.php:3664 src/view/email/tweaks-reminder.php:103
+#: languages/vue-js.php:3667 src/view/email/tweaks-reminder.php:103
 msgid "View All"
 msgstr ""
 
-#: languages/vue-js.php:3669
+#: languages/vue-js.php:3672
 msgid "View features"
 msgstr ""
 
-#: languages/vue-js.php:3672
+#: languages/vue-js.php:3675
 msgid ""
 "View IP addresses that are temporarily blocked from accessing your site "
 "according to your lockout rules. You can release IP addresses from the "
 "temporary block here."
 msgstr ""
 
-#: languages/vue-js.php:3675
+#: languages/vue-js.php:3678
 msgid "View logs"
 msgstr ""
 
-#: languages/vue-js.php:3678
+#: languages/vue-js.php:3681
 msgid "View Logs"
 msgstr ""
 
-#: languages/vue-js.php:3682
+#: languages/vue-js.php:3685
 msgid "View Report"
 msgstr ""
 
-#: languages/vue-js.php:3686
+#: languages/vue-js.php:3689
 msgid "View users"
 msgstr ""
 
-#: languages/vue-js.php:3689
+#: languages/vue-js.php:3692
 msgid ""
 "Visitors who visit the default login URLs will be redirected to the custom "
 "URL you will set below."
 msgstr ""
 
-#: languages/vue-js.php:3692
+#: languages/vue-js.php:3695
 msgid "Vulnerability & Suspicious files"
 msgstr ""
 
-#: languages/vue-js.php:3695
+#: languages/vue-js.php:3698
 msgid "Want to know more about blocklisting?"
 msgstr ""
 
-#: languages/vue-js.php:3698
+#: languages/vue-js.php:3701
 msgid ""
 "We can automatically add an .htaccess file to the root folder to action "
 "this fix. However, if an .htaccess file already exists on the server, we "
 "will append the new rules to the existing file."
 msgstr ""
 
-#: languages/vue-js.php:3701
+#: languages/vue-js.php:3704
 msgid ""
 "We can automatically disable all error reporting for you below. "
 "Alternately, you can ignore this recommendation if you don't require it. "
 "Either way, you can easily revert these actions at any time."
 msgstr ""
 
-#: languages/vue-js.php:3704
+#: languages/vue-js.php:3707
 msgid ""
 "We can automatically disable pingbacks and trackbacks for you below. "
 "Alternately, you can ignore this recommendation if you don’t require it. "
 "Either way, you can easily revert these actions at any time."
 msgstr ""
 
-#: languages/vue-js.php:3707
+#: languages/vue-js.php:3710
 msgid ""
 "We can automatically disable the file editor for you below. Alternately, "
 "you can ignore this recommendation if you don’t require it. Either way, you "
 "can easily revert these actions at any time."
 msgstr ""
 
-#: languages/vue-js.php:3710
+#: languages/vue-js.php:3713
 msgid ""
 "We can automatically disable XML-RPC for you below. Alternately, you can "
 "ignore this recommendation if you don’t require it. Either way, you can "
 "easily revert these actions at any time."
 msgstr ""
 
-#: languages/vue-js.php:3713
+#: languages/vue-js.php:3716
 msgid ""
 "We can lock down directories WordPress doesn't need to protect you from PHP "
 "execution attacks. You can also add exceptions for specific files you need "
@@ -4790,46 +4795,46 @@ msgid ""
 "Either way, you can easily revert these actions at any time."
 msgstr ""
 
-#: languages/vue-js.php:3716
+#: languages/vue-js.php:3719
 msgid ""
 "We can lock down these files and still allow WordPress to access them. "
 "Alternatively, you can ignore this tweak if you don't require it. You can "
 "revert this fix at any time."
 msgstr ""
 
-#: languages/vue-js.php:3719
+#: languages/vue-js.php:3722
 msgid ""
 "We can regenerate your key salts instantly for you and they will be good "
 "for another 60 days. Note that this will log all users out of your site. "
 "You can also choose how often we should notify you to change them."
 msgstr ""
 
-#: languages/vue-js.php:3722
+#: languages/vue-js.php:3725
 msgid ""
 "We can’t automatically action this fix, but follow the instructions below "
 "to patch this up."
 msgstr ""
 
-#: languages/vue-js.php:3725
+#: languages/vue-js.php:3728
 msgid ""
 "We can't automatically action this fix, you can follow the instructions "
 "below to patch this up."
 msgstr ""
 
-#: languages/vue-js.php:3728
+#: languages/vue-js.php:3731
 msgid ""
 "We can't automatically action this fix, you can follow the instructions "
 "below to patch this up. First, add any exceptions to files you want to "
 "allow PHP to be executed from, then follow the instructions below."
 msgstr ""
 
-#: languages/vue-js.php:3731
+#: languages/vue-js.php:3734
 msgid ""
 "We can't update PHP for you, contact your hosting provider or developer to "
 "help you upgrade."
 msgstr ""
 
-#: languages/vue-js.php:3735
+#: languages/vue-js.php:3738
 msgid ""
 "We found this folder in your WordPress file list. Your current version of "
 "WordPress doesn't use this folder so it might belong to another "
@@ -4838,59 +4843,65 @@ msgid ""
 "support team for more information."
 msgstr ""
 
-#: languages/vue-js.php:3738
+#: languages/vue-js.php:3741
 msgid ""
 "We recommend adding the usernames <strong>admin</strong>, "
 "<strong>administrator</strong> and your hostname <strong>%s</strong> as "
 "these are common for bots to try logging in with. One username per line"
 msgstr ""
 
-#: languages/vue-js.php:3741
+#: languages/vue-js.php:3744
 msgid ""
 "We recommend adding your IP address(es) to the Allowlist to avoid getting "
 "accidentally locked out of your site. Your current IP address(es): %s. <a "
 "href='%s'>%s</a>"
 msgstr ""
 
-#: languages/vue-js.php:3744
+#: languages/vue-js.php:3747
 msgid ""
 "We recommend you update your version to the latest stable release, and "
 "maintain updating it regularly. Alternately, you can ignore this upgrade if "
 "you don’t require the latest version."
 msgstr ""
 
-#: languages/vue-js.php:3747
+#: languages/vue-js.php:3750
+msgid ""
+"We were unable to read or locate the file. Please rerun the scan to check "
+"if the issue has been resolved."
+msgstr ""
+
+#: languages/vue-js.php:3753
 msgid ""
 "We were unable to retrieve the latest data from the WordPress servers. "
 "Please rerun the scan or contact our support team."
 msgstr ""
 
-#: languages/vue-js.php:3751
+#: languages/vue-js.php:3757
 msgid ""
 "We will place %s file into the uploads folder to lock down the files and "
 "folders inside."
 msgstr ""
 
-#: languages/vue-js.php:3756
+#: languages/vue-js.php:3762
 msgid ""
 "We’ve automatically added you as a recipient. Note: Added recipients must "
 "confirm their subscription to begin receiving emails."
 msgstr ""
 
-#: languages/vue-js.php:3759
+#: languages/vue-js.php:3765
 msgid ""
 "We've detected %d potential security risks in your file system. We "
 "recommend you take a look and action a fix, or ignore the file if it's "
 "harmless."
 msgstr ""
 
-#: languages/vue-js.php:3763
+#: languages/vue-js.php:3769
 msgid ""
 "We've detected a potential security risk in your file system. We recommend "
 "you take a look and action a fix, or ignore the file if it's harmless."
 msgstr ""
 
-#: languages/vue-js.php:3766
+#: languages/vue-js.php:3772
 msgid ""
 "We've detected some suspicious code in this plugin file and the flagged "
 "code is highlighted in red. We recommend contacting the plugin developer "
@@ -4898,7 +4909,7 @@ msgid ""
 "as a false positive, please reach out to our support."
 msgstr ""
 
-#: languages/vue-js.php:3769
+#: languages/vue-js.php:3775
 msgid ""
 "We've detected some suspicious code in this plugin file from the Official "
 "WP repository at <a target=\"_blank\" href=\"%1$s\">%1$s</a> and the "
@@ -4907,18 +4918,18 @@ msgid ""
 "If found as a false positive, please reach out to our support."
 msgstr ""
 
-#: languages/vue-js.php:3772
+#: languages/vue-js.php:3778
 msgid ""
 "We've uncovered suspicious code in %s. The red highlighted code is the "
 "flagged code. Note that these warnings can be false positives, so consult "
 "your developer before taking action."
 msgstr ""
 
-#: languages/vue-js.php:3778
+#: languages/vue-js.php:3784
 msgid "Web Application Firewall"
 msgstr ""
 
-#: languages/vue-js.php:3781
+#: languages/vue-js.php:3787
 msgid ""
 "Web Application Firewall (WAF) is a first layer of protection to block "
 "hackers and bot attacks before they ever reach your site. The WAF filters "
@@ -4927,89 +4938,89 @@ msgid ""
 "plugin, and theme vulnerabilities."
 msgstr ""
 
-#: languages/vue-js.php:3788 src/functions.php:415
+#: languages/vue-js.php:3794 src/functions.php:415
 msgid "Weekly"
 msgstr ""
 
-#: languages/vue-js.php:3791
+#: languages/vue-js.php:3797
 msgid "Well done, you don't have any suspicious code. Keep up the good fight!"
 msgstr ""
 
-#: languages/vue-js.php:3794
+#: languages/vue-js.php:3800
 msgid ""
 "When a user is locked out for trying to access your site using a banned "
 "user agent."
 msgstr ""
 
-#: languages/vue-js.php:3797
+#: languages/vue-js.php:3803
 msgid "When a user or IP is locked out for repeated hits on non-existent files."
 msgstr ""
 
-#: languages/vue-js.php:3800
+#: languages/vue-js.php:3806
 msgid "When a user or IP is locked out for trying to access your login area."
 msgstr ""
 
-#: languages/vue-js.php:3803
+#: languages/vue-js.php:3809
 msgid "When an issue is found"
 msgstr ""
 
-#: languages/vue-js.php:3806
+#: languages/vue-js.php:3812
 #: src/model/notification/class-malware-notification.php:280
 msgid "When failed to scan"
 msgstr ""
 
-#: languages/vue-js.php:3809
+#: languages/vue-js.php:3815
 msgid "When no issues are found"
 msgstr ""
 
-#: languages/vue-js.php:3812
+#: languages/vue-js.php:3818
 msgid ""
 "When you uninstall this plugin, what do you want to do with your settings "
 "and stored data?"
 msgstr ""
 
-#: languages/vue-js.php:3815
+#: languages/vue-js.php:3821
 msgid ""
 "While it may not be in use, we haven't found any code stopping debugging "
 "information being output. It's best to remove all doubt and disable error "
 "reporting completely."
 msgstr ""
 
-#: languages/vue-js.php:3819
+#: languages/vue-js.php:3825
 msgid "who have enabled this feature."
 msgstr ""
 
-#: languages/vue-js.php:3823
+#: languages/vue-js.php:3829
 msgid ""
 "With 404 detection enabled, Defender will keep an eye out for IP addresses "
 "that repeatedly request pages on your website that don't exist and then "
 "temporarily block them from accessing your site."
 msgstr ""
 
-#: languages/vue-js.php:3826
+#: languages/vue-js.php:3832
 msgid ""
 "With Quarantine, you can securely backup your files in case something goes "
 "wrong. <a href=\"%1$s\" target=\"_blank\">Learn more.</a>"
 msgstr ""
 
-#: languages/vue-js.php:3831 src/controller/class-recaptcha.php:1171
+#: languages/vue-js.php:3837 src/controller/class-recaptcha.php:1171
 #: src/model/setting/class-recaptcha.php:320
 #: src/model/setting/class-two-fa.php:301
 msgid "WooCommerce"
 msgstr ""
 
-#: languages/vue-js.php:3836
+#: languages/vue-js.php:3842
 msgid "WooCommerce must be active to use this feature."
 msgstr ""
 
-#: languages/vue-js.php:3839
+#: languages/vue-js.php:3845
 msgid ""
 "WordPress comes with a file editor built into the system. This means that "
 "anyone with access to your login information can further edit your plugin "
 "and theme files and inject malicious code."
 msgstr ""
 
-#: languages/vue-js.php:3842
+#: languages/vue-js.php:3848
 msgid ""
 "WordPress is an extremely popular platform, and with that popularity comes "
 "hackers that increasingly want to exploit WordPress based websites. Leaving "
@@ -5017,7 +5028,7 @@ msgid ""
 "hacked as you’re missing out on the latest security patches."
 msgstr ""
 
-#: languages/vue-js.php:3845
+#: languages/vue-js.php:3851
 msgid ""
 "WordPress uses security keys to improve the encryption of information "
 "stores in user cookies making it harder to crack passwords. A non-encrypted "
@@ -5026,15 +5037,15 @@ msgid ""
 "takes years to come up with the right combination."
 msgstr ""
 
-#: languages/vue-js.php:3848
+#: languages/vue-js.php:3854
 msgid "WP file scanning"
 msgstr ""
 
-#: languages/vue-js.php:3851
+#: languages/vue-js.php:3857
 msgid "WPMU DEV - Your WordPress Toolkit"
 msgstr ""
 
-#: languages/vue-js.php:3854
+#: languages/vue-js.php:3860
 msgid ""
 "XML-RPC is a system that allows you to post on your WordPress blog using "
 "popular weblog clients like Windows Live Writer. Technically, it’s a remote "
@@ -5042,127 +5053,127 @@ msgid ""
 "mechanism."
 msgstr ""
 
-#: languages/vue-js.php:3858
+#: languages/vue-js.php:3864
 msgid "Yes"
 msgstr ""
 
-#: languages/vue-js.php:3861
+#: languages/vue-js.php:3867
 msgid ""
 "You can activate notifications and reports of the scheduled scanning "
 "delivered to your inbox from the <a href='%s'>Notifications</a> page."
 msgstr ""
 
-#: languages/vue-js.php:3864
+#: languages/vue-js.php:3870
 msgid ""
 "You can add the invited users to the reports email recipients list. They "
 "will automatically receive an email to approve the invitation."
 msgstr ""
 
-#: languages/vue-js.php:3867
+#: languages/vue-js.php:3873
 msgid ""
 "You can also <a target=\"_blank\" href=\"%s\">create PDF reports</a> to "
 "send to your clients via The Hub."
 msgstr ""
 
-#: languages/vue-js.php:3870
+#: languages/vue-js.php:3876
 msgid ""
 "You can bulk update security recommendations, which will be applied with "
 "recommended settings and shouldn't break your site."
 msgstr ""
 
-#: languages/vue-js.php:3874
+#: languages/vue-js.php:3880
 msgid ""
 "You can edit the description to distinguish from other configs. Changing "
 "the description won’t exclude the feature from the preset."
 msgstr ""
 
-#: languages/vue-js.php:3878
+#: languages/vue-js.php:3884
 msgid "You can learn more about the WAF <a target=\"_blank\" href=\"%s\">here</a>."
 msgstr ""
 
-#: languages/vue-js.php:3881
+#: languages/vue-js.php:3887
 msgid ""
 "You can manually action this fix. Follow the instructions below to manually "
 "apply the fix."
 msgstr ""
 
-#: languages/vue-js.php:3884
+#: languages/vue-js.php:3890
 msgid ""
 "You can now manage the global IP allowlist/blocklist directly from the Hub "
 "eliminating the need to manually add IP addresses to the "
 "allowlist/blocklist in every site"
 msgstr ""
 
-#: languages/vue-js.php:3888
+#: languages/vue-js.php:3894
 msgid "You don't have any outstanding security issues, nice work!"
 msgstr ""
 
-#: languages/vue-js.php:3891
+#: languages/vue-js.php:3897
 msgid "You don't have any outstanding security recommendations, nice work!"
 msgstr ""
 
-#: languages/vue-js.php:3894
+#: languages/vue-js.php:3900
 msgid ""
 "You have %s potential security risks in your file system. We recommend you "
 "take a look and action fixes, or ignore the issues if they are harmless."
 msgstr ""
 
-#: languages/vue-js.php:3897
+#: languages/vue-js.php:3903
 msgid ""
 "You have %s security recommendations to action. Review the recommendations. "
 "Action those that are problematic, and ignore those that are not."
 msgstr ""
 
-#: languages/vue-js.php:3900
+#: languages/vue-js.php:3906
 msgid "You have actioned all available security recommendations, great work!"
 msgstr ""
 
-#: languages/vue-js.php:3903
+#: languages/vue-js.php:3909
 msgid "You have actioned all available security recommendations. Great work!"
 msgstr ""
 
-#: languages/vue-js.php:3906
+#: languages/vue-js.php:3912
 msgid ""
 "You have chosen to ignore these fixes. You can restore and action them at "
 "any time."
 msgstr ""
 
-#: languages/vue-js.php:3909
+#: languages/vue-js.php:3915
 msgid ""
 "You have one security recommendation left to do. We recommend you action "
 "it, or ignore it if it's irrelevant."
 msgstr ""
 
-#: languages/vue-js.php:3912
+#: languages/vue-js.php:3918
 #: src/component/security-tweaks/class-php-version.php:147
 msgid "You have the latest version of PHP installed, good stuff!"
 msgstr ""
 
-#: languages/vue-js.php:3915
+#: languages/vue-js.php:3921
 msgid "You have the latest version of WordPress installed, good stuff!"
 msgstr ""
 
-#: languages/vue-js.php:3918
+#: languages/vue-js.php:3924
 msgid ""
 "You haven't chosen to ignore any suspicious files yet. Ignored files appear "
 "here and can be restored at any time"
 msgstr ""
 
-#: languages/vue-js.php:3921
+#: languages/vue-js.php:3927
 msgid "You haven't chosen to quarantine any suspicious files yet."
 msgstr ""
 
-#: languages/vue-js.php:3924
+#: languages/vue-js.php:3930
 msgid "You haven't ignored anything, yet. Keep up the good fight!"
 msgstr ""
 
-#: languages/vue-js.php:3927
+#: languages/vue-js.php:3933
 msgid ""
 "You uploaded an invalid file. Only JSON file types are allowed. Please try "
 "uploading again."
 msgstr ""
 
-#: languages/vue-js.php:3930
+#: languages/vue-js.php:3936
 #: src/component/security-tweaks/class-wp-version.php:107
 #. translators: %s: WP Version
 msgid ""
@@ -5170,34 +5181,34 @@ msgid ""
 "missing out on the latest security patches in v%s"
 msgstr ""
 
-#: languages/vue-js.php:3933
+#: languages/vue-js.php:3939
 msgid "Your domain is currently clean."
 msgstr ""
 
-#: languages/vue-js.php:3936
+#: languages/vue-js.php:3942
 msgid ""
 "Your domain is currently on Google’s blocklist. Check out the article below "
 "to find out how to fix up your domain."
 msgstr ""
 
-#: languages/vue-js.php:3939
+#: languages/vue-js.php:3945
 msgid ""
 "Your site is connected to the above Maxmind license key. Defender "
 "automatically downloads the latest GeoLite2 data weekly."
 msgstr ""
 
-#: languages/vue-js.php:3943
+#: languages/vue-js.php:3949
 msgid "Z-A"
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:124
+#: src/behavior/scan-item/class-core-integrity.php:140
 #: src/behavior/scan-item/class-plugin-integrity.php:128
 #: src/behavior/scan-item/class-vuln-result.php:160
 #: src/behavior/scan-item/class-vuln-result.php:219
 msgid "This item has been resolved."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:128
+#: src/behavior/scan-item/class-core-integrity.php:144
 #: src/behavior/scan-item/class-plugin-integrity.php:132
 msgid ""
 "Permissions Denied. Defender does not have the needed permissions to edit "
@@ -5205,29 +5216,33 @@ msgid ""
 "provider so they could change them for you."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:145
+#: src/behavior/scan-item/class-core-integrity.php:161
 #: src/behavior/scan-item/class-malware-result.php:88
 #: src/behavior/scan-item/class-plugin-integrity.php:149
 #: src/behavior/scan-item/class-vuln-result.php:101
 msgid "The suspicious file has been successfully ignored."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:157
+#: src/behavior/scan-item/class-core-integrity.php:173
 #: src/behavior/scan-item/class-malware-result.php:100
 #: src/behavior/scan-item/class-plugin-integrity.php:161
 #: src/behavior/scan-item/class-vuln-result.php:115
 msgid "The suspicious file has been successfully restored."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:224
+#: src/behavior/scan-item/class-core-integrity.php:191
+msgid "This item has been deleted."
+msgstr ""
+
+#: src/behavior/scan-item/class-core-integrity.php:248
 msgid "Unknown file in WordPress core"
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:226
+#: src/behavior/scan-item/class-core-integrity.php:250
 msgid "This directory does not belong to WordPress core"
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:228
+#: src/behavior/scan-item/class-core-integrity.php:252
 msgid "This WordPress core file appears modified"
 msgstr ""
 
@@ -5396,7 +5411,7 @@ msgstr ""
 
 #: src/class-admin.php:435 src/class-admin.php:459
 #: src/controller/class-data-tracking.php:57
-#: src/traits/defender-hub-client.php:202
+#: src/traits/defender-hub-client.php:205
 msgid "here"
 msgstr ""
 
@@ -6269,7 +6284,7 @@ msgstr ""
 
 #: src/component/class-backup-settings.php:1162
 #: src/controller/class-firewall.php:872 src/controller/class-firewall.php:924
-#: src/controller/class-scan.php:1000 src/controller/class-scan.php:1035
+#: src/controller/class-scan.php:1003 src/controller/class-scan.php:1038
 #: src/controller/class-security-tweaks.php:993
 #: src/controller/class-security-tweaks.php:1022
 msgid "Email notifications active"
@@ -6500,14 +6515,14 @@ msgstr ""
 msgid "Comments"
 msgstr ""
 
-#: src/component/class-scan.php:591
+#: src/component/class-scan.php:614
 #. translators: %s - Plugin name.
 msgid ""
 "%s has detected a vulnerability in this plugin that may cause harm to your "
 "site."
 msgstr ""
 
-#: src/component/class-scan.php:608 src/component/class-scan.php:629
+#: src/component/class-scan.php:631 src/component/class-scan.php:652
 #. translators: %s - Version number.
 #. translators: 1: Version number.
 msgid ""
@@ -6515,23 +6530,23 @@ msgid ""
 "update this plugin accordingly."
 msgstr ""
 
-#: src/component/class-scan.php:615
+#: src/component/class-scan.php:638
 msgid ""
 "Important! We recommend that you deactivate this plugin until the "
 "vulnerability has been fixed."
 msgstr ""
 
-#: src/component/class-scan.php:623
+#: src/component/class-scan.php:646
 msgid ""
 "We recommend that you deactivate this plugin until the vulnerability has "
 "been fixed."
 msgstr ""
 
-#: src/component/class-scan.php:704
+#: src/component/class-scan.php:727
 msgid "Action scheduler is not setup"
 msgstr ""
 
-#: src/component/class-scan.php:751
+#: src/component/class-scan.php:774
 msgid "Malware scan logs are cleared"
 msgstr ""
 
@@ -6802,7 +6817,7 @@ msgid ""
 msgstr ""
 
 #: src/component/security-tweaks/class-change-admin.php:173
-#: src/component/security-tweaks/class-security-key.php:201
+#: src/component/security-tweaks/class-security-key.php:202
 #: src/controller/class-main-setting.php:592
 msgid "re-login"
 msgstr ""
@@ -6879,15 +6894,44 @@ msgstr ""
 msgid "Trackbacks and pingbacks"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:93
-msgid "XML-RPC is currently enabled."
+#: src/component/security-tweaks/class-disable-xml-rpc.php:181
+#: src/component/security-tweaks/class-prevent-enum-users.php:117
+msgid "Forbidden"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:94
+#: src/component/security-tweaks/class-disable-xml-rpc.php:191
 msgid "XML-RPC is disabled, great job!"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:96
+#: src/component/security-tweaks/class-disable-xml-rpc.php:207
+msgid "You can manage the XML-RPC settings in the Hosting Settings."
+msgstr ""
+
+#: src/component/security-tweaks/class-disable-xml-rpc.php:211
+#. translators: %1$s: link to admin page, %2$s: closing link tag.
+msgid ""
+"You can manage XML-RPC settings from Hosting Settings by going to %1$sthis "
+"link%2$s."
+msgstr ""
+
+#: src/component/security-tweaks/class-disable-xml-rpc.php:217
+msgid "XML-RPC is currently disabled on plugin side."
+msgstr ""
+
+#: src/component/security-tweaks/class-disable-xml-rpc.php:222
+#. translators: %1$s: link to admin page, %2$s: closing link tag.
+msgid ""
+"XML-RPC is currently disabled on plugin side, we suggest disabling it from "
+"server side by clicking on %1$sthis link%2$s."
+msgstr ""
+
+#: src/component/security-tweaks/class-disable-xml-rpc.php:232
+#: src/component/security-tweaks/class-disable-xml-rpc.php:245
+msgid "XML-RPC is currently enabled."
+msgstr ""
+
+#: src/component/security-tweaks/class-disable-xml-rpc.php:237
+#: src/component/security-tweaks/class-disable-xml-rpc.php:250
 msgid ""
 "In the past, there were security concerns with XML-RPC so we recommend "
 "making sure this feature is fully disabled if you don’t need it active. We "
@@ -6963,10 +7007,6 @@ msgstr ""
 msgid "Sorry, you are not allowed to access this page"
 msgstr ""
 
-#: src/component/security-tweaks/class-prevent-enum-users.php:117
-msgid "Forbidden"
-msgstr ""
-
 #: src/component/security-tweaks/class-prevent-enum-users.php:134
 #: src/component/security-tweaks/class-prevent-enum-users.php:142
 msgid "Prevent user enumeration"
@@ -7040,57 +7080,57 @@ msgstr ""
 msgid "Information Disclosure"
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:135
+#: src/component/security-tweaks/class-security-key.php:136
 #: src/component/security-tweaks/servers/class-apache.php:88
 #. translators: %s: file path
 #. translators: %s - file path
 msgid "The file %s is not writable"
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:197
+#: src/component/security-tweaks/class-security-key.php:198
 #. translators: 1: login link, 2: line break, 3: timer.
 msgid ""
 "All key salts have been regenerated. You will now need to %1$s. %2$s This "
 "will auto reload after %3$s seconds."
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:243
+#: src/component/security-tweaks/class-security-key.php:244
 msgid "Unable to generate salts. Please try again."
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:290
+#: src/component/security-tweaks/class-security-key.php:291
 msgid ""
 "We can't tell how old your security keys are, perhaps it's time to update "
 "them?"
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:296
+#: src/component/security-tweaks/class-security-key.php:297
 msgid ""
 "One or more security salts aren't defined in wp-config.php. Time to "
 "regenerate them!"
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:303
+#: src/component/security-tweaks/class-security-key.php:304
 #. translators: %s: number of days
 msgid "Your current security keys are %s days old. Time to update them!"
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:310
+#: src/component/security-tweaks/class-security-key.php:311
 msgid "Update old security keys"
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:314
+#: src/component/security-tweaks/class-security-key.php:315
 #. translators: %s: number of days
 msgid "Your security keys are less than %s days old, nice work."
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:320
+#: src/component/security-tweaks/class-security-key.php:321
 msgid ""
 "Your current security keys are unknown days old. Time to update them! We "
 "will update the frequency to 60 days."
 msgstr ""
 
-#: src/component/security-tweaks/class-security-key.php:324
+#: src/component/security-tweaks/class-security-key.php:325
 msgid "Security Keys"
 msgstr ""
 
@@ -7357,7 +7397,7 @@ msgid "Invalid data."
 msgstr ""
 
 #: src/controller/class-audit-logging.php:436
-#: src/controller/class-blacklist.php:224 src/controller/class-firewall.php:271
+#: src/controller/class-blacklist.php:226 src/controller/class-firewall.php:271
 #: src/controller/class-main-setting.php:148
 #: src/controller/class-mask-login.php:346
 #: src/controller/class-mask-login.php:1184
@@ -7373,7 +7413,7 @@ msgstr ""
 #: src/controller/class-audit-logging.php:581
 #: src/controller/class-audit-logging.php:608
 #: src/controller/class-firewall.php:877 src/controller/class-firewall.php:930
-#: src/controller/class-scan.php:1005 src/controller/class-scan.php:1040
+#: src/controller/class-scan.php:1008 src/controller/class-scan.php:1043
 #. translators: %s: Frequency value.
 msgid "Email reports sending %s"
 msgstr ""
@@ -7386,39 +7426,39 @@ msgstr ""
 msgid "Allow all"
 msgstr ""
 
-#: src/controller/class-blacklist.php:290
+#: src/controller/class-blacklist.php:304
 msgid ""
 "You have successfully downloaded Geo IP Database. You can now use this "
 "feature to ban any countries to access any area of your website."
 msgstr ""
 
-#: src/controller/class-blacklist.php:301
+#: src/controller/class-blacklist.php:315
 #. translators: 1. License key with link.
 msgid ""
 "You have entered an invalid %1$s. If you just created the key, please wait "
 "5 minutes before trying to activate it."
 msgstr ""
 
-#: src/controller/class-blacklist.php:305
+#: src/controller/class-blacklist.php:319
 msgid "license key"
 msgstr ""
 
-#: src/controller/class-blacklist.php:331
+#: src/controller/class-blacklist.php:345
 msgid "Maxmind GeoLite2 database license successfully disconnected."
 msgstr ""
 
-#: src/controller/class-blacklist.php:625
-#: src/controller/class-blacklist.php:635
+#: src/controller/class-blacklist.php:639
+#: src/controller/class-blacklist.php:649
 #: src/controller/class-ua-lockout.php:287
 #: src/controller/class-ua-lockout.php:295
 msgid "Your file is invalid!"
 msgstr ""
 
-#: src/controller/class-blacklist.php:645
+#: src/controller/class-blacklist.php:659
 msgid "Your file content is invalid!"
 msgstr ""
 
-#: src/controller/class-blacklist.php:658
+#: src/controller/class-blacklist.php:672
 msgid "Your allowlist/blocklist has been successfully imported."
 msgstr ""
 
@@ -7549,7 +7589,7 @@ msgid "Failed remove!"
 msgstr ""
 
 #: src/controller/class-firewall.php:883 src/controller/class-firewall.php:936
-#: src/controller/class-scan.php:1011 src/controller/class-scan.php:1046
+#: src/controller/class-scan.php:1014 src/controller/class-scan.php:1049
 #. translators: %s: Html for Pro-tag.
 msgid "Email report inactive %s"
 msgstr ""
@@ -7760,7 +7800,7 @@ msgstr ""
 msgid "Sorry! We could not send the invitation, Please try again later."
 msgstr ""
 
-#: src/controller/class-onboard.php:75 src/controller/class-onboard.php:231
+#: src/controller/class-onboard.php:75 src/controller/class-onboard.php:236
 msgid "Invalid"
 msgstr ""
 
@@ -8200,16 +8240,16 @@ msgstr ""
 msgid "90 days"
 msgstr ""
 
-#: src/functions.php:550
+#: src/functions.php:558
 #. translators: 1. Support link.
 msgid "Still, having trouble? %1$s."
 msgstr ""
 
-#: src/functions.php:551
+#: src/functions.php:559
 msgid "Open a support ticket"
 msgstr ""
 
-#: src/functions.php:561
+#: src/functions.php:569
 msgid "Safe Repair feature is only for Pro"
 msgstr ""
 
@@ -8902,27 +8942,27 @@ msgstr ""
 msgid "Polynesia"
 msgstr ""
 
-#: src/traits/defender-bootstrap.php:540
+#: src/traits/defender-bootstrap.php:541
 msgid "UPGRADE TO PRO"
 msgstr ""
 
-#: src/traits/defender-hub-client.php:131
-#: src/traits/defender-hub-client.php:246
+#: src/traits/defender-hub-client.php:134
+#: src/traits/defender-hub-client.php:249
 msgid "Dash plugin authentication API key missing."
 msgstr ""
 
-#: src/traits/defender-hub-client.php:209
+#: src/traits/defender-hub-client.php:212
 #. translators: %s - wpmudev link
 msgid ""
 "WPMU DEV Dashboard will be required for this action. Please visit %s and "
 "install the WPMU DEV Dashboard."
 msgstr ""
 
-#: src/traits/defender-hub-client.php:240
+#: src/traits/defender-hub-client.php:243
 msgid "Permission denied API call."
 msgstr ""
 
-#: src/traits/defender-hub-client.php:260
+#: src/traits/defender-hub-client.php:263
 msgid "WPMU DEV Dashboard plugin is missing."
 msgstr ""
 

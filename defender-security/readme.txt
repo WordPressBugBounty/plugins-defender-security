@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 4.9.0
+Version: 4.10.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 5.2
-Tested up to: 6.6.1
-Stable tag: 4.9.0
+Tested up to: 6.6.2
+Stable tag: 4.10.0
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -242,6 +242,21 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 4.10.0 ( 2024-10-01 ) =
+
+- Enhance: Update malware signatures to detect different infected files
+- Enhance: Display notice on the Malware Scanning page if a file is missing or unreadable
+- Enhance: Defender > Recommendations > Disable XML-RPC syncs with Hosting XML-RPC Protection
+- Enhance: Improvements in deleting and exporting IPs
+- Enhance: Translation improvements
+- Fix: False positive in Malware Scanning for Toolset plugin
+- Fix: Defender does not recognize phishing code
+- Fix: Malware Scanning gets stuck on fresh multisite
+- Fix: Text content not displayed in the Services upsell on the Malware Scanning page
+- Fix: Security keys not getting updated
+- Fix: Malware Scanning detects the old plugin file as modified
+- Fix: 404 Detection > Duration Unit disappears when changing the Firewall logs count to 100
+
 = 4.9.0 ( 2024-09-02 ) =
 
 - New: Smart IP Detection method
@@ -284,32 +299,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 = 4.7.3 ( 2024-06-27 ) =
 
 - Fix: Broken Access Control vulnerability on the Configs page
-
-= 4.7.2 ( 2024-06-18 ) =
-
-- Enhance: Option to reset Locations on the IP Banning page
-- Enhance: Removed unnecessary login filters on Mask Login to enhance security
-- Enhance: Show loading icon with message when clicking pagination buttons on Firewall logs
-- Enhance: Change the final text for the WP CLI command to remove log files older than a week
-- Enhance: Added malware signature to detect fake Core Fork plugin enhancing site security
-- Enhance: Email design improvement for 2FA code
-- Enhance: Show loading icon only for the current button
-- Enhance: Updated malware signatures to detect different infected files improving overall security
-- Enhance: Add WP CLI to clear the MaxMind license key
-- Fix: Custom logo overlaps on Malware Scanning progress bar
-- Fix: Update Calotes\DB\Mapper::save() to handle integers correctly
-- Fix: Google reCAPTCHA bypassed using auto-fill on the Login page
-- Fix: Google reCAPTCHA v2 invisible not working with the Ship to a different address option in the WooCommerce plugin
-- Fix: Suspicious files are not detected in the plugin folder when Scan plugin files are enabled
-- Fix: Notification displayed twice on the Notifications page in the free version
-- Fix: Mask Login URL isn't working when it is a Plain permalink structure
-- Fix: WordPress sends an error email with the Mask_Login::filter_site_url method
-- Fix: Update Support links
-- Fix: UI Improvements
-- Fix: Bulk delete issues fail when files have non-edit permissions
-- Fix: Calendar displayed in blue when High contrast mode is enabled
-- Fix: Ban/unban IP from Firewall Logs not reflected on the IP Banning Tab
-- Fix: Mask URL is not working on the default WP recovery email when a site goes down
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

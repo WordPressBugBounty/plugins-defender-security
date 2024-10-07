@@ -84,6 +84,7 @@ if ( $uninstall_settings ) {
 	delete_site_option( 'wpdefender_config_clear_active_tag' );
 	delete_site_option( 'wpdefender_preset_configs_transient_time' );
 	delete_site_option( 'wp_defender_config_default' );
+	delete_site_option( 'disable-xml-rpc' );
 	// Because not call remove_settings from WAF and Onboard controllers.
 	delete_site_transient( 'def_waf_status' );
 	delete_site_option( 'wp_defender_is_activated' );

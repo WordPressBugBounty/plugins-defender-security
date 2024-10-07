@@ -495,6 +495,7 @@ SQL;
 		foreach ( $js_files as $slug => $file ) {
 			if ( isset( $file[1] ) ) {
 				wp_register_script( $slug, $file[0], $file[1], DEFENDER_VERSION, true );
+				wp_set_script_translations( $slug, 'defender-security' );
 			} else {
 				wp_register_script( $slug, $file[0], array( 'jquery' ), DEFENDER_VERSION, true );
 			}

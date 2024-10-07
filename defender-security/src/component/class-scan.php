@@ -342,6 +342,28 @@ class Scan extends Component {
 	}
 
 	/**
+	 * Track the event if we have a failed checksum.
+	 */
+	public function maybe_track_failed_checksum() {
+		// If there is a Checksum issue, then check DB's value from time().
+		$checksum_issue = (int) get_site_option( Core_Integrity::ISSUE_CHECKSUMS, 0 );
+		if ( $checksum_issue > 0 ) {
+			$scan_analytics = wd_di()->get( Scan_Analytics::class );
+			$reason         = 'Failed to fetch checksums from wp.org';
+
+			$scan_analytics->track_feature(
+				$scan_analytics::EVENT_SCAN_FAILED,
+				array(
+					$scan_analytics::EVENT_SCAN_FAILED_PROP => $scan_analytics::EVENT_SCAN_FAILED_ERROR,
+					'Error_Reason' => $reason,
+				)
+			);
+
+			$this->log( $reason, 'scan.log' );
+		}
+	}
+
+	/**
 	 * Clean up data generate by current scan.
 	 */
 	public function clean_up() {
@@ -509,6 +531,7 @@ class Scan extends Component {
 		delete_site_option( Core_Integrity::CACHE_CHECKSUMS );
 		delete_site_option( Plugin_Integrity::PLUGIN_SLUGS );
 		delete_site_option( Plugin_Integrity::PLUGIN_PREMIUM_SLUGS );
+		$this->maybe_track_failed_checksum();
 	}
 
 	/**

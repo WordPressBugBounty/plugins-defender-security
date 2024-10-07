@@ -192,7 +192,7 @@ class Core_Integrity extends Behavior {
 			$scan->save();
 
 			update_site_option( self::ISSUE_CHECKSUMS, time() );
-			// Todo: add MP event.
+			// We can't send to MP event now because the Scan process continues to ping wp.org. This can cause a event's surge.
 			return false;
 		}
 

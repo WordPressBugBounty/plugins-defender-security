@@ -141,7 +141,12 @@ class Onboard extends Event {
 				)
 			);
 
-			$scan_controller->do_async_scan( 'install' );
+			if ( is_multisite() ) {
+				// The admin-ajax.php file doesn't trigger the init hook, so we need to call the scan function directly.
+				$scan_controller->process();
+			} else {
+				$scan_controller->do_async_scan( 'install' );
+			}
 		}
 	}
 

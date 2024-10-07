@@ -89,6 +89,9 @@ trait Defender_Hub_Client {
 				return "{$base}api/hub/v1/package-configs";
 			case self::API_IP_BLOCKLIST_SUBMIT_LOGS:
 				return "{$base}api/blocklist/v1/logs";
+			case self::API_XMLRPC:
+				$site_id = $this->get_site_id();
+				return "{$base}api/hub/v1/sites/$site_id/modules/hosting/xmlrpc";
 			case self::API_HUB_SYNC:
 			default:
 				return "{$base}api/defender/v1/scan-results";
@@ -726,7 +729,7 @@ trait Defender_Hub_Client {
 	 * @return bool
 	 */
 	public function is_wpmu_hosting(): bool {
-		return isset( $_SERVER['WPMUDEV_HOSTED'] ) && ! empty( $_SERVER['WPMUDEV_HOSTED'] );
+		return ! empty( $_SERVER['WPMUDEV_HOSTED'] );
 	}
 
 	/**
