@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 4.10.0\n"
+"Project-Id-Version: Defender Pro 4.10.1\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
-"POT-Creation-Date: 2024-10-01 09:57:27+00:00\n"
+"POT-Creation-Date: 2024-10-03 08:34:28+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1723,8 +1723,8 @@ msgid "Disable Usage Tracking?"
 msgstr ""
 
 #: languages/vue-js.php:1342
-#: src/component/security-tweaks/class-disable-xml-rpc.php:231
-#: src/component/security-tweaks/class-disable-xml-rpc.php:244
+#: src/component/security-tweaks/class-disable-xml-rpc.php:240
+#: src/component/security-tweaks/class-disable-xml-rpc.php:253
 msgid "Disable XML-RPC"
 msgstr ""
 
@@ -6894,44 +6894,44 @@ msgstr ""
 msgid "Trackbacks and pingbacks"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:181
+#: src/component/security-tweaks/class-disable-xml-rpc.php:190
 #: src/component/security-tweaks/class-prevent-enum-users.php:117
 msgid "Forbidden"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:191
+#: src/component/security-tweaks/class-disable-xml-rpc.php:200
 msgid "XML-RPC is disabled, great job!"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:207
+#: src/component/security-tweaks/class-disable-xml-rpc.php:216
 msgid "You can manage the XML-RPC settings in the Hosting Settings."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:211
+#: src/component/security-tweaks/class-disable-xml-rpc.php:220
 #. translators: %1$s: link to admin page, %2$s: closing link tag.
 msgid ""
 "You can manage XML-RPC settings from Hosting Settings by going to %1$sthis "
 "link%2$s."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:217
+#: src/component/security-tweaks/class-disable-xml-rpc.php:226
 msgid "XML-RPC is currently disabled on plugin side."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:222
+#: src/component/security-tweaks/class-disable-xml-rpc.php:231
 #. translators: %1$s: link to admin page, %2$s: closing link tag.
 msgid ""
 "XML-RPC is currently disabled on plugin side, we suggest disabling it from "
 "server side by clicking on %1$sthis link%2$s."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:232
-#: src/component/security-tweaks/class-disable-xml-rpc.php:245
+#: src/component/security-tweaks/class-disable-xml-rpc.php:241
+#: src/component/security-tweaks/class-disable-xml-rpc.php:254
 msgid "XML-RPC is currently enabled."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:237
-#: src/component/security-tweaks/class-disable-xml-rpc.php:250
+#: src/component/security-tweaks/class-disable-xml-rpc.php:246
+#: src/component/security-tweaks/class-disable-xml-rpc.php:259
 msgid ""
 "In the past, there were security concerns with XML-RPC so we recommend "
 "making sure this feature is fully disabled if you don’t need it active. We "

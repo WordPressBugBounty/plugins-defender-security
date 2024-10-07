@@ -132,17 +132,26 @@ class Disable_XML_RPC extends Component {
 			return true;
 		}
 
-		// Make a request to the WPMU DEV API to retrieve the status.
-		$response = $this->wpmudev->make_wpmu_request( WPMUDEV::API_WAF );
-		if ( is_wp_error( $response ) ) {
-			// Log the error message.
-			$this->log( 'XML-RPC error: ' . $response->get_error_message(), $this->slug );
-			return false;
+		// Cache the result of the API call for 5 minutes.
+		$server_xmlrpc_status = get_site_transient( 'def_xml_rpc_status_in_server' );
+		// If the result is not cached, make a request to the WPMU DEV API to retrieve the status.
+		if ( empty( $server_xmlrpc_status ) ) {
+			// Make a request to the WPMU DEV API to retrieve the status of the XML-RPC.
+			$response = $this->wpmudev->make_wpmu_request( WPMUDEV::API_WAF );
+			if ( is_wp_error( $response ) ) {
+				// Log the error message.
+				$this->log( 'XML-RPC error: ' . $response->get_error_message(), $this->slug );
+				return false;
+			}
+			// Check the XML-RPC status returned from the API.
+			$server_xmlrpc_status = empty( $response['xmlrpc']['is_enabled'] ) ? 'ON' : 'OFF';
+			// Cache the result for 5 minutes.
+			$expiration = (int) apply_filters( 'wd_xml_rpc_status_expiration', 5 * MINUTE_IN_SECONDS );
+			set_site_transient( 'def_xml_rpc_status_in_server', $server_xmlrpc_status, $expiration );
 		}
-		// Check the XML-RPC status returned from the API.
-		$response = empty( $response['xmlrpc']['is_enabled'] ) ? 'ON' : 'OFF';
+
 		// Return whether the XML-RPC is enabled or disabled based on the XML-RPC status.
-		return 'ON' === $response;
+		return 'ON' === $server_xmlrpc_status;
 	}
 
 	/**

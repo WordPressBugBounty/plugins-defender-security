@@ -385,7 +385,11 @@ class Security_Key extends Component implements Security_Key_Const_Interface {
 			$schedule_detail = $this->get_schedule_detail( $display_name );
 
 			$schedule_key      = key( $schedule_detail );
-			$schedule_interval = time() + $schedule_detail[ $schedule_key ]['interval'];
+			$schedule_interval = time();
+
+			if ( null !== $schedule_key && isset( $schedule_detail[ $schedule_key ]['interval'] ) ) {
+				$schedule_interval = $schedule_interval + $schedule_detail[ $schedule_key ]['interval'];
+			}
 
 			wp_schedule_event(
 				$schedule_interval,
