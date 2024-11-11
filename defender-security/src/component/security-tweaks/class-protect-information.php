@@ -8,20 +8,19 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
-use Calotes\Base\Component;
 use WP_Defender\Component\Security_Tweaks\Servers\Server;
 
 /**
  * Class Protect_Information
  */
-class Protect_Information extends Component {
+class Protect_Information extends Abstract_Security_Tweaks {
 
 	/**
 	 * Slug identifier for the component.
 	 *
 	 * @var string
 	 */
-	public $slug = 'protect-information';
+	public string $slug = 'protect-information';
 
 	/**
 	 * Check whether the issue has been resolved or not.
@@ -74,15 +73,33 @@ class Protect_Information extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Prevent Information Disclosure', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'You don\'t have information disclosure protection active.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
 	 */
-	public function to_array() {
+	public function to_array(): array {
 		return array(
 			'slug'            => $this->slug,
-			'title'           => esc_html__( 'Prevent Information Disclosure', 'defender-security' ),
-			'errorReason'     => esc_html__( 'You don\'t have information disclosure protection active.', 'defender-security' ),
+			'title'           => $this->get_label(),
+			'errorReason'     => $this->get_error_reason(),
 			'successReason'   => esc_html__(
 				'You\'ve automatically enabled information disclosure protection.',
 				'defender-security'

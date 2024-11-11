@@ -8,19 +8,18 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
-use Calotes\Base\Component;
 
 /**
  * Handles the implementation of the disable track back security tweak.
  */
-class Disable_Trackback extends Component {
+class Disable_Trackback extends Abstract_Security_Tweaks {
 
 	/**
 	 * Slug identifier for the component.
 	 *
 	 * @var string
 	 */
-	public $slug = 'disable-trackback';
+	public string $slug = 'disable-trackback';
 	/**
 	 * Indicates whether the trackback disable issue has been resolved.
 	 *
@@ -137,15 +136,33 @@ class Disable_Trackback extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Disable trackbacks and pingbacks', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'Trackbacks and pingbacks are currently enabled.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
 	 */
-	public function to_array() {
+	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Disable trackbacks and pingbacks', 'defender-security' ),
-			'errorReason'      => esc_html__( 'Trackbacks and pingbacks are currently enabled.', 'defender-security' ),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => esc_html__( 'Trackbacks and pingbacks are disabled, nice work!', 'defender-security' ),
 			'misc'             => array(),
 			'bulk_description' => esc_html__(

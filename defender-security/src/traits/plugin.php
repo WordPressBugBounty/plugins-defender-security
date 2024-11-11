@@ -70,23 +70,6 @@ trait Plugin {
 	}
 
 	/**
-	 * Get plugin data by slug.
-	 *
-	 * @param string $plugin_slug Plugin slug.
-	 *
-	 * @return array
-	 */
-	public function get_plugin_data( $plugin_slug ): array {
-		foreach ( $this->get_plugins() as $slug => $plugin ) {
-			if ( $plugin_slug === $slug ) {
-				return $plugin;
-			}
-		}
-
-		return array();
-	}
-
-	/**
 	 * Retrieve plugin base directory.
 	 *
 	 * @return string

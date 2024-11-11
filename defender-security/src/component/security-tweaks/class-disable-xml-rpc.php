@@ -8,14 +8,13 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Defender\Traits\IO;
-use Calotes\Base\Component;
 use WP_Defender\Behavior\WPMUDEV;
 
 /**
  * XML-RPC can be a security risk if not properly managed, and this class provides methods to disable it and ensure it
  *  remains disabled.
  */
-class Disable_XML_RPC extends Component {
+class Disable_XML_RPC extends Abstract_Security_Tweaks {
 
 	use IO;
 
@@ -85,13 +84,22 @@ class Disable_XML_RPC extends Component {
 		$this->resolved = $this->check();
 		// if this tweak is ON, block XML-RPC.
 		if ( $this->resolved ) {
-			// Disable XML-RPC methods that require authentication.
-			add_filter( 'xmlrpc_enabled', '__return_false' );
-			// Class used for handling XML-RPC requests.
-			add_filter( 'wp_xmlrpc_server_class', array( $this, 'send_forbidden_response' ) );
-			// Methods exposed by the XML-RPC server.
-			add_filter( 'xmlrpc_methods', '__return_empty_array' );
+			$this->add_hooks();
 		}
+	}
+
+	/**
+	 * Queue hooks when this class init.
+	 *
+	 * @return void
+	 */
+	public function add_hooks(): void {
+		// Disable XML-RPC methods that require authentication.
+		add_filter( 'xmlrpc_enabled', '__return_false' );
+		// Class used for handling XML-RPC requests.
+		add_filter( 'wp_xmlrpc_server_class', array( $this, 'send_forbidden_response' ) );
+		// Methods exposed by the XML-RPC server.
+		add_filter( 'xmlrpc_methods', '__return_empty_array' );
 	}
 
 	/**
@@ -100,13 +108,21 @@ class Disable_XML_RPC extends Component {
 	 * @return bool
 	 */
 	public function check(): bool {
+		return $this->is_tweak_enabled_in_site();
+	}
+
+	/**
+	 * Re-check the XML-RPC status.
+	 *
+	 * @return bool
+	 */
+	public function recheck(): bool {
 		// Check if XML-RPC is disabled on Defender (plugin) side.
 		$plugin_xmlrpc_status = $this->is_tweak_enabled_in_site();
 		// Check if user is using WPMUDEV hosting.
 		if ( $this->wpmudev->is_wpmu_hosting() ) {
 			return $this->determine_status( $plugin_xmlrpc_status, $this->is_tweak_enabled_in_server() ) !== 3;
 		}
-
 		// Return the status of XML-RPC.
 		return $plugin_xmlrpc_status;
 	}
@@ -132,12 +148,11 @@ class Disable_XML_RPC extends Component {
 			return true;
 		}
 
-		// Cache the result of the API call for 5 minutes.
+		// Get a cached result.
 		$server_xmlrpc_status = get_site_transient( 'def_xml_rpc_status_in_server' );
-		// If the result is not cached, make a request to the WPMU DEV API to retrieve the status.
+		// If the result is not cached, make a request to the WPMU DEV API to retrieve the status of the XML-RPC.
 		if ( empty( $server_xmlrpc_status ) ) {
-			// Make a request to the WPMU DEV API to retrieve the status of the XML-RPC.
-			$response = $this->wpmudev->make_wpmu_request( WPMUDEV::API_WAF );
+			$response = $this->wpmudev->make_wpmu_request( WPMUDEV::API_HOSTING );
 			if ( is_wp_error( $response ) ) {
 				// Log the error message.
 				$this->log( 'XML-RPC error: ' . $response->get_error_message(), $this->slug );
@@ -145,11 +160,10 @@ class Disable_XML_RPC extends Component {
 			}
 			// Check the XML-RPC status returned from the API.
 			$server_xmlrpc_status = empty( $response['xmlrpc']['is_enabled'] ) ? 'ON' : 'OFF';
-			// Cache the result for 5 minutes.
+			// Since v4.10.1 we cache the result for 5 minutes by default.
 			$expiration = (int) apply_filters( 'wd_xml_rpc_status_expiration', 5 * MINUTE_IN_SECONDS );
 			set_site_transient( 'def_xml_rpc_status_in_server', $server_xmlrpc_status, $expiration );
 		}
-
 		// Return whether the XML-RPC is enabled or disabled based on the XML-RPC status.
 		return 'ON' === $server_xmlrpc_status;
 	}
@@ -191,6 +205,24 @@ class Disable_XML_RPC extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Disable XML-RPC', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'XML-RPC is currently enabled.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
@@ -198,10 +230,8 @@ class Disable_XML_RPC extends Component {
 	public function to_array(): array {
 		// The message to display if the XML-RPC feature is disabled.
 		$enabled = esc_html__( 'XML-RPC is disabled, great job!', 'defender-security' );
-
 		// Determine if the XML-RPC feature is enabled on the server side.
 		$in_server = $this->is_tweak_enabled_in_server();
-
 		// Determine if the XML-RPC feature is enabled on the plugin side.
 		$in_site = $this->is_tweak_enabled_in_site();
 
@@ -237,8 +267,8 @@ class Disable_XML_RPC extends Component {
 			// Return the summary data.
 			return array(
 				'slug'             => $this->slug,
-				'title'            => esc_html__( 'Disable XML-RPC', 'defender-security' ),
-				'errorReason'      => esc_html__( 'XML-RPC is currently enabled.', 'defender-security' ),
+				'title'            => $this->get_label(),
+				'errorReason'      => $this->get_error_reason(),
 				'successReason'    => $enabled,
 				'misc'             => array(
 					'show_revert_button' => $this->determine_status( $in_site, $in_server ) !== 2,
@@ -250,8 +280,8 @@ class Disable_XML_RPC extends Component {
 
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Disable XML-RPC', 'defender-security' ),
-			'errorReason'      => esc_html__( 'XML-RPC is currently enabled.', 'defender-security' ),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => $enabled,
 			'misc'             => array(
 				'show_revert_button' => $in_site,

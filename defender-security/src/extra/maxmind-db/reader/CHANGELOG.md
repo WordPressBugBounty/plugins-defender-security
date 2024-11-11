@@ -87,7 +87,7 @@ CHANGELOG
 
 * The `maxminddb` extension now returns a string when a `uint32`
   value is greater than `LONG_MAX`. Previously, the value would
-  overflow. This generally only affects 32-bit machines.  Reported
+  overflow. This generally only affects 32-bit machines. Reported
   by Remi Collet. GitHub #79.
 * For `uint64` values, the `maxminddb` extension now returns an
   integer rather than a string when the value is less than or equal

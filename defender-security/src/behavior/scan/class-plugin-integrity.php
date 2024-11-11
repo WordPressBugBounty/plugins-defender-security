@@ -172,6 +172,7 @@ class Plugin_Integrity extends Behavior {
 	 */
 	public function plugin_integrity_check(): bool {
 		$abs_path = defender_replace_line( WP_PLUGIN_DIR );
+		$settings = wd_di()->get( Scan_Settings::class );
 		$plugins  = new File(
 			$abs_path,
 			true,
@@ -179,7 +180,8 @@ class Plugin_Integrity extends Behavior {
 			array(),
 			array( 'filename' => array( 'index.php' ) ),
 			true,
-			true
+			true,
+			$settings->filesize
 		);
 
 		$plugin_files = $plugins->get_dir_tree();

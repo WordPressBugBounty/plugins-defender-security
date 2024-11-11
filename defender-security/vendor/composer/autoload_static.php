@@ -415,6 +415,7 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Component\\Security_Headers\\Sh_XSS_Protection' => __DIR__ . '/../..' . '/src/component/security-headers/class-sh-xss-protection.php',
         'WP_Defender\\Component\\Security_Headers\\Sh_X_Frame' => __DIR__ . '/../..' . '/src/component/security-headers/class-sh-x-frame.php',
         'WP_Defender\\Component\\Security_Tweak' => __DIR__ . '/../..' . '/src/component/class-security-tweak.php',
+        'WP_Defender\\Component\\Security_Tweaks\\Abstract_Security_Tweaks' => __DIR__ . '/../..' . '/src/component/security-tweaks/class-abstract-security-tweaks.php',
         'WP_Defender\\Component\\Security_Tweaks\\Change_Admin' => __DIR__ . '/../..' . '/src/component/security-tweaks/class-change-admin.php',
         'WP_Defender\\Component\\Security_Tweaks\\Disable_File_Editor' => __DIR__ . '/../..' . '/src/component/security-tweaks/class-disable-file-editor.php',
         'WP_Defender\\Component\\Security_Tweaks\\Disable_Trackback' => __DIR__ . '/../..' . '/src/component/security-tweaks/class-disable-trackback.php',

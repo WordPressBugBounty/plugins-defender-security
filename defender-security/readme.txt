@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 4.10.1
+Version: 4.11.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 5.2
-Tested up to: 6.6.2
-Stable tag: 4.10.1
+Tested up to: 6.7
+Stable tag: 4.11.0
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -242,6 +242,17 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 4.11.0 ( 2024-11-04 ) =
+
+- Enhance: Compatibility with WordPress 6.7
+- Enhance: Malware signatures update
+- Enhance: Update SUI to the latest version
+- Fix: Optimize security recommendations flow
+- Fix: Malware Scanning can't detect the suspicious code
+- Fix: Max included file size in Malware Scanning isn't working
+- Fix: Detecting changes in files whose names match default folders
+- Fix: SEOPress plugin files are being falsely flagged as suspicious
+
 = 4.10.1 ( 2024-10-03 ) =
 
 - Fix: Optimize XML-RPC traffic management
@@ -295,14 +306,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Enhance: Compatibility with WordPress 6.6
 - Enhance: WPCS compliance
 - Fix: Editors can't close Cloudflare Usage notification
-
-= 4.7.4 ( 2024-06-27 ) =
-
-- Fix: Hide Expert Services when Whitelabel is enabled
-
-= 4.7.3 ( 2024-06-27 ) =
-
-- Fix: Broken Access Control vulnerability on the Configs page
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

@@ -7,19 +7,17 @@
 
 namespace WP_Defender\Component\Security_Tweaks;
 
-use Calotes\Base\Component;
-
 /**
  * Class WP_Version
  */
-class WP_Version extends Component {
+class WP_Version extends Abstract_Security_Tweaks {
 
 	/**
 	 * Component slug name.
 	 *
 	 * @var string
 	 */
-	public $slug = 'wp-version';
+	public string $slug = 'wp-version';
 
 	/**
 	 * Check whether the issue has been resolved or not.
@@ -94,22 +92,40 @@ class WP_Version extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Update WordPress to latest version', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return sprintf(
+			/* translators: %s: WP Version */
+			esc_html__(
+				'Your current WordPress version is out of date, which means you could be missing out on the latest security patches in v%s',
+				'defender-security'
+			),
+			$this->get_latest_version()
+		);
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
 	 */
-	public function to_array() {
+	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Update WordPress to latest version', 'defender-security' ),
-			'errorReason'      => sprintf(
-				/* translators: %s: WP Version */
-				esc_html__(
-					'Your current WordPress version is out of date, which means you could be missing out on the latest security patches in v%s',
-					'defender-security'
-				),
-				$this->get_latest_version()
-			),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => esc_html__( 'You are using the latest version of WordPress, great job!', 'defender-security' ),
 			'misc'             => array(
 				'latest_wp'       => $this->get_latest_version(),

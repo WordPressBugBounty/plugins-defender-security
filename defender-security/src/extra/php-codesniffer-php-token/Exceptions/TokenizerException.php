@@ -9,7 +9,6 @@
 
 namespace PHP_CodeSniffer\Exceptions;
 
-class TokenizerException extends \Exception
-{
+class TokenizerException extends \Exception {
 
 }//end class

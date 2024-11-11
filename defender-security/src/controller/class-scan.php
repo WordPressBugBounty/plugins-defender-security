@@ -21,6 +21,7 @@ use WP_Defender\Model\Scan_Item;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Scan as Model_Scan;
 use WP_Defender\Behavior\Scan\Core_Integrity;
+use WP_Defender\Component\Scan as Scan_Component;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
 use WP_Defender\Model\Notification\Malware_Report;
 use WP_Defender\Component\Config\Config_Hub_Helper;
@@ -46,14 +47,14 @@ class Scan extends Event {
 	/**
 	 * The model for handling the data.
 	 *
-	 * @var \WP_Defender\Model\Setting\Scan
+	 * @var Scan_Settings
 	 */
 	protected $model;
 
 	/**
 	 * Service for handling logic.
 	 *
-	 * @var \WP_Defender\Component\Scan
+	 * @var Scan_Component
 	 */
 	protected $service;
 
@@ -79,7 +80,7 @@ class Scan extends Event {
 		);
 
 		$this->model   = new Scan_Settings();
-		$this->service = wd_di()->get( \WP_Defender\Component\Scan::class );
+		$this->service = wd_di()->get( Scan_Component::class );
 
 		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
 			$this->quarantine_controller = wd_di()->get( Quarantine::class );
@@ -248,7 +249,7 @@ class Scan extends Event {
 	 * @defender_redirect
 	 */
 	public function cancel(): Response {
-		$component = wd_di()->get( \WP_Defender\Component\Scan::class );
+		$component = wd_di()->get( Scan_Component::class );
 		$component->cancel_a_scan();
 		$last = Model_Scan::get_last();
 		if ( is_object( $last ) && ! is_wp_error( $last ) ) {
@@ -270,13 +271,7 @@ class Scan extends Event {
 	 * @param  string    $intention  What action is going to be executed.
 	 */
 	private function item_action_analytics( Scan_Item $scan_item, string $intention ) {
-		$allowed_intentions = array(
-			'resolve',
-			'ignore',
-			'delete',
-			'unignore',
-			'quarantine',
-		);
+		$allowed_intentions = Scan_Component::get_intentions();
 
 		$event_name = 'def_threat_resolved';
 
@@ -293,7 +288,12 @@ class Scan extends Event {
 			$threat_type       = '';
 
 			if ( Scan_Item::TYPE_INTEGRITY === $scan_item->type ) {
-				$threat_type = 'Unknown file in WordPress core';
+				// Track Repair-actions.
+				if ( in_array( $intention, array( 'resolve', 'quarantine' ), true ) ) {
+					$threat_type = 'core file modified';
+				} else {
+					$threat_type = 'Unknown file in WordPress core';
+				}
 			} elseif ( Scan_Item::TYPE_PLUGIN_CHECK === $scan_item->type ) {
 				$raw_data = $scan_item->raw_data;
 
@@ -347,16 +347,12 @@ class Scan extends Event {
 		);
 		$id        = $data['id'] ?? false;
 		$intention = $data['intention'] ?? false;
+		// Get allowed intentions.
+		$allowed_intentions   = Scan_Component::get_intentions();
+		$allowed_intentions[] = 'pull_src';
 		if ( false === $id || false === $intention || ! in_array(
 			$intention,
-			array(
-				'pull_src',
-				'resolve',
-				'ignore',
-				'delete',
-				'unignore',
-				'quarantine',
-			),
+			$allowed_intentions,
 			true
 		) ) {
 			wp_die();
@@ -929,7 +925,7 @@ class Scan extends Event {
 			'next_run'     => $report->get_next_run_as_string(),
 			'misc'         => $misc,
 			'upsell'       => array(
-				'scan'      => $this->get_scan_upsell( 'scan' ),
+				'scan' => $this->get_scan_upsell( 'scan' ),
 			),
 		);
 
@@ -943,7 +939,7 @@ class Scan extends Event {
 	/**
 	 * Imports data into the model.
 	 *
-	 * @param  array $data  Data to be imported into the model.
+	 * @param array $data  Data to be imported into the model.
 	 */
 	public function import_data( array $data ) {
 		$model = $this->model;
@@ -961,7 +957,6 @@ class Scan extends Event {
 			}
 		}
 	}
-
 
 	/**
 	 * Checks if any scan is active.
@@ -1082,7 +1077,7 @@ class Scan extends Event {
 	 * @since 2.6.5
 	 */
 	public function clear_scan_logs(): void {
-		$scan_component = wd_di()->get( \WP_Defender\Component\Scan::class );
+		$scan_component = wd_di()->get( Scan_Component::class );
 		$result         = $scan_component::clear_logs();
 
 		if ( isset( $result['error'] ) ) {

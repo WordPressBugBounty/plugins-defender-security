@@ -157,7 +157,8 @@ breaking change.
 
 ## Support ##
 
-Please report all issues with this code using the [GitHub issue tracker](https://github.com/maxmind/MaxMind-DB-Reader-php/issues).
+Please report all issues with this code using
+the [GitHub issue tracker](https://github.com/maxmind/MaxMind-DB-Reader-php/issues).
 
 If you are having an issue with a MaxMind service that is not specific to the
 client API, please see [our support page](https://www.maxmind.com/en/support).

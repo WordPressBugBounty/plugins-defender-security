@@ -30,6 +30,7 @@ use WP_Defender\Model\Notification\Firewall_Report;
 use WP_Defender\Model\Notification\Malware_Notification;
 use WP_Defender\Model\Notification\Firewall_Notification;
 use WP_Defender\Model\Setting\Audit_Logging as Model_Audit_Logging;
+use WP_Defender\Model\Setting\Security_Tweaks as Model_Security_Tweaks;
 
 /**
  * Handles various actions and interactions with the WPMUDEV Hub.
@@ -45,7 +46,6 @@ class HUB extends Event {
 	 * @var bool
 	 */
 	private $view_onboard = false;
-
 
 	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
@@ -289,8 +289,8 @@ class HUB extends Event {
 	/**
 	 * Push data into HUB. It's without timezone.
 	 *
-	 * @param  array  $params  An array containing the data to push.
-	 * @param  string $action  The action to perform.
+	 * @param array  $params  An array containing the data to push.
+	 * @param string $action  The action to perform.
 	 */
 	public function get_stats( $params, $action ) {
 		$data = $this->build_stats_to_hub();
@@ -416,9 +416,10 @@ class HUB extends Event {
 		}
 		// Total number of Scan issues and Ignored items.
 		$scan_total_issues = $total;
+		// Exclude direct call of data_frontend().
+		$tweak_arr = wd_di()->get( Model_Security_Tweaks::class )->get_tweak_types();
 
-		$tweaks = wd_di()->get( Security_Tweaks::class )->data_frontend();
-		$total += $tweaks['summary']['issues_count'];
+		$total += $tweak_arr['count_issues'];
 		// Get statuses of login/404/ua-request if Firewall Notification is enabled.
 		$firewall_notification = wd_di()->get( Firewall_Notification::class );
 
@@ -452,8 +453,8 @@ class HUB extends Event {
 				'audit_logging' => wd_di()->get( Audit_Report::class )->get_next_run_as_string( true ),
 			),
 			'security_tweaks'   => array(
-				'issues'       => $tweaks['summary']['issues_count'],
-				'fixed'        => $tweaks['summary']['fixed_count'],
+				'issues'       => $tweak_arr['count_issues'],
+				'fixed'        => $tweak_arr['count_fixed'],
 				'notification' => wd_di()->get( Tweak_Reminder::class )->status === $status_active,
 				'wp_version'   => $wp_version,
 				'php_version'  => PHP_VERSION,
@@ -568,7 +569,6 @@ class HUB extends Event {
 	 */
 	public function remove_settings() {
 	}
-
 
 	/**
 	 * Delete all the data & the cache.

@@ -10,7 +10,6 @@ namespace WP_Defender\Component\Security_Tweaks;
 use WP_Error;
 use Exception;
 use Throwable;
-use Calotes\Base\Component;
 use Calotes\Component\Response;
 use WP_Defender\Model\Setting\Mask_Login;
 use WP_Defender\Model\Setting\Security_Tweaks;
@@ -19,7 +18,7 @@ use WP_Defender\Traits\Security_Tweaks_Option;
 /**
  * Class Security_Key
  */
-class Security_Key extends Component implements Security_Key_Const_Interface {
+class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Const_Interface {
 
 	use Security_Tweaks_Option;
 
@@ -28,7 +27,7 @@ class Security_Key extends Component implements Security_Key_Const_Interface {
 	 *
 	 * @var string
 	 */
-	public $slug = 'security-key';
+	public string $slug = 'security-key';
 	/**
 	 * Default reminder duration for regenerating security keys.
 	 *
@@ -280,11 +279,20 @@ class Security_Key extends Component implements Security_Key_Const_Interface {
 	}
 
 	/**
-	 * Return a summary data of this tweak.
+	 * Retrieve the tweak's label.
 	 *
-	 * @return array
+	 * @return string
 	 */
-	public function to_array(): array {
+	public function get_label(): string {
+		return esc_html__( 'Update old security keys', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
 		$get_last_modified_days = $this->get_last_modified_days();
 
 		if ( 'unknown' === $get_last_modified_days ) {
@@ -306,14 +314,23 @@ class Security_Key extends Component implements Security_Key_Const_Interface {
 			);
 		}
 
+		return $error_message;
+	}
+
+	/**
+	 * Return a summary data of this tweak.
+	 *
+	 * @return array
+	 */
+	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Update old security keys', 'defender-security' ),
-			'errorReason'      => $error_message,
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => sprintf(
 			/* translators: %s: number of days */
 				esc_html__( 'Your security keys are less than %s days old, nice work.', 'defender-security' ),
-				$get_last_modified_days
+				$this->get_last_modified_days()
 			),
 			'misc'             => array(
 				'reminder' => $this->reminder_duration,

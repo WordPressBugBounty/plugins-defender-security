@@ -244,7 +244,7 @@ class Dashboard extends Event {
 					'pwned_passwords'  => wd_di()->get( Password_Protection::class )->dashboard_widget(),
 					'recaptcha'        => wd_di()->get( Recaptcha::class )->dashboard_widget(),
 				),
-				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->data_frontend(),
+				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->dashboard_widget(),
 				'tutorials'         => wd_di()->get( Tutorial::class )->data_frontend(),
 				'notifications'     => wd_di()->get( Notification::class )->data_frontend(),
 				'settings'          => wd_di()->get( Main_Setting::class )->data_frontend(),

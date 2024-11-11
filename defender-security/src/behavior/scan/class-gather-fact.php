@@ -100,13 +100,14 @@ class Gather_Fact extends Component {
 			false,
 			array(
 				'dir' => array(
-					$abs_path . 'wp-admin',
-					$abs_path . WPINC,
+					$abs_path . 'wp-admin/',
+					$abs_path . WPINC . '/',
 				),
 			),
 			array(),
 			true,
-			true
+			true,
+			$this->settings->filesize
 		);
 
 		$outside = new File(
@@ -116,16 +117,17 @@ class Gather_Fact extends Component {
 			array(),
 			array(
 				'dir'      => array(
-					$abs_path . 'wp-content',
-					$abs_path . 'wp-admin',
-					$abs_path . 'wp-includes',
+					$abs_path . 'wp-content/',
+					$abs_path . 'wp-admin/',
+					$abs_path . WPINC . '/',
 				),
 				'filename' => array(
 					'wp-config.php',
 				),
 			),
 			false,
-			true
+			true,
+			$this->settings->filesize
 		);
 
 		$files = array_merge( $core->get_dir_tree(), $outside->get_dir_tree() );

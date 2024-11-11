@@ -120,12 +120,12 @@ class Tweak_Reminder extends \WP_Defender\Model\Notification {
 		foreach ( $tweaks->issues as $slug ) {
 			if ( isset( $arr[ $slug ] ) ) {
 				$issue   = $arr[ $slug ];
-				$data    = $issue->to_array();
 				$issues .= $template->render_partial(
 					'email/tweak-issue',
 					array(
-						'data'       => $data,
-						'status_img' => $status_img,
+						'tweak_title'  => $issue->get_label(),
+						'error_reason' => $issue->get_error_reason(),
+						'status_img'   => $status_img,
 					),
 					false
 				);

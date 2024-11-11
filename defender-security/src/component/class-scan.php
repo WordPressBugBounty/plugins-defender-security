@@ -799,4 +799,20 @@ class Scan extends Component {
 
 		return true;
 	}
+
+	/**
+	 * Gey intentions.
+	 *
+	 * @since 4.11.0
+	 * @return array
+	 */
+	public static function get_intentions(): array {
+		return array(
+			'resolve',
+			'ignore',
+			'delete',
+			'unignore',
+			'quarantine',
+		);
+	}
 }

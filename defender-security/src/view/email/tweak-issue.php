@@ -12,9 +12,9 @@
 			alt="<?php echo esc_attr__( 'Hero Image', 'defender-security' ); ?>"
 			style="-ms-interpolation-mode:bicubic;clear:both;display:inline-block;margin-right:10px;max-width:100%;outline:0;text-decoration:none;vertical-align:middle;width:18px"
 		/>
-		<?php echo esc_html( $data['title'] ); ?>
+		<?php echo esc_html( $tweak_title ); ?>
 		<span style="width:100%;color: #888888;padding-left: 32px;font-size: 13px;font-weight:400;letter-spacing: -0.25px;line-height: 22px;display: block">
-			<?php echo esc_html( $data['errorReason'] ); ?>
+			<?php echo esc_html( $error_reason ); ?>
 		</span>
 	</td>
 </tr>

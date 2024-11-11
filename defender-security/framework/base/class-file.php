@@ -17,17 +17,17 @@ use RecursiveCallbackFilterIterator;
  */
 class File {
 
-	const ENGINE_SPL = 'spl', ENGINE_SCANDIR = 'scan_dir', ENGINE_OPENDIR = 'open_dir';
+	public const ENGINE_SPL = 'spl', ENGINE_SCANDIR = 'scan_dir', ENGINE_OPENDIR = 'open_dir';
 
 	/**
-	 * Engine use to create a dir tree
+	 * Engine use to create a dir tree.
 	 *
 	 * @var string
 	 */
 	public $engine = '';
 
 	/**
-	 * Absolute path to a folder need to create a dir tre
+	 * Absolute path to a folder need to create a dir tree.
 	 *
 	 * @var string
 	 */
@@ -41,7 +41,7 @@ class File {
 	public $include_file = true;
 
 	/**
-	 * Is the result include dir
+	 * Is the result include dir?
 	 *
 	 * @var bool
 	 */
@@ -55,37 +55,37 @@ class File {
 	public $include_hidden = false;
 
 	/**
-	 * This is where to define the rules for exclude files out of the result
-	 * 'ext'=>array('jpg','gif') file extension you don't want appear in the result
-	 * 'path'=>array('/tmp/file1.txt','/tmp/file2') absolute path to files
-	 * 'dir'=>array('/tmp/','/dir/') absolute path to the directory you dont want to include files
-	 * 'filename'=>array('abc*') file name you don't want to include, can be regex,
+	 * This is where to define the rules for exclude files out of the result:
+	 * 'ext'=>array('jpg','gif') file extension you don't want to appear in the result,
+	 * 'path'=>array('/tmp/file1.txt','/tmp/file2') absolute path to files,
+	 * 'dir'=>array('/tmp/','/dir/') absolute path to the directory you don't want to include files,
+	 * 'filename'=>array('abc*') file name you don't want to include, can be regex.
 	 *
 	 * @var array
 	 */
 	public $exclude = array();
 
 	/**
-	 * This is where to define the rules for include files, please note that if $include is provided, the $exclude
-	 * will get ignored
-	 * 'ext'=>array('jpg','gif') file extension you don't want appear in the result
-	 * 'path'=>array('/tmp/file1.txt','/tmp/file2') absolute path to files
-	 * 'dir'=>array('/tmp/','/dir/') absolute path to the directory you dont want to include files
+	 * This is where to define the rules for include files:
+	 * 'ext'=>array('jpg','gif') file extension you don't want to appear in the result,
+	 * 'path'=>array('/tmp/file1.txt','/tmp/file2') absolute path to files,
+	 * 'dir'=>array('/tmp/','/dir/') absolute path to the directory you don't want to include files,
 	 * 'filename'=>array('abc*') file name you don't want to include, can be regex.
+	 * Please note that if $include is provided, the $exclude will get ignored.
 	 *
 	 * @var array
 	 */
 	public $include = array();
 
 	/**
-	 * Does this search recursive
+	 * Does this search recursive?
 	 *
 	 * @var bool
 	 */
 	public $is_recursive = true;
 
 	/**
-	 * If provided, only search file smaller than this
+	 * If provided, only search file smaller than this.
 	 *
 	 * @var bool
 	 */
@@ -98,7 +98,7 @@ class File {
 	 * @param  bool   $include_file  Whether to include files in the directory.
 	 * @param  bool   $include_dir  Whether to include directories in the directory.
 	 * @param  array  $include_rules  The rules for including files/directories.
-	 * @param  array  $exclude  The rules for excluding files/directories.
+	 * @param  array  $exclude_rules  The rules for excluding files/directories.
 	 * @param  bool   $is_recursive  Whether to recursively search the directory.
 	 * @param  bool   $include_hidden  Whether to include hidden files/directories.
 	 * @param  bool   $max_filesize  The maximum filesize to include.
@@ -108,7 +108,7 @@ class File {
 		$include_file = true,
 		$include_dir = false,
 		$include_rules = array(),
-		$exclude = array(),
+		$exclude_rules = array(),
 		$is_recursive = true,
 		$include_hidden = false,
 		$max_filesize = false
@@ -117,7 +117,7 @@ class File {
 		$this->include_file   = $include_file;
 		$this->include_dir    = $include_dir;
 		$this->include        = $include_rules;
-		$this->exclude        = $exclude;
+		$this->exclude        = $exclude_rules;
 		$this->is_recursive   = $is_recursive;
 		$this->engine         = self::ENGINE_SCANDIR;
 		$this->include_hidden = $include_hidden;
@@ -147,7 +147,7 @@ class File {
 	}
 
 	/**
-	 * Create a dir tree by SPL library
+	 * Create a dir tree by SPL library.
 	 *
 	 * @return array
 	 */
@@ -215,7 +215,7 @@ class File {
 	}
 
 	/**
-	 * Retrieves the directory tree using the scandir function.
+	 * Retrieves the directory tree using the scandir() function.
 	 *
 	 * @param  string|null $path  The path of the directory to retrieve the tree from. If null, it uses the path
 	 *    property of the object.
@@ -243,6 +243,9 @@ class File {
 			$real_path = $path . $rfile;
 
 			$type = filetype( $real_path );
+			if ( 'dir' === $type ) {
+				$real_path .= '/';
+			}
 
 			if ( ( ! empty( $this->include ) || ! empty( $this->exclude ) ) && ( false === $this->filter_directory(
 				$real_path,
@@ -279,14 +282,14 @@ class File {
 	}
 
 	/**
-	 * Query files on path using opendir&readir
+	 * Query files on path using opendir().
 	 *
-	 * @param  mixed $path  The path of the directory to retrieve the tree from.
+	 * @param  mixed $path The path of the directory to retrieve the tree from.
 	 *
 	 * @return array
 	 * @since 1.0.5
 	 */
-	private function get_dir_tree_by_open_dir( $path = null ) {
+	private function get_dir_tree_by_open_dir( $path = null ): array {
 		if ( is_null( $path ) ) {
 			$path = $this->path;
 		}
@@ -341,7 +344,7 @@ class File {
 	}
 
 	/**
-	 * Filter for recursive directory tree
+	 * Filter for recursive directory tree.
 	 *
 	 * @param  mixed $current  The path of the directory.
 	 * @param  mixed $filetype  The type of the file.
@@ -381,7 +384,7 @@ class File {
 			if ( is_array( $dir_exclude ) ) {
 				foreach ( $dir_exclude as $dir ) {
 					if ( 0 === strpos( $path, $dir ) ) {
-						// exclude matched, we won't list this. Move to next loop.
+						// Exclude matched, we won't list this. Move to next loop.
 						continue;
 					}
 				}
@@ -399,7 +402,7 @@ class File {
 		$ext_include = isset( $include['ext'] ) ? $include['ext'] : array();
 
 		if ( is_array( $ext_include ) && count( $ext_include ) && 'file' === $type ) {
-			// We will uses foreach and strcasecmp instead of regex cause it faster.
+			// We use foreach() and strcasecmp() instead of regex cause it faster.
 			foreach ( $ext_include as $ext ) {
 				if ( strcasecmp( pathinfo( $path, PATHINFO_EXTENSION ), $ext ) === 0 ) {
 					// Match.
@@ -447,7 +450,7 @@ class File {
 	 *
 	 * @return bool Returns true if the file or directory should be included, false otherwise.
 	 */
-	private function filter_exclude( $path, $filetype = null ) {
+	private function filter_exclude( $path, $filetype = null ): bool {
 		$exclude = $this->exclude;
 		// First filer dir, or file inside dir.
 		if ( ! is_null( $filetype ) ) {
@@ -458,7 +461,8 @@ class File {
 		$dir_exclude = isset( $exclude['dir'] ) ? $exclude['dir'] : array();
 		if ( is_array( $dir_exclude ) && count( $dir_exclude ) ) {
 			foreach ( $dir_exclude as $dir ) {
-				if ( strpos( $path, $dir ) === 0 ) {
+				// @since 4.11.0 Strict comparison.
+				if ( $path === $dir ) {
 					return false;
 				}
 			}
@@ -467,7 +471,7 @@ class File {
 		// Next extension.
 		$ext_exclude = isset( $exclude['ext'] ) ? $exclude['ext'] : array();
 		if ( is_array( $ext_exclude ) && count( $ext_exclude ) && 'file' === $type ) {
-			// We will use foreach and strcasecmp instead of regex cause it faster.
+			// We use foreach() and strcasecmp() instead of regex cause it faster.
 			foreach ( $ext_exclude as $ext ) {
 				if ( strcasecmp( pathinfo( $path, PATHINFO_EXTENSION ), $ext ) === 0 ) {
 					// Match.

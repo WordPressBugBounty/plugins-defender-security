@@ -8,20 +8,19 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
-use Calotes\Base\Component;
 use WP_Defender\Component\Security_Tweaks\Servers\Server;
 
 /**
  * Prevents PHP execution in directories that should not execute PHP.
  */
-class Prevent_PHP extends Component {
+class Prevent_PHP extends Abstract_Security_Tweaks {
 
 	/**
 	 * Identifier for the security tweak.
 	 *
 	 * @var string
 	 */
-	public $slug = 'prevent-php-executed';
+	public string $slug = 'prevent-php-executed';
 
 	/**
 	 * Check whether the issue has been resolved or not.
@@ -68,15 +67,33 @@ class Prevent_PHP extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Prevent PHP Execution', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'PHP execution is currently allowed in all directories.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
 	 */
-	public function to_array() {
+	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Prevent PHP Execution', 'defender-security' ),
-			'errorReason'      => esc_html__( 'PHP execution is currently allowed in all directories.', 'defender-security' ),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => esc_html__( 'You\'ve disabled PHP execution, good stuff.', 'defender-security' ),
 			'misc'             => array(
 				'active_server'  => Server::get_current_server(),

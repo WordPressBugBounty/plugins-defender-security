@@ -7,19 +7,17 @@
 
 namespace WP_Defender\Component\Security_Tweaks;
 
-use Calotes\Base\Component;
-
 /**
  * Handles checks and operations related to the PHP version used by the server.
  */
-class PHP_Version extends Component {
+class PHP_Version extends Abstract_Security_Tweaks {
 
 	/**
 	 * Identifier slug for the component.
 	 *
 	 * @var string
 	 */
-	public $slug = 'php-version';
+	public string $slug = 'php-version';
 	/**
 	 * Minimum PHP version required.
 	 *
@@ -108,8 +106,6 @@ class PHP_Version extends Component {
 		$supported_php    = apply_filters(
 			"defender_{$this->slug}_supported_php",
 			array(
-				'7.2',
-				'7.3',
 				'7.4',
 				'8.0',
 				'8.1',
@@ -125,6 +121,34 @@ class PHP_Version extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Update PHP to latest version', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		$this->set_php_versions();
+
+		return sprintf(
+			/* translators: %s: Min PHP version. %s: Min PHP version. */
+			esc_html__(
+				'PHP versions older than %1$s are no longer supported. For security and stability we strongly recommend you upgrade your PHP version to version %2$s or newer as soon as possible.',
+				'defender-security'
+			),
+			$this->min_php,
+			$this->min_php
+		);
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
@@ -134,16 +158,8 @@ class PHP_Version extends Component {
 
 		return array(
 			'slug'          => $this->slug,
-			'title'         => esc_html__( 'Update PHP to latest version', 'defender-security' ),
-			'errorReason'   => sprintf(
-			/* translators: %s: Min PHP version. %s: Min PHP version. */
-				esc_html__(
-					'PHP versions older than %1$s are no longer supported. For security and stability we strongly recommend you upgrade your PHP version to version %2$s or newer as soon as possible.',
-					'defender-security'
-				),
-				$this->min_php,
-				$this->min_php
-			),
+			'title'         => $this->get_label(),
+			'errorReason'   => $this->get_error_reason(),
 			'successReason' => esc_html__( 'You have the latest version of PHP installed, good stuff!', 'defender-security' ),
 			'misc'          => array(
 				'php_version'        => $this->current_php,

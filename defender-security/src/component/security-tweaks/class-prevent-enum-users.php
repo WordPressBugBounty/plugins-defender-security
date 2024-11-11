@@ -10,13 +10,12 @@ namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
 use WP_Sitemaps_Provider;
-use Calotes\Base\Component;
 use WP_Defender\Traits\Security_Tweaks_Option;
 
 /**
  * Prevent user enumeration.
  */
-class Prevent_Enum_Users extends Component implements Security_Key_Const_Interface {
+class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Key_Const_Interface {
 
 	use Security_Tweaks_Option;
 
@@ -25,7 +24,7 @@ class Prevent_Enum_Users extends Component implements Security_Key_Const_Interfa
 	 *
 	 * @var string
 	 */
-	public $slug = 'prevent-enum-users';
+	public string $slug = 'prevent-enum-users';
 
 	/**
 	 * Status to check if the issue has been resolved.
@@ -124,6 +123,24 @@ class Prevent_Enum_Users extends Component implements Security_Key_Const_Interfa
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Prevent user enumeration', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'User enumeration is currently allowed.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
@@ -131,15 +148,15 @@ class Prevent_Enum_Users extends Component implements Security_Key_Const_Interfa
 	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Prevent user enumeration', 'defender-security' ),
-			'errorReason'      => esc_html__( 'User enumeration is currently allowed.', 'defender-security' ),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => esc_html__( 'User enumeration is currently blocked, nice work!', 'defender-security' ),
 			'misc'             => array(),
 			'bulk_description' => esc_html__(
 				'To brute force your login,  hackers and bots can simply type the query string ?author=1, ?author=2 and so on, which will redirect the page to /author/username/ - bam, the bot now has your usernames to begin brute force attacks with. We can add a .htaccess file to your site to prevent the redirection.',
 				'defender-security'
 			),
-			'bulk_title'       => esc_html__( 'Prevent user enumeration', 'defender-security' ),
+			'bulk_title'       => $this->get_label(),
 		);
 	}
 

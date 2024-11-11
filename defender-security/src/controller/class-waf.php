@@ -91,7 +91,7 @@ class WAF extends Controller {
 			return 'enabled' === $cached;
 		}
 
-		$ret = $this->wpmudev->make_wpmu_request( WPMUDEV::API_WAF );
+		$ret = $this->wpmudev->make_wpmu_request( WPMUDEV::API_HOSTING );
 		if ( is_wp_error( $ret ) ) {
 			return false;
 		}

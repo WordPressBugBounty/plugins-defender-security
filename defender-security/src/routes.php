@@ -46,6 +46,7 @@ function defender_init_routes() {
 			'update_enabled_user_enums' => 'update_enabled_user_enums',
 			'handle_notice'             => 'handle_notice',
 			'refuse_notice'             => 'refuse_notice',
+			'check_xml_rpc'             => 'check_xml_rpc',
 		),
 		'ip_lockout'        => array(
 			'update_settings'      => 'save_settings',

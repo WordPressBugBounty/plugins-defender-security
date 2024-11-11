@@ -51,13 +51,6 @@ class Security_Tweaks extends Event {
 	protected $model;
 
 	/**
-	 * The Scan component, responsible for scanning the site.
-	 *
-	 * @var \WP_Defender\Component\Scan
-	 */
-	public $scan;
-
-	/**
 	 * Components instance array.
 	 *
 	 * @var array
@@ -87,11 +80,7 @@ class Security_Tweaks extends Event {
 		$this->register_page(
 			esc_html__( 'Recommendations', 'defender-security' ),
 			$this->slug,
-			array(
-				&
-				$this,
-				'main_view',
-			),
+			array( $this, 'main_view' ),
 			$this->parent_slug
 		);
 		$this->model = wd_di()->get( Model_Security_Tweaks::class );
@@ -99,8 +88,6 @@ class Security_Tweaks extends Event {
 
 		// Init all the tweaks, should happen one time.
 		$this->component_instances = $this->init_tweaks();
-
-		$this->scan = wd_di()->get( \WP_Defender\Component\Scan::class );
 
 		$this->security_key       = $this->component_instances['security-key'];
 		$this->prevent_enum_users = $this->component_instances['prevent-enum-users'];
@@ -180,7 +167,7 @@ class Security_Tweaks extends Event {
 			Config_Hub_Helper::set_clear_active_flag();
 			$this->model->mark( self::STATUS_RESOLVE, $slug );
 			// Track.
-			$this->track_tweak( $tweak->to_array()['title'], 'Actioned' );
+			$this->track_tweak( $tweak->get_label(), 'Actioned' );
 			// Response.
 			$this->ajax_response( esc_html__( 'Security recommendation successfully resolved.', 'defender-security' ) );
 		}
@@ -244,7 +231,7 @@ class Security_Tweaks extends Event {
 			Config_Hub_Helper::set_clear_active_flag();
 			$this->model->mark( self::STATUS_ISSUES, $slug );
 			// Track.
-			$this->track_tweak( $tweak->to_array()['title'], 'Reverted' );
+			$this->track_tweak( $tweak->get_label(), 'Reverted' );
 			// Response.
 			$this->ajax_response( esc_html__( 'Security recommendation successfully reverted.', 'defender-security' ) );
 		}
@@ -282,7 +269,7 @@ class Security_Tweaks extends Event {
 		}
 		$this->model->mark( self::STATUS_IGNORE, $slug );
 		// Track.
-		$this->track_tweak( $tweak->to_array()['title'], 'Ignored' );
+		$this->track_tweak( $tweak->get_label(), 'Ignored' );
 
 		$this->security_key->cron_unschedule();
 
@@ -316,7 +303,7 @@ class Security_Tweaks extends Event {
 		}
 		$this->model->mark( self::STATUS_RESTORE, $slug );
 		// Track.
-		$this->track_tweak( $tweak->to_array()['title'], 'Restored' );
+		$this->track_tweak( $tweak->get_label(), 'Restored' );
 
 		if ( $this->security_key->get_is_autogenerate_keys() ) {
 			// Mandatory: cron_schedule method bypass scheduling if already a schedule for this job.
@@ -375,7 +362,7 @@ class Security_Tweaks extends Event {
 		$msg = sprintf(
 		/* translators: %s: Tweak title. */
 			esc_html__( '%s is not actioned. Please ensure that all the instructions are followed.', 'defender-security' ),
-			$tweak->to_array()['title'] ?? ''
+			$tweak->get_label() ?? ''
 		);
 
 		return new Response(
@@ -387,7 +374,7 @@ class Security_Tweaks extends Event {
 	/**
 	 * Update security reminder.
 	 *
-	 * @param  Request $request  Request object.
+	 * @param Request $request Request object.
 	 *
 	 * @return Response
 	 * @defender_route
@@ -435,7 +422,7 @@ class Security_Tweaks extends Event {
 
 
 	/**
-	 * AJAX Response handler
+	 * AJAX Response handler.
 	 *
 	 * @param  string   $message  The message to be displayed in the response.
 	 * @param  bool     $is_success  Whether the response should have a success status.
@@ -483,6 +470,31 @@ class Security_Tweaks extends Event {
 	}
 
 	/**
+	 * Provides data for the dashboard widget.
+	 *
+	 * @return array
+	 */
+	public function dashboard_widget(): array {
+		$tweak_arr = $this->model->get_tweak_types();
+		$data      = array();
+		foreach ( $this->init_tweaks( self::STATUS_ISSUES ) as $slug => $tweak ) {
+			$data[] = array(
+				'title' => $tweak->get_label(),
+				'slug'  => $slug,
+			);
+		}
+
+		return array(
+			'summary' => array(
+				'fixed_count'  => $tweak_arr['count_fixed'],
+				'ignore_count' => $tweak_arr['count_ignored'],
+				'issues_count' => $tweak_arr['count_issues'],
+			),
+			'issues'  => $data,
+		);
+	}
+
+	/**
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
@@ -526,22 +538,21 @@ class Security_Tweaks extends Event {
 		}
 
 		$data = array(
-			'summary'               => array(
+			'summary'              => array(
 				'fixed_count'  => $tweak_arr['count_fixed'],
 				'ignore_count' => $tweak_arr['count_ignored'],
 				'issues_count' => $tweak_arr['count_issues'],
 				'php_version'  => PHP_VERSION,
 				'wp_version'   => $wp_version,
 			),
-			'issues'                => $this->init_tweaks( self::STATUS_ISSUES, 'array' ),
-			'fixed'                 => $this->init_tweaks( self::STATUS_RESOLVE, 'array' ),
-			'ignored'               => $this->init_tweaks( self::STATUS_IGNORE, 'array' ),
-			'not_allowed_bulk'      => $not_allowed_bulk,
-			'indicator_issue_count' => $this->scan->indicator_issue_count(),
-			'is_autogenerate_keys'  => $this->security_key->get_is_autogenerate_keys(),
-			'reminder_frequencies'  => $this->security_key->reminder_frequencies(),
-			'enabled_user_enums'    => $this->prevent_enum_users->get_enabled_user_enums(),
-			'misc'                  => $misc,
+			'issues'               => $this->init_tweaks( self::STATUS_ISSUES, 'array' ),
+			'fixed'                => $this->init_tweaks( self::STATUS_RESOLVE, 'array' ),
+			'ignored'              => $this->init_tweaks( self::STATUS_IGNORE, 'array' ),
+			'not_allowed_bulk'     => $not_allowed_bulk,
+			'is_autogenerate_keys' => $this->security_key->get_is_autogenerate_keys(),
+			'reminder_frequencies' => $this->security_key->reminder_frequencies(),
+			'enabled_user_enums'   => $this->prevent_enum_users->get_enabled_user_enums(),
+			'misc'                 => $misc,
 		);
 
 		return array_merge( $data, $this->dump_routes_and_nonces() );
@@ -622,7 +633,7 @@ class Security_Tweaks extends Event {
 			if ( 'ignore' === $intention ) {
 				$this->model->mark( self::STATUS_IGNORE, $slug );
 				// Track.
-				$this->track_tweak( $tweak->to_array()['title'], 'Ignored' );
+				$this->track_tweak( $tweak->get_label(), 'Ignored' );
 			} elseif ( 'resolve' === $intention ) {
 				$wont_do = array(
 					'replace-admin-username',
@@ -641,7 +652,6 @@ class Security_Tweaks extends Event {
 					$ret = $tweak->process();
 				}
 				if ( is_wp_error( $ret ) ) {
-					$data = $tweak->to_array();
 					$this->ajax_response(
 						sprintf(
 						/* translators: 1: Security tweak title, 2: Error message */
@@ -649,7 +659,7 @@ class Security_Tweaks extends Event {
 								'There is an error while processing recommendation %1$s, error message: %2$s',
 								'defender-security'
 							),
-							$data['title'],
+							$tweak->get_label(),
 							$ret->get_error_message()
 						),
 						false
@@ -657,7 +667,7 @@ class Security_Tweaks extends Event {
 				}
 				$this->model->mark( self::STATUS_RESOLVE, $slug );
 				// Track.
-				$this->track_tweak( $tweak->to_array()['title'], 'Actioned' );
+				$this->track_tweak( $tweak->get_label(), 'Actioned' );
 			}
 			++$processed;
 		}
@@ -796,7 +806,6 @@ class Security_Tweaks extends Event {
 		$settings = new Model_Security_Tweaks();
 
 		return array(
-			'rules' => array_slice( $this->init_tweaks( self::STATUS_ISSUES, 'array' ), 0, 5 ),
 			'count' => array(
 				'issues'   => count( $settings->issues ),
 				'resolved' => count( $settings->fixed ),
@@ -876,7 +885,6 @@ class Security_Tweaks extends Event {
 						if ( 'hub' === $request_reason ) {
 							continue;
 						}
-						$data = $tweak->to_array();
 
 						return sprintf(
 						/* translators: 1: Security tweak title, 2: Error message */
@@ -884,7 +892,7 @@ class Security_Tweaks extends Event {
 								'There is an error while processing recommendation %1$s, error message: %2$s',
 								'defender-security'
 							),
-							$data['title'],
+							$tweak->get_label(),
 							$ret->get_error_message()
 						);
 					}
@@ -909,7 +917,6 @@ class Security_Tweaks extends Event {
 						if ( 'hub' === $request_reason ) {
 							continue;
 						}
-						$data = $tweak->to_array();
 
 						return sprintf(
 						/* translators: 1: Security tweak title, 2: Error message */
@@ -917,7 +924,7 @@ class Security_Tweaks extends Event {
 								'There is an error while processing recommendation %1$s, error message: %2$s',
 								'defender-security'
 							),
-							$data['title'],
+							$tweak->get_label(),
 							$ret->get_error_message()
 						);
 					}
@@ -941,7 +948,7 @@ class Security_Tweaks extends Event {
 	/**
 	 * Imports data into the model.
 	 *
-	 * @param  array $data  Data to be imported into the model.
+	 * @param array $data  Data to be imported into the model.
 	 */
 	public function import_data( array $data ) {
 		$enabled_user_enums = array();
@@ -1119,6 +1126,23 @@ class Security_Tweaks extends Event {
 	 */
 	public function refuse_notice( Request $request ): Response {
 		update_site_option( Rate::SLUG_FOR_BUTTON_THANKS, true );
+
+		return new Response( true, array() );
+	}
+
+
+	/**
+	 * Check XML-RPC status.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function check_xml_rpc() {
+		$tweak_xml_rpc = wd_di()->get( Disable_XML_RPC::class );
+		// If this tweak is ON, block XML-RPC.
+		if ( $tweak_xml_rpc->recheck() ) {
+			$tweak_xml_rpc->add_hooks();
+		}
 
 		return new Response( true, array() );
 	}

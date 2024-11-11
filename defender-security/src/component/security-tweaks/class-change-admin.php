@@ -10,20 +10,19 @@ namespace WP_Defender\Component\Security_Tweaks;
 use WP_User;
 use WP_Error;
 use Calotes\Helper\HTTP;
-use Calotes\Base\Component;
 use Calotes\Component\Response;
 
 /**
  * Handle the security tweak of changing the default 'admin' username to a user-defined one.
  */
-class Change_Admin extends Component {
+class Change_Admin extends Abstract_Security_Tweaks {
 
 	/**
 	 * Slug identifier for the component.
 	 *
 	 * @var string
 	 */
-	public $slug = 'replace-admin-username';
+	public string $slug = 'replace-admin-username';
 
 	/**
 	 * Check whether the issue has been resolved or not.
@@ -190,6 +189,24 @@ class Change_Admin extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Change default admin user account', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'You have a user account with the admin username.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
@@ -197,8 +214,8 @@ class Change_Admin extends Component {
 	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Change default admin user account', 'defender-security' ),
-			'errorReason'      => esc_html__( 'You have a user account with the admin username.', 'defender-security' ),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => esc_html__(
 				'You don\'t have a user account with the default admin username, great!',
 				'defender-security'

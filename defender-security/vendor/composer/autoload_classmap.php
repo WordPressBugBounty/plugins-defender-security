@@ -110,6 +110,7 @@ return array(
     'WP_Defender\\Component\\Security_Headers\\Sh_XSS_Protection' => $baseDir . '/src/component/security-headers/class-sh-xss-protection.php',
     'WP_Defender\\Component\\Security_Headers\\Sh_X_Frame' => $baseDir . '/src/component/security-headers/class-sh-x-frame.php',
     'WP_Defender\\Component\\Security_Tweak' => $baseDir . '/src/component/class-security-tweak.php',
+    'WP_Defender\\Component\\Security_Tweaks\\Abstract_Security_Tweaks' => $baseDir . '/src/component/security-tweaks/class-abstract-security-tweaks.php',
     'WP_Defender\\Component\\Security_Tweaks\\Change_Admin' => $baseDir . '/src/component/security-tweaks/class-change-admin.php',
     'WP_Defender\\Component\\Security_Tweaks\\Disable_File_Editor' => $baseDir . '/src/component/security-tweaks/class-disable-file-editor.php',
     'WP_Defender\\Component\\Security_Tweaks\\Disable_Trackback' => $baseDir . '/src/component/security-tweaks/class-disable-trackback.php',

@@ -8,21 +8,20 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
-use Calotes\Base\Component;
 use WP_Defender\Component\Security_Tweaks\Servers\Server;
 use WP_Defender\Component\Security_Tweak as Security_Tweak_Component;
 
 /**
  * Handles the implementation of the disable-file-editor security tweak.
  */
-class Disable_File_Editor extends Component {
+class Disable_File_Editor extends Abstract_Security_Tweaks {
 
 	/**
 	 * Slug identifier for the component.
 	 *
 	 * @var string
 	 */
-	public $slug = 'disable-file-editor';
+	public string $slug = 'disable-file-editor';
 
 	/**
 	 * Check whether the issue has been resolved or not.
@@ -169,15 +168,33 @@ class Disable_File_Editor extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Disable the file editor', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return esc_html__( 'The file editor is currently enabled.', 'defender-security' );
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
 	 */
-	public function to_array() {
+	public function to_array(): array {
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Disable the file editor', 'defender-security' ),
-			'errorReason'      => esc_html__( 'The file editor is currently enabled.', 'defender-security' ),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => esc_html__( 'You\'ve disabled the file editor, winning.', 'defender-security' ),
 			'misc'             => array(),
 			'bulk_description' => esc_html__(

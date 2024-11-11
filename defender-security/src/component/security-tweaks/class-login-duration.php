@@ -9,12 +9,11 @@ namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
 use Calotes\Helper\HTTP;
-use Calotes\Base\Component;
 
 /**
  * Manages the login duration settings.
  */
-class Login_Duration extends Component {
+class Login_Duration extends Abstract_Security_Tweaks {
 
 	public const DEFAULT_DAYS = 14;
 	/**
@@ -22,7 +21,7 @@ class Login_Duration extends Component {
 	 *
 	 * @var string
 	 */
-	public $slug = 'login-duration';
+	public string $slug = 'login-duration';
 	/**
 	 * Check whether the issue has been resolved or not.
 	 *
@@ -141,6 +140,28 @@ class Login_Duration extends Component {
 	}
 
 	/**
+	 * Retrieve the tweak's label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return esc_html__( 'Manage Login Duration', 'defender-security' );
+	}
+
+	/**
+	 * Get the error reason.
+	 *
+	 * @return string
+	 */
+	public function get_error_reason(): string {
+		return sprintf(
+			/* translators: %d: Number of days. */
+			esc_html__( 'Your current login duration is the default %d days.', 'defender-security' ),
+			self::DEFAULT_DAYS
+		);
+	}
+
+	/**
 	 * Return a summary data of this tweak.
 	 *
 	 * @return array
@@ -150,12 +171,8 @@ class Login_Duration extends Component {
 
 		return array(
 			'slug'             => $this->slug,
-			'title'            => esc_html__( 'Manage Login Duration', 'defender-security' ),
-			'errorReason'      => sprintf(
-			/* translators: %d: Number of days. */
-				esc_html__( 'Your current login duration is the default %d days.', 'defender-security' ),
-				self::DEFAULT_DAYS
-			),
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => sprintf(
 			/* translators: %d: Number of days. */
 				esc_html__( 'You\'ve adjusted the default login duration to %d days.', 'defender-security' ),

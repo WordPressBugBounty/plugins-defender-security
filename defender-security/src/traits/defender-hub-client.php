@@ -33,6 +33,7 @@ use WP_Defender\Model\Setting\Password_Protection;
 use WP_Defender\Model\Notification\Firewall_Report;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
 use WP_Defender\Model\Notification\Firewall_Notification;
+use WP_Defender\Model\Setting\Security_Tweaks as Model_Security_Tweaks;
 
 trait Defender_Hub_Client {
 
@@ -46,7 +47,7 @@ trait Defender_Hub_Client {
 	 */
 	public function get_api_base_url(): string {
 		return defined( 'WPMUDEV_CUSTOM_API_SERVER' ) && WPMUDEV_CUSTOM_API_SERVER
-			? WPMUDEV_CUSTOM_API_SERVER
+			? trailingslashit( WPMUDEV_CUSTOM_API_SERVER )
 			: 'https://wpmudev.com/';
 	}
 
@@ -61,40 +62,37 @@ trait Defender_Hub_Client {
 		$base = $this->get_api_base_url();
 		switch ( $scenario ) {
 			case self::API_SCAN_KNOWN_VULN:
-				return "{$base}api/defender/v1/vulnerabilities";
+				return $base . 'api/defender/v1/vulnerabilities';
 			case self::API_SCAN_SIGNATURE:
-				return "{$base}api/defender/v1/yara-signatures";
+				return $base . 'api/defender/v1/yara-signatures';
 			case self::API_AUDIT:
 				// This is from another endpoint.
 				$base = defined( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
 					? constant( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
 					: 'https://audit.wpmudev.org/';
 
-				return "{$base}logs";
+				return $base . 'logs';
 			case self::API_AUDIT_ADD:
 				$base = defined( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
 					? constant( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
 					: 'https://audit.wpmudev.org/';
 
-				return "{$base}logs/add_multiple";
+				return $base . 'logs/add_multiple';
 			case self::API_BLACKLIST:
-				return "{$base}api/defender/v1/blacklist-monitoring?domain=" . network_site_url();
-			case self::API_WAF:
+				return $base . 'api/defender/v1/blacklist-monitoring?domain=' . network_site_url();
+			case self::API_HOSTING:
 				$site_id = $this->get_site_id();
 
-				return "{$base}api/hub/v1/sites/$site_id/modules/hosting";
+				return $base . "api/hub/v1/sites/$site_id/modules/hosting";
 			case self::API_GLOBAL_IP_LIST:
-				return "{$base}api/hub/v1/global-ip-list";
+				return $base . 'api/hub/v1/global-ip-list';
 			case self::API_PACKAGE_CONFIGS:
-				return "{$base}api/hub/v1/package-configs";
+				return $base . 'api/hub/v1/package-configs';
 			case self::API_IP_BLOCKLIST_SUBMIT_LOGS:
-				return "{$base}api/blocklist/v1/logs";
-			case self::API_XMLRPC:
-				$site_id = $this->get_site_id();
-				return "{$base}api/hub/v1/sites/$site_id/modules/hosting/xmlrpc";
+				return $base . 'api/blocklist/v1/logs';
 			case self::API_HUB_SYNC:
 			default:
-				return "{$base}api/defender/v1/scan-results";
+				return $base . 'api/defender/v1/scan-results';
 		}
 	}
 
@@ -357,9 +355,11 @@ trait Defender_Hub_Client {
 	 * @return array
 	 */
 	protected function build_security_tweaks_hub_data(): array {
-		$arr   = wd_di()->get( Security_Tweaks::class )->data_frontend();
+		// Exclude direct call of data_frontend().
+		$tweak_arr = wd_di()->get( Model_Security_Tweaks::class )->get_tweak_types();
+
 		$data  = array(
-			'cautions' => $arr['summary']['issues_count'],
+			'cautions' => $tweak_arr['count_issues'],
 			'issues'   => array(),
 			'ignore'   => array(),
 			'fixed'    => array(),
@@ -376,10 +376,10 @@ trait Defender_Hub_Client {
 			} elseif ( 'fixed' === $type ) {
 				$view = '&view=resolved';
 			}
-			foreach ( wd_di()->get( Security_Tweaks::class )->init_tweaks( $type, 'array' ) as $tweak ) {
+			foreach ( wd_di()->get( Security_Tweaks::class )->init_tweaks( $type ) as $slug => $tweak ) {
 				$data[ $type ][] = array(
-					'label' => $tweak['title'],
-					'url'   => network_admin_url( 'admin.php?page=wdf-hardener' . $view . '#' . $tweak['slug'] ),
+					'label' => $tweak->get_label(),
+					'url'   => network_admin_url( 'admin.php?page=wdf-hardener' . $view . '#' . $slug ),
 				);
 			}
 		}
