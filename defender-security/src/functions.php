@@ -739,3 +739,20 @@ function defender_are_arrays_equal( $array1, $array2 ): bool {
 
 	return $array1 === $array2;
 }
+
+/**
+ * Get a feature state on WPMU DEV hosting.
+ *
+ * @param string $feature_key  The feature key, e.g. xmlrpc_block, globaliplist or waf.
+ *
+ * @return bool|string True or false if the feature is enabled or disabled, or an empty string if the feature is not found.
+ */
+function defender_get_hosting_feature_state( string $feature_key ) {
+	if ( function_exists( 'wpmudev_hosting_features' ) ) {
+		$states = wpmudev_hosting_features();
+
+		return isset( $states[ $feature_key ] ) ? $states[ $feature_key ] : '';
+	}
+
+	return '';
+}

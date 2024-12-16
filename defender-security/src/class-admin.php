@@ -221,7 +221,7 @@ class Admin {
 	 *
 	 * @return array
 	 */
-	public function settings_link( $links ): array {
+	public function settings_link( $links ) {
 		$action_links = array();
 		$wpmu_dev     = new WPMUDEV();
 		// Dashboard-link.
@@ -279,7 +279,7 @@ class Admin {
 	 *
 	 * @return array
 	 */
-	public function plugin_row_meta( $links, $file, $plugin_data ): array {
+	public function plugin_row_meta( $links, $file, $plugin_data ) {
 		$row_meta = array();
 		if ( ! defined( 'DEFENDER_PLUGIN_BASENAME' ) || DEFENDER_PLUGIN_BASENAME !== $file ) {
 			return $links;

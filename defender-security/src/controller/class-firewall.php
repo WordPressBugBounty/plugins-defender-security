@@ -1011,7 +1011,7 @@ class Firewall extends Event {
 	 *
 	 * @return array
 	 */
-	public function extend_mime_types( array $types ): array {
+	public function extend_mime_types( array $types ) {
 		if ( empty( $types['csv'] ) ) {
 			$types['csv'] = 'text/csv';
 		}

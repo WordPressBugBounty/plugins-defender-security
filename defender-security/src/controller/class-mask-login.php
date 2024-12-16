@@ -371,7 +371,7 @@ class Mask_Login extends Event {
 	 *
 	 * @return string
 	 */
-	public function filter_site_url( string $site_url ): string {
+	public function filter_site_url( string $site_url ) {
 		return $this->alter_url( $site_url, 'site_url' );
 	}
 
@@ -382,7 +382,7 @@ class Mask_Login extends Event {
 	 *
 	 * @return string The masked URL.
 	 */
-	public function filter_wp_redirect( string $location ): string {
+	public function filter_wp_redirect( string $location ) {
 		return $this->alter_url( $location, 'wp_safe_redirect' );
 	}
 
@@ -738,7 +738,7 @@ class Mask_Login extends Event {
 		string $password,
 		string $title,
 		array $meta
-	): string {
+	) {
 		$url           = get_blogaddress_by_id( $blog_id );
 		$welcome_email = str_replace(
 			$url . 'wp-login.php',
@@ -777,7 +777,7 @@ class Mask_Login extends Event {
 		string $key,
 		string $user_login,
 		WP_User $user_data
-	): string {
+	) {
 		$message = str_replace(
 			network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ), 'login' ),
 			$this->get_model()->get_new_login_url( $this->get_site_url() )
@@ -792,11 +792,9 @@ class Mask_Login extends Event {
 	/**
 	 * Change redirect param of the link 'Lost your password?'.
 	 *
-	 * @param  string $lostpassword_redirect  The original redirect URL.
-	 *
 	 * @return string
 	 */
-	public function change_lostpassword_redirect( string $lostpassword_redirect ): string {
+	public function change_lostpassword_redirect() {
 		return $this->get_model()->get_new_login_url( $this->get_site_url() ) . $this->get_permalink_separator() . 'checkemail=confirm';
 	}
 
@@ -851,7 +849,6 @@ class Mask_Login extends Event {
 	 * @return array An array of strings.
 	 */
 	public function export_strings(): array {
-
 		return array(
 			$this->get_model()->is_active() ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
 		);
@@ -867,7 +864,6 @@ class Mask_Login extends Event {
 	 * @return array Returns an array of configuration strings.
 	 */
 	public function config_strings( array $config, bool $is_pro ): array {
-
 		return array(
 			$config['enabled'] ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
 		);
@@ -1006,7 +1002,7 @@ class Mask_Login extends Event {
 	 * @return string $where
 	 * @since 2.7.1
 	 */
-	public function posts_where_title( string $where, WP_Query $wp_query ): string {
+	public function posts_where_title( string $where, WP_Query $wp_query ) {
 		global $wpdb;
 
 		$search_term = $wp_query->get( 'search_by_post_title' );
@@ -1026,7 +1022,7 @@ class Mask_Login extends Event {
 	 *
 	 * @return string The modified URL.
 	 */
-	public function change_subsites_admin_url( string $url, string $path, $blog_id ): string {
+	public function change_subsites_admin_url( string $url, string $path, $blog_id ) {
 		if ( empty( $path ) && ! empty( $blog_id ) ) {
 			$mask_url = trim( $this->model->mask_url );
 
@@ -1126,7 +1122,7 @@ class Mask_Login extends Event {
 	 * @return string
 	 * @since 3.4.0
 	 */
-	public function update_myblogs_blog_actions( string $actions, object $user_blog ): string {
+	public function update_myblogs_blog_actions( string $actions, object $user_blog ) {
 		$mask_url = trim( $this->model->mask_url );
 
 		if ( empty( $mask_url ) ) {

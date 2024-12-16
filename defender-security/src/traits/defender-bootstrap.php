@@ -394,7 +394,7 @@ SQL;
 	 *
 	 * @return string The modified body classes.
 	 */
-	public function add_sui_to_body( string $classes ): string {
+	public function add_sui_to_body( $classes ) {
 		if ( ! is_defender_page() ) {
 			return $classes;
 		}
@@ -535,7 +535,7 @@ SQL;
 				'wpmu_dev_url_action'         => $wpmu_dev->hide_wpmu_dev_urls() ? 'hide' : 'show',
 				'opcache_save_comments'       => $wp_defender_central->is_opcache_save_comments_disabled() ? 'disabled' : 'enabled',
 				'opcache_message'             => $wp_defender_central->display_opcache_message(),
-				'wpmudev_url'                 => 'https://wpmudev.com/docs/wpmu-dev-plugins/defender/',
+				'wpmudev_url'                 => WP_DEFENDER_DOCS_LINK,
 				'wpmudev_support_ticket_text' => defender_support_ticket_text(),
 				'wpmudev_api_base_url'        => $wpmu_dev->get_api_base_url(),
 				'upgrade_title'               => esc_html__( 'UPGRADE TO PRO', 'defender-security' ),
@@ -585,7 +585,7 @@ SQL;
 	 *
 	 * @return array The updated cron schedules.
 	 */
-	public function cron_schedules( array $schedules ): array {
+	public function cron_schedules( array $schedules ) {
 		return defender_cron_schedules( $schedules );
 	}
 
@@ -598,7 +598,7 @@ SQL;
 	public function includes(): void {
 		// Initialize modules.
 		add_action(
-			'setup_theme',
+			'after_setup_theme',
 			function () {
 				add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 				$this->init_modules();

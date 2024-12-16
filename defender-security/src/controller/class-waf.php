@@ -12,8 +12,7 @@ use Calotes\Component\Response;
 use WP_Defender\Behavior\WPMUDEV;
 
 /**
- * Handles the settings, data, and other functionality related to the Web
- * Application Firewall (WAF).
+ * Handles the settings, data, and other functionality related to the Web Application Firewall (WAF).
  */
 class WAF extends Controller {
 
@@ -77,28 +76,10 @@ class WAF extends Controller {
 	/**
 	 * Retrieves the WAF status for a given site.
 	 *
-	 * @param  int $site_id  Site ID to check.
-	 *
-	 * @return mixed Returns false on failure, true if WAF is enabled, or a cached value of "enabled" or "disabled".
+	 * @return bool Returns false on failure, true if WAF is enabled.
 	 */
-	public function get_waf_status( $site_id ) {
-		if ( false === $site_id ) {
-			return false;
-		}
-
-		$cached = get_site_transient( 'def_waf_status' );
-		if ( in_array( $cached, array( 'enabled', 'disabled' ), true ) ) {
-			return 'enabled' === $cached;
-		}
-
-		$ret = $this->wpmudev->make_wpmu_request( WPMUDEV::API_HOSTING );
-		if ( is_wp_error( $ret ) ) {
-			return false;
-		}
-		$status = $ret['waf']['is_active'];
-		set_site_transient( 'def_waf_status', true === $status ? 'enabled' : 'disabled', 300 );
-
-		return $status;
+	public function get_waf_status(): bool {
+		return ! empty( defender_get_hosting_feature_state( 'waf' ) );
 	}
 
 	/**
@@ -108,8 +89,6 @@ class WAF extends Controller {
 	 * @defender_route
 	 */
 	public function recheck(): Response {
-		delete_site_transient( 'def_waf_status' );
-
 		return new Response( true, array( 'waf' => $this->data_frontend()['waf'] ) );
 	}
 
@@ -140,12 +119,10 @@ class WAF extends Controller {
 	 * @return array The array representation of the object.
 	 */
 	public function to_array(): array {
-		$site_id = $this->wpmudev->get_site_id();
-
 		return array(
 			'waf' => array(
 				'hosted'     => $this->wpmudev->is_wpmu_hosting(),
-				'status'     => $this->get_waf_status( $site_id ),
+				'status'     => $this->get_waf_status(),
 				'maybe_show' => $this->maybe_show_dashboard_widget(),
 			),
 		);
@@ -176,7 +153,7 @@ class WAF extends Controller {
 				'site_id' => $site_id,
 				'waf'     => array(
 					'hosted' => $this->wpmudev->is_wpmu_hosting(),
-					'status' => $this->get_waf_status( $site_id ),
+					'status' => $this->get_waf_status(),
 				),
 			),
 			$this->dump_routes_and_nonces()

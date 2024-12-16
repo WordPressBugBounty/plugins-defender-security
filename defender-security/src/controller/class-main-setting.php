@@ -796,7 +796,7 @@ class Main_Setting extends Event {
 			),
 			'<strong>' . esc_html__( 'Recommendations', 'defender-security' ) . '</strong>',
 			'<strong>' . esc_html__( 'wp-config.php', 'defender-security' ) . '</strong>',
-			'<a href="https://wpmudev.com/docs/wpmu-dev-plugins/defender/#manually-applying-recommendations" target="_blank">' . esc_html__( 'documentation', 'defender-security' ) . '</a>'
+			'<a href="' . WP_DEFENDER_DOCS_LINK . '#manually-applying-recommendations" target="_blank">' . esc_html__( 'documentation', 'defender-security' ) . '</a>'
 		);
 
 		return new Response(

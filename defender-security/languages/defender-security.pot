@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 4.11.0\n"
+"Project-Id-Version: Defender Pro 4.12.0\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
-"POT-Creation-Date: 2024-11-04 08:43:42+00:00\n"
+"POT-Creation-Date: 2024-12-09 08:38:08+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -263,7 +263,7 @@ msgstr ""
 msgid "7 days"
 msgstr ""
 
-#: languages/vue-js.php:182 src/controller/class-mask-login.php:1195
+#: languages/vue-js.php:182 src/controller/class-mask-login.php:1191
 #: src/model/setting/class-mask-login.php:200
 msgid ""
 "A page already exists at this URL. Please enter a unique URL for your login "
@@ -335,8 +335,8 @@ msgstr ""
 #: src/controller/class-audit-logging.php:604
 #: src/controller/class-blocklist-monitor.php:232
 #: src/controller/class-blocklist-monitor.php:250
-#: src/controller/class-mask-login.php:856
-#: src/controller/class-mask-login.php:872
+#: src/controller/class-mask-login.php:853
+#: src/controller/class-mask-login.php:868
 #: src/controller/class-password-protection.php:356
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-recaptcha.php:1259 src/controller/class-scan.php:990
@@ -1723,7 +1723,7 @@ msgid "Disable Usage Tracking?"
 msgstr ""
 
 #: languages/vue-js.php:1342
-#: src/component/security-tweaks/class-disable-xml-rpc.php:213
+#: src/component/security-tweaks/class-disable-xml-rpc.php:202
 msgid "Disable XML-RPC"
 msgstr ""
 
@@ -2037,7 +2037,7 @@ msgid "Fetching your domain info..."
 msgstr ""
 
 #: languages/vue-js.php:1592 src/model/setting/class-scan.php:135
-#: src/model/setting/class-scan.php:177 src/traits/defender-hub-client.php:675
+#: src/model/setting/class-scan.php:177 src/traits/defender-hub-client.php:671
 msgid "File change detection"
 msgstr ""
 
@@ -2497,8 +2497,8 @@ msgstr ""
 #: src/controller/class-audit-logging.php:613
 #: src/controller/class-blocklist-monitor.php:234
 #: src/controller/class-blocklist-monitor.php:251
-#: src/controller/class-mask-login.php:856
-#: src/controller/class-mask-login.php:872
+#: src/controller/class-mask-login.php:853
+#: src/controller/class-mask-login.php:868
 #: src/controller/class-password-protection.php:356
 #: src/controller/class-password-protection.php:370
 #: src/controller/class-password-protection.php:376
@@ -2633,7 +2633,7 @@ msgid "Keep"
 msgstr ""
 
 #: languages/vue-js.php:2055 src/model/setting/class-scan.php:138
-#: src/traits/defender-hub-client.php:678
+#: src/traits/defender-hub-client.php:674
 msgid "Known vulnerabilities"
 msgstr ""
 
@@ -3792,7 +3792,7 @@ msgid "Saving"
 msgstr ""
 
 #: languages/vue-js.php:2980 src/model/setting/class-scan.php:136
-#: src/traits/defender-hub-client.php:676
+#: src/traits/defender-hub-client.php:672
 msgid "Scan core files"
 msgstr ""
 
@@ -3801,7 +3801,7 @@ msgid "Scan in progress"
 msgstr ""
 
 #: languages/vue-js.php:2987 src/model/setting/class-scan.php:137
-#: src/traits/defender-hub-client.php:677
+#: src/traits/defender-hub-client.php:673
 msgid "Scan plugin files"
 msgstr ""
 
@@ -4100,7 +4100,7 @@ msgstr ""
 msgid "Support"
 msgstr ""
 
-#: languages/vue-js.php:3259 src/traits/defender-hub-client.php:679
+#: languages/vue-js.php:3259 src/traits/defender-hub-client.php:675
 msgid "Suspicious code"
 msgstr ""
 
@@ -5410,7 +5410,7 @@ msgstr ""
 
 #: src/class-admin.php:435 src/class-admin.php:459
 #: src/controller/class-data-tracking.php:57
-#: src/traits/defender-hub-client.php:203
+#: src/traits/defender-hub-client.php:199
 msgid "here"
 msgstr ""
 
@@ -6680,7 +6680,7 @@ msgstr ""
 msgid "Reset two factor"
 msgstr ""
 
-#: src/component/class-unlock-me.php:214
+#: src/component/class-unlock-me.php:222
 msgid "Unlock Me"
 msgstr ""
 
@@ -6717,6 +6717,14 @@ msgstr ""
 
 #: src/component/ip/class-global-ip.php:339
 msgid "Invalid Global IP parameter(s) provided."
+msgstr ""
+
+#: src/component/ip/class-global-ip.php:429
+msgid "No IP(s) provided."
+msgstr ""
+
+#: src/component/ip/class-global-ip.php:443
+msgid "Missing blocklist data."
 msgstr ""
 
 #: src/component/security-headers/class-sh-content-type-options.php:64
@@ -6893,43 +6901,43 @@ msgstr ""
 msgid "Trackbacks and pingbacks"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:204
+#: src/component/security-tweaks/class-disable-xml-rpc.php:193
 #: src/component/security-tweaks/class-prevent-enum-users.php:116
 msgid "Forbidden"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:222
+#: src/component/security-tweaks/class-disable-xml-rpc.php:211
 msgid "XML-RPC is currently enabled."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:232
+#: src/component/security-tweaks/class-disable-xml-rpc.php:221
 msgid "XML-RPC is disabled, great job!"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:246
+#: src/component/security-tweaks/class-disable-xml-rpc.php:235
 msgid "You can manage the XML-RPC settings in the Hosting Settings."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:250
+#: src/component/security-tweaks/class-disable-xml-rpc.php:239
 #. translators: %1$s: link to admin page, %2$s: closing link tag.
 msgid ""
 "You can manage XML-RPC settings from Hosting Settings by going to %1$sthis "
 "link%2$s."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:256
+#: src/component/security-tweaks/class-disable-xml-rpc.php:245
 msgid "XML-RPC is currently disabled on plugin side."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:261
+#: src/component/security-tweaks/class-disable-xml-rpc.php:250
 #. translators: %1$s: link to admin page, %2$s: closing link tag.
 msgid ""
 "XML-RPC is currently disabled on plugin side, we suggest disabling it from "
 "server side by clicking on %1$sthis link%2$s."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:276
-#: src/component/security-tweaks/class-disable-xml-rpc.php:289
+#: src/component/security-tweaks/class-disable-xml-rpc.php:265
+#: src/component/security-tweaks/class-disable-xml-rpc.php:278
 msgid ""
 "In the past, there were security concerns with XML-RPC so we recommend "
 "making sure this feature is fully disabled if you don’t need it active. We "
@@ -7397,7 +7405,7 @@ msgstr ""
 #: src/controller/class-blacklist.php:226 src/controller/class-firewall.php:271
 #: src/controller/class-main-setting.php:148
 #: src/controller/class-mask-login.php:346
-#: src/controller/class-mask-login.php:1184
+#: src/controller/class-mask-login.php:1180
 #: src/controller/class-password-protection.php:244
 #: src/controller/class-password-reset.php:223
 #: src/controller/class-scan.php:553
@@ -8099,7 +8107,7 @@ msgstr ""
 msgid "Your blocklist and allowlist have been successfully imported."
 msgstr ""
 
-#: src/controller/class-waf.php:45
+#: src/controller/class-waf.php:44
 msgid "WAF"
 msgstr ""
 
@@ -8943,23 +8951,23 @@ msgstr ""
 msgid "UPGRADE TO PRO"
 msgstr ""
 
-#: src/traits/defender-hub-client.php:132
-#: src/traits/defender-hub-client.php:247
+#: src/traits/defender-hub-client.php:128
+#: src/traits/defender-hub-client.php:243
 msgid "Dash plugin authentication API key missing."
 msgstr ""
 
-#: src/traits/defender-hub-client.php:210
+#: src/traits/defender-hub-client.php:206
 #. translators: %s - wpmudev link
 msgid ""
 "WPMU DEV Dashboard will be required for this action. Please visit %s and "
 "install the WPMU DEV Dashboard."
 msgstr ""
 
-#: src/traits/defender-hub-client.php:241
+#: src/traits/defender-hub-client.php:237
 msgid "Permission denied API call."
 msgstr ""
 
-#: src/traits/defender-hub-client.php:261
+#: src/traits/defender-hub-client.php:257
 msgid "WPMU DEV Dashboard plugin is missing."
 msgstr ""
 

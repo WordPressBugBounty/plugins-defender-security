@@ -103,7 +103,7 @@ class Login_Duration extends Abstract_Security_Tweaks {
 	 *
 	 * @return int
 	 */
-	public function cookie_duration( $duration, $user_id, $remember ): int {
+	public function cookie_duration( $duration, $user_id, $remember ) {
 		$saved_duration = $this->get_duration( true );
 
 		// When remember is set or saved_duration is smaller than 2 days, return saved_duration.

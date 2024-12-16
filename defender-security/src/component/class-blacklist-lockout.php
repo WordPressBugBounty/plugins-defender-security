@@ -77,6 +77,8 @@ class Blacklist_Lockout extends Component {
 			'165.227.251.120',
 			'140.82.60.49',
 			'45.63.10.140',
+			'167.71.93.101',
+			'167.71.179.192',
 			...$this->get_blc_ip_whitelisted(),
 			'127.0.0.1',
 			isset( $server_addr ) ? $server_addr : $remote_addr,

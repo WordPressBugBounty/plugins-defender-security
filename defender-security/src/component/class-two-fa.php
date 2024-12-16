@@ -757,16 +757,16 @@ class Two_Fa extends Component {
 	public function add_hooks(): void {
 		// This will be only displayed on a single site and the main site of MU.
 		if ( is_multisite() ) {
-			add_filter( 'wpmu_users_columns', array( &$this, 'alter_users_table' ) );
-			add_action( 'network_admin_notices', array( &$this, 'admin_notices' ) );
-			add_filter( 'ms_user_row_actions', array( &$this, 'display_user_actions' ), 10, 2 );
+			add_filter( 'wpmu_users_columns', array( $this, 'alter_users_table' ) );
+			add_action( 'network_admin_notices', array( $this, 'admin_notices' ) );
+			add_filter( 'ms_user_row_actions', array( $this, 'display_user_actions' ), 10, 2 );
 		} else {
-			add_filter( 'manage_users_columns', array( &$this, 'alter_users_table' ) );
-			add_action( 'admin_notices', array( &$this, 'admin_notices' ) );
-			add_filter( 'user_row_actions', array( &$this, 'display_user_actions' ), 10, 2 );
+			add_filter( 'manage_users_columns', array( $this, 'alter_users_table' ) );
+			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
+			add_filter( 'user_row_actions', array( $this, 'display_user_actions' ), 10, 2 );
 		}
-		add_filter( 'manage_users_custom_column', array( &$this, 'alter_user_table_row' ), 10, 3 );
-		add_filter( 'ms_shortcode_ajax_login', array( &$this, 'm2_no_ajax' ) );
+		add_filter( 'manage_users_custom_column', array( $this, 'alter_user_table_row' ), 10, 3 );
+		add_filter( 'ms_shortcode_ajax_login', array( $this, 'm2_no_ajax' ) );
 	}
 
 	/**
@@ -776,7 +776,7 @@ class Two_Fa extends Component {
 	 *
 	 * @return array
 	 */
-	public function alter_users_table( array $columns ): array {
+	public function alter_users_table( array $columns ) {
 		$columns = array_slice( $columns, 0, count( $columns ) - 1 )
 			+ array( 'defender-two-fa' => esc_html__( 'Two Factor', 'defender-security' ) )
 			+ array_slice( $columns, count( $columns ) - 1 );
@@ -839,7 +839,7 @@ class Two_Fa extends Component {
 	 *
 	 * @return array
 	 */
-	public function display_user_actions( $actions, WP_User $user ): array {
+	public function display_user_actions( $actions, WP_User $user ) {
 		// Only for users that have one enabled 2fa method at least.
 		if ( empty( get_user_meta( $user->ID, self::DEFAULT_PROVIDER_USER_KEY, true ) ) ) {
 			return $actions;
@@ -865,9 +865,8 @@ class Two_Fa extends Component {
 	 * @param  int    $user_id  The ID of the user.
 	 *
 	 * @return string The altered value of the user table row.
-	 * @since 2.8.1 Update return value.
 	 */
-	public function alter_user_table_row( $val, string $column_name, int $user_id ): string {
+	public function alter_user_table_row( $val, string $column_name, int $user_id ) {
 		// @since 3.3.0. Fix an error from other plugins.
 		$val = (string) $val;
 		if ( 'defender-two-fa' !== $column_name ) {
@@ -887,7 +886,7 @@ class Two_Fa extends Component {
 	 *
 	 * @return bool
 	 */
-	public function m2_no_ajax(): bool {
+	public function m2_no_ajax() {
 		return false;
 	}
 }

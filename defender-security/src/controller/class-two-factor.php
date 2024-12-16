@@ -1253,7 +1253,7 @@ class Two_Factor extends Event {
 	 *
 	 * @return string
 	 */
-	public function handle_woocommerce_login_redirect( string $redirect, WP_User $user ): string {
+	public function handle_woocommerce_login_redirect( string $redirect, WP_User $user ) {
 		// Is User role from common list checked?
 		if ( false === $this->service->is_auth_enable_for( $user, $this->model->user_roles ) ) {
 			return $redirect;
@@ -1363,7 +1363,7 @@ class Two_Factor extends Event {
 	 *
 	 * @return array The updated array of query variables.
 	 */
-	public function wp_defender_2fa_query_vars( $vars ): array {
+	public function wp_defender_2fa_query_vars( $vars ) {
 		$vars[] = $this->slug;
 
 		return $vars;
@@ -1377,7 +1377,7 @@ class Two_Factor extends Event {
 	 *
 	 * @return array The updated array of items with the new endpoint inserted.
 	 */
-	public function wp_defender_2fa_link_my_account( $items ): array {
+	public function wp_defender_2fa_link_my_account( $items ) {
 		$needed_place = is_array( $items ) && ! empty( $items ) ? ( count( $items ) - 1 ) : 0;
 
 		return array_slice( $items, 0, $needed_place, true )

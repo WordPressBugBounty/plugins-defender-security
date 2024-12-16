@@ -101,7 +101,7 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 	 *
 	 * @return string
 	 */
-	public function maybe_block( string $request ): string {
+	public function maybe_block( string $request ) {
 		if ( ! current_user_can( 'edit_others_posts' ) ) {
 			$params = array();
 			wp_parse_str( strtolower( $request ), $params );

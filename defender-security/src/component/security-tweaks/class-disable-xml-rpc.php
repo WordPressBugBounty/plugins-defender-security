@@ -148,24 +148,13 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 			return true;
 		}
 
-		// Get a cached result.
-		$server_xmlrpc_status = get_site_transient( 'def_xml_rpc_status_in_server' );
-		// If the result is not cached, make a request to the WPMU DEV API to retrieve the status of the XML-RPC.
-		if ( empty( $server_xmlrpc_status ) ) {
-			$response = $this->wpmudev->make_wpmu_request( WPMUDEV::API_HOSTING );
-			if ( is_wp_error( $response ) ) {
-				// Log the error message.
-				$this->log( 'XML-RPC error: ' . $response->get_error_message(), $this->slug );
-				return false;
-			}
-			// Check the XML-RPC status returned from the API.
-			$server_xmlrpc_status = empty( $response['xmlrpc']['is_enabled'] ) ? 'ON' : 'OFF';
-			// Since v4.10.1 we cache the result for 5 minutes by default.
-			$expiration = (int) apply_filters( 'wd_xml_rpc_status_expiration', 5 * MINUTE_IN_SECONDS );
-			set_site_transient( 'def_xml_rpc_status_in_server', $server_xmlrpc_status, $expiration );
+		$server_xmlrpc_status = defender_get_hosting_feature_state( 'xmlrpc_block' );
+		if ( '' === $server_xmlrpc_status ) {
+			// Something went wrong.
+			return false;
 		}
 		// Return whether the XML-RPC is enabled or disabled based on the XML-RPC status.
-		return 'ON' === $server_xmlrpc_status;
+		return ! $server_xmlrpc_status;
 	}
 
 	/**

@@ -98,30 +98,28 @@ abstract class Audit_Event extends Component {
 	/**
 	 * Recursively looks up a value within a nested array or object based on provided links.
 	 *
+	 * This method takes an object or an array and an array of links. It iterates over the links
+	 * and uses each link to access a nested property or array element of the $obj. For example,
+	 * if the $obj is an array ['a' => ['b' => 'c']], and the links are ['a', 'b'], the method will
+	 * return 'c'. If the link does not exist in the object or array, the method will return false.
+	 *
 	 * @param  mixed $obj  The object or array to access nested properties or array elements.
 	 * @param  array $links  The array of links to access nested properties or array elements of the $obj.
 	 *
 	 * @return mixed The final value of $obj if the iteration is successful, false otherwise.
 	 */
-	private static function recursive_look( $obj, $links ) {
-		$look  = null;
-		$count = is_array( $links ) || $links instanceof Countable ? count( $links ) : 0;
-		while ( $count ) {
-			$link = array_shift( $links );
-			if ( is_array( $obj ) ) {
+	private static function recursive_look( $obj, array $links ) {
+		// We will iterate over the links and use each link to access a nested property or array element of the $obj.
+		foreach ( $links as $link ) {
+			if ( is_array( $obj ) && array_key_exists( $link, $obj ) ) {
 				$obj = $obj[ $link ];
-			} elseif ( is_object( $obj ) ) {
+			} elseif ( is_object( $obj ) && isset( $obj->$link ) ) {
 				$obj = $obj->$link;
 			} else {
-				$look = false;
-				break;
+				return false;
 			}
-			$count = is_array( $links ) || $links instanceof Countable ? count( $links ) : 0;
 		}
-		if ( false === $look ) {
-			return false;
-		}
-
+		// If the iteration is successful, we return the final value of $obj.
 		return $obj;
 	}
 
@@ -134,11 +132,24 @@ abstract class Audit_Event extends Component {
 	 * @return mixed The value found at the end of the links, or null if not found.
 	 */
 	private static function recursive_look_array( $data, $links ) {
-		$links = explode( '->', $links );
-		$obj   = $data[ $links[0] ];
-		unset( $links[0] );
-		$obj = self::recursive_look( $obj, $links );
+		$links_array = explode( '->', $links );
 
+		// Check if the first link exists and is valid.
+		if ( empty( $links_array ) || ! isset( $data[ $links_array[0] ] ) ) {
+			return false;
+		}
+
+		// If the first link exists and is valid, retrieve the value of the first link from the data array.
+		$obj = $data[ $links_array[0] ];
+
+		// If there are more links to process, pass them to recursive_look.
+		if ( count( $links_array ) > 1 ) {
+			// Pass the remaining links starting from index 1 to the recursive_look method.
+			$remaining_links = array_slice( $links_array, 1 );
+			$obj             = self::recursive_look( $obj, $remaining_links );
+		}
+
+		// Finally, return the final value found at the end of the links.
 		return $obj;
 	}
 

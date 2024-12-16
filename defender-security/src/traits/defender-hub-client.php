@@ -80,10 +80,6 @@ trait Defender_Hub_Client {
 				return $base . 'logs/add_multiple';
 			case self::API_BLACKLIST:
 				return $base . 'api/defender/v1/blacklist-monitoring?domain=' . network_site_url();
-			case self::API_HOSTING:
-				$site_id = $this->get_site_id();
-
-				return $base . "api/hub/v1/sites/$site_id/modules/hosting";
 			case self::API_GLOBAL_IP_LIST:
 				return $base . 'api/hub/v1/global-ip-list';
 			case self::API_PACKAGE_CONFIGS:

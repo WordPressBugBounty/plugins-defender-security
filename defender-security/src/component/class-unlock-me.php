@@ -79,26 +79,16 @@ class Unlock_Me extends Component {
 		$ips = array();
 		// Get the line of ID or several IDs for multiple lockouts, and change status(-es) in Unlockout table.
 		$limit_time = strtotime( self::get_expired_time() );
-		if ( false !== strpos( $string_uid, '-' ) ) {
-			// There are some ID's.
-			$arr_uids = explode( '-', $string_uid );
-			if ( ! is_array( $arr_uids ) ) {
-				$this->log( 'Unlock Me. Incorrect result. Wrong UID(-s).', Firewall::FIREWALL_LOG );
 
-				return false;
-			}
-			foreach ( $arr_uids as $arr_uid ) {
-				$resolved_ip = Unlockout::get_resolved_ip_by( (int) $arr_uid, $user_email, $limit_time );
-				if ( 'expired' === $resolved_ip ) {
-					return false;
-				} elseif ( '' !== $resolved_ip ) {
-					// This is not expired result and no empty one.
-					$ips[] = $resolved_ip;
-				}
-			}
-		} else {
-			// Only one ID.
-			$resolved_ip = Unlockout::get_resolved_ip_by( (int) $string_uid, $user_email, $limit_time );
+		// There are some ID's.
+		$arr_uids = explode( '-', $string_uid );
+		if ( ! is_array( $arr_uids ) ) {
+			$this->log( 'Unlock Me. Incorrect result. Wrong UID(-s).', Firewall::FIREWALL_LOG );
+
+			return false;
+		}
+		foreach ( $arr_uids as $arr_uid ) {
+			$resolved_ip = Unlockout::get_resolved_ip_by( (int) $arr_uid, $user_email, $limit_time );
 			if ( 'expired' === $resolved_ip ) {
 				return false;
 			} elseif ( '' !== $resolved_ip ) {
@@ -106,6 +96,7 @@ class Unlock_Me extends Component {
 				$ips[] = $resolved_ip;
 			}
 		}
+
 		// All is good. IP's were unblocked.
 		if ( empty( $ips ) ) {
 			return true;
@@ -113,7 +104,8 @@ class Unlock_Me extends Component {
 		// Work with IP's.
 		$ips      = array_unique( $ips );
 		$first_ip = $ips[0];
-		// Remove the user IP's from Blocklist.
+
+		// Remove the user IP's from Local Blocklist.
 		$bl = wd_di()->get( \WP_Defender\Model\Setting\Blacklist_Lockout::class );
 		foreach ( $ips as $ip ) {
 			$bl->remove_from_list( $ip, 'blocklist' );
@@ -122,7 +114,8 @@ class Unlock_Me extends Component {
 				Firewall::FIREWALL_LOG
 			);
 		}
-		// Maybe IP(-s) in Active lockouts? Then unlock it or them.
+
+		// Remove IP(s) from Active lockouts.
 		if ( count( $ips ) > 1 ) {
 			$models = Lockout_Ip::get_bulk( Lockout_Ip::STATUS_BLOCKED, $ips );
 			foreach ( $models as $model ) {
@@ -142,6 +135,21 @@ class Unlock_Me extends Component {
 				);
 			}
 		}
+
+		// Remove IP(s) from Central IP Blocklist.
+		$ret = wd_di()->get( IP\Global_IP::class )->remove_from_blocklist( $ips );
+		if ( is_wp_error( $ret ) ) {
+			$this->log(
+				'Unlock Me. Error. IP(s) ' . implode( ',', $ips ) . ' have not been unblocked from Central IP Blocklist.',
+				Firewall::FIREWALL_LOG
+			);
+		} else {
+			$this->log(
+				'Unlock Me. Success. IP(s) ' . implode( ',', $ips ) . ' have been unblocked from Central IP Blocklist.',
+				Firewall::FIREWALL_LOG
+			);
+		}
+
 		// Remove the old counter.
 		delete_transient( $this->check_ip_by_remote_addr( $first_ip ) );
 		// Redirect.

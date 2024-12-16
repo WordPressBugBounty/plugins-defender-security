@@ -416,4 +416,60 @@ class Global_IP extends Component {
 
 		return $is_show_to_user;
 	}
+
+	/**
+	 * Remove one or more IPs from the block_list.
+	 *
+	 * @param array $ips The IPs to remove.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function remove_from_blocklist( array $ips ) {
+		if ( empty( $ips ) ) {
+			return new WP_Error( 'defender_hub_api_invalid_ips', esc_html__( 'No IP(s) provided.', 'defender-security' ) );
+		}
+
+		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
+
+		try {
+			$data = $this->make_wpmu_free_request( WPMUDEV::API_GLOBAL_IP_LIST );
+		} catch ( Exception $e ) {
+			return new WP_Error( 'defender_hub_api_invalid_returned', $e->getMessage() );
+		}
+
+		if ( ! isset( $data['block_list'] ) ) {
+			return new WP_Error(
+				'defender_hub_api_missing_blocklist',
+				esc_html__( 'Missing blocklist data.', 'defender-security' )
+			);
+		}
+
+		$data['block_list'] = (array) $data['block_list'];
+		foreach ( $ips as $ip ) {
+			$key = array_search( $ip, $data['block_list'], true );
+			if ( false !== $key ) {
+				unset( $data['block_list'][ $key ] );
+			}
+		}
+		// Reindex the array.
+		$data['block_list'] = array_values( $data['block_list'] );
+
+		$ret = $this->make_wpmu_request(
+			WPMUDEV::API_GLOBAL_IP_LIST,
+			array(
+				'block_list' => $data['block_list'],
+			),
+			array(
+				'method' => 'PUT',
+			)
+		);
+
+		if ( is_wp_error( $ret ) ) {
+			return new WP_Error( 'defender_hub_api_invalid_returned', $ret->get_error_message() );
+		} else {
+			$this->set_global_ip_list( $ret );
+		}
+
+		return $ret;
+	}
 }
