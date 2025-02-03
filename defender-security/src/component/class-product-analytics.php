@@ -81,9 +81,9 @@ class Product_Analytics extends Component {
 		}
 		$extra_options  = array(
 			'consumers' => array(
-				'file'   => 'ConsumerStrategies_FileConsumer',
-				'curl'   => 'ConsumerStrategies_CurlConsumer',
-				'socket' => 'ConsumerStrategies_SocketConsumer',
+				'file'   => 'WPMUDEV_Analytics_Vendor\ConsumerStrategies_FileConsumer',
+				'curl'   => 'WPMUDEV_Analytics_Vendor\ConsumerStrategies_CurlConsumer',
+				'socket' => 'WPMUDEV_Analytics_Vendor\ConsumerStrategies_SocketConsumer',
 			),
 			'consumer'  => 'socket',
 		);

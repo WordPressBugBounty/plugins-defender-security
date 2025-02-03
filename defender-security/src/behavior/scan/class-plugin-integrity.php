@@ -232,10 +232,9 @@ class Plugin_Integrity extends Behavior {
 				continue;
 			}
 
-			require_once ABSPATH . 'wp-admin/includes/image.php';
 			if (
 				$exist_smush_images
-				&& file_is_valid_image( $plugin_files->current() )
+				&& $this->file_is_valid_image( $plugin_files->current() )
 				&& $integration_smush->exist_image_path( $plugin_files->current() )
 			) {
 				$this->log(
@@ -309,5 +308,21 @@ class Plugin_Integrity extends Behavior {
 		}
 
 		return ! $plugin_files->valid();
+	}
+
+	/**
+	 * Checks if given file is a valid image.
+	 *
+	 * @param string $file_path Full path to the file.
+	 *
+	 * @return bool True if file is a valid image, false otherwise.
+	 */
+	private function file_is_valid_image( $file_path ): bool {
+		$mime = wp_check_filetype( $file_path );
+		if ( false === $mime['type'] ) {
+			return false;
+		}
+
+		return false !== strpos( $mime['type'], 'image' );
 	}
 }

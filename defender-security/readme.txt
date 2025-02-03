@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 4.12.0
+Version: 5.0.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 5.2
 Tested up to: 6.7.1
-Stable tag: 4.12.0
+Stable tag: 5.0.1
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -18,6 +18,8 @@ WordPress security plugin with malware scanner, IP blocking, audit logs, antivir
 **Defender adds the best in WordPress plugin security to your website with just a few clicks, including malware scanner, firewall, and login security features. Stop brute force login attacks, SQL injections, cross-site scripting XSS, and other WordPress security vulnerabilities and hacks with Defender's malware scanner, providing antivirus scans, IP blocking, firewall, activity log, security log, and two-factor authentication (2FA) login security.**
 
 No more complex security settings, Defender's malware scanner, firewall, and login security features add all the hardening and security you need.
+
+Plus, connect for free to WPMU DEV’s AntiBot Global Firewall to block harmful IPs with data from over 500,000 sites.
 
 **Enjoy complete site protection from malware, vulnerabilities, and bot attacks from the start with [Defender Pro](https://wpmudev.com/project/wp-defender/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme-above-the-fold&utm_content=wp_defender_pro).**
 
@@ -32,6 +34,7 @@ Defender's one-click security hardening recommendations instantly adds layers of
 ### Enhance Security and Block Hackers At Every Level:
 
 * Malware scanner - scan WordPress core files for modifications and unexpected changes which may be caused by malware. Scan for malware and tighten up the security of your files
+* AntiBot Global Firewall - Connect for free to WPMU DEV to block harmful IPs with data from over 500,000 sites
 * WordPress Security Firewall - block or allowlist IPs, implement IP blocking, and Geo IP blocking, user agent banning and protect against brute force attacks
 * Two-factor authentication (2FA) - Easily set up better security with 2FA to prevent most login attacks such as brute force, App verification, backup codes, lost device email, WooCommerce 2FA, and Web Authentication
 * Login masking - change the location of WordPress's default login area to improve login security
@@ -242,6 +245,26 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 5.0.1 ( 2025-01-31 ) =
+
+- Fix: AntiBot service sync issue
+- Fix: AntiBot toggle behavior is inconsistent when managed on the Hub
+- Fix: Usage Tracking improvements
+
+= 5.0.0 ( 2025-01-27 ) =
+
+- New: AntiBot Global Firewall
+- Enhance: Global IP Blocker renamed to Central IP List and located under Local Firewall
+- Enhance: Prevent execution of CREATE TABLE query on every page load
+- Enhance: Scan lines about suspicious code are displayed even after deleting files
+- Enhance: Update WPMU DEV IP management
+- Enhance: Show Vulnerability details for Pro plugin version
+- Enhance: Usage Tracking improvements
+- Fix: Error while uninstalling Defender
+- Fix: Wrong usage of WPMU DEV Dashboard settings function
+- Fix: SUI Alert appears when trying to make any action to files detected by Malware Scanning
+- Fix: PHP notices appear in logs when running a malware scan
+
 = 4.12.0 ( 2024-12-09 ) =
 
 - Enhance: Ability to scan malicious code in files in the site's root
@@ -298,18 +321,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Fix: Undefined array key in Audit logs
 - Fix: Foreign key getting duplicated
 - Fix: Broken error notice design in 2FA methods
-
-= 4.8.2 ( 2024-07-31 ) =
-
-- Fix: Incorrect IP header detection on WPMU DEV hosting
-- Fix: Malware Scanning is not working for specific timezones
-- Fix: Can not set notification schedule after changing the site language
-- Fix: Quarantine feature improvements
-
-= 4.8.1 ( 2024-07-23 ) =
-
-- Enhance: Improvements for Known vulnerabilities
-- Fix: Multiple redirects when Mask Login Redirect Traffic is set to custom/external URL
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

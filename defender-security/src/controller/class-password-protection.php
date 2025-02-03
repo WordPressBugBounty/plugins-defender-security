@@ -95,7 +95,16 @@ class Password_Protection extends Event {
 	 *
 	 * @return WP_User|WP_Error Return user object or error object.
 	 */
-	public function handle_login_password( $user, string $password ) {
+	public function handle_login_password( $user, $password ) {
+		if ( is_wp_error( $user ) || ! $user instanceof WP_User ) {
+			return $user;
+		}
+		if ( empty( $password ) ) {
+			return new WP_Error(
+				'defender_invalid_password',
+				esc_html__( 'Invalid user data.', 'defender-security' )
+			);
+		}
 		$this->service->do_weak_reset( $user, $password );
 
 		return $user;

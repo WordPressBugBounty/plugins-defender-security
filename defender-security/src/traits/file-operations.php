@@ -42,6 +42,7 @@ trait File_Operations {
 	public function after_delete( string $deleted_file, ?Scan $related_scan, string $scan_type ): array {
 		$this->log( sprintf( '%s is deleted', $deleted_file ), 'scan.log' );
 		$related_scan->remove_issue( $this->owner->id );
+		$related_scan->remove_related_issue_by( $deleted_file, $scan_type );
 		do_action( 'wpdef_fixed_scan_issue', $scan_type, 'delete' );
 
 		return array( 'message' => esc_html__( 'This item has been permanently removed', 'defender-security' ) );

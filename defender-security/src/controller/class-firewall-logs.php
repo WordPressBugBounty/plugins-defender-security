@@ -21,7 +21,7 @@ use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\User_Agent;
 use WP_Defender\Component\IP\Global_IP;
 use WP_Defender\Component\Table_Lockout;
-use WP_Defender\Integrations\Blocklist_Client;
+use WP_Defender\Integrations\Antibot_Global_Firewall_Client;
 use WP_Defender\Model\Setting\Blacklist_Lockout;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Component\Firewall_Logs as Firewall_Logs_Component;
@@ -49,27 +49,27 @@ class Firewall_Logs extends Controller {
 	private $wpmudev;
 
 	/**
-	 * The client for interacting with the Blocklist API service.
+	 * The client for interacting with the AntiBot Global Firewall API.
 	 *
-	 * @var Blocklist_Client
+	 * @var Antibot_Global_Firewall_Client
 	 */
-	private $blocklist_client;
+	private $antibot_client;
 
 	/**
 	 * Constructor for the class.
 	 *
-	 * @param  Blocklist_Client $blocklist_client  The client for interacting with the Block list API service.
+	 * @param  Antibot_Global_Firewall_Client $antibot_client  The client for interacting with the Block list API service.
 	 */
-	public function __construct( Blocklist_Client $blocklist_client ) {
+	public function __construct( Antibot_Global_Firewall_Client $antibot_client ) {
 		$this->register_routes();
 		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
 
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
 
-		$this->blocklist_client = $blocklist_client;
+		$this->antibot_client = $antibot_client;
 
 		/**
-		 * Send Firewall logs to Blocklist API.
+		 * Send Firewall logs to AntiBot Global Firewall API.
 		 */
 		if ( ! wp_next_scheduled( 'wpdef_firewall_send_compact_logs_to_api' ) ) {
 			wp_schedule_event( time() + 15, 'twicedaily', 'wpdef_firewall_send_compact_logs_to_api' );
@@ -717,7 +717,7 @@ class Firewall_Logs extends Controller {
 	}
 
 	/**
-	 * Send last 12 hours logs to Blocklist API.
+	 * Send last 12 hours logs to AntiBot Global Firewall API.
 	 * If running for first time then grab 7 days of logs.
 	 * If last run difference is greater than 12 hours then grab 12+ hours of log but at most grab 7 days of logs.
 	 *
@@ -760,27 +760,29 @@ class Firewall_Logs extends Controller {
 			return;
 		}
 
-		$offset = 0;
-		$length = 1000;
-		while ( $logs_chunk = array_slice( $logs, $offset, $length ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+		$offset     = 0;
+		$length     = 1000;
+		$logs_chunk = array_slice( $logs, $offset, $length );
+		while ( ! empty( $logs_chunk ) ) {
 			$data = array(
 				'logs' => $logs_chunk,
 			);
 
-			$response = $this->blocklist_client->send_reports( $data );
+			$response = $this->antibot_client->send_reports( $data );
 
 			if ( is_wp_error( $response ) ) {
 				$this->log(
-					sprintf( 'IP Blocklist API Error: %s', $response->get_error_message() ),
+					sprintf( 'AntiBot Global Firewall Error: %s', $response->get_error_message() ),
 					Firewall::FIREWALL_LOG
 				);
 			} elseif ( isset( $response['status'] ) && 'error' === $response['status'] ) {
-				$this->log( sprintf( 'IP Blocklist API Error: %s', $response['message'] ), Firewall::FIREWALL_LOG );
+				$this->log( sprintf( 'AntiBot Global Firewall Error: %s', $response['message'] ), Firewall::FIREWALL_LOG );
 			}
 
-			$offset += $length;
+			$offset     += $length;
+			$logs_chunk = array_slice( $logs, $offset, $length );
 		}
 
-		$this->log( 'IP Blocklist API: Process for sending logs completed.', Firewall::FIREWALL_LOG );
+		$this->log( 'AntiBot Global Firewall: Process for sending logs completed.', Firewall::FIREWALL_LOG );
 	}
 }

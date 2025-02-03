@@ -379,9 +379,10 @@ class Lockout_Log extends DB {
 	 */
 	public static function get_summary(): array {
 		// Time.
-		$current_time    = time();
-		$today_midnight  = strtotime( '-24 hours', $current_time );
-		$first_this_week = strtotime( '-7 days', $current_time );
+		$current_time     = time();
+		$today_midnight   = strtotime( '-24 hours', $current_time );
+		$first_this_week  = strtotime( '-7 days', $current_time );
+		$first_this_month = strtotime( '-30 days', $current_time );
 
 		// Prepare columns.
 		$select = array(
@@ -396,6 +397,10 @@ class Lockout_Log extends DB {
 			"COUNT(IF(date > {$first_this_week} AND type = '" . self::LOCKOUT_404 . "', 1, NULL)) as lockout_404_this_week",
 			"COUNT(IF(date > {$first_this_week} AND type = '" . self::AUTH_LOCK . "', 1, NULL)) as lockout_login_this_week",
 			"COUNT(IF(date > {$first_this_week} AND type = '" . self::LOCKOUT_UA . "', 1, NULL)) as lockout_ua_this_week",
+			// 30 days
+			"COUNT(IF(date > {$first_this_month} AND type = '" . self::LOCKOUT_404 . "', 1, NULL)) as lockout_404_this_month",
+			"COUNT(IF(date > {$first_this_month} AND type = '" . self::AUTH_LOCK . "', 1, NULL)) as lockout_login_this_month",
+			"COUNT(IF(date > {$first_this_month} AND type = '" . self::LOCKOUT_UA . "', 1, NULL)) as lockout_ua_this_month",
 		);
 		$select = implode( ',', $select );
 

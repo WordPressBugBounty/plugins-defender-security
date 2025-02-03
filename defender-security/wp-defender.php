@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Defender
  * Plugin URI:   https://wpmudev.com/project/wp-defender/
- * Version:      4.12.0
+ * Version:      5.0.1
  * Description:  Get regular security scans, vulnerability reports, safety recommendations and customized hardening for your site in just a few clicks. Defender is the analyst and enforcer who never sleeps.
  * Author:       WPMU DEV
  * Author URI:   https://wpmudev.com/
@@ -16,7 +16,7 @@
  */
 
 /*
-Copyright 2007-2024 Incsub (https://incsub.com)
+Copyright 2007-2025 Incsub (https://incsub.com)
 Author - Hoang Ngo, Anton Shulga
 
 This program is free software; you can redistribute it and/or modify
@@ -37,10 +37,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 if ( ! defined( 'DEFENDER_VERSION' ) ) {
-	define( 'DEFENDER_VERSION', '4.12.0' );
+	define( 'DEFENDER_VERSION', '5.0.1' );
 }
 if ( ! defined( 'DEFENDER_DB_VERSION' ) ) {
-	define( 'DEFENDER_DB_VERSION', '4.12.0' );
+	define( 'DEFENDER_DB_VERSION', '5.0.1' );
 }
 if ( ! defined( 'DEFENDER_SUI' ) ) {
 	define( 'DEFENDER_SUI', '2-12-24' );
@@ -137,7 +137,6 @@ do_action( 'wp_defender' );
 // Initialize bootstrap.
 require_once WP_DEFENDER_DIR . 'src/class-bootstrap.php';
 $bootstrap = new \WP_Defender\Bootstrap();
-$bootstrap->check_if_table_exists();
 if ( method_exists( $bootstrap, 'includes' ) ) {
 	$bootstrap->includes();
 }

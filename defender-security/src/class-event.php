@@ -93,8 +93,15 @@ abstract class Event extends Controller {
 	 * @defender_route
 	 */
 	public function track_feature_handler( Request $request ): Response {
+		// Forced tracking.
+		$data = $request->get_data();
+		if ( isset( $data['force'] ) ) {
+			$this->tracker()->track( $data['event'], $data['data'] );
+
+			return new Response( true, array() );
+		}
+		// Otherwise it's a normal process.
 		if ( $this->is_tracking_active() ) {
-			$data = $request->get_data();
 			$this->track_feature( $data['event'], $data['data'] );
 		}
 

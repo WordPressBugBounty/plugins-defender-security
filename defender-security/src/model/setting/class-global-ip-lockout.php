@@ -30,6 +30,14 @@ class Global_Ip_Lockout extends Setting {
 	public $enabled = false;
 
 	/**
+	 * Allow self unlock?
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public bool $allow_self_unlock = false;
+
+	/**
 	 * Table column for autosync.
 	 *
 	 * @var bool
@@ -43,7 +51,7 @@ class Global_Ip_Lockout extends Setting {
 	 * @var array
 	 */
 	protected $rules = array(
-		array( array( 'enabled', 'blocklist_autosync' ), 'boolean' ),
+		array( array( 'enabled', 'blocklist_autosync', 'allow_self_unlock' ), 'boolean' ),
 	);
 
 	/**
@@ -59,12 +67,12 @@ class Global_Ip_Lockout extends Setting {
 	}
 
 	/**
-	 * Get the module name for the Global IP Blocker.
+	 * Get the module name.
 	 *
 	 * @return string The module name.
 	 */
 	public static function get_module_name(): string {
-		return esc_html__( 'Global IP Blocker', 'defender-security' );
+		return esc_html__( 'Central IP List', 'defender-security' );
 	}
 
 	/**

@@ -4,13 +4,22 @@
 .wp-defender .sui-wrap .sui-form-control {
     background-color: #fff;
 }
-#wd_step_show_toggle {
-    margin-top: 25px;
-    margin-bottom: 25px;
+#wd_step_show_toggle,
+#wd_agf_unlock_me {
+    margin: 25px 0;
 }
 #wd_step_show_form,
-#wd_step_show_success {
+#wd_step_show_success,
+#wd_agf_unlock_me_success,
+#wd_agf_unlock_me_error,
+#wd_agf_unlock_me_fail {
     display: none;
+}
+
+#wd_agf_unlock_me_success,
+#wd_agf_unlock_me_error,
+#wd_agf_unlock_me_fail {
+    text-align: center;
 }
 
 /* Display form */
@@ -21,7 +30,10 @@
     margin-top: 25px;
     box-shadow: none;
 }
-.sui-wrap .sui-box#wd_step_show_success {
+.sui-wrap .sui-box#wd_step_show_success,
+.sui-wrap .sui-box#wd_agf_unlock_me_success,
+.sui-wrap .sui-box#wd_agf_unlock_me_error,
+.sui-wrap .sui-box#wd_agf_unlock_me_fail {
     margin-bottom: 30px;
 }
 .sui-wrap #unlock_sent_again_link {

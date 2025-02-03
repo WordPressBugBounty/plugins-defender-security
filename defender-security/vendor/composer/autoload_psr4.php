@@ -23,7 +23,7 @@ return array(
     'Nyholm\\Psr7\\' => array($vendorDir . '/nyholm/psr7/src'),
     'Nyholm\\Psr7Server\\' => array($vendorDir . '/nyholm/psr7-server/src'),
     'League\\Uri\\' => array($vendorDir . '/league/uri/src', $vendorDir . '/league/uri-interfaces/src'),
-    'Jose\\Component\\Signature\\Algorithm\\' => array($vendorDir . '/web-token/jwt-signature-algorithm-ecdsa', $vendorDir . '/web-token/jwt-signature-algorithm-eddsa', $vendorDir . '/web-token/jwt-signature-algorithm-rsa'),
+    'Jose\\Component\\Signature\\Algorithm\\' => array($vendorDir . '/web-token/jwt-signature-algorithm-rsa', $vendorDir . '/web-token/jwt-signature-algorithm-eddsa', $vendorDir . '/web-token/jwt-signature-algorithm-ecdsa'),
     'Jose\\Component\\Signature\\' => array($vendorDir . '/web-token/jwt-signature'),
     'Jose\\Component\\KeyManagement\\' => array($vendorDir . '/web-token/jwt-key-mgmt'),
     'Jose\\Component\\Core\\' => array($vendorDir . '/web-token/jwt-core'),
@@ -35,4 +35,5 @@ return array(
     'Brick\\Math\\' => array($vendorDir . '/brick/math/src'),
     'Base64Url\\' => array($vendorDir . '/spomky-labs/base64url/src'),
     'Assert\\' => array($vendorDir . '/beberlei/assert/lib/Assert'),
+    'AltchaOrg\\Altcha\\' => array($vendorDir . '/altcha-org/altcha/src'),
 );

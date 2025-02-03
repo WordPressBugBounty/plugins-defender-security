@@ -8,6 +8,8 @@
 namespace WP_Defender\Traits;
 
 use WPMUDEV_Dashboard;
+use WPMUDEV\Hub\Connector\API;
+use WPMUDEV\Hub\Connector\Data;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 
 trait Defender_Dashboard_Client {
@@ -93,7 +95,7 @@ trait Defender_Dashboard_Client {
 	}
 
 	/**
-	 * Check if Dash plugin is installed and activated.
+	 * Check if WPMU DEV Dashboard plugin is activated.
 	 *
 	 * @return bool
 	 * @since 3.4.0
@@ -103,7 +105,20 @@ trait Defender_Dashboard_Client {
 	}
 
 	/**
+	 * Checks if WPMU DEV Dashboard plugin is installed.
+	 *
+	 * @return bool
+	 * @since 4.10.0
+	 */
+	public function is_dash_installed(): bool {
+		return file_exists( WP_PLUGIN_DIR . '/wpmudev-updates/update-notifications.php' );
+	}
+
+	/**
 	 * Check if site is connected to HUB.
+	 * Todo: after implementing the HCM, the Free version can get an API key if the site is connected to the Hub using
+	 * HCM (without the Dashboard plugin). Does it make sense to use hub_connector_connected() method instead of
+	 * the current one?
 	 *
 	 * @return bool
 	 * @since 3.6.0 Added changes after the implementation of TFH on the hub.
@@ -112,7 +127,7 @@ trait Defender_Dashboard_Client {
 	public function is_site_connected_to_hub(): bool {
 		// The case if Pro version is activated, it is TFH account and a site is from 3rd party hosting.
 		if ( WP_DEFENDER_PRO_PATH === DEFENDER_PLUGIN_BASENAME && $this->is_another_hosted_site_connected_to_tfh() ) {
-			return ! empty( WPMUDEV_Dashboard::$api->get_key() );
+			return ! empty( $this->get_api_key() );
 		} else {
 			$hub_site_id = $this->get_site_id();
 
@@ -135,9 +150,80 @@ trait Defender_Dashboard_Client {
 	public function get_remote_access() {
 		// Use backward compatibility.
 		if ( WPMUDEV_Dashboard::$version > '4.11.9' ) {
-			return WPMUDEV_Dashboard::$site->get( 'remote_access' );
+			return WPMUDEV_Dashboard::$settings->get( 'remote_access' );
 		} else {
 			return WPMUDEV_Dashboard::$site->get_option( 'remote_access' );
 		}
+	}
+	/**
+	 * Checks if the Hub connector is connected.
+	 *
+	 * @return bool True if connected, false otherwise.
+	 */
+	public static function get_status(): bool {
+		return API::get()->is_logged_in();
+	}
+
+	/**
+	 * Checks if Hub Connector is connected. If Dash plugin is not installed Hub connector can take over.
+	 *
+	 * @return bool
+	 */
+	public function hub_connector_connected(): bool {
+		if ( $this->is_dash_activated() ) {
+			$dash_api  = WPMUDEV_Dashboard::$api;
+			$connected = (bool) $dash_api->has_key();
+		} else {
+			$connected = self::get_status();
+		}
+
+		return $connected;
+	}
+
+	/**
+	 * Upgrade the method to get api key from Dashboard plugin or Hub Connector module.
+	 *
+	 * @return string
+	 */
+	public function get_api_key(): string {
+		if ( $this->is_dash_activated() ) {
+			$api_key = WPMUDEV_Dashboard::$api->get_key();
+		} else {
+			$api_key = API::get()->get_api_key();
+		}
+
+		return $api_key;
+	}
+
+	/**
+	 * Get Membership type.
+	 *
+	 * @return string
+	 */
+	public function get_membership_type() {
+		if ( $this->is_dash_activated() ) {
+			return WPMUDEV_Dashboard::$api->get_membership_status();
+		} elseif ( self::get_status() ) {
+			return Data::get()->membership_type();
+		}
+		return 'free';
+	}
+
+	/**
+	 * Logout from hub.
+	 *
+	 * @return array|bool|\WP_Error
+	 */
+	public function logout() {
+		return API::get()->logout();
+	}
+
+	/**
+	 * Check if site is connected to HUB via HCM or Dash.
+	 *
+	 * @return bool
+	 */
+	public function is_site_connected_to_hub_via_hcm_or_dash(): bool {
+		return $this->hub_connector_connected() || self::get_status();
 	}
 }

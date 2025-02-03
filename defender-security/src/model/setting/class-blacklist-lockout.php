@@ -275,4 +275,13 @@ class Blacklist_Lockout extends Setting {
 			$this->geodb_path = $service_geo->get_db_base_path() . DIRECTORY_SEPARATOR . $matches[1];
 		}
 	}
+
+	/**
+	 * Returns the module name.
+	 *
+	 * @return string The module name.
+	 */
+	public static function get_module_name(): string {
+		return esc_html__( 'Local Blocklist', 'defender-security' );
+	}
 }

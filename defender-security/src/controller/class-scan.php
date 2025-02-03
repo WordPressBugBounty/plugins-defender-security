@@ -66,6 +66,13 @@ class Scan extends Event {
 	private $quarantine_controller;
 
 	/**
+	 * Indicates whether the current installation is a pro version.
+	 *
+	 * @var bool
+	 */
+	private $is_pro;
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -73,7 +80,7 @@ class Scan extends Event {
 			esc_html__( 'Malware Scanning', 'defender-security' ),
 			$this->slug,
 			array(
-				&$this,
+				$this,
 				'main_view',
 			),
 			$this->parent_slug
@@ -81,6 +88,7 @@ class Scan extends Event {
 
 		$this->model   = new Scan_Settings();
 		$this->service = wd_di()->get( Scan_Component::class );
+		$this->is_pro  = wd_di()->get( WPMUDEV::class )->is_pro();
 
 		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
 			$this->quarantine_controller = wd_di()->get( Quarantine::class );
@@ -99,7 +107,8 @@ class Scan extends Event {
 		if (
 			is_admin() &&
 			'plugins.php' === $pagenow &&
-			apply_filters( 'wd_display_vulnerability_warnings', true )
+			apply_filters( 'wd_display_vulnerability_warnings', true ) &&
+			$this->is_pro
 		) {
 			$this->service->display_vulnerability_warnings();
 		}
@@ -358,9 +367,7 @@ class Scan extends Event {
 			wp_die();
 		}
 
-		$result = array();
-		$scan   = Model_Scan::get_last();
-
+		$scan = Model_Scan::get_last();
 		if ( $scan instanceof Model_Scan ) {
 			$item = $scan->get_issue( $id );
 			if ( is_object( $item ) && $item->has_method( $intention ) ) {
@@ -370,8 +377,10 @@ class Scan extends Event {
 				} else {
 					$result = $item->$intention();
 				}
-
-				$this->item_action_analytics( $item, $intention );
+				// Maybe track.
+				if ( $this->is_tracking_active() ) {
+					$this->item_action_analytics( $item, $intention );
+				}
 
 				if ( is_wp_error( $result ) ) {
 					return new Response(
@@ -442,7 +451,6 @@ class Scan extends Event {
 		if (
 			empty( $items )
 			|| ! is_array( $items )
-			|| false === $intention
 			|| ! in_array( $intention, array( 'ignore', 'unignore', 'delete' ), true )
 		) {
 			return new Response( false, array() );
@@ -456,11 +464,14 @@ class Scan extends Event {
 		$is_delete         = false;
 		$delete_items      = array();
 		$none_delete_items = array();
+		$sync_hub          = false;
 		foreach ( $items as $id ) {
 			if ( 'ignore' === $intention ) {
 				$scan->ignore_issue( (int) $id );
+				$sync_hub = true;
 			} elseif ( 'unignore' === $intention ) {
 				$scan->unignore_issue( (int) $id );
+				$sync_hub = true;
 			} elseif ( 'delete' === $intention ) {
 				$item = $scan->get_issue( (int) $id );
 				// Work with every item.
@@ -474,13 +485,15 @@ class Scan extends Event {
 						$is_delete      = true;
 						$delete_items[] = $item_result['message'];
 					}
-				} else {
-					return new Response( false, array() );
+					// If there is any error, no need to sync data.
+					$sync_hub = true;
 				}
 			}
 		}
 
-		$this->queue_to_sync_with_hub();
+		if ( $sync_hub ) {
+			$this->queue_to_sync_with_hub();
+		}
 
 		$result = array();
 		if ( ! empty( $none_delete_items ) ) {
@@ -985,8 +998,7 @@ class Scan extends Event {
 	 */
 	public function export_strings(): array {
 		$strings = array();
-		$is_pro  = ( new WPMUDEV() )->is_pro();
-		if ( $this->is_any_active( $is_pro ) ) {
+		if ( $this->is_any_active( $this->is_pro ) ) {
 			$strings[] = esc_html__( 'Active', 'defender-security' );
 		} else {
 			$strings[] = esc_html__( 'Inactive', 'defender-security' );
@@ -997,13 +1009,13 @@ class Scan extends Event {
 		if ( 'enabled' === $scan_notification->status ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
-		if ( $is_pro && 'enabled' === $scan_report->status ) {
+		if ( $this->is_pro && 'enabled' === $scan_report->status ) {
 			$strings[] = sprintf(
 			/* translators: %s: Frequency value. */
 				esc_html__( 'Email reports sending %s', 'defender-security' ),
 				$scan_report->frequency
 			);
-		} elseif ( ! $is_pro ) {
+		} elseif ( ! $this->is_pro ) {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),

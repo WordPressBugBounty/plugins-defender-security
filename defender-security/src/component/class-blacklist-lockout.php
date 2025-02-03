@@ -25,6 +25,9 @@ class Blacklist_Lockout extends Component {
 	use Country;
 	use IP;
 
+	// Define the transient key.
+	const IP_LIST_KEY = 'wpmu_dev_ip_list';
+
 	/**
 	 * Checks if a given IP is whitelisted based on the country.
 	 *
@@ -60,31 +63,55 @@ class Blacklist_Lockout extends Component {
 		$server_addr = defender_get_data_from_request( 'SERVER_ADDR', 's' );
 		$remote_addr = defender_get_data_from_request( 'REMOTE_ADDR', 's' );
 		$ips         = array(
-			'18.204.159.253',
-			'54.227.51.40',
-			'3.93.131.0',
-			'18.219.56.14',
-			'45.55.78.242',
-			'35.171.56.101',
-			'192.241.140.159',
-			'104.236.132.222',
-			'192.241.148.185',
-			'34.196.51.17',
-			'35.157.144.199',
-			'159.89.254.12',
-			'18.219.161.157',
-			'165.227.251.117',
-			'165.227.251.120',
-			'140.82.60.49',
-			'45.63.10.140',
-			'167.71.93.101',
-			'167.71.179.192',
-			...$this->get_blc_ip_whitelisted(),
+			...$this->fetch_latest_ips(),
 			'127.0.0.1',
 			isset( $server_addr ) ? $server_addr : $remote_addr,
 		);
 
 		return (array) apply_filters( 'ip_lockout_default_whitelist_ip', $ips );
+	}
+
+	/**
+	 * Fetch the latest IP list from the API.
+	 *
+	 * @return array List of IPs or an empty array on failure.
+	 */
+	public static function fetch_latest_ips(): array {
+		// Attempt to retrieve IPs from the cache.
+		$cached_ips = get_site_transient( self::IP_LIST_KEY );
+		if ( $cached_ips && is_array( $cached_ips ) ) {
+			return $cached_ips;
+		}
+
+		// Fetch the IP list from the remote API.
+		$response = wp_remote_get(
+			'https://gist.githubusercontent.com/wpmu-docs/568114153e93eaf28f908a724b313b6f/raw',
+			array(
+				'timeout' => 10,
+			)
+		);
+
+		// Check for errors in the API response.
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		// Retrieve the response body.
+		$body = wp_remote_retrieve_body( $response );
+		if ( empty( $body ) ) {
+			return array();
+		}
+
+		// Process the response body into an array of IPs.
+		$ip_list = array_filter( array_map( 'sanitize_text_field', explode( "\n", $body ) ) );
+
+		// Cache the IP list for a week if it is not empty.
+		if ( ! empty( $ip_list ) ) {
+			set_site_transient( self::IP_LIST_KEY, $ip_list, WEEK_IN_SECONDS );
+		}
+
+		// Return the fetched IP list.
+		return $ip_list;
 	}
 
 	/**
@@ -313,21 +340,6 @@ class Blacklist_Lockout extends Component {
 	}
 
 	/**
-	 * Retrieves a list of IPs whitelisted by the Broken Link Checker plugin.
-	 *
-	 * @see   https://wpmudev.com/docs/wpmu-dev-plugins/broken-link-checker/#broken-link-checker-ip
-	 * @return array List of whitelisted IPs.
-	 * @since 4.2.0
-	 */
-	private function get_blc_ip_whitelisted(): array {
-		return array(
-			'165.227.127.103',
-			'64.176.196.23',
-			'144.202.86.106',
-		);
-	}
-
-	/**
 	 * Is IP on BLC Whitelist?
 	 *
 	 * @return bool
@@ -335,7 +347,11 @@ class Blacklist_Lockout extends Component {
 	 */
 	public function is_blc_ip_whitelisted(): bool {
 		$ips     = $this->get_user_ip();
-		$blc_ips = $this->get_blc_ip_whitelisted();
+		$blc_ips = array(
+			'165.227.127.103',
+			'64.176.196.23',
+			'144.202.86.106',
+		);
 		$diff    = array_diff( $ips, $blc_ips );
 
 		return empty( $diff );

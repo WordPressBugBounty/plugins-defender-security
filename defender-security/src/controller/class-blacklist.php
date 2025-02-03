@@ -146,6 +146,7 @@ class Blacklist extends Controller {
 					'no_ips'                         => '' === $arr_model['ip_blacklist'] && '' === $arr_model['ip_whitelist'],
 					'countries_with_continents_list' => $countries_with_continents_list,
 					'geodb_license_key'              => $this->mask_license_key( $this->model->maxmind_license_key ),
+					'module_name'                    => Model_Blacklist_Lockout::get_module_name(),
 				),
 			),
 			$this->dump_routes_and_nonces()

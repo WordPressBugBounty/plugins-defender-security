@@ -29,6 +29,7 @@ use WP_Defender\Model\Notification\Firewall_Report;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Setting\Two_Fa as Model_Two_Fa;
 use WP_Defender\Component\Security_Tweaks\Security_Key;
+use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
 use WP_Defender\Model\Notification\Malware_Notification;
 use WP_Defender\Model\Setting\Firewall as Model_Firewall;
 use WP_Defender\Model\Notification\Firewall_Notification;
@@ -187,6 +188,7 @@ class Backup_Settings extends Component {
 		$lockout_report       = new Firewall_Report();
 		$ua_banning_model     = new Model_Ua_Lockout();
 		$settings_gi          = wd_di()->get( Global_Ip_Lockout::class );
+		$settings_antibot     = wd_di()->get( Antibot_Global_Firewall_Setting::class );
 		$iplockout            = array(
 			'login_protection'                       => $settings_ll->enabled,
 			'login_protection_login_attempt'         => $settings_ll->attempt,
@@ -237,6 +239,7 @@ class Backup_Settings extends Component {
 			'ua_banning_empty_headers'               => $ua_banning_model->empty_headers,
 			'global_ip_list'                         => $settings_gi->enabled,
 			'global_ip_list_blocklist_autosync'      => $settings_gi->blocklist_autosync,
+			'antibot'                                => $settings_antibot->enabled,
 		);
 		$settings_two_fa      = new Model_Two_Fa();
 		$settings_mask_login  = new Model_Mask_Login();
@@ -1091,6 +1094,7 @@ class Backup_Settings extends Component {
 						new Global_Ip(),
 						new Blacklist(),
 						new Controller_Ua_Lockout(),
+						wd_di()->get( \WP_Defender\Controller\Antibot_Global_Firewall::class ),
 					);
 				} else {
 					return new Controller_Firewall();

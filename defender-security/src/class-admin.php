@@ -38,6 +38,16 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'check_pro' ) );
 		add_action( 'wp_ajax_defender_ip_detection_notice_dismiss', array( $this, 'dismiss_notice' ) );
 		add_action( 'wp_ajax_defender_ip_detection_switch_to_xff', array( $this, 'switch_to_xff' ) );
+		add_action( 'admin_head', array( $this, 'add_global_styles' ) );
+	}
+
+	/**
+	 * Add global styles.
+	 */
+	public function add_global_styles() {
+		echo '<style>
+			#toplevel_page_wp-defender ul.wp-submenu li a[href="admin.php?page=wdf-ip-lockout"] { display: flex; justify-content: space-between; align-items: center; }
+		</style>';
 	}
 
 	/**
@@ -90,6 +100,7 @@ class Admin {
 				);
 			}
 		}
+
 		// Display IP detection notice.
 		if ( is_multisite() ) {
 			add_action( 'network_admin_notices', array( &$this, 'admin_notices' ) );
@@ -354,17 +365,11 @@ class Admin {
 	 * Register sub-modules.
 	 */
 	public function register_free_modules() {
-		if (
-			! file_exists( defender_path( 'extra/free-dashboard/module.php' ) )
-			|| ! file_exists( defender_path( 'extra/recommended-plugins-notice/notice.php' ) )
-		) {
+		if ( ! file_exists( defender_path( 'extra/free-dashboard/module.php' ) ) ) {
 			return;
 		}
 		/* @noinspection PhpIncludeInspection */
 		require_once defender_path( 'extra/free-dashboard/module.php' );
-		/* @noinspection PhpIncludeInspection */
-		require_once defender_path( 'extra/recommended-plugins-notice/notice.php' );
-
 		// Register the current plugin.
 		do_action(
 			'wdev_register_plugin',
@@ -375,6 +380,21 @@ class Admin {
 		);
 
 		// Recommended plugin notice.
+		$this->register_recommended_plugin_notice();
+	}
+
+	/**
+	 * Register recommended plugin notice.
+	 *
+	 * @return void
+	 */
+	protected function register_recommended_plugin_notice() {
+		if ( ! file_exists( defender_path( 'extra/recommended-plugins-notice/notice.php' ) ) ) {
+			return;
+		}
+		/* @noinspection PhpIncludeInspection */
+		require_once defender_path( 'extra/recommended-plugins-notice/notice.php' );
+
 		do_action(
 			// It's from the extra WPMUDEV_Recommended_Plugins_Notice_Registered_Plugin package.
 			'wpmudev-recommended-plugins-register-notice', // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores

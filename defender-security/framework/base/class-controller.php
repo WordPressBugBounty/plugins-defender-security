@@ -8,6 +8,7 @@
 namespace Calotes\Base;
 
 use ReflectionClass;
+use WP_Defender\Component\Hub_Connector;
 
 /**
  * This class use for:
@@ -17,7 +18,6 @@ use ReflectionClass;
  *  4. Render frontend view.
  */
 class Controller extends Component {
-
 
 	/**
 	 * The slug for the page.
@@ -81,13 +81,25 @@ class Controller extends Component {
 	 * @param  array $params  Optional. The parameters to pass to the view file. Default is an empty array.
 	 * @param  bool  $output  Optional. Whether to output the rendered content or return it. Default is true.
 	 *
-	 * @return bool|string If $output is false, the rendered content. Otherwise, true on success, false on failure.
+	 * @return void|bool|string If $output is false, the rendered content. Otherwise, true on success, false on failure.
 	 */
 	public function render( $view_file, $params = array(), $output = true ) {
 		$stop_further = $this->check_has_server_error();
 
 		if ( $stop_further ) {
 			return false;
+		}
+		if ( Hub_Connector::should_render() ) {
+			wp_dequeue_script( 'def-iplockout' );
+			// Custimize the text.
+			add_filter(
+				'wpmudev_hub_connector_localize_text_vars',
+				array( 'WP_Defender\Component\Hub_Connector', 'customize_text_vars' ),
+				10,
+				2
+			);
+			do_action( 'wpmudev_hub_connector_ui', Hub_Connector::PLUGIN_IDENTIFIER );
+			return;
 		}
 
 		$base_path = $this->get_base_path();

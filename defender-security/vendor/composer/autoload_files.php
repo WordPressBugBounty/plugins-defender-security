@@ -100,5 +100,4 @@ return array(
     '4af1dca6db8c527c6eed27bff85ff0e5' => $vendorDir . '/thecodingmachine/safe/generated/yaz.php',
     'fe43ca06499ac37bc2dedd823af71eb5' => $vendorDir . '/thecodingmachine/safe/generated/zip.php',
     '356736db98a6834f0a886b8d509b0ecd' => $vendorDir . '/thecodingmachine/safe/generated/zlib.php',
-    '1f155afceeab454b94183cdd8d5248a6' => $vendorDir . '/mixpanel/mixpanel-php/lib/Mixpanel.php',
 );

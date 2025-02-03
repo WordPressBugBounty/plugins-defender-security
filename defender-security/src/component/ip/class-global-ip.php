@@ -26,6 +26,7 @@ class Global_IP extends Component {
 	 * Global IP list key.
 	 */
 	public const LIST_KEY                  = 'wpdef_global_ip_list';
+	public const LIST_LAST_SYNCED_KEY      = 'wpdef_global_ip_list_last_synced';
 	public const DASHBOARD_NOTICE_REMINDER = 'wpdef_global_ip_dashoard_notice_reminder';
 
 	/**
@@ -131,7 +132,7 @@ class Global_IP extends Component {
 	}
 
 	/**
-	 * Check if Blacklist Auto sync is enabled.
+	 * Check if Central IP lists can be synced automatically.
 	 *
 	 * @return bool True for enabled or false for disabled.
 	 */
@@ -146,9 +147,20 @@ class Global_IP extends Component {
 	 */
 	public function can_blocklist_autosync(): bool {
 		return $this->wpmudev->is_dash_activated() &&
-				$this->wpmudev->is_site_connected_to_hub() &&
-				$this->is_global_ip_enabled() &&
-				$this->is_blocklist_autosync_enabled();
+			$this->wpmudev->is_site_connected_to_hub() &&
+			$this->is_global_ip_enabled() &&
+			$this->is_blocklist_autosync_enabled();
+	}
+
+	/**
+	 * Check if blocked or allowlisted IPs can be synced with the Central IP lists on HUB.
+	 *
+	 * @return bool
+	 */
+	public function can_central_ip_autosync(): bool {
+		return $this->wpmudev->hub_connector_connected() &&
+			$this->is_global_ip_enabled() &&
+			$this->is_blocklist_autosync_enabled();
 	}
 
 	/**
@@ -219,6 +231,8 @@ class Global_IP extends Component {
 		$this->allow_list  = $value['allow_list'];
 		$this->block_list  = $value['block_list'];
 
+		self::set_last_synced();
+
 		if ( ! empty( $errors['allow_list'] ) || ! empty( $errors['block_list'] ) ) {
 			return new WP_Error( 'defender_hub_api_invalid_ips', esc_html__( 'Invalid IP(s)', 'defender-security' ), $errors );
 		} else {
@@ -232,7 +246,8 @@ class Global_IP extends Component {
 	 * @return array
 	 */
 	public function get_formated_global_ip_list(): array {
-		$data = $this->global_list;
+		$data        = $this->global_list;
+		$last_synced = self::get_last_synced();
 
 		return array(
 			'allow_list'           => ! empty( $data['allow_list'] ) && is_array( $data['allow_list'] ) ?
@@ -241,6 +256,10 @@ class Global_IP extends Component {
 			'block_list'           => ! empty( $data['block_list'] ) && is_array( $data['block_list'] ) ?
 				implode( '<br>', $data['block_list'] ) :
 				'',
+			'last_synced'          => 0 !== $last_synced ?
+				$this->format_date_time( $last_synced ) :
+				esc_html__( 'Never', 'defender-security' ),
+			'block_list_count'     => ! empty( $data['block_list'] ) && is_array( $data['block_list'] ) ? $this->format_number( count( $data['block_list'] ) ) : 0,
 			'last_update_time_utc' => ! empty( $data['last_update_time_utc'] ) ?
 				$this->format_date_time( $data['last_update_time_utc'] ) :
 				esc_html__( 'Never', 'defender-security' ),
@@ -291,6 +310,8 @@ class Global_IP extends Component {
 				if ( is_array( $data ) ) {
 					$this->set_global_ip_list( $data );
 				}
+			} else {
+				self::set_last_synced();
 			}
 		}
 
@@ -328,6 +349,7 @@ class Global_IP extends Component {
 	 *
 	 * @param  array $params  The IPs to add.
 	 *
+	 * @since 4.12.0 Send a request using API key from the Dashboard plugin or HCM.
 	 * @return array|WP_Error
 	 */
 	public function add_to_global_ip_list( array $params ) {
@@ -418,6 +440,29 @@ class Global_IP extends Component {
 	}
 
 	/**
+	 * Format a number to a human-readable format.
+	 *
+	 * @param int|float|null $number The number to format.
+	 *
+	 * @return string The formatted number.
+	 */
+	public function format_number( $number ) {
+		if ( null === $number || ! is_numeric( $number ) ) {
+			return '';
+		}
+
+		if ( $number >= 1000000000 ) {
+			return $number / 1000000000 . 'b';
+		} elseif ( $number >= 1000000 ) {
+			return $number / 1000000 . 'm';
+		} elseif ( $number >= 1000 ) {
+			return $number / 1000 . 'k';
+		} else {
+			return $number;
+		}
+	}
+
+	/**
 	 * Remove one or more IPs from the block_list.
 	 *
 	 * @param array $ips The IPs to remove.
@@ -471,5 +516,32 @@ class Global_IP extends Component {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Set the last sync time.
+	 *
+	 * @return void
+	 */
+	public static function set_last_synced(): void {
+		update_site_option( self::LIST_LAST_SYNCED_KEY, time() );
+	}
+
+	/**
+	 * Get the last sync time.
+	 *
+	 * @return int
+	 */
+	public static function get_last_synced(): int {
+		return get_site_option( self::LIST_LAST_SYNCED_KEY, 0 );
+	}
+
+	/**
+	 * Check if the Global IP feature is enabled and the site is connected to the HUB.
+	 *
+	 * @return bool True if the Global IP feature is active, false otherwise.
+	 */
+	public function is_active(): bool {
+		return $this->is_global_ip_enabled() && $this->is_site_connected_to_hub_via_hcm_or_dash();
 	}
 }

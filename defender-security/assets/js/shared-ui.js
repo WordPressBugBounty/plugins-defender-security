@@ -1381,6 +1381,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 
   SUI.closeModal = function (isAnimated) {
     var topDialog = aria.getCurrentDialog();
+    if (!topDialog) {
+      return;
+    }
     topDialog.close(isAnimated);
   }; // end closeDialog.
 

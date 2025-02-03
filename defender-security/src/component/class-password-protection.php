@@ -325,11 +325,11 @@ class Password_Protection extends Component {
 	 * @return WP_User|WP_Error         Return user object or error object.
 	 */
 	public function do_force_reset( $user, $password ) {
-		if ( ! is_wp_error( $user ) && wp_check_password(
-			$password,
-			$user->user_pass,
-			$user->ID
-		) && $this->is_force_reset( $user ) ) {
+		// The check for $user and $password was performed before the method was called.
+		if (
+			wp_check_password( $password, $user->user_pass, $user->ID )
+			&& $this->is_force_reset( $user )
+		) {
 			$action      = 'password_reset';
 			$cookie_name = 'display_reset_password_warning';
 
@@ -348,11 +348,11 @@ class Password_Protection extends Component {
 	 * @return WP_User|WP_Error         Return user object or error object.
 	 */
 	public function do_weak_reset( $user, $password ) {
-		if ( ! is_wp_error( $user ) && wp_check_password(
-			$password,
-			$user->user_pass,
-			$user->ID
-		) && $this->is_weak_password( $user, $password ) ) {
+		// The check for $user and $password was performed before the method was called.
+		if (
+			wp_check_password( $password, $user->user_pass, $user->ID )
+			&& $this->is_weak_password( $user, $password )
+		) {
 			$action      = 'password_protection';
 			$cookie_name = 'display_pwned_password_warning';
 

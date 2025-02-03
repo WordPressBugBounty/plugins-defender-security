@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
+class ComposerStaticInit93f1aef403241330ad485598014557c3
 {
     public static $files = array (
         'a4ecaeafb8cfb009ad0e052c90355e98' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/functions.php',
@@ -101,7 +101,6 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         '4af1dca6db8c527c6eed27bff85ff0e5' => __DIR__ . '/..' . '/thecodingmachine/safe/generated/yaz.php',
         'fe43ca06499ac37bc2dedd823af71eb5' => __DIR__ . '/..' . '/thecodingmachine/safe/generated/zip.php',
         '356736db98a6834f0a886b8d509b0ecd' => __DIR__ . '/..' . '/thecodingmachine/safe/generated/zlib.php',
-        '1f155afceeab454b94183cdd8d5248a6' => __DIR__ . '/..' . '/mixpanel/mixpanel-php/lib/Mixpanel.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -172,6 +171,7 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'A' => 
         array (
             'Assert\\' => 7,
+            'AltchaOrg\\Altcha\\' => 17,
         ),
     );
 
@@ -250,9 +250,9 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         ),
         'Jose\\Component\\Signature\\Algorithm\\' => 
         array (
-            0 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-ecdsa',
+            0 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-rsa',
             1 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-eddsa',
-            2 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-rsa',
+            2 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-ecdsa',
         ),
         'Jose\\Component\\Signature\\' => 
         array (
@@ -298,6 +298,10 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         array (
             0 => __DIR__ . '/..' . '/beberlei/assert/lib/Assert',
         ),
+        'AltchaOrg\\Altcha\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/altcha-org/altcha/src',
+        ),
     );
 
     public static $prefixesPsr0 = array (
@@ -311,6 +315,14 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
     );
 
     public static $classMap = array (
+        'AltchaOrg\\Altcha\\Algorithm' => __DIR__ . '/..' . '/altcha-org/altcha/src/Algorithm.php',
+        'AltchaOrg\\Altcha\\Altcha' => __DIR__ . '/..' . '/altcha-org/altcha/src/Altcha.php',
+        'AltchaOrg\\Altcha\\Challenge' => __DIR__ . '/..' . '/altcha-org/altcha/src/Challenge.php',
+        'AltchaOrg\\Altcha\\ChallengeOptions' => __DIR__ . '/..' . '/altcha-org/altcha/src/ChallengeOptions.php',
+        'AltchaOrg\\Altcha\\Payload' => __DIR__ . '/..' . '/altcha-org/altcha/src/Payload.php',
+        'AltchaOrg\\Altcha\\ServerSignaturePayload' => __DIR__ . '/..' . '/altcha-org/altcha/src/ServerSignaturePayload.php',
+        'AltchaOrg\\Altcha\\ServerSignatureVerificationData' => __DIR__ . '/..' . '/altcha-org/altcha/src/ServerSignatureVerificationData.php',
+        'AltchaOrg\\Altcha\\Solution' => __DIR__ . '/..' . '/altcha-org/altcha/src/Solution.php',
         'Assert\\Assert' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/Assert.php',
         'Assert\\Assertion' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/Assertion.php',
         'Assert\\AssertionChain' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/AssertionChain.php',
@@ -1066,6 +1078,7 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Bootstrap' => __DIR__ . '/../..' . '/src/class-bootstrap.php',
         'WP_Defender\\Central' => __DIR__ . '/../..' . '/src/class-central.php',
         'WP_Defender\\Component' => __DIR__ . '/../..' . '/src/class-component.php',
+        'WP_Defender\\Component\\Altcha_Handler' => __DIR__ . '/../..' . '/src/component/class-altcha-handler.php',
         'WP_Defender\\Component\\Audit' => __DIR__ . '/../..' . '/src/component/class-audit.php',
         'WP_Defender\\Component\\Audit\\Audit_Event' => __DIR__ . '/../..' . '/src/component/audit/class-audit-event.php',
         'WP_Defender\\Component\\Audit\\Comment_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-comment-audit.php',
@@ -1088,6 +1101,8 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Component\\Http\\Remote_Address' => __DIR__ . '/../..' . '/src/component/http/class-remote-address.php',
         'WP_Defender\\Component\\Http\\Remote_Address\\Classic_Remote_Address' => __DIR__ . '/../..' . '/src/component/http/remote-address/class-classic-remote-address.php',
         'WP_Defender\\Component\\Http\\Remote_Address\\Remote_Address' => __DIR__ . '/../..' . '/src/component/http/remote-address/class-remote-address.php',
+        'WP_Defender\\Component\\Hub_Connector' => __DIR__ . '/../..' . '/src/component/class-hub-connector.php',
+        'WP_Defender\\Component\\IP\\Antibot_Global_Firewall' => __DIR__ . '/../..' . '/src/component/ip/class-antibot-global-firewall.php',
         'WP_Defender\\Component\\IP\\Global_IP' => __DIR__ . '/../..' . '/src/component/ip/class-global-ip.php',
         'WP_Defender\\Component\\Legacy_Versions' => __DIR__ . '/../..' . '/src/component/class-legacy-versions.php',
         'WP_Defender\\Component\\Logger\\Rotation_Logger' => __DIR__ . '/../..' . '/src/component/logger/class-rotation-logger.php',
@@ -1150,6 +1165,7 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Component\\Webauthn' => __DIR__ . '/../..' . '/src/component/class-webauthn.php',
         'WP_Defender\\Controller' => __DIR__ . '/../..' . '/src/class-controller.php',
         'WP_Defender\\Controller\\Advanced_Tools' => __DIR__ . '/../..' . '/src/controller/class-advanced-tools.php',
+        'WP_Defender\\Controller\\Antibot_Global_Firewall' => __DIR__ . '/../..' . '/src/controller/class-antibot-global-firewall.php',
         'WP_Defender\\Controller\\Audit_Logging' => __DIR__ . '/../..' . '/src/controller/class-audit-logging.php',
         'WP_Defender\\Controller\\Blacklist' => __DIR__ . '/../..' . '/src/controller/class-blacklist.php',
         'WP_Defender\\Controller\\Blocklist_Monitor' => __DIR__ . '/../..' . '/src/controller/class-blocklist-monitor.php',
@@ -1160,6 +1176,7 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Controller\\Firewall_Logs' => __DIR__ . '/../..' . '/src/controller/class-firewall-logs.php',
         'WP_Defender\\Controller\\Global_Ip' => __DIR__ . '/../..' . '/src/controller/class-global-ip.php',
         'WP_Defender\\Controller\\HUB' => __DIR__ . '/../..' . '/src/controller/class-hub.php',
+        'WP_Defender\\Controller\\Hub_Connector' => __DIR__ . '/../..' . '/src/controller/class-hub-connector.php',
         'WP_Defender\\Controller\\Login_Lockout' => __DIR__ . '/../..' . '/src/controller/class-login-lockout.php',
         'WP_Defender\\Controller\\Main_Setting' => __DIR__ . '/../..' . '/src/controller/class-main-setting.php',
         'WP_Defender\\Controller\\Mask_Login' => __DIR__ . '/../..' . '/src/controller/class-mask-login.php',
@@ -1182,15 +1199,17 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Extra\\Base2n' => __DIR__ . '/../..' . '/src/extra/binary-to-text-php/Base2n.php',
         'WP_Defender\\Extra\\GeoIp' => __DIR__ . '/../..' . '/src/extra/geoip.php',
         'WP_Defender\\Extra\\IP_Helper' => __DIR__ . '/../..' . '/src/extra/ip-helper.php',
+        'WP_Defender\\Helper\\Analytics\\Antibot' => __DIR__ . '/../..' . '/src/helper/analytics/class-antibot.php',
         'WP_Defender\\Helper\\Analytics\\Firewall' => __DIR__ . '/../..' . '/src/helper/analytics/class-firewall.php',
         'WP_Defender\\Helper\\Analytics\\Scan' => __DIR__ . '/../..' . '/src/helper/analytics/class-scan.php',
         'WP_Defender\\Helper\\File' => __DIR__ . '/../..' . '/src/helper/class-file.php',
-        'WP_Defender\\Integrations\\Blocklist_Client' => __DIR__ . '/../..' . '/src/integrations/class-blocklist-client.php',
+        'WP_Defender\\Integrations\\Antibot_Global_Firewall_Client' => __DIR__ . '/../..' . '/src/integrations/class-antibot-global-firewall-client.php',
         'WP_Defender\\Integrations\\Buddypress' => __DIR__ . '/../..' . '/src/integrations/class-buddypress.php',
         'WP_Defender\\Integrations\\Dashboard_Whitelabel' => __DIR__ . '/../..' . '/src/integrations/class-dashboard-whitelabel.php',
         'WP_Defender\\Integrations\\MaxMind_Geolocation' => __DIR__ . '/../..' . '/src/integrations/class-maxmind-geolocation.php',
         'WP_Defender\\Integrations\\Smush' => __DIR__ . '/../..' . '/src/integrations/class-smush.php',
         'WP_Defender\\Integrations\\Woocommerce' => __DIR__ . '/../..' . '/src/integrations/class-woocommerce.php',
+        'WP_Defender\\Model\\Antibot_Global_Firewall' => __DIR__ . '/../..' . '/src/model/class-antibot-global-firewall.php',
         'WP_Defender\\Model\\Audit_Log' => __DIR__ . '/../..' . '/src/model/class-audit-log.php',
         'WP_Defender\\Model\\Email_Track' => __DIR__ . '/../..' . '/src/model/class-email-track.php',
         'WP_Defender\\Model\\Lockout_Ip' => __DIR__ . '/../..' . '/src/model/class-lockout-ip.php',
@@ -1205,6 +1224,7 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
         'WP_Defender\\Model\\Onboard' => __DIR__ . '/../..' . '/src/model/class-onboard.php',
         'WP_Defender\\Model\\Scan' => __DIR__ . '/../..' . '/src/model/class-scan.php',
         'WP_Defender\\Model\\Scan_Item' => __DIR__ . '/../..' . '/src/model/class-scan-item.php',
+        'WP_Defender\\Model\\Setting\\Antibot_Global_Firewall_Setting' => __DIR__ . '/../..' . '/src/model/setting/class-antibot-global-firewall-setting.php',
         'WP_Defender\\Model\\Setting\\Audit_Logging' => __DIR__ . '/../..' . '/src/model/setting/class-audit-logging.php',
         'WP_Defender\\Model\\Setting\\Blacklist_Lockout' => __DIR__ . '/../..' . '/src/model/setting/class-blacklist-lockout.php',
         'WP_Defender\\Model\\Setting\\Firewall' => __DIR__ . '/../..' . '/src/model/setting/class-firewall.php',
@@ -1334,10 +1354,10 @@ class ComposerStaticInitf0eb055c08a2deead8b913944120dc0a
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitf0eb055c08a2deead8b913944120dc0a::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitf0eb055c08a2deead8b913944120dc0a::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitf0eb055c08a2deead8b913944120dc0a::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitf0eb055c08a2deead8b913944120dc0a::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit93f1aef403241330ad485598014557c3::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit93f1aef403241330ad485598014557c3::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit93f1aef403241330ad485598014557c3::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit93f1aef403241330ad485598014557c3::$classMap;
 
         }, null, ClassLoader::class);
     }

@@ -18,6 +18,7 @@ use WP_Defender\Model\Notification;
 use WP_Defender\Controller\Firewall;
 use WP_Defender\Component\Quarantine;
 use WP_Defender\Model\Setting\Two_Fa;
+use WP_Defender\Component\IP\Antibot_Global_Firewall;
 use WP_Defender\Model\Setting\Recaptcha;
 use WP_Defender\Model\Setting\Mask_Login;
 use WP_Defender\Controller\Security_Tweaks;
@@ -86,6 +87,10 @@ trait Defender_Hub_Client {
 				return $base . 'api/hub/v1/package-configs';
 			case self::API_IP_BLOCKLIST_SUBMIT_LOGS:
 				return $base . 'api/blocklist/v1/logs';
+			case self::API_ANTIBOT_GLOBAL_FIREWALL:
+				$site_id = $this->get_site_id();
+
+				return $base . "api/hub/v1/sites/$site_id/modules/hosting/antibot";
 			case self::API_HUB_SYNC:
 			default:
 				return $base . 'api/defender/v1/scan-results';
@@ -122,14 +127,7 @@ trait Defender_Hub_Client {
 		array $args = array(),
 		bool $recheck = false
 	) {
-		$dash_api = WPMUDEV_Dashboard::$api;
-
-		if ( ! $dash_api->has_key() ) {
-			throw new Exception( esc_html__( 'Dash plugin authentication API key missing.', 'defender-security' ) );
-		}
-
-		$api_key = $dash_api->get_key();
-
+		$api_key          = $this->get_api_key();
 		$body['domain'] ??= network_site_url();
 
 		$headers = array(
@@ -137,12 +135,14 @@ trait Defender_Hub_Client {
 			'apikey'        => $api_key,
 		);
 
+		$timeout = isset( $args['timeout'] ) ? $args['timeout'] : 30;
+
 		$args = array_merge(
 			$args,
 			array(
 				'body'      => $body,
 				'headers'   => $headers,
-				'timeout'   => '30',
+				'timeout'   => $timeout,
 				'sslverify' => apply_filters( 'https_ssl_verify', true ),
 			)
 		);
@@ -190,9 +190,9 @@ trait Defender_Hub_Client {
 		array $args = array(),
 		bool $recheck = false
 	) {
-		$api_key = $this->get_apikey();
+		$api_key = $this->get_api_key();
 
-		if ( false === $api_key ) {
+		if ( empty( $api_key ) ) {
 			$link_text = sprintf(
 				'<a target="_blank" href="%s">%s</a>',
 				'https://wpmudev.com/project/wpmu-dev-dashboard/',
@@ -233,16 +233,12 @@ trait Defender_Hub_Client {
 		array $args = array(),
 		bool $recheck = false
 	) {
+		if ( ! $this->hub_connector_connected() ) {
+			throw new Exception( esc_html__( 'API key missing.', 'defender-security' ) );
+		}
 		if ( $this->can_wpmu_free_request() === false ) {
 			throw new Exception( esc_html__( 'Permission denied API call.', 'defender-security' ) );
 		}
-
-		$dash_api = WPMUDEV_Dashboard::$api;
-
-		if ( ! $dash_api->has_key() ) {
-			throw new Exception( esc_html__( 'Dash plugin authentication API key missing.', 'defender-security' ) );
-		}
-
 		return $this->hub_api_request( $scenario, $body, $args, $recheck );
 	}
 
@@ -253,19 +249,7 @@ trait Defender_Hub_Client {
 	 * @throws Exception If the WPMU DEV Dashboard plugin is missing.
 	 */
 	public function can_wpmu_free_request() {
-		if ( ! class_exists( 'WPMUDEV_Dashboard' ) ) {
-			throw new Exception( esc_html__( 'WPMU DEV Dashboard plugin is missing.', 'defender-security' ) );
-		}
-
-		WPMUDEV_Dashboard::instance();
-
-		$membership_status = WPMUDEV_Dashboard::$api->get_membership_status();
-
-		if ( in_array( $membership_status, array( 'single', 'unit' ), true ) ) {
-			return $this->is_member();
-		}
-
-		return in_array( $membership_status, array( 'free', 'full' ), true );
+		return in_array( $this->get_membership_type(), array( 'free', 'full' ), true );
 	}
 
 	/**
@@ -430,6 +414,7 @@ trait Defender_Hub_Client {
 			'ua'                     => wd_di()->get( User_Agent_Lockout::class )->enabled,
 			'ua_week'                => $firewall['ua']['week'],
 			'global_ip_list_enabled' => wd_di()->get( Global_Ip_Lockout::class )->enabled,
+			'antibot_enabled'        => wd_di()->get( Antibot_Global_Firewall::class )->frontend_is_enabled(),
 		);
 	}
 
@@ -689,6 +674,7 @@ trait Defender_Hub_Client {
 					'lockout_ua'             => $firewall_data['ua_week'],
 					'total_lockout'          => (int) $firewall_data['lp_week'] + (int) $firewall_data['nf_week'] + (int) $firewall_data['ua_week'],
 					'global_ip_list_enabled' => $firewall_data['global_ip_list_enabled'],
+					'antibot_enabled'        => $firewall_data['antibot_enabled'],
 					'advanced'               => array(
 						// This is moved but still keep here for backward compatibility.
 						'multi_factors_auth'  => array(
@@ -780,5 +766,31 @@ trait Defender_Hub_Client {
 		if ( ! wp_next_scheduled( 'defender_hub_sync' ) ) {
 			wp_schedule_single_event( time(), 'defender_hub_sync' );
 		}
+	}
+
+	/**
+	 * Returns the signup url.
+	 * If Dashboard plugin is active the signup url returned will be the Dashboard signup page. Else Hub signup page.
+	 *
+	 * @return string
+	 */
+	public function signup_url(): string {
+		if ( class_exists( 'WPMUDEV_Dashboard' ) && is_object( WPMUDEV_Dashboard::$api ) ) {
+			return add_query_arg(
+				array( 'page' => 'wpmudev' ),
+				is_multisite() ? network_admin_url() : get_admin_url()
+			);
+		}
+
+		return $this->hub_signup_url();
+	}
+
+	/**
+	 * Returns the hub's signup url.
+	 *
+	 * @return string
+	 */
+	public function hub_signup_url(): string {
+		return $this->get_api_base_url() . 'register/?signup=defender&defender_url=' . site_url();
 	}
 }

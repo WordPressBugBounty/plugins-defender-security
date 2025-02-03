@@ -193,7 +193,12 @@ class Audit extends Component {
 			// Count the logs that should be deleted.
 			$logs_count = Audit_Log::count( $date_from->getTimestamp(), $date_to->getTimestamp() );
 			if ( $logs_count > 0 ) {
-				Audit_Log::delete_old_logs( $date_from->getTimestamp(), $date_to->getTimestamp(), 50 );
+				Audit_Log::delete_old_logs(
+					$date_from->getTimestamp(),
+					$date_to->getTimestamp(),
+					// Since v5.0.0.
+					(int) apply_filters( 'wpdef_audit_limit_deleted_logs', 50 )
+				);
 			}
 		}
 	}

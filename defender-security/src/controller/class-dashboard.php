@@ -16,9 +16,11 @@ use Calotes\Component\Response;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Feature_Modal;
+use WP_Defender\Controller\Hub_Connector;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
+use WP_Defender\Component\IP\Antibot_Global_Firewall as Antibot_Component;
 
 /**
  * Handles the main admin page.
@@ -209,7 +211,6 @@ class Dashboard extends Event {
 		wd_di()->get( Feature_Modal::class )->upgrade_site_options();
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */
@@ -224,9 +225,10 @@ class Dashboard extends Event {
 	public function data_frontend(): array {
 		[ $endpoints, $nonces ] = Route::export_routes( 'dashboard' );
 		$firewall               = wd_di()->get( Firewall::class );
+		$force_hide_modal       = wd_di()->get( Antibot_Component::class )->frontend_is_enabled();
 
 		return array_merge(
-			wd_di()->get( Feature_Modal::class )->get_dashboard_modals(),
+			wd_di()->get( Feature_Modal::class )->get_dashboard_modals( $force_hide_modal ),
 			array(
 				'scan'              => wd_di()->get( Scan::class )->data_frontend(),
 				'firewall'          => $firewall->data_frontend(),
@@ -250,6 +252,8 @@ class Dashboard extends Event {
 				'settings'          => wd_di()->get( Main_Setting::class )->data_frontend(),
 				'countries'         => $firewall->dashboard_widget(),
 				'global_ip'         => wd_di()->get( Global_Ip::class )->data_frontend(),
+				'hub_connector'     => wd_di()->get( Hub_Connector::class )->data_frontend(),
+				'antibot'           => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			)
 		);
 	}

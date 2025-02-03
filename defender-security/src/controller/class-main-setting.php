@@ -44,6 +44,13 @@ class Main_Setting extends Event {
 	protected $service;
 
 	/**
+	 * Service for handling WPMUDEV.
+	 *
+	 * @var WPMUDEV
+	 */
+	protected $wpmudev;
+
+	/**
 	 * The intention/nonce action of the current request.
 	 *
 	 * @since 4.0.0
@@ -68,6 +75,7 @@ class Main_Setting extends Event {
 		// Internal cache.
 		$this->model   = new Model_Main_Setting();
 		$this->service = wd_di()->get( Backup_Settings::class );
+		$this->wpmudev = wd_di()->get( WPMUDEV::class );
 		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
 		$this->register_routes();
 
@@ -243,23 +251,16 @@ class Main_Setting extends Event {
 			}
 		}
 
-		$link         = ( new WPMUDEV() )->is_member()
+		$link           = $this->wpmudev->is_member()
 			? 'https://wpmudev.com/translate/projects/wpdef/'
 			: 'https://translate.wordpress.org/projects/wp-plugins/defender-security/';
-		$allowed_user = (array) get_option( 'wdp_un_general', array( 'limit_to_user' => array() ) )['limit_to_user'];
-		/**
-		 * Ignore WordPress.PHP.StrictInArray.MissingTrueStrict
-		 *
-		 * We're not using strict comparison. Here's why:
-		 * Initially, when the dashboard plugin is installed, the user ID is an integer.
-		 * However, after adding a new user, all user IDs become strings.
-		 * This can cause errors if users aren't updated in the permissions tab.
-		 */
+		$can_whitelabel = wd_di()->get( \WP_Defender\Integrations\Dashboard_Whitelabel::class )->can_whitelabel();
+
 		return array_merge(
 			array(
 				'general'       => array(
 					'translate'           => $model->translate,
-					'show_usage_tracking' => in_array( get_current_user_id(), $allowed_user ), // phpcs:ignore WordPress.PHP.StrictInArray.MissingTrueStrict
+					'show_usage_tracking' => $this->wpmudev->is_wpmu_dev_admin() || ! $can_whitelabel,
 					'usage_tracking'      => $model->usage_tracking,
 					'translation_link'    => $link,
 				),

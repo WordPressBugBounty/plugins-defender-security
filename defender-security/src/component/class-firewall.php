@@ -228,11 +228,29 @@ class Firewall extends Component {
 		$global_ip = wd_di()->get( IP\Global_IP::class );
 
 		if (
-			$global_ip->is_global_ip_enabled() &&
+			$global_ip->is_active() &&
 			$global_ip->is_ip_blocked( $ip )
 		) {
 			return array(
 				'reason' => 'global_ip',
+				'result' => true,
+			);
+		}
+
+		/**
+		 * Retrieve Antibot_Global_Firewall instance.
+		 *
+		 * @var IP\Antibot_Global_Firewall $antibot
+		 */
+		$antibot = wd_di()->get( IP\Antibot_Global_Firewall::class );
+
+		if (
+			$antibot->is_active() &&
+			$antibot->is_ip_blocked( $ip ) &&
+			'plugin' === $antibot->get_managed_by()
+		) {
+			return array(
+				'reason' => IP\Antibot_Global_Firewall::REASON_SLUG,
 				'result' => true,
 			);
 		}

@@ -17,12 +17,22 @@ use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Model\Setting\Main_Setting as Model_Main_Setting;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
 use WP_Defender\Controller\Scan as Controller_Scan;
+use WP_Defender\Controller\Hub_Connector;
+use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
+use WP_Defender\Component\IP\Antibot_Global_Firewall;
+use WP_Defender\Component\Feature_Modal;
 
 /**
  * This class is only used once, after the activation on a fresh install.
  * We will use this for activating & presets other module settings.
  */
 class Onboard extends Event {
+	/**
+	 * The key for the remind later in onboarding page.
+	 *
+	 * @var string
+	 */
+	public const REMINDER_KEY = 'wp_defender_onboard_antibot_reminder';
 
 	/**
 	 * The slug identifier for this controller.
@@ -30,6 +40,17 @@ class Onboard extends Event {
 	 * @var string
 	 */
 	public $slug = 'wp-defender';
+
+	/**
+	 * List of steps for the onboarding process.
+	 *
+	 * @var array
+	 */
+	public const STEPS = array(
+		'init',
+		'activating',
+		'activate-antibot',
+	);
 
 	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
@@ -75,24 +96,57 @@ class Onboard extends Event {
 			wp_send_json_error( array( 'message' => esc_html__( 'Invalid', 'defender-security' ) ) );
 		}
 
-		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
-
-		update_site_option( 'wp_defender_shown_activator', true );
-		delete_site_option( 'wp_defender_is_free_activated' );
-
-		$this->maybe_tracking( 'Activate & Configure' );
-		// Run plugin modules.
-		if ( $this->is_pro() ) {
-			$this->preset_audit();
-			$this->preset_blacklist_monitor();
+		$step = defender_get_data_from_request( 'step', 'p' );
+		if ( ! in_array( $step, self::STEPS, true ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid', 'defender-security' ) ) );
 		}
-		$this->preset_firewall();
-		$this->resolve_security_tweaks();
-		$this->preset_scanning();
-		// @since 4.2.0 No display the Data Tracking after the Onboarding.
-		Data_Tracking::delete_modal_key();
 
-		wp_send_json_success();
+		if ( 'activate-antibot' !== $step ) {
+			$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
+
+			$this->maybe_tracking( 'Activate & Configure' );
+			// Run plugin modules.
+			if ( $this->is_pro() ) {
+				$this->preset_audit();
+				$this->preset_blacklist_monitor();
+			}
+			$this->preset_firewall();
+			$this->resolve_security_tweaks();
+			$this->preset_scanning();
+			// @since 4.2.0 No display the Data Tracking after the Onboarding.
+			Data_Tracking::delete_modal_key();
+
+			update_site_option( 'wp_defender_onboarding_step', 'activate-antibot' );
+			Feature_Modal::delete_modal_key();
+
+			wp_send_json_success();
+		} else {
+			$antibot_service = wd_di()->get( Antibot_Global_Firewall::class );
+			$managed_by      = $antibot_service->get_default_managed_by();
+			$antibot_service->set_managed_by( $managed_by );
+
+			if ( 'plugin' === $managed_by ) {
+				$antibot_service->managed_by_plugin_action();
+			} else {
+				$antibot_service->managed_by_hosting_action();
+			}
+
+			update_site_option( 'wp_defender_shown_activator', true );
+			delete_site_option( 'wp_defender_is_free_activated' );
+			delete_site_option( 'wp_defender_onboarding_step' );
+
+			$data = array(
+				'is_antibot_enabled' => $antibot_service->frontend_is_enabled(),
+				'hub_connector'      => wd_di()->get( Hub_Connector::class )->data_frontend(),
+			);
+			// Track.
+			if ( $this->is_tracking_active() ) {
+				wd_di()->get( \WP_Defender\Helper\Analytics\Antibot::class )
+					->track_antibot( false, 'Onboarding' );
+			}
+
+			wp_send_json_success( $data );
+		}
 	}
 
 	/**
@@ -277,6 +331,8 @@ class Onboard extends Event {
 	 * Removes settings for all submodules.
 	 */
 	public function remove_settings() {
+		delete_site_option( self::REMINDER_KEY );
+		delete_site_option( 'wp_defender_onboarding_step' );
 	}
 
 	/**
@@ -320,12 +376,33 @@ class Onboard extends Event {
 		[ $endpoints, $nonces ] = Route::export_routes( 'onboard' );
 
 		return array(
-			'endpoints' => $endpoints,
-			'nonces'    => $nonces,
-			'misc'      => array(
+			'endpoints'     => $endpoints,
+			'nonces'        => $nonces,
+			'misc'          => array(
 				'state_usage_tracking' => wd_di()->get( Model_Main_Setting::class )->usage_tracking,
 				'privacy_link'         => Model_Main_Setting::PRIVACY_LINK,
+				'antibot'              => Antibot_Global_Firewall_Setting::get_module_name(),
 			),
+			'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
+			'step'          => get_site_option( 'wp_defender_onboarding_step', 'init' ),
 		);
+	}
+
+	/**
+	 * Remind Antibot onboarding.
+	 *
+	 * @defender_route
+	 */
+	public function antibot_reminder() {
+		if ( ! $this->check_permission() || ! $this->verify_nonce( 'antibot_reminderonboard' ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid', 'defender-security' ) ) );
+		}
+
+		update_site_option( 'wp_defender_shown_activator', true );
+		update_site_option( self::REMINDER_KEY, time() );
+		delete_site_option( 'wp_defender_onboarding_step' );
+		delete_site_option( 'wp_defender_is_free_activated' );
+
+		wp_send_json_success();
 	}
 }

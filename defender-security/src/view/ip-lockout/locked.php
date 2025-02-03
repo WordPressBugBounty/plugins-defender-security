@@ -54,6 +54,7 @@
 			align-items: center;
 			justify-content: center;
 			gap: 30px;
+			width: auto;
 			max-width: 100%; /* Ensure container doesn't overflow on smaller screens */
 			padding: 0 20px; /* Add padding for better readability and spacing */
 		}
@@ -86,6 +87,8 @@
 			font-size: 10px;
 			color: #C0C0C0;
 			justify-items: center;
+			padding: 0 20px;
+			max-width: 100%;
 		}
 
 		.powered strong {
@@ -125,7 +128,8 @@
 			font-weight: normal;
 		}
 
-		#wd_step_show_success .success_icon {
+		#wd_step_show_success .success_icon,
+		#wd_agf_unlock_me_success .success_icon {
 			width: 60px;
 			height: 60px;
 			margin: 0 auto;
@@ -136,7 +140,7 @@
 		}
 
 	</style>
-	<?php if ( ! empty( $is_unlock_me ) ) { ?>
+	<?php if ( ! empty( $is_unlock_me_agf ) || ! empty( $is_unlock_me ) ) { ?>
 		<link rel="stylesheet" href="<?php echo esc_url( defender_asset_url( '/assets/css/unlock.css' ) ); ?>">
 		<script src="<?php echo esc_url_raw( includes_url( '/js/jquery/jquery.min.js' ) ); ?>"></script>
 	<?php } ?>
@@ -154,10 +158,32 @@
 		}
 		?>
 		<h1 class="locked_page_header"><?php esc_html_e( 'Access Denied', 'defender-security' ); ?></h1>
-		<p class="message">
+		<p class="message" <?php echo ! empty( $hide_btn_agf ) ? 'style="margin-top: -1.5em; margin-bottom: 3em"' : ''; ?>>
 			<?php
-			echo wp_kses_post( $message ) . '<br/>';
-			if ( ! empty( $is_unlock_me ) ) {
+			echo wp_kses_post( $message );
+			echo ! empty( $hide_btn_agf ) ? '' : '<br/>';
+			if ( ! empty( $is_unlock_me_agf ) ) {
+				if ( empty( $hide_btn_agf ) ) {
+					printf(
+					/* translators: 1. Module name. 2. Button title. */
+						esc_html__(
+							'Your IP appeared in the %s service. Click on the %s button below to unlock yourself.',
+							'defender-security'
+						),
+						$module_name_agf,
+						'<strong>' . esc_html( $button_title ) . '</strong>',
+					);
+				} else {
+					printf(
+					/* translators: %s: Module name. */
+						esc_html__(
+							'Your IP address has been blocked from accessing this website because it is listed in the %s.',
+							'defender-security'
+						),
+						'<strong>' . $module_name_agf . '</strong>'
+					);
+				}
+			} else if ( ! empty( $is_unlock_me ) ) {
 				printf(
 				/* translators: %s: Button title. */
 					esc_html__(
@@ -169,7 +195,59 @@
 			}
 			?>
 		</p>
-		<?php if ( ! empty( $is_unlock_me ) ) { ?>
+		<?php if ( ! empty( $is_unlock_me_agf ) ) {
+			if ( empty( $hide_btn_agf ) ) { ?>
+				<div class="unlock_wrap sui-wrap">
+					<!--Step#1-->
+					<form id="wd_agf_unlock_me_form">
+						<input type="checkbox" id="wd_agf_unlock_me_checkbox"
+								name="captcha"
+								style="display: none;">
+						<button type="button" id="wd_agf_unlock_me"
+								class="sui-button sui-button-lg sui-button-blue"
+								disabled="disabled"
+						>
+							<i class="sui-icon-lock" aria-hidden="true"></i>
+							<?php echo esc_html( $button_title ); ?>
+						</button>
+					</form>
+					<!--Step#2-->
+					<div class="sui-box unlock_section" id="wd_agf_unlock_me_success">
+						<div class="success_icon"></div>
+						<p>
+							<?php
+							esc_html_e(
+								'Your IP is removed from the AntiBot Global FIrewall blocklist.',
+								'defender-security'
+							);
+							?>
+						</p>
+					</div>
+					<!--Step#3-->
+					<div class="sui-box unlock_section" id="wd_agf_unlock_me_fail">
+						<p>
+							<?php echo sprintf(
+								/* translators: 1. Open tag. 2. Close tag. */
+								esc_html__( 'Verification failed. Please %1$sretry%2$s.', 'defender-security' ),
+								'<a href="javascript:void(0);" class="retry-link">',
+								'</a>'
+							); ?>
+						</p>
+					</div>
+					<!--Step#4-->
+					<div class="sui-box unlock_section" id="wd_agf_unlock_me_error">
+						<p>
+							<?php echo sprintf(
+								/* translators: 1. Open tag. 2. Close tag. */
+								esc_html__( 'Unexpected error occurred. Please %1$sretry%2$s.', 'defender-security' ),
+								'<a href="javascript:void(0);" class="retry-link">',
+								'</a>'
+							); ?>
+						</p>
+					</div>
+				</div>
+		<?php }
+		} else if ( ! empty( $is_unlock_me ) ) { ?>
 			<div class="unlock_wrap sui-wrap">
 				<!--Step#1-->
 				<button type="button" id="wd_step_show_toggle"
@@ -338,76 +416,134 @@
 		}
 	</script>
 <?php } ?>
-<script>
-	<?php if ( ! empty( $is_unlock_me ) ) { ?>
-	jQuery(function ($) {
-		//Verify user.
-		function verifyUser(that) {
-			let userField = $.trim($('#unlock_user_field').val());
-			//No action if the field is empty.
-			if ('' == userField) {
-				return;
-			}
-			let data = {
-				data: JSON.stringify({
-					'user_data': userField
-				})
-			};
-			$.ajax({
-				type: 'POST',
-				url: '<?php echo $action_verify_blocked_user; ?>',
-				data: data,
-				beforeSend: function () {
-					that.prop('disabled', true);
-				},
-				success: function (response) {
-					// Enable button.
-					that.prop('disabled', false);
-					// Hide the current step and show the next one.
-					$('#wd_step_show_form').hide();
-					$('#wd_step_show_success').show();
-				},
-				error: function (e) {
-					console.log('Unexpected error occurred: ', e);
-				}
-			})
-		}
 
-		//Show a form for communication with the user.
-		$('body').on('click', '#wd_step_show_toggle', function () {
-			$(this).hide();
-			$('#wd_step_show_form').show();
-		});
-		// Verify a blocked user.
-		$('body').on('click', '#wd_verify_user', function (e) {
-			e.preventDefault();
-			verifyUser($(this));
-		});
-		$(window).on('keydown', function (event) {
-			if (event.keyCode == 13 && jQuery(event.target).attr('id') === 'unlock_user_field') {
-				verifyUser(jQuery(event.target))
-			}
-		});
-		//Show the form again.
-		$('body').on('click', '#unlock_sent_again_link', function (e) {
-			let that = $(this);
-			e.preventDefault();
-			//Check the attempt limit.
-			$.ajax({
-				type: 'POST',
-				url: '<?php echo $action_send_again; ?>',
-				data: {},
-				success: function (response) {
-					if (response.success === false) {
-						location.reload();
+<?php if ( ! empty( $is_unlock_me_agf ) && empty( $hide_btn_agf ) ) { ?>
+	<script>
+		let altcha = <?php echo json_encode( $altcha ); ?>;
+
+		jQuery(function ($) {
+			function agf_unlock_user(that) {
+				let data = altcha;
+				data.solution = that.data('solution');
+				data.captcha = $('#wd_agf_unlock_me_checkbox').prop('checked') ? 1 : 0;
+
+				$.ajax({
+					type: 'POST',
+					url: '<?php echo $action_agf_unlock_user; ?>',
+					data: data,
+					beforeSend: function () {
+						that.prop('disabled', true);
+					},
+					success: function (response) {
+						if (response.success) {
+							// Enable button.
+							that.prop('disabled', false);
+							// Hide the current step and show the next one.
+							$('#wd_agf_unlock_me').hide();
+							$('#wd_agf_unlock_me_success').show();
+
+							setTimeout(function() {
+								window.location.reload(true);
+							}, 1000);
+						} else {
+							$('#wd_agf_unlock_me').hide();
+							// If the response has data and the data has a message, show that message in the fail box.
+							// Otherwise, just show the fail box.
+							if (response.data && response.data.message) {
+								$('#wd_agf_unlock_me_fail').html(response.data.message).show();
+							} else {
+								$('#wd_agf_unlock_me_fail').show();
+							}
+						}
+					},
+					error: function (e) {
+						$('#wd_agf_unlock_me').hide();
+						$('#wd_agf_unlock_me_error').show();
 					}
-					$('#wd_step_show_success').hide();
-					$('#wd_step_show_form').show();
-				}
+				})
+			}
+
+			$('body').on('click', '#wd_agf_unlock_me', function (e) {
+				e.preventDefault();
+				agf_unlock_user($(this));
+			});
+
+			$('body').on('click', '.retry-link', function (e) {
+				window.location.reload(true);
 			});
 		});
-	})
-	<?php } ?>
-</script>
+	</script>
+	<script src="<?php echo plugins_url( 'assets/js/altcha.js', WP_DEFENDER_FILE ); ?>"></script>
+<?php } else if ( ! empty( $is_unlock_me ) ) { ?>
+	<script>
+		jQuery(function ($) {
+			//Verify user.
+			function verifyUser(that) {
+				let userField = $.trim($('#unlock_user_field').val());
+				//No action if the field is empty.
+				if ('' == userField) {
+					return;
+				}
+				let data = {
+					data: JSON.stringify({
+						'user_data': userField
+					})
+				};
+				$.ajax({
+					type: 'POST',
+					url: '<?php echo $action_verify_blocked_user; ?>',
+					data: data,
+					beforeSend: function () {
+						that.prop('disabled', true);
+					},
+					success: function (response) {
+						// Enable button.
+						that.prop('disabled', false);
+						// Hide the current step and show the next one.
+						$('#wd_step_show_form').hide();
+						$('#wd_step_show_success').show();
+					},
+					error: function (e) {
+						console.log('Unexpected error occurred: ', e);
+					}
+				})
+			}
+
+			//Show a form for communication with the user.
+			$('body').on('click', '#wd_step_show_toggle', function () {
+				$(this).hide();
+				$('#wd_step_show_form').show();
+			});
+			// Verify a blocked user.
+			$('body').on('click', '#wd_verify_user', function (e) {
+				e.preventDefault();
+				verifyUser($(this));
+			});
+			$(window).on('keydown', function (event) {
+				if (event.keyCode == 13 && jQuery(event.target).attr('id') === 'unlock_user_field') {
+					verifyUser(jQuery(event.target))
+				}
+			});
+			//Show the form again.
+			$('body').on('click', '#unlock_sent_again_link', function (e) {
+				let that = $(this);
+				e.preventDefault();
+				//Check the attempt limit.
+				$.ajax({
+					type: 'POST',
+					url: '<?php echo $action_send_again; ?>',
+					data: {},
+					success: function (response) {
+						if (response.success === false) {
+							location.reload();
+						}
+						$('#wd_step_show_success').hide();
+						$('#wd_step_show_form').show();
+					}
+				});
+			});
+		})
+	</script>
+<?php } ?>
 </body>
 </html>

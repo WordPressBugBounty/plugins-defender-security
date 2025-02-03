@@ -14,6 +14,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\Quarantine;
 use WP_Defender\Model\Setting\Two_Fa;
+use WP_Defender\Component\IP\Antibot_Global_Firewall;
 use WP_Defender\Component\IP\Global_IP;
 use WP_Defender\Component\Backup_Settings;
 use WP_Defender\Model\Setting\Login_Lockout;
@@ -31,6 +32,7 @@ use WP_Defender\Model\Notification\Malware_Notification;
 use WP_Defender\Model\Notification\Firewall_Notification;
 use WP_Defender\Model\Setting\Audit_Logging as Model_Audit_Logging;
 use WP_Defender\Model\Setting\Security_Tweaks as Model_Security_Tweaks;
+use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
 
 /**
  * Handles various actions and interactions with the WPMUDEV Hub.
@@ -75,7 +77,7 @@ class HUB extends Event {
 		$actions['defender_manage_2fa']            = array( &$this, 'manage_2fa' );
 		$actions['defender_manage_global_ip_list'] = array( &$this, 'manage_global_ip_list' );
 		$actions['defender_set_global_ip_list']    = array( &$this, 'set_global_ips' );
-
+		$actions['defender_set_antibot_status']    = array( $this, 'set_antibot_status' );
 		// Backup/restore settings.
 		$actions['defender_export_settings'] = array( &$this, 'export_settings' );
 		$actions['defender_import_settings'] = array( &$this, 'import_settings' );
@@ -234,7 +236,7 @@ class HUB extends Event {
 		} else {
 			$response[ $type ] = 'invalid';
 		}
-		// Track. Only for Login & NF Lockouts. Ignoreing phpcs error due to all possible types.
+		// Track. Only for Login & NF Lockouts. Ignoring phpcs error due to all possible types.
 		if ( $this->is_tracking_active() && in_array( $type, array( 'login', '404' ), true ) ) {
 			$event = $settings->enabled ? 'def_feature_deactivated' : 'def_feature_activated';
 			$data  = array(
@@ -344,7 +346,7 @@ class HUB extends Event {
 	 * Import settings from HUB.
 	 * Analog to import_data but with object $params. So separated method.
 	 *
-	 * @param  array $params  An array containing the data to import.
+	 * @param object object $params Request parameters.
 	 */
 	public function import_settings( $params ) {
 		// Dirty but quick.
@@ -513,6 +515,7 @@ class HUB extends Event {
 				'lockout_404_enabled'        => wd_di()->get( Notfound_Lockout::class )->enabled,
 				'user_agent_lockout_enabled' => wd_di()->get( User_Agent_Lockout::class )->enabled,
 				'global_ip_list_enabled'     => wd_di()->get( Global_Ip_Lockout::class )->enabled,
+				'antibot_enabled'            => wd_di()->get( Antibot_Global_Firewall::class )->frontend_is_enabled(),
 			),
 			'audit'             => array(
 				'last_event' => $audit['lastEvent'],
@@ -829,5 +832,52 @@ class HUB extends Event {
 
 		// Send plugin deactivation event.
 		$this->track_opt_toggle( false, $triggered_from );
+	}
+
+	/**
+	 * Enable/Disable Antibot Functionality.
+	 *
+	 * @param  object $params  Request parameters.
+	 *
+	 * @return void
+	 * @since 4.11.0
+	 */
+	public function set_antibot_status( object $params ): void {
+		if ( ! isset( $params->enable ) ) {
+			wp_send_json_error(
+				array( 'message' => esc_html__( 'Missing parameter(s)', 'defender-security' ) )
+			);
+		}
+
+		if ( ! class_exists( Antibot_Global_Firewall_Setting::class ) ) {
+			wp_send_json_error(
+				array( 'message' => esc_html__( 'Missing class', 'defender-security' ) )
+			);
+		}
+
+		$antibot_settings = wd_di()->get( Antibot_Global_Firewall_Setting::class );
+		$old_enabled      = $antibot_settings->enabled;
+		$new_enabled      = (bool) $params->enable;
+		if ( $old_enabled !== $new_enabled ) {
+			$antibot_settings->enabled = $new_enabled;
+			$antibot_settings->save();
+			// Track.
+			if ( $this->is_tracking_active() ) {
+				wd_di()->get( \WP_Defender\Helper\Analytics\Antibot::class )
+					->track_antibot( $old_enabled, 'Hub' );
+			}
+
+			/**
+			 * Download and store the blocklist.
+			 *
+			 * @var Antibot_Global_Firewall $antibot_service
+			 */
+			$antibot_service = wd_di()->get( Antibot_Global_Firewall::class );
+			if ( 'plugin' === $antibot_service->get_managed_by() && $antibot_service->is_enabled() ) {
+				$antibot_service->download_and_store_blocklist();
+			}
+		}
+
+		wp_send_json_success( array( 'enabled' => $antibot_settings->enabled ) );
 	}
 }
