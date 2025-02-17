@@ -401,6 +401,9 @@ class Upgrader {
 		if ( version_compare( $db_version, '5.0.0', '<' ) ) {
 			$this->upgrade_5_0_0();
 		}
+		if ( version_compare( $db_version, '5.0.2', '<' ) ) {
+			$this->upgrade_5_0_2();
+		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
 		// Don't run any function below this line.
@@ -1680,5 +1683,15 @@ To complete your login, copy and paste the temporary password into the Password 
 	private function upgrade_5_0_0(): void {
 		update_site_option( \WP_Defender\Component\IP\Antibot_Global_Firewall::NOTICE_SLUG, true );
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+	}
+
+	/**
+	 * Upgrade to 5.0.2: Clear the blocklist count. Also set the whitelist server public IP.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_0_2(): void {
+		delete_site_transient( 'wpdef_antibot_global_firewall_db_blocklist_count' );
+		wd_di()->get( Firewall::class )->set_whitelist_server_public_ip();
 	}
 }

@@ -148,17 +148,4 @@ class Antibot_Global_Firewall extends DB {
 			)
 		);
 	}
-
-	/**
-	 * Count the number of records in the database table.
-	 *
-	 * @return string|null The number of records, or null if an error occurred.
-	 */
-	public function count() {
-		global $wpdb;
-
-		$table_name = $wpdb->prefix . $this->table;
-
-		return $wpdb->get_var( "SELECT COUNT(id) FROM $table_name" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-	}
 }

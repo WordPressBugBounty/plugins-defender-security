@@ -40,9 +40,14 @@ class Firewall_Logs extends Component {
 		$logs = array();
 		if ( is_array( $results ) ) {
 			foreach ( $results as $row ) {
-				$ip = $row['IP'];
-				if ( ! isset( $logs[ $ip ] ) ) {
-					$logs[ $ip ] = array( 'ip' => $ip );
+				$frequency = (int) $row['frequency'];
+
+				if ( '404_error' === $row['type'] ) {
+					$frequency = intdiv( $frequency, 20 );
+
+					if ( $frequency < 1 ) {
+						continue;
+					}
 				}
 
 				$type = '';
@@ -60,7 +65,12 @@ class Firewall_Logs extends Component {
 						continue 2;
 				}
 
-				$logs[ $ip ]['reason'][ $type ] = (int) $row['frequency'];
+				$ip = $row['IP'];
+				if ( ! isset( $logs[ $ip ] ) ) {
+					$logs[ $ip ] = array( 'ip' => $ip );
+				}
+
+				$logs[ $ip ]['reason'][ $type ] = $frequency;
 			}
 		}
 

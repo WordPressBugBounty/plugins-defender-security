@@ -1206,6 +1206,7 @@ class ComposerStaticInit93f1aef403241330ad485598014557c3
         'WP_Defender\\Integrations\\Antibot_Global_Firewall_Client' => __DIR__ . '/../..' . '/src/integrations/class-antibot-global-firewall-client.php',
         'WP_Defender\\Integrations\\Buddypress' => __DIR__ . '/../..' . '/src/integrations/class-buddypress.php',
         'WP_Defender\\Integrations\\Dashboard_Whitelabel' => __DIR__ . '/../..' . '/src/integrations/class-dashboard-whitelabel.php',
+        'WP_Defender\\Integrations\\Main_Wp' => __DIR__ . '/../..' . '/src/integrations/class-main-wp.php',
         'WP_Defender\\Integrations\\MaxMind_Geolocation' => __DIR__ . '/../..' . '/src/integrations/class-maxmind-geolocation.php',
         'WP_Defender\\Integrations\\Smush' => __DIR__ . '/../..' . '/src/integrations/class-smush.php',
         'WP_Defender\\Integrations\\Woocommerce' => __DIR__ . '/../..' . '/src/integrations/class-woocommerce.php',

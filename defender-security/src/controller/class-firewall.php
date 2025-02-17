@@ -44,6 +44,7 @@ use WP_Defender\Helper\Analytics\Firewall as Firewall_Analytics;
 use WP_Defender\Model\Antibot_Global_Firewall as Antibot_Global_Firewall_Model;
 use WP_Defender\Component\Altcha_Handler;
 use WP_Defender\Controller\Hub_Connector;
+use WP_Defender\Integrations\Main_Wp;
 
 /**
  * Handles IP lockouts, notifications, and settings related to the firewall features.
@@ -110,6 +111,9 @@ class Firewall extends Event {
 		wd_di()->get( Global_Ip::class );
 		wd_di()->get( Antibot_Global_Firewall::class );
 
+		// Integrate MainWP plugin.
+		wd_di()->get( Main_Wp::class );
+
 		// We will schedule the time to clean up old firewall logs.
 		if ( ! wp_next_scheduled( 'firewall_clean_up_logs' ) ) {
 			wp_schedule_event( time() + 10, 'hourly', 'firewall_clean_up_logs' );
@@ -158,6 +162,14 @@ class Firewall extends Event {
 			}
 			add_action( 'wpdef_smart_ip_detection_ping', array( $this, 'smart_ip_detection_ping' ) );
 		}
+
+		/**
+		 * Whitelist server IP.
+		 */
+		if ( ! wp_next_scheduled( 'wpdef_firewall_whitelist_server_public_ip' ) ) {
+			wp_schedule_event( time() + 15, 'twicedaily', 'wpdef_firewall_whitelist_server_public_ip' );
+		}
+		add_action( 'wpdef_firewall_whitelist_server_public_ip', array( $this, 'whitelist_server_public_ip' ) );
 	}
 
 	/**
@@ -832,6 +844,9 @@ class Firewall extends Event {
 		// Remove Unlockouts.
 		Unlockout::truncate();
 		Smart_Ip_Detection::remove_header();
+
+		delete_site_option( Firewall_Service::WHITELIST_SERVER_PUBLIC_IP_OPTION );
+		delete_site_option( Main_Wp::WHITELIST_DASHBOARD_PUBLIC_IP_OPTION );
 	}
 
 	/**
@@ -1320,5 +1335,15 @@ class Firewall extends Event {
 		$this->log( 'Captcha verification failed for IP(s): ' . implode( ', ', $user_ips ), Altcha_Handler::LOG_FILE_NAME );
 
 		return new Response( false, array( 'message' => esc_html__( 'Captcha verification failed. Please try again.', 'defender-security' ) ) );
+	}
+
+	/**
+	 * Whitelist server public IP.
+	 *
+	 * @return void
+	 * @since 5.0.2
+	 */
+	public function whitelist_server_public_ip(): void {
+		$this->service->set_whitelist_server_public_ip();
 	}
 }

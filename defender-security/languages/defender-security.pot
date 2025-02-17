@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 5.0.1\n"
+"Project-Id-Version: Defender Pro 5.0.2\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
-"POT-Creation-Date: 2025-01-31 08:45:16+00:00\n"
+"POT-Creation-Date: 2025-02-14 08:32:30+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -1699,7 +1699,7 @@ msgid ""
 msgstr ""
 
 #: languages/vue-js.php:1323
-#: src/component/ip/class-antibot-global-firewall.php:380
+#: src/component/ip/class-antibot-global-firewall.php:373
 msgid "Defender Plugin"
 msgstr ""
 
@@ -2248,8 +2248,8 @@ msgid "Finnish"
 msgstr ""
 
 #: languages/vue-js.php:1752 src/component/class-backup-settings.php:1308
-#: src/component/class-mail.php:63 src/controller/class-firewall.php:89
-#: src/controller/class-firewall.php:538
+#: src/component/class-mail.php:63 src/controller/class-firewall.php:90
+#: src/controller/class-firewall.php:550
 #: src/model/notification/class-firewall-notification.php:265
 #: src/model/notification/class-firewall-report.php:157
 msgid "Firewall"
@@ -3182,7 +3182,7 @@ msgstr ""
 #: src/component/ip/class-global-ip.php:261
 #: src/component/ip/class-global-ip.php:265
 #: src/component/ip/class-global-ip.php:268
-#: src/controller/class-firewall.php:787 src/model/class-notification.php:373
+#: src/controller/class-firewall.php:799 src/model/class-notification.php:373
 #: src/model/class-notification.php:387
 #: src/model/notification/class-malware-report.php:164
 #: src/traits/formats.php:326
@@ -5227,7 +5227,7 @@ msgstr ""
 msgid ""
 "We recommend adding the usernames <strong>admin</strong>, "
 "<strong>administrator</strong> and your hostname <strong>%s</strong> as "
-"these are common for bots to try logging in with. One username per line"
+"these are common for bots to try logging in with. One username per line."
 msgstr ""
 
 #: languages/vue-js.php:4016
@@ -5426,7 +5426,7 @@ msgid "WPMU DEV - Your WordPress Toolkit"
 msgstr ""
 
 #: languages/vue-js.php:4132
-#: src/component/ip/class-antibot-global-firewall.php:381
+#: src/component/ip/class-antibot-global-firewall.php:374
 msgid "WPMU DEV Hosting"
 msgstr ""
 
@@ -5867,45 +5867,45 @@ msgid ""
 "enable %2$s."
 msgstr ""
 
-#: src/class-upgrader.php:709
+#: src/class-upgrader.php:712
 msgid "Basic config"
 msgstr ""
 
-#: src/class-upgrader.php:710 src/component/class-backup-settings.php:613
+#: src/class-upgrader.php:713 src/component/class-backup-settings.php:613
 msgid "Basic Config"
 msgstr ""
 
-#: src/class-upgrader.php:1326
+#: src/class-upgrader.php:1329
 msgid "Scan of {SITE_URL} complete."
 msgstr ""
 
-#: src/class-upgrader.php:1327
+#: src/class-upgrader.php:1330
 msgid "Malware Scan of {SITE_URL} is complete."
 msgstr ""
 
-#: src/class-upgrader.php:1332
+#: src/class-upgrader.php:1335
 msgid "{ISSUES_COUNT} issues found."
 msgstr ""
 
-#: src/class-upgrader.php:1333
+#: src/class-upgrader.php:1336
 msgid "{ISSUES_COUNT} issue(s) found."
 msgstr ""
 
-#: src/class-upgrader.php:1367
+#: src/class-upgrader.php:1370
 msgid ""
 "{ISSUES_COUNT} vulnerabilities were identified for {SITE_URL} during a "
 "Malware Scan."
 msgstr ""
 
-#: src/class-upgrader.php:1368
+#: src/class-upgrader.php:1371
 msgid "Malware Scan identified {ISSUES_COUNT} issue(s) on {SITE_URL}."
 msgstr ""
 
-#: src/class-upgrader.php:1373
+#: src/class-upgrader.php:1376
 msgid "See details for each issue below."
 msgstr ""
 
-#: src/class-upgrader.php:1374
+#: src/class-upgrader.php:1377
 msgid "The identified issue(s) is/are listed below."
 msgstr ""
 
@@ -6678,7 +6678,7 @@ msgid "Inactive %s"
 msgstr ""
 
 #: src/component/class-backup-settings.php:1166
-#: src/controller/class-firewall.php:932 src/controller/class-firewall.php:984
+#: src/controller/class-firewall.php:947 src/controller/class-firewall.php:999
 #: src/controller/class-scan.php:1010 src/controller/class-scan.php:1045
 #: src/controller/class-security-tweaks.php:1000
 #: src/controller/class-security-tweaks.php:1029
@@ -6758,7 +6758,7 @@ msgstr ""
 msgid "LEARN MORE"
 msgstr ""
 
-#: src/component/class-firewall.php:530
+#: src/component/class-firewall.php:535
 msgid "Cloudflare"
 msgstr ""
 
@@ -7154,7 +7154,7 @@ msgstr ""
 msgid "%s header missing in $_SERVER global variable."
 msgstr ""
 
-#: src/component/ip/class-antibot-global-firewall.php:174
+#: src/component/ip/class-antibot-global-firewall.php:171
 msgid "AntiBot Unlock Me"
 msgstr ""
 
@@ -7911,7 +7911,7 @@ msgid "Invalid data."
 msgstr ""
 
 #: src/controller/class-audit-logging.php:436
-#: src/controller/class-blacklist.php:227 src/controller/class-firewall.php:294
+#: src/controller/class-blacklist.php:227 src/controller/class-firewall.php:306
 #: src/controller/class-main-setting.php:156
 #: src/controller/class-mask-login.php:346
 #: src/controller/class-mask-login.php:1180
@@ -7926,7 +7926,7 @@ msgstr ""
 
 #: src/controller/class-audit-logging.php:581
 #: src/controller/class-audit-logging.php:608
-#: src/controller/class-firewall.php:937 src/controller/class-firewall.php:990
+#: src/controller/class-firewall.php:952 src/controller/class-firewall.php:1005
 #: src/controller/class-scan.php:1015 src/controller/class-scan.php:1050
 #. translators: %s: Frequency value.
 msgid "Email reports sending %s"
@@ -8086,51 +8086,51 @@ msgstr ""
 msgid "Wrong start and end date."
 msgstr ""
 
-#: src/controller/class-firewall.php:172
+#: src/controller/class-firewall.php:184
 msgid "NEW"
 msgstr ""
 
-#: src/controller/class-firewall.php:393
+#: src/controller/class-firewall.php:405
 msgid "Demo"
 msgstr ""
 
-#: src/controller/class-firewall.php:523
+#: src/controller/class-firewall.php:535
 msgid "Request to Unblock IP Address"
 msgstr ""
 
-#: src/controller/class-firewall.php:762
+#: src/controller/class-firewall.php:774
 msgid "Your logs have been successfully deleted."
 msgstr ""
 
-#: src/controller/class-firewall.php:771 src/controller/class-firewall.php:1105
+#: src/controller/class-firewall.php:783 src/controller/class-firewall.php:1120
 msgid "Failed remove!"
 msgstr ""
 
-#: src/controller/class-firewall.php:943 src/controller/class-firewall.php:996
+#: src/controller/class-firewall.php:958 src/controller/class-firewall.php:1011
 #: src/controller/class-scan.php:1021 src/controller/class-scan.php:1056
 #. translators: %s: Html for Pro-tag.
 msgid "Email report inactive %s"
 msgstr ""
 
-#: src/controller/class-firewall.php:1096
+#: src/controller/class-firewall.php:1111
 msgid "Deleted lockout records successfully."
 msgstr ""
 
-#: src/controller/class-firewall.php:1233
+#: src/controller/class-firewall.php:1248
 msgid "Invalid nonce."
 msgstr ""
 
-#: src/controller/class-firewall.php:1245
+#: src/controller/class-firewall.php:1260
 msgid "IP detection process completed."
 msgstr ""
 
-#: src/controller/class-firewall.php:1280
+#: src/controller/class-firewall.php:1295
 msgid ""
 "You have reached the maximum limit of verification attempts. Please try "
 "again later or contact your web administrator for assistance."
 msgstr ""
 
-#: src/controller/class-firewall.php:1322
+#: src/controller/class-firewall.php:1337
 msgid "Captcha verification failed. Please try again."
 msgstr ""
 
@@ -9505,7 +9505,7 @@ msgstr ""
 msgid "Polynesia"
 msgstr ""
 
-#: src/traits/defender-bootstrap.php:572
+#: src/traits/defender-bootstrap.php:573
 msgid "UPGRADE TO PRO"
 msgstr ""
 

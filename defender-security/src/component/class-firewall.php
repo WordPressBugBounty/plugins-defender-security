@@ -49,6 +49,11 @@ class Firewall extends Component {
 	public const IP_DETECTION_XFF_DISMISS_SLUG = 'wd_dismiss_ip_detection_xff_notice';
 
 	/**
+	 * The option name for the whitelist server public IP.
+	 */
+	public const WHITELIST_SERVER_PUBLIC_IP_OPTION = 'wpdef_firewall_whitelist_server_public_ip';
+
+	/**
 	 * Check if the first commencing request is proper staff remote access.
 	 *
 	 * @param  array $access  The access details including key.
@@ -542,5 +547,60 @@ class Firewall extends Component {
 		) {
 			update_site_option( self::IP_DETECTION_CF_DISMISS_SLUG, true );
 		}
+	}
+
+	/**
+	 * Is whitelist server public IP enabled.
+	 *
+	 * @return bool
+	 * @since 5.0.2
+	 */
+	public function is_whitelist_server_public_ip_enabled(): bool {
+		/**
+		 * Filter to enable/disable fetching server public IP.
+		 *
+		 * @param bool $enable True to enable whitelist server public IP, false otherwise.
+		 *
+		 * @since 5.0.2
+		 */
+		return (bool) apply_filters( 'wpdef_firewall_whitelist_server_public_ip_enabled', true );
+	}
+
+	/**
+	 * Set whitelist server public IP.
+	 *
+	 * @return bool
+	 * @since 5.0.2
+	 */
+	public function set_whitelist_server_public_ip(): bool {
+		if ( ! $this->is_whitelist_server_public_ip_enabled() ) {
+			return false;
+		}
+
+		$ip = wd_di()->get( Smart_Ip_Detection::class )->get_server_public_ip();
+		if ( empty( $ip ) ) {
+			$this->log( 'Failed to whitelist server public IP.', Firewall_Controller::FIREWALL_LOG );
+			return false;
+		}
+
+		$stored_ip = $this->get_whitelist_server_public_ip();
+		if ( $stored_ip !== $ip ) {
+			update_site_option( self::WHITELIST_SERVER_PUBLIC_IP_OPTION, $ip );
+		}
+
+		$this->log( 'Server public IP whitelisted successfully.', Firewall_Controller::FIREWALL_LOG );
+		return true;
+	}
+
+	/**
+	 * Get whitelist server public IP.
+	 *
+	 * @return string
+	 * @since 5.0.2
+	 */
+	public function get_whitelist_server_public_ip(): string {
+		return $this->is_whitelist_server_public_ip_enabled() ?
+			get_site_option(  self::WHITELIST_SERVER_PUBLIC_IP_OPTION, '' ) :
+			'';
 	}
 }

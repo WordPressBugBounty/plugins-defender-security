@@ -16,6 +16,8 @@ use WP_Defender\Model\Lockout_Log;
 use MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Integrations\MaxMind_Geolocation;
 use WP_Defender\Model\Setting\Blacklist_Lockout as Model_Blacklist_Lockout;
+use WP_Defender\Component\Firewall;
+use WP_Defender\Integrations\Main_Wp;
 
 /**
  * Handles operations related to IP and country-based blacklisting and whitelisting.
@@ -123,6 +125,18 @@ class Blacklist_Lockout extends Component {
 	 */
 	public function is_ip_whitelisted( $ip ): bool {
 		if ( in_array( $ip, $this->get_default_ip_whitelisted(), true ) ) {
+			return true;
+		}
+
+		// If the IP is the server public IP.
+		$server_public_ip = wd_di()->get( Firewall::class )->get_whitelist_server_public_ip();
+		if ( ! empty( $server_public_ip ) && $server_public_ip === $ip ) {
+			return true;
+		}
+
+		// If the IP is the MainWP Dashboard public IP.
+		$mainwp_dashboard_public_ip = wd_di()->get( Main_Wp::class )->get_whitelist_dashboard_public_ip();
+		if ( ! empty( $mainwp_dashboard_public_ip ) && in_array( $ip, $mainwp_dashboard_public_ip, true ) ) {
 			return true;
 		}
 

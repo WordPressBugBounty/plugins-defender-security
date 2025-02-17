@@ -38,8 +38,6 @@ class Antibot_Global_Firewall extends Component {
 
 	public const IS_SWITCHING_TO_PLUGIN_IN_PROGRESS = 'wpdef_antibot_global_firewall_switching_to_plugin_in_progress';
 
-	public const DB_BLOCKLIST_COUNT = 'wpdef_antibot_global_firewall_db_blocklist_count';
-
 	/**
 	 * The AntiBot Global Firewall model for storing IPs.
 	 *
@@ -141,7 +139,6 @@ class Antibot_Global_Firewall extends Component {
 		$this->model->truncate();
 
 		delete_site_option( self::LAST_SYNC_OPTION );
-		$this->clear_db_blocklist_count();
 	}
 
 	/**
@@ -258,7 +255,6 @@ class Antibot_Global_Firewall extends Component {
 			$this->model->bulk_insert( $generator );
 
 			self::set_last_sync();
-			$this->set_db_blocklist_count();
 
 			$this->log( 'AntiBot Global Firewall: IPs stored in the DB table.', Firewall::FIREWALL_LOG );
 		} catch ( Exception $e ) {
@@ -308,11 +304,8 @@ class Antibot_Global_Firewall extends Component {
 		if ( ! $this->frontend_is_enabled() ) {
 			return '0';
 		}
-		if ( 'hosting' === $this->get_managed_by() ) {
-			return number_format_i18n( $this->get_cached_blocklisted_ips() );
-		}
-
-		return number_format_i18n( (int) $this->get_db_blocklist_count() );
+		// Since from v5.0.2 one method is used for counting.
+		return number_format( $this->get_cached_blocklisted_ips() );
 	}
 
 	/**
@@ -561,43 +554,5 @@ class Antibot_Global_Firewall extends Component {
 	public function confirm_toggle_on_hosting( bool $enable ): void {
 		$this->toggle_on_hosting( $enable );
 		delete_site_transient( self::IS_SWITCHING_TO_PLUGIN_IN_PROGRESS );
-	}
-
-	/**
-	 * Get the blocklist count from DB.
-	 *
-	 * @return int The blocklisted IP count.
-	 */
-	public function get_db_blocklist_count(): int {
-		$cached = get_site_transient( self::DB_BLOCKLIST_COUNT );
-		if ( false !== $cached ) {
-			return $cached;
-		}
-
-		return $this->set_db_blocklist_count();
-	}
-
-	/**
-	 * Set the DB blocklist count.
-	 *
-	 * @return int The blocklisted IP count.
-	 */
-	public function set_db_blocklist_count(): int {
-		$count = $this->model->count();
-		if ( is_null( $count ) ) {
-			return 0;
-		}
-
-		$count = (int) $count;
-		set_site_transient( self::DB_BLOCKLIST_COUNT, $count, 12 * HOUR_IN_SECONDS );
-
-		return $count;
-	}
-
-	/**
-	 * Clear the blocklist count.
-	 */
-	public function clear_db_blocklist_count() {
-		delete_site_transient( self::DB_BLOCKLIST_COUNT );
 	}
 }

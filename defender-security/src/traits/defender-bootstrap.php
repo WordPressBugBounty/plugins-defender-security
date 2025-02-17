@@ -186,6 +186,7 @@ trait Defender_Bootstrap {
 		wp_clear_scheduled_hook( 'wpdef_antibot_global_firewall_fetch_blocklist' );
 		wp_clear_scheduled_hook( 'wpdef_smart_ip_detection_ping' );
 		wp_clear_scheduled_hook( 'wpdef_confirm_antibot_toggle_on_hosting' );
+		wp_clear_scheduled_hook( 'wpdef_firewall_whitelist_server_public_ip' );
 
 		// Remove old legacy cron jobs if they exist.
 		wp_clear_scheduled_hook( 'lockoutReportCron' );
