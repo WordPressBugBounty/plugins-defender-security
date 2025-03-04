@@ -494,68 +494,20 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return string Text content after salts appended.
 	 */
 	private function append_salts( $contents, string $new_salts ): string {
-		$config_array = preg_split( '/\R/', $contents );
+		$pattern = '/(define\(\s*\'AUTH_KEY\'.*?\);)\s*' .
+					'(define\(\s*\'SECURE_AUTH_KEY\'.*?\);)\s*' .
+					'(define\(\s*\'LOGGED_IN_KEY\'.*?\);)\s*' .
+					'(define\(\s*\'NONCE_KEY\'.*?\);)\s*' .
+					'(define\(\s*\'AUTH_SALT\'.*?\);)\s*' .
+					'(define\(\s*\'SECURE_AUTH_SALT\'.*?\);)\s*' .
+					'(define\(\s*\'LOGGED_IN_SALT\'.*?\);)\s*' .
+					'(define\(\s*\'NONCE_SALT\'.*?\);)/s';
 
-		$line_no = $this->search_line( // Important $line_no is array index therefore 0 means first line.
-			$config_array,
-			"That's all, stop editing!" // Warning text in wp-config file.
-		);
-
-		if ( false === $line_no ) { // If faster prediction failed.
-			// Regex prediction (slow one but last resort). Matches multiline of: "if ( ! defined( 'ABSPATH' ) ) {".
-			$regex = "/^\s*if\s*\(\s*\!\s*defined\s*\(\s*['|\"]ABSPATH['|\"]\s*\)\s*\)\s*\{?\s*/m";
-
-			$line_no = $this->grep_line( $config_array, $regex );
+		if ( preg_match( $pattern, $contents ) ) {
+			return preg_replace( $pattern, $new_salts, $contents );
+		} else {
+			return preg_replace( '/(define\(\s*\'DB_NAME\'\s*,.*?\);)/s', $new_salts . PHP_EOL . '$1', $contents );
 		}
-
-		// Splice before WP initialize and append.
-		array_splice( $config_array, $line_no, 0, $new_salts );
-
-		return implode( PHP_EOL, $config_array );
-	}
-
-	/**
-	 * Simple array search and return the array index of first match value.
-	 *
-	 * @param  array  $haystack  Array of text for search.
-	 * @param  string $search_text  Search term.
-	 *
-	 * @return int|bool On found return array index else false.
-	 */
-	private function search_line( $haystack, string $search_text ) {
-		$filtered_array = array_filter(
-			$haystack,
-			function ( $el ) use ( $search_text ) {
-				return ( false !== strpos( $el, $search_text ) );
-			}
-		);
-
-		if ( empty( $filtered_array ) ) {
-			return false;
-		}
-
-		reset( $filtered_array );
-
-		return key( $filtered_array );
-	}
-
-	/**
-	 * Grep array search and return the array index of first match value.
-	 *
-	 * @param  array  $haystack  Array of text for search.
-	 * @param  string $regex  Search term (accepts regex).
-	 *
-	 * @return int|bool On found return array index else false.
-	 */
-	private function grep_line( $haystack, string $regex ) {
-		$filtered_array = preg_grep( $regex, $haystack );
-
-		if ( empty( $filtered_array ) ) {
-			return false;
-		}
-		reset( $filtered_array );
-
-		return key( $filtered_array );
 	}
 
 	/**

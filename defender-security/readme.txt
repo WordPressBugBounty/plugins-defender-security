@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.0.2
+Version: 5.1.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
-Requires at least: 5.2
+Requires at least: 6.4
 Tested up to: 6.7.2
-Stable tag: 5.0.2
+Stable tag: 5.1.1
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -245,6 +245,35 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 5.1.1 ( 2025-03-03 ) =
+
+- Enhance: Improve cron events for AntiBot Global Firewall on multisite
+- Enhance: Remove manual "All headers" option and migrate to Automatic IP detection for improved compatibility and security
+- Enhance: Update User Agent logic with AntiBot service to better detect potential threats
+
+= 5.1.0 ( 2025-02-26 ) =
+
+- New: Enforce strong password
+- Enhance: Manage all password-related settings in one place
+- Enhance: Improve lockout mechanism
+- Enhance: Upgrade plugin packages
+- Enhance: Support Unit server
+- Enhance: Translation improvements
+- Enhance: Improve IP Lockout redirect when user adds IP to Allowlist
+- Enhance: Create a new cookie to avoid Lockout caching in Hummingbird plugin
+- Enhance: Update minimum supported WordPress version
+- Enhance: Enable Plugin & Suspicious code scan by default on fresh installations
+- Enhance: Improve Malware_Result class
+- Enhance: Minor code improvements
+- Fix: Defender does not detect themes with vulnerabilities
+- Fix: Error while pfsockopen function is disabled
+- Fix: NaN is showing on AntiBot page when language is changed to German in the Dashboard plugin
+- Fix: Form does not submit if Google reCAPTCHA is enabled in both Defender and Forminator plugins
+- Fix: Malware Scanner highlights WordPress core files on IIS server
+- Fix: Database error related to AntiBot feature
+- Fix: Salt keys appear before open php tag
+- Fix: Google reCAPTCHA compact style is not working
+
 = 5.0.2 ( 2025-02-14 ) =
 
 - Improvement: Update 404 logic with AntiBot service to better detect and mitigate potential threats
@@ -279,53 +308,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Fix: Notice for _load_textdomain_just_in_time called incorrectly
 - Fix: Update malware signature to avoid false positives
 - Fix: Undefined array key warning when creating a new subsite on multisite if Audit logging is enabled
-
-= 4.11.0 ( 2024-11-04 ) =
-
-- Enhance: Compatibility with WordPress 6.7
-- Enhance: Malware signatures update
-- Enhance: Update SUI to the latest version
-- Fix: Optimize security recommendations flow
-- Fix: Malware Scanning can't detect the suspicious code
-- Fix: Max included file size in Malware Scanning isn't working
-- Fix: Detecting changes in files whose names match default folders
-- Fix: SEOPress plugin files are being falsely flagged as suspicious
-
-= 4.10.1 ( 2024-10-03 ) =
-
-- Fix: Optimize XML-RPC traffic management
-
-= 4.10.0 ( 2024-10-01 ) =
-
-- Enhance: Update malware signatures to detect different infected files
-- Enhance: Display notice on the Malware Scanning page if a file is missing or unreadable
-- Enhance: Defender > Recommendations > Disable XML-RPC syncs with Hosting XML-RPC Protection
-- Enhance: Improvements in deleting and exporting IPs
-- Enhance: Translation improvements
-- Fix: False positive in Malware Scanning for Toolset plugin
-- Fix: Defender does not recognize phishing code
-- Fix: Malware Scanning gets stuck on fresh multisite
-- Fix: Text content not displayed in the Services upsell on the Malware Scanning page
-- Fix: Security keys not getting updated
-- Fix: Malware Scanning detects the old plugin file as modified
-- Fix: 404 Detection > Duration Unit disappears when changing the Firewall logs count to 100
-
-= 4.9.0 ( 2024-09-02 ) =
-
-- New: Smart IP Detection method
-- Enhance: Improved error handling of Malware Scan during checksum
-- Enhance: Improved scan logic to detect plugins from wp.org
-- Enhance: Mention Defender in Cloudflare and X-Forwarded-For IP detection notices
-- Enhance: Usage Tracking improvements
-- Fix: Google reCAPTCHA verification failure on WooCommerce my-account and checkout pages
-- Fix: Google reCAPTCHA V3 error in the console log
-- Fix: 2FA settings issue in WooCommerce
-- Fix: Issues when uploading Config
-- Fix: Getting 'ERROR: Something went wrong' when registering a new authenticator
-- Fix: Copy error in translations
-- Fix: Undefined array key in Audit logs
-- Fix: Foreign key getting duplicated
-- Fix: Broken error notice design in 2FA methods
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

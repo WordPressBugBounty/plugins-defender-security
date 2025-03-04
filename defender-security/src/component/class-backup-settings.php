@@ -419,9 +419,9 @@ class Backup_Settings extends Component {
 			'scan'             => array(
 				'integrity_check'               => true,
 				'check_core'                    => true,
-				'check_plugins'                 => false,
+				'check_plugins'                 => true,
 				'check_known_vuln'              => true,
-				'scan_malware'                  => false,
+				'scan_malware'                  => true,
 				'filesize'                      => 3,
 				'report'                        => 'enabled',
 				'always_send'                   => false,

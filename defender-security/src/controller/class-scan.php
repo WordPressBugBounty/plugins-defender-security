@@ -139,23 +139,14 @@ class Scan extends Event {
 	/**
 	 * Start a scan.
 	 *
-	 * @param  Request $request  Request object.
-	 *
 	 * @return Response
 	 * @defender_route
 	 * @defender_redirect
 	 */
-	public function start( Request $request ): Response {
+	public function start(): Response {
 		$model = Model_Scan::create();
 		if ( is_object( $model ) && ! is_wp_error( $model ) ) {
 			$this->log( 'Initial ping self', 'scan.log' );
-
-			$this->scan_started_analytics(
-				array(
-					'Triggered From' => 'Plugin',
-					'Scan Type'      => 'Manual',
-				)
-			);
 
 			$this->do_async_scan( 'scan' );
 
@@ -1116,23 +1107,6 @@ class Scan extends Event {
 		}
 
 		return $response;
-	}
-
-	/**
-	 * Triggers and send analytics data on scan started.
-	 *
-	 * @param  array $extra_data  Extra data.
-	 *
-	 * @return void
-	 */
-	public function scan_started_analytics( array $extra_data ) {
-		$scan_analytics = wd_di()->get( Scan_Analytics::class );
-		$analytics_data = $scan_analytics->scan_started( $this->model );
-
-		$this->track_feature(
-			$analytics_data['event'],
-			array_merge( $analytics_data['data'], $extra_data )
-		);
 	}
 
 	/**

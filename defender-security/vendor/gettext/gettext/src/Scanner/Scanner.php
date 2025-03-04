@@ -8,7 +8,7 @@ use Gettext\Translation;
 use Gettext\Translations;
 
 /**
- * Base class with common funtions for all scanners.
+ * Base class with common functions for all scanners.
  */
 abstract class Scanner implements ScannerInterface
 {
@@ -51,7 +51,7 @@ abstract class Scanner implements ScannerInterface
         ?string $domain,
         ?string $context,
         string $original,
-        string $plural = null
+        ?string $plural = null
     ): ?Translation {
         if (is_null($domain)) {
             $domain = $this->defaultDomain;
@@ -77,14 +77,11 @@ abstract class Scanner implements ScannerInterface
      */
     protected static function readFile(string $file): string
     {
-        $length = filesize($file);
+        $content = @file_get_contents($file);
 
-        if (!($fd = fopen($file, 'rb'))) {
+        if (false === $content) {
             throw new Exception("Cannot read the file '$file', probably permissions");
         }
-
-        $content = $length ? fread($fd, $length) : '';
-        fclose($fd);
 
         return $content;
     }

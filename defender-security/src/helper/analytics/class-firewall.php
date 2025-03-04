@@ -77,9 +77,6 @@ class Firewall extends Event {
 			// Manual options.
 			$detection_method = 'Manual - ';
 			switch ( $http_ip_header ) {
-				case 'REMOTE_ADDR':
-					$detection_method .= 'Remote-Addr';
-					break;
 				case 'HTTP_X_FORWARDED_FOR':
 					$detection_method .= 'X-Forward-For';
 					break;
@@ -89,9 +86,9 @@ class Firewall extends Event {
 				case 'HTTP_CF_CONNECTING_IP':
 					$detection_method .= 'CF-Connecting-IP';
 					break;
-				case 'recommended':
+				case 'REMOTE_ADDR':
 				default:
-					$detection_method .= 'All Headers';
+					$detection_method .= 'Remote-Addr';
 					break;
 			}
 		}

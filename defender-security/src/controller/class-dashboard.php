@@ -245,6 +245,7 @@ class Dashboard extends Event {
 					'security_headers' => wd_di()->get( Security_Headers::class )->dashboard_widget(),
 					'pwned_passwords'  => wd_di()->get( Password_Protection::class )->dashboard_widget(),
 					'recaptcha'        => wd_di()->get( Recaptcha::class )->dashboard_widget(),
+					'strong_passwords' => wd_di()->get( Strong_Password::class )->dashboard_widget(),
 				),
 				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->dashboard_widget(),
 				'tutorials'         => wd_di()->get( Tutorial::class )->data_frontend(),

@@ -32,6 +32,7 @@ use WP_Defender\Controller\Audit_Logging;
 use WP_Defender\Controller\Data_Tracking;
 use WP_Defender\Controller\Advanced_Tools;
 use WP_Defender\Controller\Password_Reset;
+use WP_Defender\Controller\Strong_Password;
 use WP_Defender\Controller\Expert_Services;
 use WP_Defender\Controller\Security_Tweaks;
 use WP_Defender\Controller\Security_Headers;
@@ -412,6 +413,7 @@ SQL;
 		wd_di()->get( Webauthn::class );
 		wd_di()->get( Expert_Services::class );
 		wd_di()->get( Hub_Connector_Controller::class );
+		wd_di()->get( Strong_Password::class );
 
 		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
 			wd_di()->get( Quarantine::class );

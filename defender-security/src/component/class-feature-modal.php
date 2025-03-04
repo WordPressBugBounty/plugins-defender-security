@@ -23,8 +23,8 @@ class Feature_Modal extends Component {
 	/**
 	 * Feature data for the last active "What's new" modal.
 	 */
-	public const FEATURE_SLUG    = 'wd_show_feature_antibot';
-	public const FEATURE_VERSION = '5.0.0';
+	public const FEATURE_SLUG    = 'wd_show_feature_strong_password';
+	public const FEATURE_VERSION = '5.1.0';
 
 	/**
 	 * Get modals that are displayed on the Dashboard page.
@@ -36,52 +36,43 @@ class Feature_Modal extends Component {
 	 * @since 2.7.0 Use one template for Welcome modal and dynamic data.
 	 */
 	public function get_dashboard_modals( $force_hide = false ): array {
-		$wpmudev           = wd_di()->get( WPMUDEV::class );
-		$is_site_connected = $this->is_site_connected_to_hub_via_hcm_or_dash();
-		$is_displayed      = $force_hide ? false : $this->display_last_modal( self::FEATURE_SLUG );
-		$title             = esc_html__( 'New! AntiBot Firewall Protection', 'defender-security' );
+		$is_displayed = $force_hide ? false : $this->display_last_modal( self::FEATURE_SLUG );
+		$title        = esc_html__( 'New! Strong Password Rule', 'defender-security' );
+		$current_user = wp_get_current_user();
 
 		$desc  = '<p class="text-base leading-22px mb-15px">';
-		$desc .= esc_html__(
-			'Protect your site from malicious traffic with a click. Powered by traffic patterns and threat data from a network of over 500,000 websites.',
-			'defender-security'
+		$desc .= sprintf(
+			/* translators: %s: Name. */
+			esc_html__(
+				'Hey %s, security just got stronger! You can now require users to set strong passwords when registering or updating their credentials. This helps protect your site from unauthorized access and password breaches.',
+				'defender-security'
+			),
+			esc_html( $current_user->display_name )
 		);
 		$desc .= '</p>';
 
-		$desc .= '<p class="text-base leading-22px mb-15px">';
-		$desc .= $is_site_connected ?
-			esc_html__( 'Activate now for automatic, 24/7 protection and stronger, hassle-free security.', 'defender-security' ) :
-			esc_html__( 'Sign up for a free WPMU DEV account to activate advanced firewall protection today.', 'defender-security' );
-		$desc .= '</p>';
+		$desc .= '<div class="feature-highlights">';
+		$desc .= '<span class="text-gray-500 font-bold">' . esc_html__( 'What’s New?', 'defender-security' ) . '</span>';
+		$desc .= '<ul><li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Enforce strong password strength rules.', 'defender-security' ) . '</li>
+			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Improve security without manual intervention.', 'defender-security' ) . '</li>
+			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Manage all password-related settings in one place.', 'defender-security' ) . '</li></ul>';
+		$desc .= '</div>';
 
-		$desc .= '<ul class="feature-highlights">
-			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Dynamic IP Blocklist', 'defender-security' ) . '</li>
-			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Automated Firewall Protection', 'defender-security' ) . '</li>
-			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Millions of IPs Checked', 'defender-security' ) . '</li>
-			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Regularly Reviewed IP Database', 'defender-security' ) . '</li>
-		</ul>';
-
-		$button_title      = $is_site_connected ?
-			esc_html__( 'Activate antibot firewall', 'defender-security' ) :
-			esc_html__( 'Connect site to Activate for free', 'defender-security' );
-		$button_title_free = $button_title;
+		$button_title = esc_html__( 'Go to Password Rules', 'defender-security' );
 
 		return array(
 			'show_welcome_modal' => $is_displayed,
 			'welcome_modal'      => array(
-				'title'               => $title,
-				'desc'                => $desc,
-				'banner_1x'           => defender_asset_url( '/assets/img/modal/welcome-modal.png' ),
-				'banner_2x'           => defender_asset_url( '/assets/img/modal/welcome-modal@2x.png' ),
-				'banner_alt'          => esc_html__( 'Modal for Automatic IP Detection', 'defender-security' ),
-				'button_title'        => $button_title,
-				'button_title_free'   => $button_title_free,
+				'title'           => $title,
+				'desc'            => $desc,
+				'banner_1x'       => defender_asset_url( '/assets/img/modal/welcome-modal.png' ),
+				'banner_2x'       => defender_asset_url( '/assets/img/modal/welcome-modal@2x.png' ),
+				'banner_alt'      => esc_html__( 'Modal for Strong Password Rule', 'defender-security' ),
+				'button_title'    => $button_title,
 				// Additional information.
-				'additional_text'     => $this->additional_text(),
-				'is_disabled_option'  => $wpmudev->is_disabled_hub_option(),
-				'read_more_title'     => esc_html__( 'LEARN MORE', 'defender-security' ),
-				'read_more_url'       => network_admin_url( 'admin.php?page=wdf-ip-lockout&view=global-ip' ),
-				'antibot_module_name' => Antibot_Global_Firewall_Setting::get_module_name(),
+				'additional_text' => $this->additional_text(),
+				'read_more_title' => esc_html__( 'DISMISS', 'defender-security' ),
+				'read_more_url'   => network_admin_url( 'admin.php?page=wdf-advanced-tools&view=password-rules' ),
 			),
 		);
 	}
@@ -119,8 +110,8 @@ class Feature_Modal extends Component {
 			),
 			// The latest feature.
 			array(
-				'slug' => 'wd_show_feature_global_ip',
-				'vers' => '3.6.0',
+				'slug' => 'wd_show_feature_antibot',
+				'vers' => '5.0.0',
 			),
 			// The current feature.
 			array(

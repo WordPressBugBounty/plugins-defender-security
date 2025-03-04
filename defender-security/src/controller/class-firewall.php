@@ -180,11 +180,6 @@ class Firewall extends Event {
 	 * @return string
 	 */
 	protected function menu_title( string $title ): string {
-		$suffix = '<span style="padding: 2px 6px;border-radius: 9px;background-color: #17A8E3;color: #FFF;font-size: 8px;letter-spacing: -0.25px;text-transform: uppercase;vertical-align: middle;">'
-			. esc_html__( 'NEW', 'defender-security' )
-			. '</span>';
-		$title .= ' ' . $suffix;
-
 		return $title;
 	}
 
@@ -588,9 +583,19 @@ class Firewall extends Event {
 		if ( Unlock_Me::SLUG_UNLOCK === $action && wd_di()->get( Unlock_Me::class )->maybe_unlock() ) {
 			return;
 		}
+		// Create a Lockout cookie to avoid caching in real case.
+		if ( 'demo' !== $reason ) {
+			// We follow the default naming process to find the required cookie later.
+			$cookie_name = str_replace( '.', '_', $ips[0] );
+			$cookie_name = 'wpdef_lockout_' . $cookie_name;
+			if ( ! isset( $_COOKIE[ $cookie_name ] ) ) {
+				setcookie( $cookie_name, true, time() + HOUR_IN_SECONDS, '/' );
+			}
+		}
 
+		$antibot_service = wd_di()->get( Antibot_Global_Firewall_Component::class );
 		if ( Antibot_Global_Firewall_Component::REASON_SLUG === $reason ) {
-			$this->log( 'Blocked IP(s): ' . implode( ', ', $ips ), Antibot_Global_Firewall_Component::LOG_FILE_NAME );
+			$antibot_service->log_ip_message( 'Blocked IP(s): ' . implode( ', ', $ips ) );
 		}
 
 		ob_start();
@@ -608,7 +613,7 @@ class Firewall extends Event {
 
 			$global_ip_lockout = wd_di()->get( Global_Ip_Lockout::class );
 			$is_displayed      = Unlock_Me::is_displayed( $reason, $ips );
-			$is_displayed_agf  = wd_di()->get( Antibot_Global_Firewall_Component::class )->is_displayed( $ips );
+			$is_displayed_agf  = $antibot_service->is_displayed( $ips );
 			$allow_self_unlock = $global_ip_lockout->allow_self_unlock;
 			$hide_btn_agf      = $is_displayed_agf && ! $allow_self_unlock;
 			$params            = array(
@@ -1199,7 +1204,7 @@ class Firewall extends Event {
 	 */
 	public function maybe_lockout_gathered_ips(): void {
 		$msg = '';
-		$ips = $this->service->gather_ips();
+		$ips = $this->service->get_user_ip();
 
 		if ( ! empty( $ips ) && is_array( $ips ) ) {
 			foreach ( $ips as $ip ) {
@@ -1317,7 +1322,7 @@ class Firewall extends Event {
 
 			$unlock_result = wd_di()->get( Antibot_Global_Firewall_Model::class )->unlock_ips( $user_ips );
 			if ( false !== $unlock_result ) {
-				$this->log( 'Successfully unlocked IP(s): ' . implode( ', ', $user_ips ), Antibot_Global_Firewall_Component::LOG_FILE_NAME );
+				wd_di()->get( Antibot_Global_Firewall_Component::class )->log_ip_message( 'Successfully unlocked IP(s): ' . implode( ', ', $user_ips ) );
 			}
 
 			return new Response( true, array() );

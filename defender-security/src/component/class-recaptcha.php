@@ -77,10 +77,21 @@ class Recaptcha extends Component {
 		if ( ! is_object( $wp_scripts ) || empty( $wp_scripts ) ) {
 			return false;
 		}
-
+		/**
+		 * Exclude scripts from Defender and Forminator to display reCAPTCHA.
+		 *
+		 * @since 5.1.0
+		*/
+		$excluded_handles = (array) apply_filters(
+			'wd_recaptcha_excluded_handles',
+			array(
+				'wpdef_recaptcha_api',
+				'forminator-google-recaptcha',
+			)
+		);
 		foreach ( $wp_scripts->registered as $script_name => $args ) {
 			if ( is_string( $args->src ) && preg_match( '|google\.com/recaptcha/api\.js|', $args->src )
-				&& 'wpdef_recaptcha_api' !== $script_name
+				&& ! in_array( $script_name, $excluded_handles, true )
 			) {
 				wp_dequeue_script( $script_name );
 			}

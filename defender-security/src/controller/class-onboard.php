@@ -188,12 +188,6 @@ class Onboard extends Event {
 				wd_di()->get( Model_Main_Setting::class )->toggle_tracking( true );
 			}
 			$scan_controller = wd_di()->get( Controller_Scan::class );
-			$scan_controller->scan_started_analytics(
-				array(
-					'Triggered From' => 'Plugin',
-					'Scan Type'      => 'Install',
-				)
-			);
 
 			if ( is_multisite() ) {
 				// The admin-ajax.php file doesn't trigger the init hook, so we need to call the scan function directly.

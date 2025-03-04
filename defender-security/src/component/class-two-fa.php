@@ -516,12 +516,6 @@ class Two_Fa extends Component {
 		$from_email = get_bloginfo( 'admin_email' );
 		$headers[]  = sprintf( 'From: %s <%s>', $settings->email_sender, $from_email );
 
-		/**Todo: check
-		 * $headers[] = wd_di()->get( \WP_Defender\Component\Mail::class )->get_headers(
-		 * defender_noreply_email( 'wd_two_fa_totp_noreply_email' ),
-		 * 'totp'
-		 * );*/
-
 		return wp_mail( Fallback_Email::get_backup_email( $user->ID ), $settings->email_subject, $body, $headers );
 	}
 

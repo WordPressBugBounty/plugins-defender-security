@@ -56,6 +56,14 @@ class Firewall_Logs extends Controller {
 	private $antibot_client;
 
 	/**
+	 * The transient key used to store the list of IP addresses from the
+	 * Akismet service that are blocked in the firewall.
+	 *
+	 * @var string
+	 */
+	const AKISMET_BLOCKED_IPS = 'defender_akismet_blocked_ips';
+
+	/**
 	 * Constructor for the class.
 	 *
 	 * @param  Antibot_Global_Firewall_Client $antibot_client  The client for interacting with the Block list API service.
@@ -75,6 +83,9 @@ class Firewall_Logs extends Controller {
 			wp_schedule_event( time() + 15, 'twicedaily', 'wpdef_firewall_send_compact_logs_to_api' );
 		}
 		add_action( 'wpdef_firewall_send_compact_logs_to_api', array( $this, 'send_compact_logs_to_api' ) );
+		if ( class_exists( 'Akismet' ) ) {
+			add_filter( 'http_response', array( $this, 'akismet_http_response' ), 10, 3 );
+		}
 	}
 
 	/**
@@ -142,7 +153,7 @@ class Firewall_Logs extends Controller {
 						'defender-security'
 					),
 					implode( ', ', $ips ),
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist' ) . '">' . esc_html__( 'IP Lockouts', 'defender-security' ) . '</a>'
+					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist#tab-ip-allowlist' ) . '">' . esc_html__( 'IP Lockouts', 'defender-security' ) . '</a>'
 				);
 				break;
 			case 'ban':
@@ -717,6 +728,42 @@ class Firewall_Logs extends Controller {
 	}
 
 	/**
+	 * Exports strings.
+	 *
+	 * @param array $logs Prepared logs.
+	 * @param bool  $is_live_environment Are the data ready for production? True if ready, false if not.
+	 */
+	private function maybe_send_reports( array $logs, bool $is_live_environment = true ): void {
+		$offset     = 0;
+		$length     = 1000;
+		$logs_chunk = array_slice( $logs, $offset, $length );
+		while ( ! empty( $logs_chunk ) ) {
+			$data = array(
+				'logs' => $logs_chunk,
+			);
+
+			$response = $this->antibot_client->send_reports( $data, $is_live_environment );
+
+			if ( is_wp_error( $response ) ) {
+				$this->log(
+					sprintf( 'AntiBot Global Firewall Error: %s', $response->get_error_message() ),
+					Firewall::FIREWALL_LOG
+				);
+			} elseif ( isset( $response['status'] ) && 'error' === $response['status'] ) {
+				$this->log(
+					sprintf( 'AntiBot Global Firewall Error: %s', $response['message'] ),
+					Firewall::FIREWALL_LOG
+				);
+			}
+
+			$offset    += $length;
+			$logs_chunk = array_slice( $logs, $offset, $length );
+		}
+
+		$this->log( 'AntiBot Global Firewall: Process for sending logs completed.', Firewall::FIREWALL_LOG );
+	}
+
+	/**
 	 * Send last 12 hours logs to AntiBot Global Firewall API.
 	 * If running for first time then grab 7 days of logs.
 	 * If last run difference is greater than 12 hours then grab 12+ hours of log but at most grab 7 days of logs.
@@ -724,6 +771,10 @@ class Firewall_Logs extends Controller {
 	 * @return void
 	 */
 	public function send_compact_logs_to_api(): void {
+		$site_id    = get_current_blog_id();
+		$event_name = 'wpdef_firewall_send_compact_logs_to_api';
+		$this->log( "Cron job {$event_name} triggered at site {$site_id}", Firewall::FIREWALL_LOG );
+
 		/**
 		 * Enable/disable sending Firewall logs to API.
 		 *
@@ -741,6 +792,13 @@ class Firewall_Logs extends Controller {
 			return;
 		}
 
+		// Acquire lock before executing.
+		if ( ! $this->acquire_cron_lock( $event_name, 'twicedaily' ) ) {
+			$this->log( "{$event_name} is skipped running from site {$site_id}", Firewall::FIREWALL_LOG );
+			return;
+		}
+		// Log the site ID where the event is triggered.
+		$this->log( "{$event_name} is processing from site {$site_id}", Firewall::FIREWALL_LOG );
 		$from = time() - ( 7 * DAY_IN_SECONDS );
 
 		$last_run_time = get_site_option( 'wpdef_ip_blocklist_sync_last_run_time' );
@@ -756,33 +814,72 @@ class Firewall_Logs extends Controller {
 		$service = wd_di()->get( Firewall_Logs_Component::class );
 		$logs    = $service->get_compact_logs( $from );
 
-		if ( empty( $logs ) ) {
-			return;
+		if ( ! empty( $logs ) ) {
+			$this->maybe_send_reports( $logs );
 		}
 
-		$offset     = 0;
-		$length     = 1000;
-		$logs_chunk = array_slice( $logs, $offset, $length );
-		while ( ! empty( $logs_chunk ) ) {
-			$data = array(
-				'logs' => $logs_chunk,
-			);
-
-			$response = $this->antibot_client->send_reports( $data );
-
-			if ( is_wp_error( $response ) ) {
-				$this->log(
-					sprintf( 'AntiBot Global Firewall Error: %s', $response->get_error_message() ),
-					Firewall::FIREWALL_LOG
-				);
-			} elseif ( isset( $response['status'] ) && 'error' === $response['status'] ) {
-				$this->log( sprintf( 'AntiBot Global Firewall Error: %s', $response['message'] ), Firewall::FIREWALL_LOG );
-			}
-
-			$offset     += $length;
-			$logs_chunk = array_slice( $logs, $offset, $length );
+		$logs = $service->get_compact_staging_logs();
+		if ( ! empty( $logs ) ) {
+			// Raw data.
+			$this->maybe_send_reports( $logs, false );
 		}
 
-		$this->log( 'AntiBot Global Firewall: Process for sending logs completed.', Firewall::FIREWALL_LOG );
+		// Release lock after execution.
+		$this->release_cron_lock( $event_name );
+	}
+
+	/**
+	 * Filters a successful HTTP API response before returning it.
+	 *
+	 * @param array  $response    HTTP response.
+	 * @param array  $parsed_args HTTP request arguments.
+	 * @param string $url         The request URL.
+	 *
+	 * @return array HTTP response.
+	 */
+	public function akismet_http_response( $response, $parsed_args, $url ) {
+		// If the URL is not the Akismet comment-check endpoint, return the response as is.
+		if ( 'https://rest.akismet.com/1.1/comment-check' !== $url ) {
+			return $response;
+		}
+
+		// Retrieve response body safely.
+		$body = wp_remote_retrieve_body( $response );
+		// If the body is empty or does not equal 'true' (indicating spam), return the response as is.
+		if ( empty( $body ) || trim( $body ) !== 'true' ) {
+			return $response;
+		}
+
+		// Ensure the request body contains data; otherwise, return the response.
+		if ( empty( $parsed_args['body'] ) ) {
+			return $response;
+		}
+
+		$request_data = wp_parse_args( $parsed_args['body'] );
+		// If the comment author's IP is not present in the request data, return the response.
+		if ( empty( $request_data['comment_author_IP'] ) ) {
+			return $response;
+		}
+
+		// Validate the user IP address from the request data.
+		$user_ip = filter_var( $request_data['comment_author_IP'], FILTER_VALIDATE_IP );
+		if ( false === $user_ip ) {
+			return $response;
+		}
+
+		// Retrieve the current list of blocked IPs from the site transient.
+		$option = get_site_transient( self::AKISMET_BLOCKED_IPS );
+		// Ensure the retrieved data is an array; if not, initialize it as an empty array.
+		if ( ! is_array( $option ) ) {
+			$option = array();
+		}
+
+		// Increment the count of how many times this IP has been associated with spam.
+		$option[ $user_ip ] = isset( $option[ $user_ip ] ) ? (int) $option[ $user_ip ] + 1 : 1;
+		// Update the site transient with the new list of blocked IPs.
+		set_site_transient( self::AKISMET_BLOCKED_IPS, $option );
+
+		// Return the original HTTP response.
+		return $response;
 	}
 }

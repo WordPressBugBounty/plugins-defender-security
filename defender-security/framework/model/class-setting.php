@@ -134,4 +134,13 @@ class Setting extends Model {
 	public function get_table(): string {
 		return $this->table;
 	}
+
+	/**
+	 * Get old setting values.
+	 *
+	 * @return array
+	 */
+	public function get_old_settings(): array {
+		return $this->old_settings;
+	}
 }

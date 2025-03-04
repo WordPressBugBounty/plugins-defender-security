@@ -100,8 +100,8 @@ class Gather_Fact extends Component {
 			false,
 			array(
 				'dir' => array(
-					$abs_path . 'wp-admin/',
-					$abs_path . WPINC . '/',
+					$abs_path . 'wp-admin',
+					$abs_path . WPINC,
 				),
 			),
 			array(),
@@ -117,9 +117,9 @@ class Gather_Fact extends Component {
 			array(),
 			array(
 				'dir'      => array(
-					$abs_path . 'wp-content/',
-					$abs_path . 'wp-admin/',
-					$abs_path . WPINC . '/',
+					$abs_path . 'wp-content' . DIRECTORY_SEPARATOR,
+					$abs_path . 'wp-admin',
+					$abs_path . WPINC,
 				),
 				'filename' => array(
 					'wp-config.php',

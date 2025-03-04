@@ -18,6 +18,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\IP\Antibot_Global_Firewall as Antibot_Global_Firewall_Component;
 use WP_Defender\Component\Blacklist_Lockout;
 use WP_Defender\Component\IP\Global_IP;
+use WP_Defender\Component\Scheduler\Scheduler;
 use WP_Defender\Helper\Analytics\Antibot as Antibot_Analytics;
 
 /**
@@ -71,11 +72,16 @@ class Antibot_Global_Firewall extends Controller {
 		$this->wpmudev = $wpmudev;
 
 		add_action( 'wpmudev_hub_connector_first_sync_completed', array( $this, 'maybe_hcm_connection_attempt' ) );
+
 		/**
 		 * Download and store Blocklist from the API.
 		 */
-		if ( ! wp_next_scheduled( 'wpdef_antibot_global_firewall_fetch_blocklist' ) ) {
-			wp_schedule_event( time() + 15, Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_SCHEDULE, 'wpdef_antibot_global_firewall_fetch_blocklist' );
+		if ( $this->service->is_active_via_plugin() ) {
+			if ( ! wp_next_scheduled( 'wpdef_antibot_global_firewall_fetch_blocklist' ) ) {
+				wp_schedule_event( time() + 15, Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_SCHEDULE, 'wpdef_antibot_global_firewall_fetch_blocklist' );
+			}
+		} elseif ( wp_next_scheduled( 'wpdef_antibot_global_firewall_fetch_blocklist' ) ) {
+			wp_clear_scheduled_hook( 'wpdef_antibot_global_firewall_fetch_blocklist' );
 		}
 		add_action( 'wpdef_antibot_global_firewall_fetch_blocklist', array( $this, 'handle_download_and_store_blocklist' ) );
 
@@ -262,8 +268,28 @@ class Antibot_Global_Firewall extends Controller {
 	 * @return void
 	 */
 	public function handle_download_and_store_blocklist(): void {
-		if ( true === $this->service->is_enabled() ) {
+		if ( is_multisite() ) {
+			$next_run = get_site_option( Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_NEXT_RUN_OPTION, 0 );
+			if ( ! empty( $next_run ) && $next_run > time() ) {
+				return;
+			}
+
+			$interval = wd_di()->get( Scheduler::class )->get_cron_schedule_interval( Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_SCHEDULE );
+			$next_run = time() + ( ! empty( $interval ) ? $interval : 12 * HOUR_IN_SECONDS );
+			update_site_option( Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_NEXT_RUN_OPTION, $next_run );
+		}
+
+		if ( true === $this->service->is_active_via_plugin() ) {
+			$is_switch_to_main_site = is_multisite() && ! is_main_site();
+			if ( $is_switch_to_main_site ) {
+				switch_to_blog( get_main_site_id() );
+			}
+
 			$this->service->download_and_store_blocklist();
+
+			if ( $is_switch_to_main_site ) {
+				restore_current_blog();
+			}
 		}
 	}
 
@@ -321,6 +347,7 @@ class Antibot_Global_Firewall extends Controller {
 		$this->service->delete_blocklist();
 
 		delete_site_option( Antibot_Global_Firewall_Component::NOTICE_SLUG );
+		delete_site_option( Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_NEXT_RUN_OPTION );
 		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_KEY );
 		delete_site_transient( Antibot_Global_Firewall_Component::IS_SWITCHING_TO_PLUGIN_IN_PROGRESS );
 	}
@@ -412,7 +439,7 @@ class Antibot_Global_Firewall extends Controller {
 			$data['email'],
 			$data['reason']
 		);
-		$this->log( $message, Antibot_Global_Firewall_Component::LOG_FILE_NAME );
+		$this->service->log_ip_message( $message );
 
 		return new Response( true, array() );
 	}
@@ -522,10 +549,10 @@ class Antibot_Global_Firewall extends Controller {
 						'defender-security'
 					),
 					$ip,
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist' ) . '">',
+					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist#tab-ip-allowlist' ) . '">',
 					'</a>'
 				),
-				'interval' => 3,
+				'interval' => 5,
 			)
 		);
 	}

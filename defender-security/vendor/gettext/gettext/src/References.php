@@ -7,6 +7,7 @@ use ArrayIterator;
 use Countable;
 use IteratorAggregate;
 use JsonSerializable;
+use ReturnTypeWillChange;
 
 /**
  * Class to manage the references of a translation.
@@ -28,7 +29,7 @@ class References implements JsonSerializable, Countable, IteratorAggregate
         return $this->toArray();
     }
 
-    public function add(string $filename, int $line = null): self
+    public function add(string $filename, ?int $line = null): self
     {
         $fileReferences = $this->references[$filename] ?? [];
 
@@ -41,11 +42,13 @@ class References implements JsonSerializable, Countable, IteratorAggregate
         return $this;
     }
 
+    #[ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->toArray();
     }
 
+    #[ReturnTypeWillChange]
     public function getIterator()
     {
         return new ArrayIterator($this->references);

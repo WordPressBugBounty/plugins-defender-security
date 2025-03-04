@@ -369,7 +369,7 @@ class Password_Protection extends Component {
 	 * @param  string           $action  Action query string name.
 	 * @param  string           $cookie_name  Cookie name.
 	 */
-	private function trigger_redirect( $user, $action, $cookie_name ) {
+	public function trigger_redirect( $user, $action, $cookie_name ) {
 		// Set cookie to check and display the warning notice on reset password page.
 		$this->set_cookie_notice( $cookie_name, true, time() + MINUTE_IN_SECONDS * 2 );
 		// Get the reset password URL.

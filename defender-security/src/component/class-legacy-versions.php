@@ -366,6 +366,7 @@ class Legacy_Versions extends Component {
 	 * @return bool|string Decrypted data or false on failure.
 	 */
 	private static function decrypt_data_with_pub_key( $encrypt_data, $key ) {
+		// This is not obfuscation. Just decode a base64-encoded string.
 		$str = base64_decode( $encrypt_data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		if ( ! $str ) {
 			return false;

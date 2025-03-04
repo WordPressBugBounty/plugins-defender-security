@@ -306,8 +306,9 @@ class Firewall extends Component {
 	/**
 	 * Gather IP(s) from headers.
 	 *
-	 * @return array
 	 * @since 4.4.2
+	 * @deprecated 5.1.0 This method and the 'wpdef_firewall_gathered_ips' filter are no longer in use.
+	 * @return array
 	 */
 	public function gather_ips(): array {
 		$ip_headers = array(
@@ -343,8 +344,15 @@ class Firewall extends Component {
 		 * @param  array  $gathered_ips  IPs gathered from request headers.
 		 *
 		 * @since 4.5.1
+		 * @deprecated 5.1.0 No longer used and will be removed in a future version.
 		 */
-		$gathered_ips = (array) apply_filters( 'wpdef_firewall_gathered_ips', array_unique( $gathered_ips ) );
+		$gathered_ips = (array) apply_filters_deprecated(
+			'wpdef_firewall_gathered_ips',
+			array_unique( $gathered_ips ),
+			'5.1.0',
+			'',
+			'This filter will be removed in a future version. If you are using it, update your implementation.'
+		);
 
 		return $this->filter_user_ips( $gathered_ips );
 	}
@@ -600,7 +608,7 @@ class Firewall extends Component {
 	 */
 	public function get_whitelist_server_public_ip(): string {
 		return $this->is_whitelist_server_public_ip_enabled() ?
-			get_site_option(  self::WHITELIST_SERVER_PUBLIC_IP_OPTION, '' ) :
+			get_site_option( self::WHITELIST_SERVER_PUBLIC_IP_OPTION, '' ) :
 			'';
 	}
 }

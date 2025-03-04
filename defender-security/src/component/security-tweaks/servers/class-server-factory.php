@@ -77,11 +77,12 @@ class Server_Factory {
 			'defender_get_supported_servers',
 			array(
 				'nginx'      => 'Nginx',
+				'unit'       => 'Nginx', // We're going to use the same server for Nginx and Unit.
 				'apache'     => 'Apache',
-				'litespeed'  => 'Apache', // We're going to use same server for Apache and LiteSpeed.
+				'litespeed'  => 'Apache', // We're going to use the same server for Apache and LiteSpeed.
 				'iis-7'      => 'IIS_7',
 				'flywheel'   => 'Flywheel',
-				'cloudflare' => 'Flywheel', // We're going to use same server for Flywheel and Cloudflare.
+				'cloudflare' => 'Flywheel', // We're going to use the same server for Flywheel and Cloudflare.
 				// A specific case for WordPress Playground.
 				'php.wasm'   => 'PHP_Wasm',
 			)

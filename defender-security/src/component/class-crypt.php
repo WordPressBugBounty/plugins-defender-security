@@ -55,8 +55,7 @@ class Crypt extends Component {
 		// Not safe. Use in extreme cases.
 		$return = '';
 		for ( $i = 0; $i < $bytes; $i++ ) {
-			// Using wp_rand cause backward compatibility issues.
-			$return .= chr( mt_rand( 0, 255 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rand_mt_rand
+			$return .= chr( wp_rand( 0, 255 ) );
 		}
 
 		return $return;
@@ -129,6 +128,7 @@ class Crypt extends Component {
 	 * @throws SodiumException Throws an exception if encryption fails.
 	 */
 	private static function encrypt( $value, $key ) {
+		// This is not obfuscation. Just decode a base64-encoded string.
 		$key = base64_decode( $key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		if ( SODIUM_CRYPTO_SECRETBOX_KEYBYTES !== mb_strlen( $key, '8bit' ) ) {
 			return new WP_Error(
@@ -138,7 +138,7 @@ class Crypt extends Component {
 		}
 		$nonce      = self::random_bytes( SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
 		$ciphertext = sodium_crypto_secretbox( $value, $nonce, $key );
-
+		// This is not obfuscation. Just encode the resulting string.
 		return base64_encode( $nonce . $ciphertext ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 	}
 
@@ -158,6 +158,7 @@ class Crypt extends Component {
 				esc_html__( 'Please re-setup 2FA TOTP method again.', 'defender-security' )
 			);
 		}
+		// No obfuscation. Just decode base64-encoded $key and $encoded_value strings.
 		$key        = base64_decode( $key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$decoded    = base64_decode( $encoded_value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$nonce      = mb_substr( $decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit' );
@@ -253,6 +254,7 @@ class Crypt extends Component {
 	 * @throws Exception On failure.
 	 */
 	protected function generate_random_key(): string {
+		// This is not obfuscation. Just encode the binary key into a base64 string.
 		return base64_encode( sodium_crypto_secretbox_keygen() ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 	}
 

@@ -641,12 +641,7 @@ function defender_deprecated_function( string $function_name, string $version, s
 			$log_string .= $replacement ? " Use {$replacement} instead." : '';
 			wp_die( esc_html( $log_string ) );
 		} else {
-			/**
-			 * Ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			 * Why?
-			 * This wrapper function doesn’t produce any output.
-			 */
-			_deprecated_function( $function_name, $version, $replacement );  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			_deprecated_function( esc_html( $function_name ), esc_html( $version ), esc_html( $replacement ) );
 		}
 	}
 }

@@ -1,11 +1,52 @@
 # Change Log
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 Previous releases are documented in [github releases](https://github.com/oscarotero/Gettext/releases)
+
+## [5.7.3] - 2024-12-01
+### Fixed
+- Php 8.4 support [#302].
+
+## [5.7.2] - 2024-11-24
+### Fixed
+- Php 8.4 support [#300].
+
+## [5.7.1] - 2024-07-24
+### Fixed
+- Parsing of PO files with empty comments instead of empty lines [#296]
+- Support for PHP >= 8.2 [#299]
+
+## [5.7.0] - 2022-07-27
+### Added
+- StrictPoLoader, a stricter PO loader more aligned with the syntax of the GNU gettext tooling [#282].
+- Previous attributes (msgctxt, msgid, msgid_plural) to the Translation class and the PO generator [#282].
+
+### Changed
+- Minor performance improvements to the Translations class [#282].
+
+## [5.6.1] - 2021-12-04
+### Fixed
+- PHP 8.1 support [#278].
+
+## [5.6.0] - 2021-11-05
+### Added
+- New method `addFlag` to `ParsedFunction`, that allows to assign flags by scanners.
+- The `FunctionsHandlersTrait` has an abstract `addFlags` method.
+
+### Fixed
+- Subsequent load file fails [#257] [#276]
+- Upgraded some dependencies in `dev`.
+
+## [5.5.4] - 2020-12-20
+### Fixed
+- TypeError in which numeric entries were converted to integers [#265]
+
+## [5.5.3] - 2020-12-01
+### Fixed
+- Add PHP 8 to composer.json
 
 ## [5.5.2] - 2020-11-17
 ### Fixed
@@ -52,7 +93,7 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 ### Added
 - New function `CodeScanner::ignoreInvalidFunctions()` to ignore invalid functions instead throw an exception
 
-## 5.0.0 - 2019-11-04
+## [5.0.0] - 2019-11-04
 ### Added
 - New interfaces: `ScannerInterface` and `FunctionsScannerInterface`.
 
@@ -71,7 +112,7 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 ### Removed
 - Extractors (now scanners and loaders), generators and translators were removed from this package and published as external packages, allowing to install only those that you need. Only Po and Mo formats are included by default.
 - Removed magic classes like `Translations::fromPoFile` or `$translation->toMoFile()`. Now, the scanners, loaders and generators are independent classes that have to be instantiated.
-- Removed `Merge::LANGUAGE_OVERRIDE` and `Merge::DOMAIN_OVERRIDE` contants
+- Removed `Merge::LANGUAGE_OVERRIDE` and `Merge::DOMAIN_OVERRIDE` constants
 
 ### Fixed
 - Improved code quality
@@ -83,11 +124,28 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 [#247]: https://github.com/php-gettext/Gettext/issues/247
 [#251]: https://github.com/php-gettext/Gettext/issues/251
 [#253]: https://github.com/php-gettext/Gettext/issues/253
+[#257]: https://github.com/php-gettext/Gettext/issues/257
 [#258]: https://github.com/php-gettext/Gettext/issues/258
 [#260]: https://github.com/php-gettext/Gettext/issues/260
 [#262]: https://github.com/php-gettext/Gettext/issues/262
 [#263]: https://github.com/php-gettext/Gettext/issues/263
+[#265]: https://github.com/php-gettext/Gettext/issues/265
+[#276]: https://github.com/php-gettext/Gettext/issues/276
+[#278]: https://github.com/php-gettext/Gettext/issues/278
+[#282]: https://github.com/php-gettext/Gettext/issues/282
+[#296]: https://github.com/php-gettext/Gettext/issues/296
+[#299]: https://github.com/php-gettext/Gettext/issues/299
+[#300]: https://github.com/php-gettext/Gettext/issues/300
+[#302]: https://github.com/php-gettext/Gettext/issues/302
 
+[5.7.3]: https://github.com/php-gettext/Gettext/compare/v5.7.2...v5.7.3
+[5.7.2]: https://github.com/php-gettext/Gettext/compare/v5.7.1...v5.7.2
+[5.7.1]: https://github.com/php-gettext/Gettext/compare/v5.7.0...v5.7.1
+[5.7.0]: https://github.com/php-gettext/Gettext/compare/v5.6.1...v5.7.0
+[5.6.1]: https://github.com/php-gettext/Gettext/compare/v5.6.0...v5.6.1
+[5.6.0]: https://github.com/php-gettext/Gettext/compare/v5.5.4...v5.6.0
+[5.5.4]: https://github.com/php-gettext/Gettext/compare/v5.5.3...v5.5.4
+[5.5.3]: https://github.com/php-gettext/Gettext/compare/v5.5.2...v5.5.3
 [5.5.2]: https://github.com/php-gettext/Gettext/compare/v5.5.1...v5.5.2
 [5.5.1]: https://github.com/php-gettext/Gettext/compare/v5.5.0...v5.5.1
 [5.5.0]: https://github.com/php-gettext/Gettext/compare/v5.4.1...v5.5.0
@@ -98,3 +156,4 @@ Previous releases are documented in [github releases](https://github.com/oscarot
 [5.2.1]: https://github.com/php-gettext/Gettext/compare/v5.2.0...v5.2.1
 [5.2.0]: https://github.com/php-gettext/Gettext/compare/v5.1.0...v5.2.0
 [5.1.0]: https://github.com/php-gettext/Gettext/compare/v5.0.0...v5.1.0
+[5.0.0]: https://github.com/php-gettext/Gettext/releases/tag/v5.0.0

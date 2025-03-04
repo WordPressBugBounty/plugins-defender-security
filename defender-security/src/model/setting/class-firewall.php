@@ -54,7 +54,7 @@ class Firewall extends Setting {
 	 * @var string
 	 * @defender_property
 	 */
-	public $http_ip_header = '';
+	public $http_ip_header = 'REMOTE_ADDR';
 
 	/**
 	 * Trusted proxies IP.
@@ -132,6 +132,10 @@ class Firewall extends Setting {
 			&& ! empty( $validation_object['message'] )
 		) {
 			$this->errors[] = $validation_object['message'];
+		}
+
+		if ( 'manual' === $this->ip_detection_type && '' === $this->http_ip_header ) {
+			$this->errors[] = esc_html__( 'IP Detection option should not be empty.', 'defender-security' );
 		}
 	}
 

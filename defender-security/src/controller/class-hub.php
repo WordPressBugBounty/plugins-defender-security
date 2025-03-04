@@ -106,14 +106,6 @@ class HUB extends Event {
 		}
 		// Todo: need to save Malware_Report last_sent & est_timestamp?
 		$scan_controller = wd_di()->get( Scan::class );
-
-		$scan_controller->scan_started_analytics(
-			array(
-				'Triggered From' => 'Hub',
-				'Scan Type'      => 'Manual',
-			)
-		);
-
 		$scan_controller->do_async_scan( 'hub' );
 
 		wp_send_json_success();

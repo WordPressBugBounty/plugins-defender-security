@@ -177,12 +177,7 @@
 		var grecaptcha_version = WPDEF.options.version;
 		
 		if ( 'v2_checkbox' == grecaptcha_version ) {
-			if ( $( '#' + container ).parent().width() <= 300 && $( '#' + container ).parent().width() != 0 || $( window ).width() < 400 ) {
-				var size = 'compact';
-			} else {
-				var size = 'normal';
-			}
-			var parameters = params ? params : { 'sitekey' : WPDEF.options.sitekey, 'theme' : WPDEF.options.theme, 'size' : size },
+			var parameters = params ? params : { 'sitekey' : WPDEF.options.sitekey, 'theme' : WPDEF.options.theme, 'size' : WPDEF.options.size },
 				block = $( '#' + container ),
 				form = block.closest( 'form' );
 

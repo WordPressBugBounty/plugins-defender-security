@@ -979,13 +979,7 @@ class Two_Factor extends Event {
 		}
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		if ( $sender ) {
-			$from_email = get_bloginfo( 'admin_email' );
-			$headers[]  = sprintf( 'From: %s <%s>', $sender, $from_email );
-			/**Todo: check
-			 * $headers[] = wd_di()->get( \WP_Defender\Component\Mail::class )->get_headers(
-			 * defender_noreply_email( 'wd_two_fa_totp_noreply_email' ),
-			 * 'totp'
-			 * );*/
+			$headers[] = sprintf( 'From: %s <%s>', $sender, get_bloginfo( 'admin_email' ) );
 		}
 		// Main email template.
 		$body = $this->render_partial(

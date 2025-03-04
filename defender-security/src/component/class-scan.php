@@ -73,6 +73,13 @@ class Scan extends Component {
 	private ?Gather_Fact $gather_fact;
 
 	/**
+	 * Lock file name for scanning.
+	 *
+	 * @var string
+	 */
+	protected string $lock_filename = 'scan.lock';
+
+	/**
 	 * Constructs the Scan object and initializes behaviors.
 	 */
 	public function __construct() {
@@ -377,44 +384,6 @@ class Scan extends Component {
 				$model->delete();
 			}
 		}
-	}
-
-	/**
-	 * Create a file lock, so we can check if a process already running.
-	 */
-	public function create_lock() {
-		file_put_contents( $this->get_lock_path(), time(), LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-	}
-
-	/**
-	 * Delete file lock.
-	 */
-	public function remove_lock() {
-		wp_delete_file( $this->get_lock_path() );
-	}
-
-	/**
-	 * Check if a lock is valid.
-	 *
-	 * @return bool
-	 */
-	public function has_lock(): bool {
-		global $wp_filesystem;
-		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
-		}
-		if ( ! file_exists( $this->get_lock_path() ) ) {
-			return false;
-		}
-		$time = $wp_filesystem->get_contents( $this->get_lock_path() );
-		if ( strtotime( '+90 seconds', $time ) < time() ) {
-			// Usually a timeout window is 30 seconds, so we should allow lock at 1.30min for safe.
-			return false;
-		}
-
-		return true;
 	}
 
 	/**

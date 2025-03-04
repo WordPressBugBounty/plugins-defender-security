@@ -30,6 +30,8 @@ class Antibot_Global_Firewall extends Component {
 
 	public const DOWNLOAD_SYNC_SCHEDULE = 'twicedaily';
 
+	public const DOWNLOAD_SYNC_NEXT_RUN_OPTION = 'wpdef_antibot_global_firewall_download_sync_next_run';
+
 	public const LAST_SYNC_OPTION = 'wpdef_antibot_global_firewall_last_sync';
 
 	public const NOTICE_SLUG = 'wpdef_show_antibot_global_firewall_notice';
@@ -65,6 +67,13 @@ class Antibot_Global_Firewall extends Component {
 	 * @var Antibot_Global_Firewall_Client
 	 */
 	private $antibot_client;
+
+	/**
+	 * Lock file name for firewall updates.
+	 *
+	 * @var string
+	 */
+	protected string $lock_filename = 'antibot_global_firewall.lock';
 
 	/**
 	 * Initializes the class with the Antibot_Global_Firewall_Model, Antibot_Global_Firewall_Setting, WPMUDEV and Antibot_Global_Firewall_Client instances.
@@ -117,6 +126,16 @@ class Antibot_Global_Firewall extends Component {
 	 */
 	public function is_active(): bool {
 		return $this->frontend_is_enabled() && $this->is_site_connected_to_hub_via_hcm_or_dash();
+	}
+
+	/**
+	 * Check if the AntiBot Global Firewall is active via plugin.
+	 *
+	 * @since 5.1.1
+	 * @return bool True if the AntiBot Global Firewall is active via plugin, false otherwise.
+	 */
+	public function is_active_via_plugin(): bool {
+		return 'plugin' === $this->get_managed_by() && $this->is_enabled() && $this->is_site_connected_to_hub_via_hcm_or_dash();
 	}
 
 	/**
@@ -182,11 +201,18 @@ class Antibot_Global_Firewall extends Component {
 			return;
 		}
 
+		if ( $this->has_lock() ) {
+			$this->log( 'Fallback as already a process is running', Firewall::FIREWALL_LOG );
+			return;
+		}
+
+		$this->create_lock();
 		$file_path = $this->download_blocklist();
 
 		if ( ! empty( $file_path ) ) {
 			$this->store_blocklist( $file_path );
 		}
+		$this->remove_lock();
 	}
 
 	/**
@@ -554,5 +580,29 @@ class Antibot_Global_Firewall extends Component {
 	public function confirm_toggle_on_hosting( bool $enable ): void {
 		$this->toggle_on_hosting( $enable );
 		delete_site_transient( self::IS_SWITCHING_TO_PLUGIN_IN_PROGRESS );
+	}
+
+	/**
+	 * Logs IP-related messages if logging is enabled via filter.
+	 *
+	 * @param string $message The message to be logged.
+	 */
+	public function log_ip_message( string $message ): void {
+		/**
+		 * Filters whether IP logging is enabled.
+		 *
+		 * This filter allows developers to enable or disable IP logging globally.
+		 * Returning false will prevent the log message from being written.
+		 *
+		 * @param bool $is_enabled Whether IP logging is enabled. Default true.
+		 * @since 5.1.0
+		 */
+		$is_logging_enabled = (bool) apply_filters( 'wpdef_antibot_global_firewall_ip_log', true );
+
+		if ( ! $is_logging_enabled ) {
+			return;
+		}
+
+		$this->log( $message, self::LOG_FILE_NAME );
 	}
 }

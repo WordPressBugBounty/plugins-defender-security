@@ -46,4 +46,17 @@ class Scheduler {
 
 		wp_reschedule_event( $timestamp, $recurrence, $hook );
 	}
+
+	/**
+	 * Get cron schedule interval.
+	 *
+	 * @param string $schedule Schedule name.
+	 *
+	 * @since 5.1.1
+	 * @return int|bool
+	 */
+	public function get_cron_schedule_interval( $schedule ) {
+		$schedules = wp_get_schedules();
+		return isset( $schedules[ $schedule ] ) ? $schedules[ $schedule ]['interval'] : false;
+	}
 }

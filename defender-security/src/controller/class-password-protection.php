@@ -235,31 +235,48 @@ class Password_Protection extends Event {
 		$model_data['pwned_actions']['force_change_message'] = sanitize_textarea_field(
 			$model_data['pwned_actions']['force_change_message']
 		);
-		$data = $request->get_data(
-			array(
-				'intention' => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-			)
-		);
-
 		$this->model->import( $model_data );
 		if ( $this->model->validate() ) {
 			$this->model->save();
 			Config_Hub_Helper::set_clear_active_flag();
 
 			$response = array(
-				'message'    => esc_html__( 'Your settings have been updated.', 'defender-security' ),
 				'auto_close' => true,
 			);
-			if ( $data && 'save_settings' === $data['intention'] && ! $this->model->is_active() ) {
-				$response['type_notice'] = 'warning';
-				$response['message']     = sprintf(
-					/* translators: %s: Pwned checks preferences. */
-					esc_html__( 'You need to check at least one of the %s and save your settings to enable Password Protection.', 'defender-security' ),
-					'<b>' . esc_html__( 'Pwned checks preferences below', 'defender-security' ) . '</b>',
+			if ( $this->model->enabled && empty( $this->model->user_roles ) ) {
+				// we need to control this message in front.
+				$response['warning'] = sprintf(
+					/* translators: 1. Open tag. 2. Close tag. */
+					esc_html__( 'You need to check at least one of the %1$sPwned checks preferences below%2$s and save your settings to enable Password Protection.', 'defender-security' ),
+					'<b>',
+					'</b>'
 				);
+
+				return new Response( true, array_merge( $response, $this->data_frontend() ) );
+			}
+			// Maybe track.
+			if ( ! defender_is_wp_cli() && $this->is_tracking_active() ) {
+				$prev_data = $this->get_model()->get_old_settings();
+
+				if ( ! empty( $prev_data ) ) {
+					if ( $this->model->enabled && ! $prev_data['enabled'] ) {
+						$need_track = true;
+						$event      = 'def_feature_activated';
+					} elseif ( ! $this->model->enabled && $prev_data['enabled'] ) {
+						$need_track = true;
+						$event      = 'def_feature_deactivated';
+					} else {
+						$need_track = false;
+					}
+
+					if ( $need_track ) {
+						$data = array(
+							'Feature'        => 'Pwned Passwords',
+							'Triggered From' => 'Feature page',
+						);
+						$this->track_feature( $event, $data );
+					}
+				}
 			}
 
 			return new Response( true, array_merge( $response, $this->data_frontend() ) );

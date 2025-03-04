@@ -264,7 +264,7 @@ class Password_Reset extends Event {
 				),
 			);
 		} else {
-			$response['message'] = esc_html__( 'Passwords reset is no longer required.', 'defender-security' );
+			$response['message'] = esc_html__( 'Force Reset Password has been disabled.', 'defender-security' );
 		}
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {

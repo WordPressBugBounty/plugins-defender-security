@@ -74,15 +74,6 @@ trait IO {
 	}
 
 	/**
-	 * Create a lock. This will be used in scanning.
-	 *
-	 * @return string
-	 */
-	protected function get_lock_path(): string {
-		return $this->get_tmp_path() . DIRECTORY_SEPARATOR . 'scan.lock';
-	}
-
-	/**
 	 * Create a lock. This will be used for 2FA.
 	 *
 	 * @return string
@@ -229,5 +220,120 @@ trait IO {
 		hash_update( $context, $data );
 
 		return hash_final( $context, false );
+	}
+
+	/**
+	 * Retrieves the lock file path used in scanning.
+	 *
+	 * @return string The lock file path.
+	 *
+	 * @throws \RuntimeException If the lock file name is not defined.
+	 */
+	protected function get_lock_path(): string {
+		if ( empty( $this->lock_filename ) ) {
+			throw new \RuntimeException( 'Lock file name must be defined in the class using IO trait.' );
+		}
+
+		return $this->get_tmp_path() . DIRECTORY_SEPARATOR . $this->lock_filename;
+	}
+
+	/**
+	 * Create a file lock, so we can check if a process already running.
+	 */
+	public function create_lock() {
+		$this->remove_lock();
+		file_put_contents( $this->get_lock_path(), time(), LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	}
+
+	/**
+	 * Delete file lock.
+	 */
+	public function remove_lock() {
+		if ( file_exists( $this->get_lock_path() ) ) {
+			wp_delete_file( $this->get_lock_path() );
+		}
+	}
+
+	/**
+	 * Check if a lock is valid.
+	 *
+	 * @return bool
+	 */
+	public function has_lock(): bool {
+		global $wp_filesystem;
+		// Initialize the WP filesystem, no more using 'file-put-contents' function.
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . '/wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+		if ( ! file_exists( $this->get_lock_path() ) ) {
+			return false;
+		}
+		$time = $wp_filesystem->get_contents( $this->get_lock_path() );
+		if ( strtotime( '+90 seconds', $time ) < time() ) {
+			// Usually a timeout window is 30 seconds, so we should allow lock at 1.30min for safe.
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Acquire a lock for a given cron event.
+	 *
+	 * @param string $event Unique cron event name.
+	 * @param string $ttl Cron schedule name to hold the lock. Default is 'every_minute'.
+	 * @return bool True if lock is acquired, False if another process is running.
+	 */
+	public function acquire_cron_lock( string $event, string $ttl = 'every_minute' ): bool {
+		$lock_key      = "{$event}_lock";
+		$last_run_key  = "{$event}_last_run";
+		$now           = time();
+		$lock_duration = 59; // Default lock duration.
+
+		// Set lock duration based on cron schedule.
+		switch ( $ttl ) {
+			case 'twicedaily':
+				$lock_duration = ( DAY_IN_SECONDS / 2 ) - 1;
+				break;
+			case 'hourly':
+				$lock_duration = HOUR_IN_SECONDS - 1;
+				break;
+			case 'daily':
+				$lock_duration = DAY_IN_SECONDS - 1;
+				break;
+			default:
+				break;
+		}
+
+		// Prevent execution if it has already run within lock duration.
+		$last_run = get_site_option( $last_run_key, 0 );
+		if ( $now < $last_run + $lock_duration ) {
+			return false;
+		}
+
+		// Check if another process is running.
+		$lock_time = get_site_option( $lock_key, 0 );
+		if ( $lock_time && ( $now < $lock_time + $lock_duration ) ) {
+			return false;
+		}
+
+		// Acquire the lock.
+		if ( ! update_site_option( $lock_key, $now ) ) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Release the lock and update the last run time.
+	 *
+	 * @param string $event Unique cron event name.
+	 */
+	public function release_cron_lock( string $event ): void {
+		$lock_key     = "{$event}_lock";
+		$last_run_key = "{$event}_last_run";
+		update_site_option( $last_run_key, time() );
+		delete_site_option( $lock_key );
 	}
 }

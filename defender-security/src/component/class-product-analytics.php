@@ -7,7 +7,7 @@
 
 namespace WP_Defender\Component;
 
-use WPMUDEV_Analytics;
+use WPMUDEV_Analytics_V4;
 use Calotes\Base\Component;
 use WP_Defender\Traits\Device;
 use WP_Defender\Behavior\WPMUDEV;
@@ -27,7 +27,7 @@ class Product_Analytics extends Component {
 	/**
 	 * Holds the Mixpanel analytics instance.
 	 *
-	 * @var null|WPMUDEV_Analytics
+	 * @var null|WPMUDEV_Analytics_V4
 	 */
 	private $mixpanel = null;
 	/**
@@ -52,7 +52,7 @@ class Product_Analytics extends Component {
 	/**
 	 * Get configured mixpanel instance.
 	 *
-	 * @return WPMUDEV_Analytics
+	 * @return WPMUDEV_Analytics_v4
 	 */
 	public function get_mixpanel() {
 		return $this->mixpanel;
@@ -73,10 +73,10 @@ class Product_Analytics extends Component {
 	/**
 	 * Prepare Mixpanel instance.
 	 *
-	 * @return WPMUDEV_Analytics
+	 * @return WPMUDEV_Analytics_V4
 	 */
 	private function prepare_mixpanel_instance() {
-		if ( ! class_exists( 'WPMUDEV_Analytics' ) ) {
+		if ( ! class_exists( 'WPMUDEV_Analytics_V4' ) ) {
 			require_once defender_path( 'extra/wpmudev-analytics/autoload.php' );
 		}
 		$extra_options  = array(
@@ -87,7 +87,7 @@ class Product_Analytics extends Component {
 			),
 			'consumer'  => 'socket',
 		);
-		$this->mixpanel = new WPMUDEV_Analytics( 'defender', 'Defender', 55, self::PROJECT_TOKEN, $extra_options );
+		$this->mixpanel = new WPMUDEV_Analytics_V4( 'defender', 'Defender', 55, self::PROJECT_TOKEN, $extra_options );
 
 		return $this->mixpanel;
 	}

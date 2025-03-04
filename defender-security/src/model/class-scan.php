@@ -264,12 +264,10 @@ class Scan extends DB {
 				case Scan_Item::TYPE_PLUGIN_CHECK:
 					$model->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
 					break;
-				case Scan_Item::TYPE_SUSPICIOUS:
-					$model->attach_behavior( Malware_Result::class, Malware_Result::class );
-					break;
 				case Scan_Item::TYPE_VULNERABILITY:
-				default:
 					$model->attach_behavior( Vuln_Result::class, Vuln_Result::class );
+					break;
+				default:
 					break;
 			}
 			$models[ $key ] = $model;
@@ -405,12 +403,10 @@ class Scan extends DB {
 				case Scan_Item::TYPE_PLUGIN_CHECK:
 					$model->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
 					break;
-				case Scan_Item::TYPE_SUSPICIOUS:
-					$model->attach_behavior( Malware_Result::class, Malware_Result::class );
-					break;
 				case Scan_Item::TYPE_VULNERABILITY:
-				default:
 					$model->attach_behavior( Vuln_Result::class, Vuln_Result::class );
+					break;
+				default:
 					break;
 			}
 		}

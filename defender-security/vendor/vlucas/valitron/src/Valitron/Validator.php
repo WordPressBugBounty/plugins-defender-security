@@ -630,6 +630,10 @@ class Validator
      */
     protected function validateEmailDNS($field, $value)
     {
+        if (!is_string($value)) {
+            return false;
+        }
+
         if ($this->validateEmail($field, $value)) {
             $domain = ltrim(stristr($value, '@'), '@') . '.';
             if (function_exists('idn_to_ascii') && defined('INTL_IDNA_VARIANT_UTS46')) {
@@ -651,6 +655,10 @@ class Validator
      */
     protected function validateUrl($field, $value)
     {
+        if (!is_string($value)) {
+            return false;
+        }
+
         foreach ($this->validUrlPrefixes as $prefix) {
             if (strpos($value, $prefix) !== false) {
                 return filter_var($value, \FILTER_VALIDATE_URL) !== false;
@@ -669,6 +677,10 @@ class Validator
      */
     protected function validateUrlActive($field, $value)
     {
+        if (!is_string($value)) {
+            return false;
+        }
+
         foreach ($this->validUrlPrefixes as $prefix) {
             if (strpos($value, $prefix) !== false) {
                 $host = parse_url(strtolower($value), PHP_URL_HOST);
@@ -959,8 +971,8 @@ class Validator
             $emptyFields = 0;
             foreach ($reqParams as $requiredField) {
                 // check the field is set, not null, and not the empty string
-                if (isset($fields[$requiredField]) && !is_null($fields[$requiredField])
-                    && (is_string($fields[$requiredField]) ? trim($fields[$requiredField]) !== '' : true)) {
+                list($requiredFieldValue, $multiple) = $this->getPart($fields, explode('.', $requiredField));
+                if (isset($requiredFieldValue) && (!is_string($requiredFieldValue) || trim($requiredFieldValue) !== '')) {
                     if (!$allRequired) {
                         $conditionallyReq = true;
                         break;
@@ -1003,8 +1015,8 @@ class Validator
             $filledFields = 0;
             foreach ($reqParams as $requiredField) {
                 // check the field is NOT set, null, or the empty string, in which case we are requiring this value be present
-                if (!isset($fields[$requiredField]) || (is_null($fields[$requiredField])
-                    || (is_string($fields[$requiredField]) && trim($fields[$requiredField]) === ''))) {
+                list($requiredFieldValue, $multiple) = $this->getPart($fields, explode('.', $requiredField));
+                if (!isset($requiredFieldValue) || (is_string($requiredFieldValue) && trim($requiredFieldValue) === '')) {
                     if (!$allEmpty) {
                         $conditionallyReq = true;
                         break;

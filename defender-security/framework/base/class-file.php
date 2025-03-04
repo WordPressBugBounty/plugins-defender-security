@@ -244,7 +244,7 @@ class File {
 
 			$type = filetype( $real_path );
 			if ( 'dir' === $type ) {
-				$real_path .= '/';
+				$real_path .= DIRECTORY_SEPARATOR;
 			}
 
 			if ( ( ! empty( $this->include ) || ! empty( $this->exclude ) ) && ( false === $this->filter_directory(
@@ -461,8 +461,7 @@ class File {
 		$dir_exclude = isset( $exclude['dir'] ) ? $exclude['dir'] : array();
 		if ( is_array( $dir_exclude ) && count( $dir_exclude ) ) {
 			foreach ( $dir_exclude as $dir ) {
-				// @since 4.11.0 Strict comparison.
-				if ( $path === $dir ) {
+				if ( strpos( $path, $dir ) === 0 ) {
 					return false;
 				}
 			}

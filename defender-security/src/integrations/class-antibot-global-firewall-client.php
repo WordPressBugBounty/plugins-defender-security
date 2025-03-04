@@ -63,11 +63,12 @@ class Antibot_Global_Firewall_Client {
 	 * Send firewall logs to AntiBot Global Firewall API.
 	 *
 	 * @param  array $data  The firewall logs.
+	 * @param  bool  $is_live_environment  Are the data ready for production? True if ready, false if not.
 	 *
 	 * @return array|WP_Error
 	 */
-	public function send_reports( $data ) {
-		return $this->make_request( 'POST', '/report', $data );
+	public function send_reports( $data, $is_live_environment ) {
+		return $this->make_request( 'POST', '/report', $data, $is_live_environment );
 	}
 
 	/**
@@ -105,17 +106,22 @@ class Antibot_Global_Firewall_Client {
 	 * @param  string $method  The HTTP method to use.
 	 * @param  string $endpoint  The API endpoint to request.
 	 * @param  array  $data  The data to send with the request or query variables.
+	 * @param  bool   $is_live_environment Are the data ready for production? True if ready, false if not.
 	 *
 	 * @return array|WP_Error
 	 */
-	private function make_request( $method, $endpoint, $data = array() ) {
+	private function make_request( $method, $endpoint, $data = array(), $is_live_environment = true ) {
 		$apikey = $this->get_api_key();
 
 		if ( ! $apikey ) {
 			return new WP_Error( 'no_api_key', 'No API key provided' );
 		}
 
-		$url  = $this->get_base_url() . $endpoint;
+		$base_url = $is_live_environment
+			? $this->get_base_url()
+			: 'https://staging-api.blocklist-service.com/api';
+		// Combine Url.
+		$url  = $base_url . $endpoint;
 		$args = array(
 			'method'  => $method,
 			'headers' => array(

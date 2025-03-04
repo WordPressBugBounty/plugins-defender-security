@@ -65,6 +65,7 @@ if ( $uninstall_settings || $uninstall_data ) {
 }
 // Only Settings.
 if ( $uninstall_settings ) {
+	// Remove all settings of Advanced Tools.
 	$advanced_tools->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Audit_Logging::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Dashboard::class )->remove_settings();
@@ -73,7 +74,6 @@ if ( $uninstall_settings ) {
 	// Start of Firewall parent and submodules.
 	wd_di()->get( \WP_Defender\Controller\Firewall::class )->remove_settings();
 	// End.
-	wd_di()->get( \WP_Defender\Controller\Mask_Login::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Tutorial::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Two_Factor::class )->remove_settings();
@@ -103,15 +103,16 @@ if ( $uninstall_data ) {
 	// Start of Firewall parent and submodules.
 	wd_di()->get( \WP_Defender\Controller\Firewall::class )->remove_data();
 	// End.
-	wd_di()->get( \WP_Defender\Controller\Mask_Login::class )->remove_data();
 	wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_data();
 	wd_di()->get( \WP_Defender\Controller\Tutorial::class )->remove_data();
 	wd_di()->get( \WP_Defender\Controller\Two_Factor::class )->remove_data();
 	wd_di()->get( \WP_Defender\Component\Backup_Settings::class )->clear_configs();
+	// Remove all data of Advanced Tools.
 	$advanced_tools->remove_data();
 	defender_drop_custom_tables();
 	delete_site_transient( \WP_Defender\Behavior\Scan\Plugin_Integrity::$org_slugs );
 	delete_site_transient( \WP_Defender\Behavior\Scan\Plugin_Integrity::$org_responses );
+	delete_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );
 }
 
 if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {

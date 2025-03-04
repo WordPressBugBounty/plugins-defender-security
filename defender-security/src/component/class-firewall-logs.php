@@ -17,7 +17,10 @@ use WP_Defender\Model\Spam_Comment;
 class Firewall_Logs extends Component {
 
 	/**
-	 * Fetch compact Firewall logs.
+	 * Fetch compact Firewall logs. Combination of conditions:
+	 * 1. Logs for the specified period.
+	 * 2. '404_error'-logs with the same IP, the number of which is not less than 20.
+	 * 3. Exclude UA-logs that match entries in the blocklist. Only REASON_BAD_POST UA-logs with the same IP.
 	 *
 	 * @param  int $from  Fetch Logs from this time to current time.
 	 *
@@ -29,10 +32,12 @@ class Firewall_Logs extends Component {
 		$table   = $wpdb->base_prefix . ( new Lockout_Log() )->get_table();
 		$results = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
-				"SELECT IP, type, COUNT(*) AS frequency FROM {$table}" . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				" WHERE `date` >= %s AND type IN ('auth_fail', '404_error', 'ua_lockout')" .
+				"SELECT IP, type, tried, COUNT(*) AS frequency FROM {$table}" . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				" WHERE `date` >= %s AND (type IN ('auth_fail', '404_error')" .
+				" OR (type = 'ua_lockout' AND tried = %s))" .
 				' GROUP BY IP, `type`',
-				$from
+				$from,
+				\WP_Defender\Component\User_Agent::REASON_BAD_POST
 			),
 			ARRAY_A
 		);
@@ -74,11 +79,11 @@ class Firewall_Logs extends Component {
 			}
 		}
 
-		// Add spam comments IP to the compact log.
 		$spam_comments_ip = Spam_Comment::get_spam_comments_ip();
-		$this->log( $spam_comments_ip, 'spam-comment.log' );
+		if ( ! empty( $spam_comments_ip ) ) {
+			// Add spam comments IP to the compact log.
+			$this->log( $spam_comments_ip, 'spam-comment.log' );
 
-		if ( is_array( $spam_comments_ip ) && ! empty( $spam_comments_ip ) ) {
 			foreach ( $spam_comments_ip as $ip => $count ) {
 				if ( ! isset( $logs[ $ip ] ) ) {
 					$logs[ $ip ] = array( 'ip' => $ip );
@@ -87,6 +92,33 @@ class Firewall_Logs extends Component {
 				$logs[ $ip ]['reason']['spam_comment'] = $count;
 			}
 		}
+
+		return array_values( $logs );
+	}
+
+	/**
+	 * Fetch raw logs.
+	 *
+	 * @return array
+	 */
+	public function get_compact_staging_logs(): array {
+		$logs = array();
+		// Retrieve the current list of blocked IPs from the site transient.
+		$ips = get_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );
+		// Ensure the retrieved data is an array; if not, initialize it as an empty array.
+		if ( is_array( $ips ) && ! empty( $ips ) ) {
+			$this->log( $ips, 'spam-comment.log' );
+
+			foreach ( $ips as $ip => $count ) {
+				if ( ! isset( $logs[ $ip ] ) ) {
+					$logs[ $ip ] = array( 'ip' => $ip );
+				}
+
+				$logs[ $ip ]['reason']['spam_comment'] = $count;
+			}
+		}
+
+		delete_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );
 
 		return array_values( $logs );
 	}

@@ -45,7 +45,7 @@ final class MoGenerator extends Generator
             $messages[$originalString] = $translation;
         }
 
-        ksort($messages);
+        ksort($messages, SORT_STRING);
         $numEntries = count($messages);
         $originalsTable = '';
         $translationsTable = '';
@@ -67,7 +67,7 @@ final class MoGenerator extends Generator
 
             $originalsIndex[] = [
                 'relativeOffset' => strlen($originalsTable),
-                'length' => strlen($originalString),
+                'length' => strlen((string) $originalString),
             ];
             $originalsTable .= $originalString."\x00";
             $translationsIndex[] = [

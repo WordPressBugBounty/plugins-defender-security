@@ -8,6 +8,7 @@
 namespace WP_Defender\Model;
 
 use WP_Defender\DB;
+use WP_Defender\Behavior\Scan_Item\Malware_Result;
 
 /**
  * Model for scan item table.
@@ -75,8 +76,6 @@ class Scan_Item extends DB {
 	public function get_types_total( $parent_id, $status ) {
 		global $wpdb;
 
-		$table = $wpdb->base_prefix . $this->table;
-
 		$records = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
 				"SELECT IFNULL(`type`, 'all') as `item_type`, count(*) as `type_total` FROM {$wpdb->base_prefix}defender_scan_item WHERE `parent_id` = %d AND `status` = %s Group BY `type` WITH ROLLUP",
@@ -106,5 +105,24 @@ class Scan_Item extends DB {
 			->delete( array( 'id' => $id ) );
 
 		return is_int( $delete );
+	}
+
+	/**
+	 * Import data into the model.
+	 *
+	 * @param mixed $data The data array to import values from.
+	 *
+	 * @return void
+	 */
+	public function import( $data ): void {
+		parent::import( $data );
+		switch ( $this->type ) {
+			// Add other behaviors here.
+			case self::TYPE_SUSPICIOUS:
+				$this->attach_behavior( Malware_Result::class, Malware_Result::class );
+				break;
+			default:
+				break;
+		}
 	}
 }
