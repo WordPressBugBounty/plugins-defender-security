@@ -136,7 +136,6 @@ class Data_Tracking extends Event {
 		return (bool) get_site_option( self::TRACKING_SLUG ) && ! $white_label_is_hide;
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */
@@ -151,7 +150,6 @@ class Data_Tracking extends Event {
 	public function export_strings(): array {
 		return array();
 	}
-
 
 	/**
 	 * Converts the object data to an array.

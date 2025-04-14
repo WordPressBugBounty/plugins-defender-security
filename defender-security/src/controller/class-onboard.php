@@ -117,7 +117,6 @@ class Onboard extends Event {
 			Data_Tracking::delete_modal_key();
 
 			update_site_option( 'wp_defender_onboarding_step', 'activate-antibot' );
-			Feature_Modal::delete_modal_key();
 
 			wp_send_json_success();
 		} else {

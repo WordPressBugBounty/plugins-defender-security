@@ -660,7 +660,6 @@ class Webauthn extends Controller {
 		wp_send_json_success( esc_html__( 'Notice disabled!', 'defender-security' ) );
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */

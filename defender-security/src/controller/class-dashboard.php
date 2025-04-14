@@ -20,7 +20,8 @@ use WP_Defender\Controller\Hub_Connector;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
-use WP_Defender\Component\IP\Antibot_Global_Firewall as Antibot_Component;
+use WP_Defender\Controller\Antibot_Global_Firewall;
+use WP_Defender\Model\Setting\Session_Protection;
 
 /**
  * Handles the main admin page.
@@ -171,8 +172,6 @@ class Dashboard extends Event {
 	 * @defender_route
 	 */
 	public function activate_global_ip(): Response {
-		// Hide the modal.
-		Feature_Modal::delete_modal_key();
 		// Changes for Global IP.
 		$model                     = wd_di()->get( Global_Ip_Lockout::class );
 		$model->enabled            = true;
@@ -187,6 +186,28 @@ class Dashboard extends Event {
 			true,
 			array(
 				'redirect' => network_admin_url( 'admin.php?page=wdf-ip-lockout&view=global-ip' ),
+				'interval' => 1,
+			)
+		);
+	}
+
+	/**
+	 * Activate Session Protection submodule.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function activate_session_protection(): Response {
+		$model          = wd_di()->get( Session_Protection::class );
+		$model->enabled = true;
+		$model->save();
+		// Changes for Hub.
+		Config_Hub_Helper::set_clear_active_flag();
+
+		return new Response(
+			true,
+			array(
+				'redirect' => network_admin_url( 'admin.php?page=wdf-advanced-tools&view=session-protection' ),
 				'interval' => 1,
 			)
 		);
@@ -225,7 +246,8 @@ class Dashboard extends Event {
 	public function data_frontend(): array {
 		[ $endpoints, $nonces ] = Route::export_routes( 'dashboard' );
 		$firewall               = wd_di()->get( Firewall::class );
-		$force_hide_modal       = wd_di()->get( Antibot_Component::class )->frontend_is_enabled();
+		// Session is Pro feature.
+		$force_hide_modal = ( new WPMUDEV() )->is_pro() && wd_di()->get( Session_Protection::class )->enabled;
 
 		return array_merge(
 			wd_di()->get( Feature_Modal::class )->get_dashboard_modals( $force_hide_modal ),

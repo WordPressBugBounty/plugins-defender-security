@@ -139,7 +139,6 @@ class User_Agent extends Component {
 		return false;
 	}
 
-
 	/**
 	 * Retrieves the message to display for blocked user agents.
 	 *
@@ -229,7 +228,10 @@ class User_Agent extends Component {
 		$lines    = explode( "\n", $contents );
 		$data     = array();
 		foreach ( $lines as $line ) {
-			$line = str_getcsv( $line );
+			if ( '' === $line ) {
+				continue;
+			}
+			$line = str_getcsv( $line, ',', '"', '\\' );
 			if ( count( $line ) !== 2 ) {
 				return false;
 			}
@@ -276,5 +278,24 @@ class User_Agent extends Component {
 		}
 
 		return $status_text;
+	}
+
+	/**
+	 * A list of known bad user agents.
+	 *
+	 * @return array An array of user agents.
+	 */
+	public static function get_spam_user_agent_list() {
+		return array(
+			'AhrefsBot',
+			'DotBot',
+			'EmailSiphon',
+			'HTTrack',
+			'MJ12Bot',
+			'Nmap',
+			'SEMrushBot',
+			'sqlmap',
+			'ZmEu',
+		);
 	}
 }

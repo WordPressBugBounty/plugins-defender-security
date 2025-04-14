@@ -65,7 +65,7 @@ trait IO {
 	 * @return string The path to the log file.
 	 */
 	public function get_log_path( $category = '' ): string {
-		$file = empty( $category ) ? 'defender.log' : $category;
+		$file = empty( $category ) ? wd_internal_log() : $category;
 
 		$logger    = new Logger();
 		$file_name = $logger->generate_file_name( $file );

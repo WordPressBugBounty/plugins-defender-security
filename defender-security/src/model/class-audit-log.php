@@ -254,7 +254,6 @@ class Audit_Log extends DB {
 		}
 	}
 
-
 	/**
 	 * Counts the number of records in the database table that match the given criteria.
 	 *
@@ -286,7 +285,6 @@ class Audit_Log extends DB {
 		return $builder->count();
 	}
 
-
 	/**
 	 * Mass insert logs, usually fetched from API.
 	 *
@@ -304,7 +302,6 @@ class Audit_Log extends DB {
 			$item->save();
 		}
 	}
-
 
 	/**
 	 * Retrieves a record from the database by its ID.

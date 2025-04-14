@@ -8,6 +8,7 @@
 namespace WP_Defender\Model;
 
 use WP_Defender\DB;
+use WP_Defender\Behavior\Scan_Item\Vuln_Result;
 use WP_Defender\Behavior\Scan_Item\Malware_Result;
 
 /**
@@ -92,7 +93,6 @@ class Scan_Item extends DB {
 		return $results;
 	}
 
-
 	/**
 	 * Deletes a record from the database by its ID.
 	 *
@@ -120,6 +120,9 @@ class Scan_Item extends DB {
 			// Add other behaviors here.
 			case self::TYPE_SUSPICIOUS:
 				$this->attach_behavior( Malware_Result::class, Malware_Result::class );
+				break;
+			case self::TYPE_VULNERABILITY:
+				$this->attach_behavior( Vuln_Result::class, Vuln_Result::class );
 				break;
 			default:
 				break;

@@ -40,7 +40,6 @@ class MaxMind_Geolocation {
 	 */
 	public const DB_DIRECTORY = 'maxmind';
 
-
 	/**
 	 * Returns the full name of the database by concatenating the database name and extension.
 	 *
@@ -49,7 +48,6 @@ class MaxMind_Geolocation {
 	public function get_db_full_name() {
 		return self::DB_NAME . self::DB_EXT;
 	}
-
 
 	/**
 	 * Retrieves the URL for downloading the MaxMind database using the provided license key.

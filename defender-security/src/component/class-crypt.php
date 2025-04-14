@@ -42,7 +42,7 @@ class Crypt extends Component {
 				}
 			} catch ( Exception $e ) {
 				$_this = new self();
-				$_this->log( $e->getMessage(), 'internal.log' );
+				$_this->log( $e->getMessage(), wd_internal_log() );
 			}
 		}
 		// Try with openssl_random_pseudo_bytes.
@@ -76,7 +76,7 @@ class Crypt extends Component {
 				return random_int( $min, $max );
 			} catch ( Exception $e ) {
 				$_this = new self();
-				$_this->log( $e->getMessage(), 'internal.log' );
+				$_this->log( $e->getMessage(), wd_internal_log() );
 			}
 		}
 		$diff  = $max - $min;

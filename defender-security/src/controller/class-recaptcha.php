@@ -134,7 +134,6 @@ class Recaptcha extends Event {
 		}
 	}
 
-
 	/**
 	 * Declares the necessary variables for the reCAPTCHA functionality.
 	 *
@@ -332,7 +331,6 @@ class Recaptcha extends Event {
 		return $error;
 	}
 
-
 	/**
 	 * Modifies the script loader tag for the 'wpdef_recaptcha_api' handle.
 	 *
@@ -348,7 +346,6 @@ class Recaptcha extends Event {
 
 		return $tag;
 	}
-
 
 	/**
 	 * Returns the API URL for reCAPTCHA based on the recaptcha_type property.
@@ -960,7 +957,6 @@ class Recaptcha extends Event {
 			)
 		);
 	}
-
 
 	/**
 	 * Load the reCAPTCHA preview based on the provided request data.

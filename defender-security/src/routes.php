@@ -103,6 +103,7 @@ function defender_init_routes() {
 			'hide_new_features'                => 'hide_new_features',
 			'activate_global_ip'               => 'activate_global_ip',
 			'remove_global_ip_notice_reminder' => 'remove_global_ip_notice_reminder',
+			'activate_session_protection'      => 'activate_session_protection',
 		),
 		'settings'          => array(
 			'update_settings' => 'save_settings',

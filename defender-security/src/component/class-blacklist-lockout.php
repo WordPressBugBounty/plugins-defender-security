@@ -204,7 +204,7 @@ class Blacklist_Lockout extends Component {
 		$lines = $wp_filesystem->get_contents_array( $file );
 		$data  = array();
 		foreach ( $lines as $line ) {
-			$line = str_getcsv( $line );
+			$line = str_getcsv( $line, ',', '"', '\\' );
 			if ( count( $line ) !== 2 ) {
 				return false;
 			}

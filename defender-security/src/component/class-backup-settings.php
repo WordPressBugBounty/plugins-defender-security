@@ -282,7 +282,6 @@ class Backup_Settings extends Component {
 		return $ret;
 	}
 
-
 	/**
 	 * Retrieves all configurations from the options table.
 	 *

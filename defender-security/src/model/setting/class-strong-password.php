@@ -51,13 +51,9 @@ class Strong_Password extends Setting {
 	 * @return bool
 	 */
 	public function is_active(): bool {
-		$is_enabled = $this->enabled && count( $this->user_roles ) > 0;
-
 		return (bool) apply_filters(
 			'wd_strong_password_enable',
-			$is_enabled,
-			$this->enabled,
-			$this->user_roles
+			$this->enabled && count( $this->user_roles ) > 0
 		);
 	}
 

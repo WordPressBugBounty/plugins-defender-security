@@ -788,7 +788,6 @@ class Mask_Login extends Event {
 		return $message;
 	}
 
-
 	/**
 	 * Change redirect param of the link 'Lost your password?'.
 	 *

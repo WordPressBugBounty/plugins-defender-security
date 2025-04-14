@@ -100,7 +100,6 @@ class Lockout_Ip extends DB {
 	 */
 	public $meta = array();
 
-
 	/**
 	 * Get the record by IP, if it not appears, then create one.
 	 *
@@ -243,7 +242,6 @@ class Lockout_Ip extends DB {
 		return $result;
 	}
 
-
 	/**
 	 * Returns the text representation of the access status based on the given status code.
 	 *
@@ -283,7 +281,6 @@ class Lockout_Ip extends DB {
 					->order_by( 'lock_time', 'desc' )
 					->get_results();
 	}
-
 
 	/**
 	 * Checks if the current object is locked.

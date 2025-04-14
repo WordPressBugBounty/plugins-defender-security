@@ -11,12 +11,14 @@ use WP_User;
 use WP_Error;
 use stdClass;
 use WP_Defender\Component;
+use WP_Defender\Traits\User;
 use WP_Defender\Model\Setting\Strong_Password as Settings;
 
 /**
  *  Enforces strong password policies for user accounts.
  */
 class Strong_Password extends Component {
+	use User;
 
 	/**
 	 * Cookie key to show warning message on reset password page.
@@ -93,41 +95,6 @@ class Strong_Password extends Component {
 		}
 
 		return $user;
-	}
-
-	/**
-	 * Check if the user has a role selected by the admin.
-	 *
-	 * @param WP_User|stdClass $user User object.
-	 *
-	 * @return bool True if the user has a selected role, false otherwise.
-	 */
-	private function should_enforce_for_user( $user ): bool {
-		$roles = array();
-		if ( ! is_multisite() ) {
-			if ( $user instanceof WP_User ) {
-				$roles = $this->get_roles( $user );
-			} elseif ( empty( $roles ) && $user instanceof stdClass && ! empty( $user->ID ) ) {
-				$user  = get_userdata( $user->ID );
-				$roles = $user->roles;
-			} elseif ( empty( $roles ) ) {
-				$role = defender_get_data_from_request( 'role', 'p' );
-				if ( ! empty( $role ) ) {
-					$roles = array( $role );
-				}
-			}
-		} elseif ( is_multisite() && isset( $user->ID ) ) {
-			$blogs = get_blogs_of_user( $user->ID );
-			foreach ( $blogs as $blog ) {
-				// Get user roles for this blog.
-				$u     = new WP_User( $user->ID, '', $blog->userblog_id );
-				$roles = array_merge( $u->roles, $roles );
-			}
-		}
-
-		$array_intersect = array_intersect( $this->model->user_roles, $roles );
-
-		return ! empty( $array_intersect );
 	}
 
 	/**

@@ -221,7 +221,6 @@ class Security_Headers extends Setting {
 		return null;
 	}
 
-
 	/**
 	 * Set the value of a data key.
 	 *
@@ -321,7 +320,6 @@ class Security_Headers extends Setting {
 
 		return 'both' === $type ? $headers : $headers[ $type ];
 	}
-
 
 	/**
 	 * Check if any of the security headers are activated.

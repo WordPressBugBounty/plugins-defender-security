@@ -8,9 +8,7 @@
 namespace WP_Defender\Component;
 
 use WP_Defender\Component;
-use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Traits\Defender_Dashboard_Client;
-use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
 
 /**
  * Use different actions for "What's new" modals.
@@ -23,8 +21,8 @@ class Feature_Modal extends Component {
 	/**
 	 * Feature data for the last active "What's new" modal.
 	 */
-	public const FEATURE_SLUG    = 'wd_show_feature_strong_password';
-	public const FEATURE_VERSION = '5.1.0';
+	public const FEATURE_SLUG    = 'wd_show_feature_session_protection';
+	public const FEATURE_VERSION = '5.2.0';
 
 	/**
 	 * Get modals that are displayed on the Dashboard page.
@@ -37,42 +35,14 @@ class Feature_Modal extends Component {
 	 */
 	public function get_dashboard_modals( $force_hide = false ): array {
 		$is_displayed = $force_hide ? false : $this->display_last_modal( self::FEATURE_SLUG );
-		$title        = esc_html__( 'New! Strong Password Rule', 'defender-security' );
 		$current_user = wp_get_current_user();
-
-		$desc  = '<p class="text-base leading-22px mb-15px">';
-		$desc .= sprintf(
-			/* translators: %s: Name. */
-			esc_html__(
-				'Hey %s, security just got stronger! You can now require users to set strong passwords when registering or updating their credentials. This helps protect your site from unauthorized access and password breaches.',
-				'defender-security'
-			),
-			esc_html( $current_user->display_name )
-		);
-		$desc .= '</p>';
-
-		$desc .= '<div class="feature-highlights">';
-		$desc .= '<span class="text-gray-500 font-bold">' . esc_html__( 'What’s New?', 'defender-security' ) . '</span>';
-		$desc .= '<ul><li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Enforce strong password strength rules.', 'defender-security' ) . '</li>
-			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Improve security without manual intervention.', 'defender-security' ) . '</li>
-			<li><span class="sui-icon-check-tick" aria-hidden="true"></span>' . esc_html__( 'Manage all password-related settings in one place.', 'defender-security' ) . '</li></ul>';
-		$desc .= '</div>';
-
-		$button_title = esc_html__( 'Go to Password Rules', 'defender-security' );
 
 		return array(
 			'show_welcome_modal' => $is_displayed,
 			'welcome_modal'      => array(
-				'title'           => $title,
-				'desc'            => $desc,
-				'banner_1x'       => defender_asset_url( '/assets/img/modal/welcome-modal.png' ),
-				'banner_2x'       => defender_asset_url( '/assets/img/modal/welcome-modal@2x.png' ),
-				'banner_alt'      => esc_html__( 'Modal for Strong Password Rule', 'defender-security' ),
-				'button_title'    => $button_title,
-				// Additional information.
-				'additional_text' => $this->additional_text(),
-				'read_more_title' => esc_html__( 'DISMISS', 'defender-security' ),
-				'read_more_url'   => network_admin_url( 'admin.php?page=wdf-advanced-tools&view=password-rules' ),
+				'user_name' => esc_html( $current_user->display_name ),
+				'banner_1x' => defender_asset_url( '/assets/img/modal/welcome-modal.png' ),
+				'banner_2x' => defender_asset_url( '/assets/img/modal/welcome-modal@2x.png' ),
 			),
 		);
 	}
@@ -110,8 +80,8 @@ class Feature_Modal extends Component {
 			),
 			// The latest feature.
 			array(
-				'slug' => 'wd_show_feature_antibot',
-				'vers' => '5.0.0',
+				'slug' => 'wd_show_feature_strong_password',
+				'vers' => '5.1.0',
 			),
 			// The current feature.
 			array(

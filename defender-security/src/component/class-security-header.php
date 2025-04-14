@@ -135,7 +135,7 @@ abstract class Security_Header extends Component {
 				'data' => $headers,
 			);
 			$model->set_data_values( 'head_requests', $cached );
-			$this->log( sprintf( 'Fetched header for %s into cache', $url ) );
+			$this->log( sprintf( 'Fetched header for %s into cache', $url ), wd_internal_log() );
 
 			return $headers;
 		}

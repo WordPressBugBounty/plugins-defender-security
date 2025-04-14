@@ -274,7 +274,6 @@ class Global_Ip extends Controller {
 	public function remove_settings() {
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */

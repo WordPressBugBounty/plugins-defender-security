@@ -90,7 +90,6 @@ class Unlockout extends DB {
 		return $this->save();
 	}
 
-
 	/**
 	 * Remove data by given data.
 	 *
@@ -117,7 +116,6 @@ class Unlockout extends DB {
 		$orm = self::get_orm();
 		$orm->get_repository( self::class )->truncate();
 	}
-
 
 	/**
 	 * Retrieves the resolved IP address by the given ID, email, and limit time.

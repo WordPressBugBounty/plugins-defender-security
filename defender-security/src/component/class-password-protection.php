@@ -20,6 +20,8 @@ use WP_Defender\Model\Setting\Password_Protection as Password_Protection_Setting
  */
 class Password_Protection extends Component {
 
+	public const PASSWORD_LOG = 'password.log';
+
 	/**
 	 * The Pwned API URL.
 	 * API source website: http://haveibeenpwned.com/. API version: v3.
@@ -132,7 +134,7 @@ class Password_Protection extends Component {
 				$user_meta = get_userdata( $user_id );
 				if ( empty( $user_meta->roles ) ) {
 					// User should have roles.
-					$this->log( sprintf( "User ID: %d doesn't have roles.", $user_id ), 'password.log' );
+					$this->log( sprintf( "User ID: %d doesn't have roles.", $user_id ), self::PASSWORD_LOG );
 
 					return false;
 				}
@@ -141,14 +143,14 @@ class Password_Protection extends Component {
 				$arr_user_blogs = get_blogs_of_user( $user_id );
 				if ( empty( $arr_user_blogs ) ) {
 					// User should be associated with some site.
-					$this->log( sprintf( 'User ID: %d is not associated with any site.', $user_id ), 'password.log' );
+					$this->log( sprintf( 'User ID: %d is not associated with any site.', $user_id ), self::PASSWORD_LOG );
 
 					return false;
 				}
 				$user_blog_id = array_key_first( $arr_user_blogs );
 				$user         = new WP_User( $user_id, '', $user_blog_id );
 				if ( empty( $user->roles ) ) {
-					$this->log( sprintf( "User ID: %d doesn't have roles on MU.", $user->ID ), 'password.log' );
+					$this->log( sprintf( "User ID: %d doesn't have roles on MU.", $user->ID ), self::PASSWORD_LOG );
 
 					return false;
 				}

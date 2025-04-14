@@ -28,6 +28,7 @@ class Audit extends Component {
 	use IO;
 	use Formats;
 
+	public const AUDIT_LOG             = 'audit.log';
 	public const CACHE_LAST_CHECKPOINT = 'wd_audit_fetch_checkpoint';
 
 	/**
@@ -45,7 +46,7 @@ class Audit extends Component {
 	 */
 	public function fetch( $date_from, $date_to, $events = array(), $user_id = '', $ip = '', $paged = 1 ) {
 		$internal = Audit_Log::query( $date_from, $date_to, $events, $user_id, $ip, $paged );
-		$this->log( sprintf( 'Found %s from local', count( $internal ) ), 'audit.log' );
+		$this->log( sprintf( 'Found %s from local', count( $internal ) ), self::AUDIT_LOG );
 		$checkpoint = get_site_option( self::CACHE_LAST_CHECKPOINT );
 		if ( false === $checkpoint ) {
 			// This case where user install the plugin, have some local data but never reach to Logs page, then check point will be today.
@@ -55,11 +56,11 @@ class Audit extends Component {
 		$date_from  = (int) $date_from;
 		if ( 0 === count( $internal ) && $checkpoint > $date_from ) {
 			// Have to fetch from API.
-			$this->log( 'fetch from cloud', 'audit.log' );
+			$this->log( 'fetch from cloud', self::AUDIT_LOG );
 			// Todo:need $paged as 'nopaging'-arg?
 			$cloud = $this->query_from_api( $date_from, $date_to );
 			if ( is_wp_error( $cloud ) ) {
-				$this->log( sprintf( 'Fetch error %s', $cloud->get_error_message() ), 'audit.log' );
+				$this->log( sprintf( 'Fetch error %s', $cloud->get_error_message() ), self::AUDIT_LOG );
 
 				return $cloud;
 			}
@@ -81,11 +82,11 @@ class Audit extends Component {
 					wp_date( 'Y-m-d H:i:s', $checkpoint ),
 					wp_date( 'Y-m-d H:i:s', $date_from )
 				),
-				'audit.log'
+				self::AUDIT_LOG
 			);
 			$cloud = $this->query_from_api( $date_from, $checkpoint );
 			if ( is_wp_error( $cloud ) ) {
-				$this->log( sprintf( 'Fetch error %s', $cloud->get_error_message() ), 'audit.log' );
+				$this->log( sprintf( 'Fetch error %s', $cloud->get_error_message() ), self::AUDIT_LOG );
 
 				return $cloud;
 			}
@@ -133,7 +134,7 @@ class Audit extends Component {
 		);
 
 		if ( is_wp_error( $data ) ) {
-			$this->log( sprintf( 'Fetch error %s', $data->get_error_message() ), 'audit.log' );
+			$this->log( sprintf( 'Fetch error %s', $data->get_error_message() ), self::AUDIT_LOG );
 
 			return $data;
 		}
@@ -243,7 +244,7 @@ class Audit extends Component {
 		}
 		$this->log(
 			sprintf( 'Flush %s to cloud', is_array( $data ) || $data instanceof Countable ? count( $data ) : 0 ),
-			'audit.log'
+			self::AUDIT_LOG
 		);
 		$start_time = microtime( true );
 		$sks        = $sockets;

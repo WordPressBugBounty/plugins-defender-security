@@ -14,6 +14,7 @@ use Calotes\Component\Behavior;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Component\Timer;
 use WP_Defender\Helper\Analytics\Scan as Scan_Analytics;
+use WP_Defender\Controller\Scan as Scan_Controller;
 
 /**
  * Handles core integrity scan.
@@ -60,7 +61,7 @@ class Core_Integrity extends Behavior {
 		if ( $pos > 0 ) {
 			$core_files->seek( $pos );
 		}
-		$this->log( sprintf( 'current pos %s', $pos ), 'scan.log' );
+		$this->log( sprintf( 'current pos %s', $pos ), Scan_Controller::SCAN_LOG );
 		while ( $core_files->valid() ) {
 			if ( ! $timer->check() ) {
 
@@ -81,20 +82,20 @@ class Core_Integrity extends Behavior {
 					)
 				);
 
-				$this->log( $reason, 'scan.log' );
+				$this->log( $reason, Scan_Controller::SCAN_LOG );
 				break;
 			}
 
 			if ( $model->is_issue_whitelisted( $core_files->current() ) ) {
 				// This is whitelisted, so do nothing.
-				$this->log( sprintf( 'skip %s because of file is whitelisted', $core_files->current() ), 'scan.log' );
+				$this->log( sprintf( 'skip %s because of file is whitelisted', $core_files->current() ), Scan_Controller::SCAN_LOG );
 				$core_files->next();
 				continue;
 			}
 
 			if ( $model->is_issue_ignored( $core_files->current() ) ) {
 				// This is ignored, so do nothing.
-				$this->log( sprintf( 'skip %s because of file is ignored', $core_files->current() ), 'scan.log' );
+				$this->log( sprintf( 'skip %s because of file is ignored', $core_files->current() ), Scan_Controller::SCAN_LOG );
 				$core_files->next();
 				continue;
 			}
@@ -108,7 +109,7 @@ class Core_Integrity extends Behavior {
 
 			if ( isset( $checksums[ $rev_file ] ) ) {
 				if ( ! $this->compare_hashes( $file, $checksums[ $rev_file ] ) ) {
-					$this->log( sprintf( 'modified %s', $file ), 'scan.log' );
+					$this->log( sprintf( 'modified %s', $file ), Scan_Controller::SCAN_LOG );
 					$model->add_item(
 						Scan_Item::TYPE_INTEGRITY,
 						array(
@@ -122,7 +123,7 @@ class Core_Integrity extends Behavior {
 					if ( $this->is_dir_empty( $core_files->current() ) ) {
 						$this->log(
 							sprintf( 'skip %s because of non-WP directory is empty', $core_files->current() ),
-							'scan.log'
+							Scan_Controller::SCAN_LOG
 						);
 						$core_files->next();
 						continue;
@@ -177,7 +178,7 @@ class Core_Integrity extends Behavior {
 		if ( is_array( $cache ) ) {
 			return $cache;
 		}
-		$this->log( 'Fetch checksums, should only once', 'scan.log' );
+		$this->log( 'Fetch checksums, should only once', Scan_Controller::SCAN_LOG );
 
 		global $wp_version, $wp_local_package;
 
@@ -186,7 +187,7 @@ class Core_Integrity extends Behavior {
 		}
 		$checksums = get_core_checksums( $wp_version, empty( $wp_local_package ) ? 'en_US' : $wp_local_package );
 		if ( false === $checksums ) {
-			$this->log( 'Error from fetching checksums from wp.org', 'scan.log' );
+			$this->log( 'Error from fetching checksums from wp.org', Scan_Controller::SCAN_LOG );
 			$scan         = $this->owner->scan;
 			$scan->status = Scan::STATUS_IDLE;
 			$scan->save();

@@ -39,7 +39,6 @@ class Recaptcha extends Setting {
 	 */
 	public $active_type = 'v2_checkbox';
 
-
 	/**
 	 * Data for v2 checkbox reCaptcha.
 	 *
@@ -286,7 +285,6 @@ class Recaptcha extends Setting {
 		return $this->detect_buddypress && empty( $this->buddypress_checked_locations );
 	}
 
-
 	/**
 	 * Level#1 Checks if the BuddyPress locations are valid and have all the necessary data.
 	 *
@@ -322,7 +320,6 @@ class Recaptcha extends Setting {
 			'disable_for_known_users' => esc_html__( 'Disable for logged in users', 'defender-security' ),
 		);
 	}
-
 
 	/**
 	 * Validates the form after submission.

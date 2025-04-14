@@ -37,7 +37,7 @@ class Sh_XSS_Protection extends Security_Header {
 		}
 		$headers = $this->head_request( network_site_url(), self::$rule_slug );
 		if ( is_wp_error( $headers ) ) {
-			$this->log( sprintf( 'Self ping error: %s', $headers->get_error_message() ) );
+			$this->log( sprintf( 'Self ping error: %s', $headers->get_error_message() ), wd_internal_log() );
 
 			return false;
 		}

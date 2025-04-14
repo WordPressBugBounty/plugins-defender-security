@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.1.1
+Version: 5.2.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 6.7.2
-Stable tag: 5.1.1
+Tested up to: 6.8
+Stable tag: 5.2.0
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -15,13 +15,15 @@ WordPress security plugin with malware scanner, IP blocking, audit logs, antivir
 
 == Description ==
 
-**Defender adds the best in WordPress plugin security to your website with just a few clicks, including malware scanner, firewall, and login security features. Stop brute force login attacks, SQL injections, cross-site scripting XSS, and other WordPress security vulnerabilities and hacks with Defender's malware scanner, providing antivirus scans, IP blocking, firewall, activity log, security log, and two-factor authentication (2FA) login security.**
+**Defender adds the best in WordPress plugin security to your website with just a few clicks, including malware scanner, firewall, password protection, and login security features. Stop brute force login attacks, weak password usage, SQL injections, cross-site scripting (XSS), and other WordPress security vulnerabilities and hacks with Defender’s malware scanner, providing antivirus scans, IP blocking, firewall, activity log, security log, and two-factor authentication (2FA) login security.**
 
 No more complex security settings, Defender's malware scanner, firewall, and login security features add all the hardening and security you need.
 
+Defender is brought to you by the WordPress speed specialists that created Smush image optimization, now active on more than +1 million websites.
+
 Plus, connect for free to WPMU DEV’s AntiBot Global Firewall to block harmful IPs with data from over 500,000 sites.
 
-**Enjoy complete site protection from malware, vulnerabilities, and bot attacks from the start with [Defender Pro](https://wpmudev.com/project/wp-defender/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme-above-the-fold&utm_content=wp_defender_pro).**
+**Enjoy complete site protection from malware, vulnerabilities, bot attacks, and session hijacking from the start with [Defender Pro](https://wpmudev.com/project/wp-defender/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme-above-the-fold&utm_content=wp_defender_pro).**
 
 Level up security immediately with exclusive Pro features like scheduled malware scanning, Safe Repair for suspicious files, and known WordPress vulnerability detection. [Learn more about Pro](https://wpmudev.com/project/wp-defender/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme-above-the-fold&utm_content=wp_defender_pro).
 
@@ -55,7 +57,8 @@ Defender's one-click security hardening recommendations instantly adds layers of
 * Resolve security recommendations and issues in bulk
 * Google reCAPTCHA security - easy to add, stop fraud and abuse - including BuddyPress and WooCommerce
 * Pwned Password Check - Increase security by protecting against compromised passwords
-* Force Password Reset - Force users with selected roles to reset passwords.
+* Force Password Reset - Force users with selected roles to reset passwords
+* Force Strong Passwords – Ensure users create secure credentials by enforcing robust password requirements.
 
 ### Learn The Ropes With These Hands-On Defender Security Plugin Tutorials
 
@@ -94,7 +97,7 @@ Add reCAPTCHA security to your login / registration pages, lost password forms, 
 
 ### Login Screen Masking
 
-Defender makes it easy to move your login screen to a custom URL. Not only does login screen masking improve security, but it also lets you white label your login user experience and improves branding. 
+Defender makes it easy to move your login screen to a custom URL. Not only does login screen masking improve security, but it also lets you white label your login user experience and improves branding.
 
 ### Force Password Reset
 
@@ -125,7 +128,7 @@ Save your Defender security plugin configurations and reapply them to your other
 
 Entered passwords are checked against public database breach records to further boost security. If a password is identified as compromised, the user will be asked to change it.
 
-### Global IP Block/Allowlists
+### Custom IP Block/Allowlist
 
 Create your IP block/allow list once, then apply and automatically sync it to all your other sites with just a single click. Save hours by not having to manually add IPs to each individual site. *Note: a [free WPMU DEV account] (https://wpmudev.com/register) is required to access this feature.
 
@@ -198,7 +201,7 @@ Yes! All of Defender's security features are fully compatible with a multisite i
 
 =  Does Defender offer spam protection and security? =
 
-A high percentage of Trackbacks and Pingbacks are spam. Defender allows you to easily disable both, giving you added security and protection.
+Yes, Defender provides multiple layers of spam protection and security. A large percentage of Trackbacks and Pingbacks are spam, and Defender allows you to easily disable both to reduce spam and improve site security. Additionally, Defender includes the AntiBot Global Firewall, which blocks known malicious IPs and bots before they even reach your site, offering proactive protection against common attacks and spam bots.
 
 = Will my site be protected from DDoS attacks and similar security threats? =
 
@@ -206,8 +209,15 @@ Yes. Defender's IP banning, IP lockout, and 404 detection security features can 
 
 = I've locked myself out of my admin panel, what can I do? =
 
-Add the code below to your theme's function.php file, which you'll find in the main directory of an active theme. Replace "YOUR IP HERE" with your IP address. Use a site like [whatsmyip](https://www.whatsmyip.org/) to get your IP.
+If you’re the administrator and you’ve been locked out due to multiple failed login attempts, Defender offers two options:
 
+Option #1: Use the “Unlock Me” feature:
+
+Click the Unlock Me button on the login page and enter your username or the email address linked to your site. You’ll receive an email with a secure link to unlock your account and regain access — no technical steps needed.
+
+Option #2: Use the manual method (if email doesn’t work):
+
+Add the following code to your theme’s functions.php file, located in the main directory of your active theme.
 `
 add_filter( 'ip_lockout_default_whitelist_ip', function ( $ips ) {
   $ip    = 'YOUR IP HERE';
@@ -215,6 +225,7 @@ add_filter( 'ip_lockout_default_whitelist_ip', function ( $ips ) {
   return $ips;
 } );
 `
+Replace "YOUR IP HERE" with your actual IP address (you can use a tool like whatsmyip to find it.)
 
 = Help! I was already hacked. What should I do? =
 
@@ -244,6 +255,20 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 4. Done!
 
 == Changelog ==
+
+= 5.2.0 ( 2025-04-07 ) =
+
+- New: Session Protection
+- Enhance: Compatibility with WordPress 6.8
+- Enhance: Add a toggle to block popular spam/malicious User Agents
+- Enhance: Remove Semrush and Ahrefs from the default User Agent blocklist
+- Enhance: Improve the wpdef_sec_key_gen cron process on multisite
+- Enhance: Update Malware Signatures to detect suspicious code
+- Enhance: Improve the Quarantine flow during upgrade from free to pro plugin version
+- Enhance: Improve the class representing the vulnerability result
+- Enhance: Improve Trusted IP popup flow
+- Fix: Masked Login URL bypassed by using encoded characters
+- Fix: Audit Logging showing wrong time
 
 = 5.1.1 ( 2025-03-03 ) =
 

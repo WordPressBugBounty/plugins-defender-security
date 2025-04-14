@@ -103,7 +103,6 @@ class Lockout_Log extends DB {
 	 */
 	public $country_iso_code;
 
-
 	/**
 	 * Query the logs based on the provided filters and pagination settings.
 	 *
@@ -414,7 +413,6 @@ class Lockout_Log extends DB {
 		return $result[0] ?? array();
 	}
 
-
 	/**
 	 * Returns the log tag based on the given type.
 	 *
@@ -442,7 +440,6 @@ class Lockout_Log extends DB {
 		return $tag;
 	}
 
-
 	/**
 	 * Returns the CSS class for the log tag based on the given type.
 	 *
@@ -468,7 +465,6 @@ class Lockout_Log extends DB {
 		return $badge_bg;
 	}
 
-
 	/**
 	 * Returns the CSS class for the log container based on the given type.
 	 *
@@ -493,7 +489,6 @@ class Lockout_Log extends DB {
 
 		return $class;
 	}
-
 
 	/**
 	 * Retrieves logs from the database and formats them for display on the frontend.

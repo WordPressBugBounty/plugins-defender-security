@@ -18,6 +18,8 @@ use WP_Defender\Model\Setting\Security_Tweaks;
  */
 class Security_Tweak extends Component {
 
+	public const LOG_FILE_NAME = 'recommendations.log';
+
 	/**
 	 * Model instance for caching.
 	 *
@@ -142,7 +144,7 @@ class Security_Tweak extends Component {
 			try {
 				$file = new SplFileObject( defender_wp_config_path(), 'r+' );
 			} catch ( Exception $e ) {
-				$this->log( $e->getMessage(), 'internal.log' );
+				$this->log( $e->getMessage(), wd_internal_log() );
 
 				return false;
 			}

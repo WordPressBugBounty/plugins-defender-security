@@ -187,7 +187,6 @@ class Scan extends Setting {
 		}
 	}
 
-
 	/**
 	 * Initializes the object by setting default values for the frequency, day, day_n, and time properties based on the
 	 * current day and time.

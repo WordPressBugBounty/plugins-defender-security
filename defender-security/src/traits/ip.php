@@ -119,7 +119,6 @@ trait IP {
 		}
 	}
 
-
 	/**
 	 * Compares an IPv4 address with a CIDR block.
 	 *
@@ -344,7 +343,7 @@ trait IP {
 	 */
 	public function check_validate_ip( $ip ): bool {
 		// Validate the localhost IP address.
-		if ( in_array( $ip, array( '127.0.0.1', '::1' ), true ) ) {
+		if ( in_array( $ip, $this->get_localhost_ips(), true ) ) {
 			return true;
 		}
 
@@ -472,5 +471,15 @@ trait IP {
 	 */
 	public function is_private_ip( string $ip ): bool {
 		return filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_NO_PRIV_RANGE ) === false;
+	}
+
+	/**
+	 * Maybe Loopback?
+	 * Don't check '127.0.0.0/8' and '::1/128'.
+	 *
+	 * @return array
+	 */
+	public function get_localhost_ips(): array {
+		return array( '127.0.0.1', '::1' );
 	}
 }

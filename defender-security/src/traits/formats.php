@@ -28,13 +28,12 @@ trait Formats {
 		if ( false === $timestamp ) {
 			return 'n/a';
 		}
-		$format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
-		if ( false === $i18n ) {
-			return gmdate( $format, $timestamp );
-		}
-		$time = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $timestamp ) );
 
-		return date_i18n( $format, strtotime( $time ) );
+		// Convert the given timestamp to a local time Unix timestamp.
+		$time   = strtotime( get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $timestamp ) ) );
+		$format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+
+		return $i18n ? wp_date( $format, $timestamp ) : gmdate( $format, $time );
 	}
 
 	/**
@@ -118,7 +117,7 @@ trait Formats {
 	 */
 	public function get_date( $date ) {
 		if ( strtotime( '-24 hours' ) > $date ) {
-			return $this->format_date_time( wp_date( 'Y-m-d H:i:s', $date ) );
+			return $this->format_date_time( $date );
 		} else {
 			return human_time_diff( $date, time() ) . ' ' . esc_html__( 'ago', 'defender-security' );
 		}

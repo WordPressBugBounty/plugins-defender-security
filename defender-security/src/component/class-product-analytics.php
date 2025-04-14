@@ -67,7 +67,7 @@ class Product_Analytics extends Component {
 	 * @return void
 	 */
 	private function handle_error( $code, $data ) {
-		$this->log( $code . ':' . $data );
+		$this->log( $code . ':' . $data, wd_internal_log() );
 	}
 
 	/**

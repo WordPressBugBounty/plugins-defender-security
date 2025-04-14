@@ -88,7 +88,7 @@ class User_Agent_Lockout extends Setting {
 			'message'   => esc_html__( 'You have been blocked from accessing this website.', 'defender-security' ),
 			'whitelist' => $whitelist,
 			// Blocked User Agents.
-			'blacklist' => "MJ12Bot\nAhrefsBot\nSEMrushBot\nDotBot",
+			'blacklist' => "MJ12Bot\nDotBot",
 		);
 	}
 
@@ -105,7 +105,6 @@ class User_Agent_Lockout extends Setting {
 		$this->whitelist = $default_values['whitelist'];
 		$this->blacklist = $default_values['blacklist'];
 	}
-
 
 	/**
 	 * Checks if the User Agent Lockout feature is active.

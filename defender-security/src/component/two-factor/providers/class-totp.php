@@ -304,7 +304,6 @@ class Totp extends Two_Factor_Provider {
 		return (bool) get_user_meta( $user->ID, self::TOTP_AUTH_KEY, true );
 	}
 
-
 	/**
 	 * Validates the TOTP authentication for a user.
 	 *

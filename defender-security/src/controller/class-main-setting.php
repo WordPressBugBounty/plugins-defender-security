@@ -867,7 +867,7 @@ class Main_Setting extends Event {
 			WP_Filesystem();
 		}
 		$now   = wp_date( 'c' );
-		$files = array( 'defender.log' );
+		$files = array( wd_internal_log() );
 
 		foreach ( $files as $file_name ) {
 			$file_path = $this->get_log_path( $file_name );

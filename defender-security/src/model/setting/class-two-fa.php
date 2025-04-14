@@ -224,7 +224,6 @@ To complete your login, copy and paste the temporary password into the Password 
 		$this->user_roles = array_values( $this->user_roles );
 	}
 
-
 	/**
 	 * Check if a plugin is in conflict with the current instance.
 	 *
@@ -256,7 +255,6 @@ To complete your login, copy and paste the temporary password into the Password 
 			$this->save();
 		}
 	}
-
 
 	/**
 	 * Marks a plugin as not conflicting with the current instance.
@@ -301,7 +299,6 @@ To complete your login, copy and paste the temporary password into the Password 
 			'detect_woo'          => esc_html__( 'WooCommerce', 'defender-security' ),
 		);
 	}
-
 
 	/**
 	 * Checks if the 2FA feature is active.

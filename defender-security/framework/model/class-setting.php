@@ -77,7 +77,6 @@ class Setting extends Model {
 	 * @throws Exception Table must be defined before using.
 	 */
 	public function load() {
-		$time = microtime( true );
 		if ( empty( $this->table ) ) {
 			throw new Exception( 'Table must be defined before using.' );
 		}
@@ -98,7 +97,6 @@ class Setting extends Model {
 		$data               = $this->prepare_data( $data );
 		$this->old_settings = $data;
 		$this->import( $data );
-		$this->log( sprintf( 'loaded %s - %s', $this->table, microtime( true ) - $time ) );
 	}
 
 	/**

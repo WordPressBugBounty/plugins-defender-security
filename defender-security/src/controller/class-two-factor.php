@@ -710,7 +710,6 @@ class Two_Factor extends Event {
 		update_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, '' );
 	}
 
-
 	/**
 	 * Updates the user's 2FA profile with the selected providers and default provider.
 	 *
@@ -978,8 +977,15 @@ class Two_Factor extends Event {
 			}
 		}
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-		if ( $sender ) {
-			$headers[] = sprintf( 'From: %s <%s>', $sender, get_bloginfo( 'admin_email' ) );
+		if ( ! empty( $sender ) ) {
+			// Since v5.2.0.
+			$from_email = defender_noreply_email( 'wd_two_fa_totp_noreply_email' );
+			$headers[]  = sprintf( 'From: %s <%s>', $sender, $from_email );
+		} else {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'Sender value cannot be empty.', 'defender-security' ) )
+			);
 		}
 		// Main email template.
 		$body = $this->render_partial(
@@ -1037,7 +1043,6 @@ class Two_Factor extends Event {
 	public function remove_settings(): void {
 		( new Two_Fa() )->delete();
 	}
-
 
 	/**
 	 * Delete all the data & the cache.
@@ -1362,7 +1367,6 @@ class Two_Factor extends Event {
 
 		return $vars;
 	}
-
 
 	/**
 	 * 3. Inserts the new endpoint into the My Account menu.

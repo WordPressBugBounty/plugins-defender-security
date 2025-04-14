@@ -37,6 +37,7 @@ class Scan extends Event {
 	use Formats;
 	use Scan_Upsell;
 
+	public const SCAN_LOG = 'scan.log';
 	/**
 	 * The slug identifier for this controller.
 	 *
@@ -146,7 +147,7 @@ class Scan extends Event {
 	public function start(): Response {
 		$model = Model_Scan::create();
 		if ( is_object( $model ) && ! is_wp_error( $model ) ) {
-			$this->log( 'Initial ping self', 'scan.log' );
+			$this->log( 'Initial ping self', self::SCAN_LOG );
 
 			$this->do_async_scan( 'scan' );
 
@@ -177,7 +178,7 @@ class Scan extends Event {
 	 */
 	public function process() {
 		if ( $this->service->has_lock() ) {
-			$this->log( 'Fallback as already a process is running', 'scan.log' );
+			$this->log( 'Fallback as already a process is running', self::SCAN_LOG );
 
 			return;
 		}
@@ -186,10 +187,10 @@ class Scan extends Event {
 		$this->service->create_lock();
 		// Check if the ping is from self or not.
 		$ret = $this->service->process();
-		$this->log( 'process done, queue for next', 'scan.log' );
+		$this->log( 'process done, queue for next', self::SCAN_LOG );
 		if ( false === $ret ) {
 			// Ping self.
-			$this->log( 'Scan not done, pinging', 'scan.log' );
+			$this->log( 'Scan not done, pinging', self::SCAN_LOG );
 			$this->service->remove_lock();
 			$this->process();
 		} else {
@@ -512,7 +513,6 @@ class Scan extends Event {
 		return new Response( empty( $none_delete_items ), $result );
 	}
 
-
 	/**
 	 * Save settings.
 	 *
@@ -684,7 +684,6 @@ class Scan extends Event {
 		return new Response( true, array() );
 	}
 
-
 	/**
 	 * Handle postponed notice.
 	 * Reset counters for postponed notice.
@@ -699,7 +698,6 @@ class Scan extends Event {
 
 		return new Response( true, array() );
 	}
-
 
 	/**
 	 * Handle refuse notice.
@@ -1084,7 +1082,7 @@ class Scan extends Event {
 		$result         = $scan_component::clear_logs();
 
 		if ( isset( $result['error'] ) ) {
-			$this->log( 'WP CRON Error : ' . $result['error'], 'scan.log' );
+			$this->log( 'WP CRON Error : ' . $result['error'], self::SCAN_LOG );
 		}
 	}
 

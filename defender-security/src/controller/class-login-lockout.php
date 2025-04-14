@@ -208,7 +208,6 @@ class Login_Lockout extends Event {
 	public function remove_settings() {
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */

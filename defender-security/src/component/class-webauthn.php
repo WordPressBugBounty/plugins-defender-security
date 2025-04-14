@@ -212,7 +212,6 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 		}
 	}
 
-
 	/**
 	 * Remove authenticator from userHandle mismatch list.
 	 *

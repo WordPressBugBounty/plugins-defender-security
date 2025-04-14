@@ -220,7 +220,6 @@ abstract class Notification extends Setting {
 		return $time->getTimestamp() >= $this->est_timestamp;
 	}
 
-
 	/**
 	 * Calculates the next run date based on the current date and the frequency of the notification.
 	 *
@@ -300,7 +299,6 @@ abstract class Notification extends Setting {
 		$track->to        = $email;
 		$track->save();
 	}
-
 
 	/**
 	 * Checks the active status of the notification.

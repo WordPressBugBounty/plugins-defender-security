@@ -9,6 +9,7 @@ namespace WP_Defender\Component;
 
 use WP_Defender\Component;
 use WP_Recovery_Mode_Link_Service;
+use WP_Defender\Helper\Request;
 
 /**
  * Handles the logic for masking the login URL to enhance security by obscuring the default login paths.
@@ -79,7 +80,9 @@ class Mask_Login extends Component {
 		if ( null === $site_url ) {
 			$site_url = $this->get_site_url();
 		}
-		$request_uri = defender_get_data_from_request( 'REQUEST_URI', 's' );
+
+		$request_uri = Request::get_request_uri();
+
 		// If parsed URL is null. PHP v8.1 displays it as deprecated.
 		$path = empty( wp_parse_url( $site_url, PHP_URL_PATH ) )
 			? ''

@@ -256,19 +256,19 @@ class Firewall_Logs extends Controller {
 			esc_html__( 'IP Status', 'defender-security' ),
 			esc_html__( 'User Agent Status', 'defender-security' ),
 		);
-		fputcsv( $fp, $headers );
+		fputcsv( $fp, $headers, ',', '"', '\\' );
 
 		$flush_limit = Lockout_Log::INFINITE_SCROLL_SIZE;
 		foreach ( $logs as $key => $log ) {
 			$item = array(
 				$log->log,
-				$this->format_date_time( wp_date( 'Y-m-d H:i:s', $log->date ) ),
+				$this->format_date_time( $log->date ),
 				$tl_component->get_type( $log->type ),
 				$log->ip,
 				$tl_component->get_ip_status_text( $log->ip ),
 				$ua_component->get_status_text( $log->type, $log->tried ),
 			);
-			fputcsv( $fp, $item );
+			fputcsv( $fp, $item, ',', '"', '\\' );
 
 			if ( 0 === $key % $flush_limit ) {
 				ob_flush();
@@ -381,7 +381,7 @@ class Firewall_Logs extends Controller {
 			array(
 				'message' => sprintf(
 					$message,
-					$data['ip'],
+					$data['ip'] ?? '-',
 					$data['list'],
 					$data['list'],
 					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist' ) . '">' . esc_html__( 'IP Lockouts', 'defender-security' ) . '</a>'
@@ -711,7 +711,6 @@ class Firewall_Logs extends Controller {
 	public function remove_settings() {
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */
@@ -731,9 +730,8 @@ class Firewall_Logs extends Controller {
 	 * Exports strings.
 	 *
 	 * @param array $logs Prepared logs.
-	 * @param bool  $is_live_environment Are the data ready for production? True if ready, false if not.
 	 */
-	private function maybe_send_reports( array $logs, bool $is_live_environment = true ): void {
+	private function maybe_send_reports( array $logs ): void {
 		$offset     = 0;
 		$length     = 1000;
 		$logs_chunk = array_slice( $logs, $offset, $length );
@@ -742,7 +740,7 @@ class Firewall_Logs extends Controller {
 				'logs' => $logs_chunk,
 			);
 
-			$response = $this->antibot_client->send_reports( $data, $is_live_environment );
+			$response = $this->antibot_client->send_reports( $data );
 
 			if ( is_wp_error( $response ) ) {
 				$this->log(
@@ -818,10 +816,9 @@ class Firewall_Logs extends Controller {
 			$this->maybe_send_reports( $logs );
 		}
 
-		$logs = $service->get_compact_staging_logs();
+		$logs = $service->get_akismet_auto_spam_comment_logs();
 		if ( ! empty( $logs ) ) {
-			// Raw data.
-			$this->maybe_send_reports( $logs, false );
+			$this->maybe_send_reports( $logs );
 		}
 
 		// Release lock after execution.

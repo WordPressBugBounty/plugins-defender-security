@@ -121,7 +121,7 @@ class Plugin_Integrity extends Behavior {
 		if ( $ret ) {
 			$scan = Scan::get_last();
 			$scan->remove_issue( $this->owner->id );
-			$this->log( sprintf( '%s is deleted', $path ), 'scan.log' );
+			$this->log( sprintf( '%s is deleted', $path ), \WP_Defender\Controller\Scan::SCAN_LOG );
 
 			do_action( 'wpdef_fixed_scan_issue', 'plugin_integrity', 'resolve' );
 

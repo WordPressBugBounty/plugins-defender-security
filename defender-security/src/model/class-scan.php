@@ -15,9 +15,7 @@ use WP_Defender\DB;
 use WP_Defender\Traits\IO;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Component\Error_Code;
-use WP_Defender\Behavior\Scan_Item\Vuln_Result;
 use WP_Defender\Behavior\Scan_Item\Core_Integrity;
-use WP_Defender\Behavior\Scan_Item\Malware_Result;
 use WP_Defender\Behavior\Scan_Item\Plugin_Integrity;
 
 /**
@@ -264,9 +262,6 @@ class Scan extends DB {
 				case Scan_Item::TYPE_PLUGIN_CHECK:
 					$model->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
 					break;
-				case Scan_Item::TYPE_VULNERABILITY:
-					$model->attach_behavior( Vuln_Result::class, Vuln_Result::class );
-					break;
 				default:
 					break;
 			}
@@ -402,9 +397,6 @@ class Scan extends DB {
 					break;
 				case Scan_Item::TYPE_PLUGIN_CHECK:
 					$model->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
-					break;
-				case Scan_Item::TYPE_VULNERABILITY:
-					$model->attach_behavior( Vuln_Result::class, Vuln_Result::class );
 					break;
 				default:
 					break;
@@ -696,7 +688,7 @@ class Scan extends DB {
 	 * @return float The calculated percentage.
 	 */
 	public function calculate_percent( $task_percent, $pos = 1 ) {
-		$task_max      = 100 / $this->total_tasks;
+		$task_max      = ( 0 !== $this->total_tasks ) ? ( 100 / $this->total_tasks ) : 0;
 		$task_base     = $task_max * ( $pos - 1 );
 		$micro         = $task_percent * $task_max / 100;
 		$this->percent = round( $task_base + $micro, 2 );

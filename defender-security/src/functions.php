@@ -5,7 +5,6 @@
  * @package WP_Defender
  */
 
-use DI\Container;
 use WP_Defender\Central;
 use WP_Defender\Component\Crypt;
 use WP_Defender\Component\Two_Fa;
@@ -13,11 +12,11 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\User_Agent;
 use WP_Defender\Controller\Two_Factor;
 use WP_Defender\Model\Setting\Main_Setting;
+use WP_Defender\Helper\Request;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
-
 
 /**
  * Generates the URL for a given asset path in the Defender plugin.
@@ -36,7 +35,6 @@ function defender_asset_url( string $path, bool $print_url = false ) {
 
 	echo esc_url_raw( $url );
 }
-
 
 /**
  * Generates the absolute path for a given path relative to the Defender plugin directory.
@@ -99,11 +97,10 @@ function defender_is_windows(): bool {
 	return '\\' === DIRECTORY_SEPARATOR;
 }
 
-
 /**
  * Returns the global DI container for the WP Defender plugin.
  *
- * @return Container The global DI container.
+ * @return \WPMU_DEV\Defender\Vendor\DI\Container  The global DI container.
  */
 function wd_di() {
 	global $wp_defender_di;
@@ -601,7 +598,7 @@ function defender_is_wp_cli() {
  * @since 4.2.0
  */
 function defender_is_rest_api_request(): bool {
-	$request_uri = defender_get_data_from_request( 'REQUEST_URI', 's' );
+	$request_uri = Request::get_request_uri();
 	if ( empty( $request_uri ) ) {
 		return false;
 	}
@@ -658,7 +655,7 @@ if ( ! function_exists( 'defender_get_data_from_request' ) ) {
 	 * @return array|string|null The sanitized value of the server data key.
 	 */
 	function defender_get_data_from_request(
-		string $key = null,
+		?string $key,
 		string $source,
 		string $nonce_key = '',
 		string $nonce_action = ''
@@ -750,4 +747,59 @@ function defender_get_hosting_feature_state( string $feature_key ) {
 	}
 
 	return '';
+}
+
+/**
+ * Get an internal log file name.
+ *
+ * @return string
+ */
+function wd_internal_log(): string {
+	return Central::INTERNAL_LOG;
+}
+
+/**
+ * Retrieves the current time, allowing overrides for testing.
+ *
+ * @return int The current timestamp.
+ */
+function defender_get_current_time() {
+	/**
+	 * Filter the current time.
+	 *
+	 * @since 5.2.0
+	 *
+	 * @param int $time The current timestamp.
+	 *
+	 * @return int The current/filtered timestamp.
+	 */
+	return (int) apply_filters( 'wpdef_current_time', time() );
+}
+
+/**
+ * Get the current site domain.
+ *
+ * @return string The determined domain name.
+ */
+function defender_get_domain() {
+	static $domain = '';
+
+	if ( '' === $domain ) {
+		$domain = is_multisite()
+		? ( get_network()->domain ?? '' )
+		: wp_parse_url( get_site_url(), PHP_URL_HOST );
+	}
+
+	/**
+	 * Filter the current site domain.
+	 *
+	 * @param string $domain The determined domain name.
+	 *
+	 * @return string The filtered domain name.
+	 *
+	 * @since 5.2.0
+	 */
+	$domain = (string) apply_filters( 'wpdef_current_site_domain', $domain );
+
+	return esc_html( $domain );
 }

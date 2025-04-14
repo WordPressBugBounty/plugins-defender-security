@@ -14,6 +14,7 @@ use Calotes\Base\Component;
 use WP_Defender\Component\Timer;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
+use WP_Defender\Controller\Scan as Scan_Controller;
 
 /**
  * We will gather core files & content files, for using in core integrity.
@@ -76,7 +77,7 @@ class Gather_Fact extends Component {
 			$this->get_content_files();
 			$model->calculate_percent( 100, 1 );
 		}
-		$this->log( sprintf( '%s in %d', $need_to_run, $timer->get_difference() ), 'scan.log' );
+		$this->log( sprintf( '%s in %d', $need_to_run, $timer->get_difference() ), Scan_Controller::SCAN_LOG );
 		$model->task_checkpoint = $need_to_run;
 		$model->save();
 
@@ -132,7 +133,7 @@ class Gather_Fact extends Component {
 
 		$files = array_merge( $core->get_dir_tree(), $outside->get_dir_tree() );
 		$files = array_filter( $files );
-		$this->log( sprintf( 'Core: %s', count( $files ) ), 'scan.log' );
+		$this->log( sprintf( 'Core: %s', count( $files ) ), Scan_Controller::SCAN_LOG );
 		update_site_option( self::CACHE_CORE, $files );
 
 		return $files;
@@ -164,7 +165,7 @@ class Gather_Fact extends Component {
 		$files   = $content->get_dir_tree();
 		$files   = array_filter( $files );
 		$files[] = defender_wp_config_path();
-		$this->log( sprintf( 'Content: %s', count( $files ) ), 'scan.log' );
+		$this->log( sprintf( 'Content: %s', count( $files ) ), Scan_Controller::SCAN_LOG );
 		update_site_option( self::CACHE_CONTENT, $files );
 	}
 }

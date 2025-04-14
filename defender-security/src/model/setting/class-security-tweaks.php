@@ -72,11 +72,11 @@ class Security_Tweaks extends Setting {
 	/**
 	 * Check if a tweak is ignored.
 	 *
-	 * @param  string $slug  Tweak slug.
+	 * @param string $slug  Tweak slug.
 	 *
 	 * @return bool
 	 */
-	public function is_tweak_ignore( $slug ): bool {
+	public function is_tweak_ignore( string $slug ): bool {
 		// Empty ignored tweak is string on old versions, so change it to array.
 		if ( is_string( $this->ignore ) ) {
 			$this->ignore = empty( $this->ignore ) ? array() : array( $this->ignore );
@@ -84,6 +84,17 @@ class Security_Tweaks extends Setting {
 		}
 
 		return in_array( $slug, $this->ignore, true );
+	}
+
+	/**
+	 * Is the tweak in the Issue list?.
+	 *
+	 * @param string $slug  Tweak slug.
+	 *
+	 * @return bool
+	 */
+	public function is_tweak_issue( string $slug ): bool {
+		return in_array( $slug, $this->issues, true );
 	}
 
 	/**

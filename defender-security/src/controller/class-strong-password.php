@@ -88,10 +88,9 @@ class Strong_Password extends Event {
 	public function data_frontend(): array {
 		return array_merge(
 			array(
-				'is_active'        => $this->model->is_active(),
-				'model'            => $this->model->export(),
-				'all_roles'        => wp_list_pluck( get_editable_roles(), 'name' ),
-				'hide_feature_dot' => (bool) get_user_meta( get_current_user_id(), 'wd_password_rules_visited', true ),
+				'is_active' => $this->model->is_active(),
+				'model'     => $this->model->export(),
+				'all_roles' => wp_list_pluck( get_editable_roles(), 'name' ),
 			),
 			$this->dump_routes_and_nonces()
 		);
@@ -214,7 +213,8 @@ class Strong_Password extends Event {
 	}
 
 	/**
-	 * Deletes the 'wd_password_rules_visited' meta key.
+	 * Delete the 'wd_password_rules_visited' meta key.
+	 * We can remove it in the future releases and use delete_meta_key() of Breadcrumbs class.
 	 *
 	 * @return void
 	 */

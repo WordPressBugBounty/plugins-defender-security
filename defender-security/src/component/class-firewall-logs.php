@@ -97,11 +97,11 @@ class Firewall_Logs extends Component {
 	}
 
 	/**
-	 * Fetch raw logs.
+	 * Get spam comment logs automatically marked by the Akismet plugin.
 	 *
 	 * @return array
 	 */
-	public function get_compact_staging_logs(): array {
+	public function get_akismet_auto_spam_comment_logs(): array {
 		$logs = array();
 		// Retrieve the current list of blocked IPs from the site transient.
 		$ips = get_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );

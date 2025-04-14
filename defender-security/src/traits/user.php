@@ -254,4 +254,56 @@ trait User {
 
 		return false;
 	}
+
+	/**
+	 * Check if the user has a role selected by the admin.
+	 *
+	 * @param WP_User|stdClass $user User object.
+	 *
+	 * @return bool True if the user has a selected role, false otherwise.
+	 */
+	private function should_enforce_for_user( $user ): bool {
+		$roles = array();
+		if ( ! is_multisite() ) {
+			if ( $user instanceof WP_User ) {
+				$roles = $this->get_roles( $user );
+			} elseif ( empty( $roles ) && $user instanceof stdClass && ! empty( $user->ID ) ) {
+				$user  = get_userdata( $user->ID );
+				$roles = $user->roles;
+			} elseif ( empty( $roles ) ) {
+				$role = defender_get_data_from_request( 'role', 'p' );
+				if ( ! empty( $role ) ) {
+					$roles = array( $role );
+				}
+			}
+		} elseif ( is_multisite() && isset( $user->ID ) ) {
+			$blogs = get_blogs_of_user( $user->ID );
+			foreach ( $blogs as $blog ) {
+				// Get user roles for this blog.
+				$u     = new WP_User( $user->ID, '', $blog->userblog_id );
+				$roles = array_merge( $u->roles, $roles );
+			}
+		}
+
+		$user_roles = $this->get_user_roles_property();
+
+		$array_intersect = array_intersect( $user_roles, $roles );
+
+		return ! empty( $array_intersect );
+	}
+
+	/**
+	 * Retrieve the user roles property dynamically.
+	 *
+	 * @return array The user roles from the appropriate property.
+	 */
+	private function get_user_roles_property(): array {
+		if ( isset( $this->model ) && property_exists( $this->model, 'user_roles' ) ) {
+			return $this->model->user_roles;
+		} elseif ( isset( $this->settings ) && property_exists( $this->settings, 'user_roles' ) ) {
+			return $this->settings->user_roles;
+		}
+
+		return array();
+	}
 }

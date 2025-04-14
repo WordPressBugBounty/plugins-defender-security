@@ -271,6 +271,51 @@ class Users_Audit extends Audit_Event {
 					),
 				),
 			),
+			'wpdef_session_lock'    => array(
+				'args'         => array( 'user_id', 'session_lock_type' ),
+				'text'         => sprintf(
+					/* translators: 1: Blog name, 2: Username, 3: Session lock type. */
+					esc_html__( '%1$s User session ended for %2$s due to a change in %3$s', 'defender-security' ),
+					'{{blog_name}}',
+					'{{username}}',
+					'{{session_lock_type}}'
+				),
+				'event_type'   => Audit_Log::EVENT_TYPE_USER,
+				'context'      => self::CONTEXT_SESSION,
+				'action_type'  => self::ACTION_LOGIN,
+				'program_args' => array(
+					'username' => array(
+						'callable'        => 'get_user_by',
+						'params'          => array(
+							'id',
+							'{{user_id}}',
+						),
+						'result_property' => 'user_login',
+					),
+				),
+			),
+			'wpdef_session_timeout' => array(
+				'args'         => array( 'user_id' ),
+				'text'         => sprintf(
+					/* translators: 1: Blog name, 2: Username. */
+					esc_html__( '%1$s User session ended for %2$s due to an idle session', 'defender-security' ),
+					'{{blog_name}}',
+					'{{username}}'
+				),
+				'event_type'   => Audit_Log::EVENT_TYPE_USER,
+				'context'      => self::CONTEXT_SESSION,
+				'action_type'  => self::ACTION_LOGIN,
+				'program_args' => array(
+					'username' => array(
+						'callable'        => 'get_user_by',
+						'params'          => array(
+							'id',
+							'{{user_id}}',
+						),
+						'result_property' => 'user_login',
+					),
+				),
+			),
 		);
 	}
 

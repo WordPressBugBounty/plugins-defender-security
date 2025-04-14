@@ -35,7 +35,6 @@ class Tweak_Reminder extends \WP_Defender\Model\Notification {
 	 */
 	public const SLUG = 'tweak-reminder';
 
-
 	/**
 	 * Constructor method.
 	 * Sets default values for the class.

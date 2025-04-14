@@ -14,6 +14,7 @@ use Calotes\Component\Response;
 use WP_Defender\Model\Setting\Mask_Login;
 use WP_Defender\Model\Setting\Security_Tweaks;
 use WP_Defender\Traits\Security_Tweaks_Option;
+use WP_Defender\Component\Security_Tweak;
 
 /**
  * Class Security_Key
@@ -21,6 +22,8 @@ use WP_Defender\Traits\Security_Tweaks_Option;
 class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Const_Interface {
 
 	use Security_Tweaks_Option;
+
+	public const REGENERATE_SALT_NEXT_RUN_OPTION = 'wpdef_regereate_salt_next_run';
 
 	/**
 	 * The slug identifier for the component.
@@ -179,6 +182,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 			$this->last_modified     = time();
 			$values['last_modified'] = time();
 			update_site_option( 'defender_security_tweaks_' . $this->slug, $values );
+			$this->log( 'Security keys are updated.', Security_Tweak::LOG_FILE_NAME );
 
 			$url        = wp_login_url( network_admin_url( 'admin.php?page=wdf-hardener' ) );
 			$mask_login = new Mask_Login();
@@ -380,7 +384,33 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return void
 	 */
 	public function add_hooks(): void {
-		add_action( 'wpdef_sec_key_gen', array( &$this, 'cron_process' ) );
+		add_action( 'wpdef_sec_key_gen', array( $this, 'cron_process' ) );
+	}
+
+	/**
+	 * Get cron schedule details.
+	 *
+	 * @return array
+	 */
+	private function get_cron_schedule_details(): array {
+		$display_name = $this->get_option( 'reminder_duration' );
+
+		if ( empty( $display_name ) ) {
+			$display_name = $this->default_days;
+		}
+		$schedule_detail = $this->get_schedule_detail( $display_name );
+
+		$schedule_key      = key( $schedule_detail );
+		$schedule_interval = time();
+
+		if ( null !== $schedule_key && isset( $schedule_detail[ $schedule_key ]['interval'] ) ) {
+			$schedule_interval = $schedule_interval + $schedule_detail[ $schedule_key ]['interval'];
+		}
+
+		return array(
+			'key'      => $schedule_key,
+			'interval' => $schedule_interval,
+		);
 	}
 
 	/**
@@ -393,24 +423,11 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 			true === $this->get_is_autogenerate_keys() &&
 			! wp_next_scheduled( 'wpdef_sec_key_gen' )
 		) {
-			$display_name = $this->get_option( 'reminder_duration' );
-
-			if ( empty( $display_name ) ) {
-				$display_name = $this->default_days;
-			}
-
-			$schedule_detail = $this->get_schedule_detail( $display_name );
-
-			$schedule_key      = key( $schedule_detail );
-			$schedule_interval = time();
-
-			if ( null !== $schedule_key && isset( $schedule_detail[ $schedule_key ]['interval'] ) ) {
-				$schedule_interval = $schedule_interval + $schedule_detail[ $schedule_key ]['interval'];
-			}
+			$schedule_details = $this->get_cron_schedule_details();
 
 			wp_schedule_event(
-				$schedule_interval,
-				$schedule_key,
+				$schedule_details['interval'],
+				$schedule_details['key'],
 				'wpdef_sec_key_gen'
 			);
 		}
@@ -436,17 +453,36 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 */
 	public function cron_process(): void {
 		try {
+			if ( is_multisite() ) {
+				$next_run = get_site_option( self::REGENERATE_SALT_NEXT_RUN_OPTION, 0 );
+				if ( ! empty( $next_run ) && $next_run > time() ) {
+					return;
+				}
+
+				$schedule_details = $this->get_cron_schedule_details();
+				update_site_option( self::REGENERATE_SALT_NEXT_RUN_OPTION, $schedule_details['interval'] );
+			}
+
+			$is_switch_to_main_site = is_multisite() && ! is_main_site();
+			if ( $is_switch_to_main_site ) {
+				switch_to_blog( get_main_site_id() );
+			}
+
 			$security_tweak_model = new Security_Tweaks();
 			if ( ! $security_tweak_model->is_tweak_ignore( $this->slug ) &&
 				true === $this->get_is_autogenerate_keys()
 			) {
 				$this->process();
 			}
+
+			if ( $is_switch_to_main_site ) {
+				restore_current_blog();
+			}
 		} catch ( Throwable $th ) {
 			// PHP 7+ catch.
-			$this->log( get_class( $th ) . ': ' . $th->getMessage(), 'internal.log' );
+			$this->log( 'Security Key. Cron Throwable: ' . get_class( $th ) . ': ' . $th->getMessage(), Security_Tweak::LOG_FILE_NAME );
 		} catch ( Exception $e ) {
-			$this->log( get_class( $e ) . ': ' . $e->getMessage(), 'internal.log' );
+			$this->log( 'Security Key. Cron Exception: ' . get_class( $e ) . ': ' . $e->getMessage(), Security_Tweak::LOG_FILE_NAME );
 		}
 	}
 

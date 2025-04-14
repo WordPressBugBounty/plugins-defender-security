@@ -28,6 +28,7 @@ use WP_Defender\Model\Setting\Notfound_Lockout;
 use WP_Defender\Model\Notification\Audit_Report;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Adapter;
+use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Integrations\MaxMind_Geolocation;
 use WP_Defender\Traits\Webauthn as Webauthn_Trait;
 use WP_Defender\Model\Notification\Malware_Report;
@@ -410,6 +411,9 @@ class Upgrader {
 		if ( version_compare( $db_version, '5.1.1', '<' ) ) {
 			$this->upgrade_5_1_1();
 		}
+		if ( version_compare( $db_version, '5.2.0', '<' ) ) {
+			$this->upgrade_5_2_0();
+		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
 		// Don't run any function below this line.
@@ -626,7 +630,6 @@ class Upgrader {
 		}
 	}
 
-
 	/**
 	 * Forces the addition of default lockout exclusions to the Notfound Lockout settings.
 	 *
@@ -677,7 +680,6 @@ class Upgrader {
 		// Add some lockout extension to old installations forced.
 		$this->force_nf_lockout_exclusions();
 	}
-
 
 	/**
 	 * Updates the body of the scan error email template.
@@ -1541,10 +1543,8 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	 * @return void
 	 */
 	private function upgrade_4_0_0(): void {
-		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-			$bootstrap = wd_di()->get( Bootstrap::class );
-			$bootstrap->create_table_quarantine();
-		}
+		$bootstrap = wd_di()->get( Bootstrap::class );
+		$bootstrap->create_table_quarantine();
 
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
@@ -1744,5 +1744,38 @@ To complete your login, copy and paste the temporary password into the Password 
 				array( Firewall_Analytics::PROP_IP_DETECTION => $detection_method )
 			);
 		}
+	}
+	/**
+	 * Update UA blocklist.
+	 *
+	 * @return void
+	 */
+	private function update_ua_blocklist(): void {
+		$settings  = wd_di()->get( User_Agent_Lockout::class );
+		$blacklist = $settings->get_lockout_list( 'blocklist', false );
+		if ( empty( $blacklist ) ) {
+			return;
+		}
+		$blacklist           = array_filter(
+			$blacklist,
+			function ( $agent ) {
+				return false === stripos( $agent, 'ahrefsbot' ) && false === stripos( $agent, 'semrushbot' );
+			}
+		);
+		$settings->blacklist = implode( "\n", $blacklist ); // Convert back to string.
+		$settings->save();
+	}
+
+	/**
+	 * Upgrade to 5.2.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_2_0(): void {
+		$this->update_ua_blocklist();
+		// Remove the prev Breadcrumbs.
+		wd_di()->get( \WP_Defender\Controller\Strong_Password::class )->remove_data();
+		// Add the "What's new" modal.
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
 }

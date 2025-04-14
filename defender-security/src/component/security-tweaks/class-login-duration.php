@@ -9,13 +9,17 @@ namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
 use Calotes\Helper\HTTP;
+use WP_Defender\Traits\Security_Tweaks_Option;
 
 /**
  * Manages the login duration settings.
  */
-class Login_Duration extends Abstract_Security_Tweaks {
+class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Const_Interface {
+
+	use Security_Tweaks_Option;
 
 	public const DEFAULT_DAYS = 14;
+	public const OPTION_NAME  = 'defender_security_tweeks_login-duration';
 	/**
 	 * Slug identifier for the component.
 	 *
@@ -66,8 +70,12 @@ class Login_Duration extends Abstract_Security_Tweaks {
 			);
 		}
 		$this->resolved = true;
+		// Sync with the Session feature.
+		$session_settings                 = wd_di()->get( \WP_Defender\Model\Setting\Session_Protection::class );
+		$session_settings->login_duration = (int) $duration;
+		$session_settings->save();
 
-		return update_site_option( "defender_security_tweeks_{$this->slug}", $duration );
+		return update_site_option( self::OPTION_NAME, $duration );
 	}
 
 	/**
@@ -76,14 +84,14 @@ class Login_Duration extends Abstract_Security_Tweaks {
 	 * @return bool
 	 */
 	public function revert(): bool {
-		return delete_site_option( "defender_security_tweeks_{$this->slug}" );
+		return delete_site_option( self::OPTION_NAME );
 	}
 
 	/**
 	 * Set $duration as resolved if value > 0 otherwise revert value.
 	 */
 	public function shield_up() {
-		$duration = get_site_option( "defender_security_tweeks_{$this->slug}" );
+		$duration = $this->get_duration_in_days();
 		if ( empty( $duration ) || $this->is_incorect_duration( $duration ) ) {
 			$this->resolved = false;
 
@@ -104,11 +112,11 @@ class Login_Duration extends Abstract_Security_Tweaks {
 	 * @return int
 	 */
 	public function cookie_duration( $duration, $user_id, $remember ) {
-		$saved_duration = $this->get_duration( true );
+		$saved_duration = $this->get_tweak_duration();
 
-		// When remember is set or saved_duration is smaller than 2 days, return saved_duration.
+		// When remember is set or saved_duration is smaller than 2 days, return 1 day in seconds.
 		if ( $remember || 2 > $saved_duration ) {
-			return $saved_duration;
+			return $saved_duration * DAY_IN_SECONDS;
 		}
 
 		return $duration;
@@ -119,24 +127,46 @@ class Login_Duration extends Abstract_Security_Tweaks {
 	 */
 	public function bulk_process() {
 		$duration = 7;
-		update_site_option( "defender_security_tweeks_{$this->slug}", $duration );
+		update_site_option( self::OPTION_NAME, $duration );
 	}
 
 	/**
-	 * Get duration in days or seconds. Returns in seconds on passing true.
-	 *
-	 * @param  bool $in_seconds  Default value: false.
+	 * Get duration in days.
 	 *
 	 * @return int
 	 */
-	private function get_duration( $in_seconds = false ): int {
-		$duration = apply_filters(
+	private function get_duration_in_days(): int {
+		return (int) apply_filters(
 			"defender_security_tweaks_{$this->slug}_get_duration",
-			get_site_option( "defender_security_tweeks_{$this->slug}" ),
-			$in_seconds
+			get_site_option( self::OPTION_NAME )
 		);
+	}
 
-		return $in_seconds ? $duration * DAY_IN_SECONDS : (int) $duration;
+	/**
+	 * Get duration in days.
+	 *
+	 * @return int
+	 */
+	public function get_tweak_duration(): int {
+		$duration = $this->get_duration_in_days();
+		if ( empty( $duration ) || $this->is_incorect_duration( $duration ) ) {
+			return self::DEFAULT_DAYS;
+		}
+
+		return $duration;
+	}
+
+	/**
+	 * Update duration.
+	 *
+	 * @param int $duration The duration.
+	 */
+	public function update_tweak_duration( int $duration ) {
+		if ( empty( $duration ) || $this->is_incorect_duration( $duration ) ) {
+			return;
+		}
+
+		update_site_option( self::OPTION_NAME, $duration );
 	}
 
 	/**
@@ -167,7 +197,7 @@ class Login_Duration extends Abstract_Security_Tweaks {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$duration = $this->get_duration();
+		$duration = $this->get_tweak_duration();
 
 		return array(
 			'slug'             => $this->slug,

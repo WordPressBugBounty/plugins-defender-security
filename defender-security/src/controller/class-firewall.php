@@ -900,7 +900,6 @@ class Firewall extends Event {
 		return array_merge( $data, $this->dump_routes_and_nonces() );
 	}
 
-
 	/**
 	 * Provides data for the dashboard widget.
 	 *

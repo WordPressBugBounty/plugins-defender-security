@@ -502,7 +502,7 @@ class Two_Fa extends Component {
 			}
 		}
 		// Main email template.
-		$body       = $two_fa->render_partial(
+		$body = $two_fa->render_partial(
 			'email/index',
 			array(
 				'title'            => esc_html__( 'Two-Factor Authentication', 'defender-security' ),
@@ -512,8 +512,9 @@ class Two_Fa extends Component {
 			),
 			false
 		);
+		// Since v5.2.0.
+		$from_email = defender_noreply_email( 'wd_two_fa_totp_noreply_email' );
 		$headers    = array( 'Content-Type: text/html; charset=UTF-8' );
-		$from_email = get_bloginfo( 'admin_email' );
 		$headers[]  = sprintf( 'From: %s <%s>', $settings->email_sender, $from_email );
 
 		return wp_mail( Fallback_Email::get_backup_email( $user->ID ), $settings->email_subject, $body, $headers );

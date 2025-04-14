@@ -284,7 +284,6 @@ class Login_Lockout extends Component {
 		$model->save();
 	}
 
-
 	/**
 	 * Handles lockouts triggered by two-factor authentication failures.
 	 *

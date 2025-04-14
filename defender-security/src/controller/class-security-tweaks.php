@@ -420,7 +420,6 @@ class Security_Tweaks extends Event {
 		}
 	}
 
-
 	/**
 	 * AJAX Response handler.
 	 *
@@ -545,6 +544,7 @@ class Security_Tweaks extends Event {
 				'php_version'  => PHP_VERSION,
 				'wp_version'   => $wp_version,
 			),
+			// Todo: improve the logic so that Tweak initialization happens in one go and return 3 different types.
 			'issues'               => $this->init_tweaks( self::STATUS_ISSUES, 'array' ),
 			'fixed'                => $this->init_tweaks( self::STATUS_RESOLVE, 'array' ),
 			'ignored'              => $this->init_tweaks( self::STATUS_IGNORE, 'array' ),
@@ -782,13 +782,12 @@ class Security_Tweaks extends Event {
 		return $tmp;
 	}
 
-
 	/**
 	 * Get tweak object from cache by slug.
 	 *
 	 * @param  string $slug  Tweak slug.
 	 *
-	 * @return mixed Tweak object if exist, else null.
+	 * @return mixed Tweak object if exists, else null.
 	 */
 	private function get_tweak( $slug ) {
 		$tweaks = Array_Cache::get( 'tweaks', 'tweaks' );
@@ -843,6 +842,7 @@ class Security_Tweaks extends Event {
 	public function remove_data() {
 		// Remove cached data.
 		Array_Cache::remove( 'tweaks', 'tweaks' );
+		delete_site_option( Security_Key::REGENERATE_SALT_NEXT_RUN_OPTION );
 	}
 
 	/**
@@ -1101,7 +1101,6 @@ class Security_Tweaks extends Event {
 		);
 	}
 
-
 	/**
 	 * Handle tweaks rating notice.
 	 *
@@ -1129,7 +1128,6 @@ class Security_Tweaks extends Event {
 
 		return new Response( true, array() );
 	}
-
 
 	/**
 	 * Check XML-RPC status.

@@ -45,7 +45,6 @@ class Blocklist_Monitor extends Controller {
 		delete_site_transient( self::CACHE_BLACKLIST_STATUS );
 	}
 
-
 	/**
 	 * Delete all the data & the cache.
 	 */

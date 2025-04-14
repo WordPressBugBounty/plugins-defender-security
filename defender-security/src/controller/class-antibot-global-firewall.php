@@ -418,15 +418,19 @@ class Antibot_Global_Firewall extends Controller {
 	public function blocklist_checker_submit_trusted_ip_form( Request $request ): Response {
 		$data = $request->get_data(
 			array(
-				'ip'     => array(
+				'ip'      => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
-				'email'  => array(
+				'email'   => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
-				'reason' => array(
+				'service' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'reason'  => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
@@ -434,9 +438,10 @@ class Antibot_Global_Firewall extends Controller {
 		);
 		// Logging.
 		$message = sprintf(
-			'IP: %s, email: %s, message: %s',
+			'IP: %s, email: %s, service: %s, reason: %s',
 			$data['ip'],
 			$data['email'],
+			$data['service'],
 			$data['reason']
 		);
 		$this->service->log_ip_message( $message );

@@ -19,6 +19,7 @@ use WP_Defender\Traits\Formats;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Component\Error_Code;
 use WP_Defender\Component\Security_Tweaks\WP_Version;
+use WP_Defender\Controller\Scan as Scan_Controller;
 
 /**
  * Represents a vulnerability result.
@@ -196,21 +197,6 @@ class Vuln_Result extends Behavior {
 				'message'     => $skin->get_error_messages(),
 			);
 		} elseif ( is_array( $result ) && ! empty( $result[ $slug ] ) ) {
-			/*
-			 * Plugin is already at the latest version.
-			 *
-			 * This may also be the return value if the `update_plugins` site transient is empty,
-			 * e.g. when you update two plugins in quick succession before the transient repopulates.
-			 *
-			 * Preferably something can be done to ensure `update_plugins` isn't empty.
-			 * For now, surface some sort of error here.
-			 */
-			if ( true === $result[ $slug ] ) {
-				return array(
-					'type_notice' => 'error',
-					'message'     => $upgrader->strings['up_to_date'],
-				);
-			}
 			$model = Scan::get_last();
 			$model->remove_issue( $this->owner->id );
 
@@ -282,7 +268,7 @@ class Vuln_Result extends Behavior {
 			esc_html__( '%s plugin', 'defender-security' ),
 			'<b>' . $data['name'] . '</b>'
 		);
-		$this->log( $message . 'is deleted', 'scan.log' );
+		$this->log( $message . 'is deleted', Scan_Controller::SCAN_LOG );
 		$model = Scan::get_last();
 		$model->remove_issue( $this->owner->id );
 
@@ -326,7 +312,7 @@ class Vuln_Result extends Behavior {
 			esc_html__( '%s theme', 'defender-security' ),
 			'<b>' . $data['name'] . '</b>'
 		);
-		$this->log( $message . 'is deleted', 'scan.log' );
+		$this->log( $message . 'is deleted', Scan_Controller::SCAN_LOG );
 		$model = Scan::get_last();
 		$model->remove_issue( $this->owner->id );
 

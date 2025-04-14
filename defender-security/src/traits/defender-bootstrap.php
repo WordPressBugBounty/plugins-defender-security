@@ -37,6 +37,7 @@ use WP_Defender\Controller\Expert_Services;
 use WP_Defender\Controller\Security_Tweaks;
 use WP_Defender\Controller\Security_Headers;
 use WP_Defender\Controller\Blocklist_Monitor;
+use WP_Defender\Controller\Session_Protection;
 use WP_Defender\Controller\Password_Protection;
 use WP_Defender\Component\Logger\Rotation_Logger;
 use WP_Defender\Component\Firewall as Firewall_Component;
@@ -361,9 +362,8 @@ SQL;
 ) $charset_collate;";
 		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-			$this->create_table_quarantine();
-		}
+		$this->create_table_quarantine();
+
 		// Create Unlock table.
 		$this->create_table_unlockout();
 		// Create Blocklist table.
@@ -414,6 +414,7 @@ SQL;
 		wd_di()->get( Expert_Services::class );
 		wd_di()->get( Hub_Connector_Controller::class );
 		wd_di()->get( Strong_Password::class );
+		wd_di()->get( Session_Protection::class );
 
 		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
 			wd_di()->get( Quarantine::class );
@@ -604,7 +605,6 @@ SQL;
 			}
 		);
 	}
-
 
 	/**
 	 * Returns the cron schedules.

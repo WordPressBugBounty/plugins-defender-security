@@ -15,6 +15,7 @@ use Calotes\Component\Behavior;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Traits\File_Operations;
+use WP_Defender\Controller\Scan as Scan_Controller;
 
 /**
  * This class represents a behavior related to core integrity in the WP_Defender plugin.
@@ -133,7 +134,7 @@ class Core_Integrity extends Behavior {
 		if ( $ret ) {
 			$scan = Scan::get_last();
 			$scan->remove_issue( $this->owner->id );
-			$this->log( sprintf( '%s is deleted', $path ), 'scan.log' );
+			$this->log( sprintf( '%s is deleted', $path ), Scan_Controller::SCAN_LOG );
 
 			do_action( 'wpdef_fixed_scan_issue', 'core_integrity', 'resolve' );
 
@@ -186,7 +187,10 @@ class Core_Integrity extends Behavior {
 		$file = $data['file'];
 		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
 			$scan->remove_issue( $this->owner->id );
-			$this->log( sprintf( '%s is not readable and will be removed from the scan result', $file ), 'scan.log' );
+			$this->log(
+				sprintf( '%s is not readable and will be removed from the scan result', $file ),
+				Scan_Controller::SCAN_LOG
+			);
 
 			return array( 'message' => esc_html__( 'This item has been deleted.', 'defender-security' ) );
 		}

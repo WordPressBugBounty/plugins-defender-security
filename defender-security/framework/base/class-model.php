@@ -68,7 +68,7 @@ abstract class Model extends Component {
 	public function validate(): bool {
 		$this->before_validate();
 		if ( empty( $this->annotations ) ) {
-			$this->log( 'Empty annotations.' );
+			$this->log( 'Empty annotations.', wd_internal_log() );
 		}
 		$validate = $this->get_validate_rules();
 		$validate->validate();

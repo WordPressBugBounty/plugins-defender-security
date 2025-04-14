@@ -10,6 +10,7 @@ namespace WP_Defender\Component;
 use WP_Defender\Component;
 use WP_Defender\Model\Scan;
 use WP_Defender\Model\Scan_Item;
+use WP_Defender\Controller\Scan as Scan_Controller;
 
 /**
  * Responsible for handling legacy data migration and management related to scan issues and ignored items.
@@ -278,7 +279,7 @@ class Legacy_Versions extends Component {
 		$scan_model->date_end        = gmdate( 'Y-m-d H:i:s' );
 		$scan_model->is_automation   = false;
 		$last_id                     = $scan_model->save();
-		$this->log( 'Scan ID during data migration: ' . $last_id, 'scan.log' );
+		$this->log( 'Scan ID during data migration: ' . $last_id, Scan_Controller::SCAN_LOG );
 		$scan_component->advanced_scan_actions( $scan_model );
 
 		return $last_id;
@@ -293,7 +294,7 @@ class Legacy_Versions extends Component {
 	public function migrate_scan_data( $issue_list, $ignored_list ) {
 		$scan = Scan::get_active();
 		if ( is_object( $scan ) ) {
-			$this->log( 'Scan is still running', 'scan.log' );
+			$this->log( 'Scan is still running', Scan_Controller::SCAN_LOG );
 
 			return;
 		}

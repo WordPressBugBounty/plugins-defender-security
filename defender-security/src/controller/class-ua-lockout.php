@@ -69,7 +69,6 @@ class UA_Lockout extends Event {
 		return new User_Agent_Lockout();
 	}
 
-
 	/**
 	 * Enqueues scripts and styles for this page.
 	 * Only enqueues assets if the page is active.
@@ -80,7 +79,6 @@ class UA_Lockout extends Event {
 		}
 		wp_localize_script( 'def-iplockout', 'ua_lockout', $this->data_frontend() );
 	}
-
 
 	/**
 	 * Save settings.
@@ -165,8 +163,9 @@ class UA_Lockout extends Event {
 			array(
 				'model' => $arr_model,
 				'misc'  => array(
-					'no_ua'       => '' === $arr_model['blacklist'] && '' === $arr_model['whitelist'],
-					'module_name' => User_Agent_Lockout::get_module_name(),
+					'no_ua'        => '' === $arr_model['blacklist'] && '' === $arr_model['whitelist'],
+					'module_name'  => User_Agent_Lockout::get_module_name(),
+					'spam_ua_list' => User_Agent_Service::get_spam_user_agent_list(),
 				),
 			),
 			$this->dump_routes_and_nonces()
@@ -252,7 +251,7 @@ class UA_Lockout extends Event {
 		// WP_Filesystem class doesn’t directly provide a function for opening a stream to php://memory with the 'w' mode.
 		$fp = fopen( 'php://memory', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		foreach ( $data as $fields ) {
-			fputcsv( $fp, $fields );
+			fputcsv( $fp, $fields, ',', '"', '\\' );
 		}
 		$filename = 'wdf-ua-export-' . wp_date( 'ymdHis' ) . '.csv';
 		fseek( $fp, 0 );

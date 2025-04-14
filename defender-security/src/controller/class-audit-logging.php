@@ -60,10 +60,7 @@ class Audit_Logging extends Event {
 		$this->register_page(
 			esc_html( Model_Audit_Logging::get_module_name() ),
 			$this->slug,
-			array(
-				&$this,
-				'main_view',
-			),
+			array( $this, 'main_view' ),
 			$this->parent_slug
 		);
 		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
@@ -148,20 +145,20 @@ class Audit_Logging extends Event {
 			esc_html__( 'IP address', 'defender-security' ),
 			esc_html__( 'User', 'defender-security' ),
 		);
-		fputcsv( $fp, $headers );
+		fputcsv( $fp, $headers, ',', '"', '\\' );
 		foreach ( $result as $log ) {
 			$fields = $log->export();
 			$vars   = array(
 				$fields['msg'],
 				is_array( $fields['timestamp'] )
-				? $this->format_date_time( wp_date( 'Y-m-d H:i:s', $fields['timestamp'][0] ) )
-				: $this->format_date_time( wp_date( 'Y-m-d H:i:s', $fields['timestamp'] ) ),
+				? $this->format_date_time( $fields['timestamp'][0] )
+				: $this->format_date_time( $fields['timestamp'] ),
 				$fields['context'],
 				$fields['action_type'],
 				$fields['ip'],
 				$this->get_user_display( $fields['user_id'] ),
 			);
-			fputcsv( $fp, $vars );
+			fputcsv( $fp, $vars, ',', '"', '\\' );
 		}
 		$filename = 'wdf-audit-logs-export-' . wp_date( 'ymdHis' ) . '.csv';
 		fseek( $fp, 0 );
@@ -268,7 +265,7 @@ class Audit_Logging extends Event {
 						'user'        => $this->get_user_display( $item->user_id ),
 						'user_url'    => (int) $item->user_id > 0 ? get_edit_user_link( $item->user_id ) : '',
 						'log_date'    => $this->get_date( $item->timestamp ),
-						'format_date' => $this->format_date_time( wp_date( 'Y-m-d H:i:s', $item->timestamp ) ),
+						'format_date' => $this->format_date_time( $item->timestamp ),
 					)
 				);
 			}
@@ -507,7 +504,7 @@ class Audit_Logging extends Event {
 							'user'        => $this->get_user_display( $item->user_id ),
 							'user_url'    => (int) $item->user_id > 0 ? get_edit_user_link( $item->user_id ) : '',
 							'log_date'    => $this->get_date( $item->timestamp ),
-							'format_date' => $this->format_date_time( wp_date( 'Y-m-d H:i:s', $item->timestamp ) ),
+							'format_date' => $this->format_date_time( $item->timestamp ),
 						)
 					);
 				}
