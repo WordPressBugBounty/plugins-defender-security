@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 5.2.0\n"
+"Project-Id-Version: Defender Pro 5.2.1\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
-"POT-Creation-Date: 2025-04-07 08:02:09+00:00\n"
+"POT-Creation-Date: 2025-04-22 05:29:59+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -17,7 +17,7 @@ msgstr ""
 msgid "Get Secure!"
 msgstr ""
 
-#: free/class-bootstrap.php:91
+#: free/class-bootstrap.php:89
 msgid ""
 "You're awesome for installing Defender! Are you interested in how to make "
 "the most of this plugin? We've collected all the best security resources we "
@@ -1642,7 +1642,7 @@ msgstr ""
 msgid "Dark"
 msgstr ""
 
-#: languages/vue-js.php:1273 src/class-admin.php:244
+#: languages/vue-js.php:1273 src/class-admin.php:228
 #: src/controller/class-dashboard.php:82
 msgid "Dashboard"
 msgstr ""
@@ -1958,7 +1958,7 @@ msgstr ""
 msgid "Do you want to disconnect your site from WPMU DEV?"
 msgstr ""
 
-#: languages/vue-js.php:1532 src/class-admin.php:250 src/class-admin.php:254
+#: languages/vue-js.php:1532 src/class-admin.php:234 src/class-admin.php:238
 msgid "Docs"
 msgstr ""
 
@@ -3901,7 +3901,7 @@ msgstr ""
 msgid "Quickly remove all the nations inside a continent or region."
 msgstr ""
 
-#: languages/vue-js.php:3014 src/class-admin.php:334 src/class-admin.php:337
+#: languages/vue-js.php:3014 src/class-admin.php:318 src/class-admin.php:321
 #: src/component/class-rate.php:94
 msgid "Rate Defender"
 msgstr ""
@@ -4136,7 +4136,7 @@ msgstr ""
 msgid "Revert"
 msgstr ""
 
-#: languages/vue-js.php:3204 src/class-admin.php:356 src/class-admin.php:359
+#: languages/vue-js.php:3204 src/class-admin.php:340 src/class-admin.php:343
 msgid "Roadmap"
 msgstr ""
 
@@ -4573,7 +4573,7 @@ msgstr ""
 msgid "Subscribed"
 msgstr ""
 
-#: languages/vue-js.php:3603 src/class-admin.php:338 src/class-admin.php:341
+#: languages/vue-js.php:3603 src/class-admin.php:322 src/class-admin.php:325
 msgid "Support"
 msgstr ""
 
@@ -5899,11 +5899,11 @@ msgstr ""
 msgid "We couldn't remove this item."
 msgstr ""
 
-#: src/class-admin.php:96 src/class-admin.php:97 src/class-admin.php:266
+#: src/class-admin.php:80 src/class-admin.php:81 src/class-admin.php:250
 msgid "Upgrade For 80% Off!"
 msgstr ""
 
-#: src/class-admin.php:120 src/component/class-mail.php:41
+#: src/class-admin.php:104 src/component/class-mail.php:41
 #: src/traits/defender-dashboard-client.php:72
 #: src/view/ip-lockout/locked.php:319
 msgid "Defender"
@@ -5913,19 +5913,19 @@ msgstr ""
 msgid "Defender Pro"
 msgstr ""
 
-#: src/class-admin.php:240
+#: src/class-admin.php:224
 msgid "Go to Defender Dashboard"
 msgstr ""
 
-#: src/class-admin.php:262
+#: src/class-admin.php:246
 msgid "Upgrade to Defender Pro"
 msgstr ""
 
-#: src/class-admin.php:273
+#: src/class-admin.php:257
 msgid "Renew Your Membership"
 msgstr ""
 
-#: src/class-admin.php:277
+#: src/class-admin.php:261
 msgid "Renew Membership"
 msgstr ""
 
@@ -5933,41 +5933,41 @@ msgstr ""
 msgid "WPMU DEV"
 msgstr ""
 
-#: src/class-admin.php:309
+#: src/class-admin.php:293
 #. translators: %s: Author URI.
 msgid "By %s"
 msgstr ""
 
-#: src/class-admin.php:326
+#: src/class-admin.php:310
 #. translators: %s: Plugin name.
 msgid "More information about %s"
 msgstr ""
 
-#: src/class-admin.php:328 src/class-admin.php:348
+#: src/class-admin.php:312 src/class-admin.php:332
 msgid "View details"
 msgstr ""
 
-#: src/class-admin.php:351 src/class-admin.php:354
+#: src/class-admin.php:335 src/class-admin.php:338
 msgid "Premium Support"
 msgstr ""
 
-#: src/class-admin.php:379
+#: src/class-admin.php:364
 msgid "Get Fast!"
 msgstr ""
 
-#: src/class-admin.php:425
+#: src/class-admin.php:408
 msgid ""
 "Cloudflare Usage Detected: Switched to CF-Connecting-IP for Better "
 "Compatibility"
 msgstr ""
 
-#: src/class-admin.php:432
+#: src/class-admin.php:415
 msgid ""
 "Improve IP Detection: We suggest Switching to X-Forward-For IP Detection "
 "Method"
 msgstr ""
 
-#: src/class-admin.php:451
+#: src/class-admin.php:434
 #. translators: %s: Link.
 msgid ""
 "We have switched to using the CF-Connecting-IP HTTP header for IP "
@@ -5975,17 +5975,17 @@ msgid ""
 "Proxy. If you wish to change this setting, you can do so from %s."
 msgstr ""
 
-#: src/class-admin.php:455 src/class-admin.php:479
+#: src/class-admin.php:438 src/class-admin.php:462
 #: src/controller/class-data-tracking.php:57
 #: src/traits/defender-hub-client.php:199
 msgid "here"
 msgstr ""
 
-#: src/class-admin.php:463
+#: src/class-admin.php:446
 msgid "Ok, I understand"
 msgstr ""
 
-#: src/class-admin.php:475
+#: src/class-admin.php:458
 #. translators: %s: Link.
 msgid ""
 "Based on your server configuration, we recommend switching to the "
@@ -5993,20 +5993,20 @@ msgid ""
 "blocks. Easily modify your settings %s."
 msgstr ""
 
-#: src/class-admin.php:487
+#: src/class-admin.php:470
 msgid "Switch to X-Forwarded-For"
 msgstr ""
 
-#: src/class-admin.php:491 src/view/two-fa/providers/biometric.php:22
+#: src/class-admin.php:474 src/view/two-fa/providers/biometric.php:22
 msgid "Dismiss"
 msgstr ""
 
-#: src/class-admin.php:544 src/class-admin.php:574
+#: src/class-admin.php:527 src/class-admin.php:557
 #: src/component/class-rate.php:306
 msgid "Invalid request, you are not allowed to do that action."
 msgstr ""
 
-#: src/class-admin.php:558 src/component/class-rate.php:313
+#: src/class-admin.php:541 src/component/class-rate.php:313
 msgid "Invalid request, allowed data not provided."
 msgstr ""
 

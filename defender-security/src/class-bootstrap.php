@@ -48,7 +48,7 @@ class Bootstrap {
 		if ( file_exists( $file_path ) ) {
 			require_once $file_path;
 
-			add_filter( 'wdev_email_message_' . DEFENDER_PLUGIN_BASENAME, array( &$this, 'defender_ads_message' ) );
+			add_filter( 'wdev_email_message_' . DEFENDER_PLUGIN_BASENAME, array( $this, 'defender_ads_message' ) );
 
 			$screen_prefix = 'defender';
 			$screen_suffix = is_multisite() ? '-network' : '';
@@ -83,11 +83,9 @@ class Bootstrap {
 	}
 
 	/**
-	 * @param string $message
-	 *
 	 * @return string
 	 */
-	public function defender_ads_message( string $message ): string {
+	public function defender_ads_message(): string {
 		return __( "You're awesome for installing Defender! Are you interested in how to make the most of this plugin? We've collected all the best security resources we know in a single email - just for users of Defender!", 'defender-security' );
 	}
 }

@@ -787,6 +787,7 @@ return array(
     'WP_Defender\\Component\\Cli' => $baseDir . '/src/component/class-cli.php',
     'WP_Defender\\Component\\Config\\Config_Adapter' => $baseDir . '/src/component/config/class-config-adapter.php',
     'WP_Defender\\Component\\Config\\Config_Hub_Helper' => $baseDir . '/src/component/config/class-config-hub-helper.php',
+    'WP_Defender\\Component\\Cross_Sell' => $baseDir . '/src/component/class-cross-sell.php',
     'WP_Defender\\Component\\Crypt' => $baseDir . '/src/component/class-crypt.php',
     'WP_Defender\\Component\\Error_Code' => $baseDir . '/src/component/class-error-code.php',
     'WP_Defender\\Component\\Feature_Modal' => $baseDir . '/src/component/class-feature-modal.php',

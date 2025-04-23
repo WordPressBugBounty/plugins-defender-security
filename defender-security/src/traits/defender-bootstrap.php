@@ -639,8 +639,10 @@ SQL;
 			},
 			9
 		);
-		// Registers the Hub Connector early to handle the auth callback during the admin init hook.
+		// Register the Hub Connector early to handle the auth callback during the admin init hook.
 		add_action( 'plugins_loaded', array( wd_di()->get( Hub_Connector::class ), 'init' ) );
+		// Register the Cross-Sell module.
+		add_action( 'init', array( wd_di()->get( \WP_Defender\Component\Cross_Sell::class ), 'init' ), 9 );
 		// Include admin class. Don't use is_admin().
 		add_action( 'admin_init', array( ( new Admin() ), 'init' ) );
 		// Add WP-CLI commands.

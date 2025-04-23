@@ -887,7 +887,7 @@ class Scan extends Event {
 			);
 		}
 		// Prepare additional data.
-		if ( wd_di()->get( Admin::class )->is_wp_org_version() ) {
+		if ( defender_is_wp_org_version() ) {
 			$scan_array = Rate::what_scan_notice_display();
 			$misc       = array(
 				'rating_is_displayed' => ! Rate::was_rate_request() && ! empty( $scan_array['text'] ),

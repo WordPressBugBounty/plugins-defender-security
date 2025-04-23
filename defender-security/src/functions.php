@@ -803,3 +803,13 @@ function defender_get_domain() {
 
 	return esc_html( $domain );
 }
+
+/**
+ * WP_DEFENDER_PRO sometimes doesn't match WPMUDEV::is_pro().
+ *
+ * @return bool.
+ */
+function defender_is_wp_org_version(): bool {
+	return ! wd_di()->get( WPMUDEV::class )->is_pro()
+		&& ( defined( 'WP_DEFENDER_PRO' ) && ! WP_DEFENDER_PRO );
+}

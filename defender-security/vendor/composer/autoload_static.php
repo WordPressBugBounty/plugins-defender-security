@@ -1096,6 +1096,7 @@ class ComposerStaticInit93f1aef403241330ad485598014557c3
         'WP_Defender\\Component\\Cli' => __DIR__ . '/../..' . '/src/component/class-cli.php',
         'WP_Defender\\Component\\Config\\Config_Adapter' => __DIR__ . '/../..' . '/src/component/config/class-config-adapter.php',
         'WP_Defender\\Component\\Config\\Config_Hub_Helper' => __DIR__ . '/../..' . '/src/component/config/class-config-hub-helper.php',
+        'WP_Defender\\Component\\Cross_Sell' => __DIR__ . '/../..' . '/src/component/class-cross-sell.php',
         'WP_Defender\\Component\\Crypt' => __DIR__ . '/../..' . '/src/component/class-crypt.php',
         'WP_Defender\\Component\\Error_Code' => __DIR__ . '/../..' . '/src/component/class-error-code.php',
         'WP_Defender\\Component\\Feature_Modal' => __DIR__ . '/../..' . '/src/component/class-feature-modal.php',

@@ -515,7 +515,7 @@ class Security_Tweaks extends Event {
 		$total_tweaks = $tweak_arr['count_fixed'] + $tweak_arr['count_ignored'] + $tweak_arr['count_issues'];
 
 		// Prepare additional data.
-		if ( wd_di()->get( Admin::class )->is_wp_org_version() ) {
+		if ( defender_is_wp_org_version() ) {
 			$misc = array(
 				'rating_is_displayed' => ! Rate::was_rate_request() && $tweak_arr['count_fixed'] === $total_tweaks,
 				'rating_text'         => sprintf(

@@ -92,13 +92,13 @@ class Scan extends Component {
 	/**
 	 * Performs additional actions after an advanced scan.
 	 *
-	 * @param  object $model  The scan model.
+	 * @param object $model  The scan model.
 	 */
 	public function advanced_scan_actions( $model ) {
 		$this->reindex_ignored_issues( $model );
 		$this->clean_up();
 
-		if ( wd_di()->get( Admin::class )->is_wp_org_version() ) {
+		if ( defender_is_wp_org_version() ) {
 			Rate::run_counter_of_completed_scans();
 		}
 	}

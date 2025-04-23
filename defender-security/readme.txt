@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.2.0
+Version: 5.2.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 5.2.0
+Stable tag: 5.2.1
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -243,9 +243,10 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 1. Malware scans and one-click website security hardening recommendations.
 2. Layered security recommendations let you harden your site with a few clicks.
-3. Compare your WordPress install with the directory and restore original files with a click.
-4. Use 2-Step Verification (2FA) to protect your accounts with your phone.
-5. IP blocklisting, 404 limiter, Geo IP Blocking, and Timed Lockout attack shield.
+3. Enable AntiBot & Local Firewall for smart, layered defense against bots and brute-force attacks.
+4. Keep your account safe with 2FA options including TOTP apps, backup codes, and secure fallback methods.
+5. Use built-in password rules to ensure only secure, uncompromised passwords are used.
+6. Never miss a threat—Defender emails you security updates on your schedule.
 
 == Installation ==
 
@@ -255,6 +256,10 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 4. Done!
 
 == Changelog ==
+
+= 5.2.1 ( 2025-04-23 ) =
+
+- Enhance: Add a new menu item to help you discover other free plugins by WPMU DEV and more
 
 = 5.2.0 ( 2025-04-07 ) =
 
@@ -323,16 +328,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Fix: Wrong usage of WPMU DEV Dashboard settings function
 - Fix: SUI Alert appears when trying to make any action to files detected by Malware Scanning
 - Fix: PHP notices appear in logs when running a malware scan
-
-= 4.12.0 ( 2024-12-09 ) =
-
-- Enhance: Ability to scan malicious code in files in the site's root
-- Enhance: Optimize WAF traffic management
-- Enhance: Optimize XML-RPC traffic management
-- Enhance: Remove strict declarations for default WP filters
-- Fix: Notice for _load_textdomain_just_in_time called incorrectly
-- Fix: Update malware signature to avoid false positives
-- Fix: Undefined array key warning when creating a new subsite on multisite if Audit logging is enabled
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 
