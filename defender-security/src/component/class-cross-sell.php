@@ -9,7 +9,6 @@ namespace WP_Defender\Component;
 
 use Calotes\Base\Component;
 use WP_Defender\Behavior\WPMUDEV;
-use WPMUDEV\Modules\Plugin_Cross_Sell;
 
 /**
  * Handles the functionality related to the Cross-Sell module.
@@ -42,7 +41,7 @@ class Cross_Sell extends Component {
 
 		static $cross_sell = null;
 		if ( is_null( $cross_sell ) ) {
-			if ( ! class_exists( 'Plugin_Cross_Sell' ) ) {
+			if ( ! class_exists( '\WPMUDEV\Modules\Plugin_Cross_Sell' ) ) {
 				require_once $cross_sell_path;
 			}
 
@@ -53,7 +52,7 @@ class Cross_Sell extends Component {
 				'position'        => 17, // Optional – Usually a specific position will be required.
 				'translation_dir' => defender_path( 'languages' ), // Optional – The directory where the translation files are located.
 			);
-			$cross_sell     = new Plugin_Cross_Sell( $submenu_params );
+			$cross_sell     = new \WPMUDEV\Modules\Plugin_Cross_Sell( $submenu_params );
 		}
 	}
 }
