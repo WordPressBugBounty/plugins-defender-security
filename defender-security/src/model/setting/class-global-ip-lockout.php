@@ -72,7 +72,7 @@ class Global_Ip_Lockout extends Setting {
 	 * @return string The module name.
 	 */
 	public static function get_module_name(): string {
-		return esc_html__( 'Central IP List', 'defender-security' );
+		return esc_html__( 'Custom IP List', 'defender-security' );
 	}
 
 	/**

@@ -201,25 +201,24 @@ trait Plugin {
 			return $transient[ $slug ];
 		}
 
-		// Check by readme.txt.
-		$readme_file = $this->get_plugin_base_dir() . $slug . '/readme.txt';
-		if ( $this->check_by_readme_file( $readme_file ) ) {
-			$transient[ $slug ] = true;
-			set_site_transient( self::$org_slugs, $transient, WEEK_IN_SECONDS );
-
-			return true;
-		}
-		// Check by readme.md.
-		$readme_file = $this->get_plugin_base_dir() . $slug . '/readme.md';
-		if ( $this->check_by_readme_file( $readme_file ) ) {
+		$plugin_path  = $this->get_plugin_base_dir() . $slug . '/';
+		$readme_files = array(
+			'readme.txt',
+			'readme.md',
+			'README.md',
+		);
+		// Check each Readme-case.
+		foreach ( $readme_files as $readme_file ) {
+			if ( $this->check_by_readme_file( $plugin_path . $readme_file ) ) {
 				$transient[ $slug ] = true;
-				set_site_transient( self::$org_slugs, $transient, WEEK_IN_SECONDS );
+				set_site_transient( self::$org_slugs, $transient, DAY_IN_SECONDS );
 
-			return true;
+				return true;
+			}
 		}
 
 		$transient[ $slug ] = false;
-		set_site_transient( self::$org_slugs, $transient, WEEK_IN_SECONDS );
+		set_site_transient( self::$org_slugs, $transient, DAY_IN_SECONDS );
 
 		return false;
 	}

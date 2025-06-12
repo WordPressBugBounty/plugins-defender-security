@@ -72,7 +72,7 @@ class User_Agent extends Component {
 
 		$ip_to_country = $this->ip_to_country( $ip );
 
-		if ( ! empty( $ip_to_country ) && isset( $ip_to_country['iso'] ) ) {
+		if ( isset( $ip_to_country['iso'] ) ) {
 			$model->country_iso_code = $ip_to_country['iso'];
 		}
 

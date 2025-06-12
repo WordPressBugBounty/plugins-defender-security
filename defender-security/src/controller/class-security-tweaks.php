@@ -95,8 +95,8 @@ class Security_Tweaks extends Event {
 		// Now shield up.
 		$this->boot();
 		// Add addition hooks.
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
-		add_action( 'wp_loaded', array( &$this, 'should_output_error' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
+		add_action( 'wp_loaded', array( $this, 'should_output_error' ) );
 	}
 
 	/**

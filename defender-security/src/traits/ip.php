@@ -482,4 +482,65 @@ trait IP {
 	public function get_localhost_ips(): array {
 		return array( '127.0.0.1', '::1' );
 	}
+
+	/**
+	 * Determines if the current request originates from this server.
+	 *
+	 * Validates that the request is a loopback from the server by:
+	 * 1. Matching the IP against localhost, hostname IP, or a whitelisted server public IP.
+	 * 2. Matching the User-Agent against the WordPress core loopback format.
+	 *
+	 * @return bool True if it's a valid server-originated loopback request; false otherwise.
+	 */
+	public function request_is_from_server(): bool {
+		$user_ips = $this->get_user_ip();
+		if ( empty( $user_ips ) ) {
+			return false;
+		}
+
+		// Start building list of trusted server IPs.
+		$trusted_ips = $this->get_localhost_ips();
+		$server_ip   = defender_get_data_from_request( 'SERVER_ADDR', 's' );
+		if ( $this->check_validate_ip( $server_ip ) ) {
+			$trusted_ips[] = $server_ip;
+		}
+
+		$stored_ip = get_site_option( \WP_Defender\Component\Firewall::WHITELIST_SERVER_PUBLIC_IP_OPTION, '' );
+		if ( $this->check_validate_ip( $stored_ip ) ) {
+			$trusted_ips[] = $stored_ip;
+		}
+
+		/**
+		 * Filters the list of trusted server IP addresses used to validate server-originated loopback requests.
+		 *
+		 * This filter allows developers to customize the list of IP addresses considered as trusted sources
+		 * for internal server requests. These IPs are checked against the request's origin IP to determine
+		 * whether it's a valid server-initiated loopback (e.g., WordPress cron or REST loopback check).
+		 *
+		 * Common use cases:
+		 * - Add public-facing server IPs behind proxies/load balancers.
+		 * - Adjust loopback behavior in containerized or cloud environments.
+		 * - Remove/override default server hostname resolution or localhost IPs.
+		 *
+		 * @since 5.3.0
+		 *
+		 * @param array $trusted_ips An array of trusted server IP addresses.
+		 */
+		$trusted_ips = (array) apply_filters( 'wp_defender_server_ips', array_unique( $trusted_ips ) );
+		// Only return true if the request IP is in the trusted list.
+		if ( ! empty( array_intersect( $user_ips, $trusted_ips ) ) ) {
+			return true;
+		}
+
+		// User-Agent missing? Not a valid loopback.
+		$server_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
+		if ( empty( $server_agent ) ) {
+			return false;
+		}
+
+		// User-Agent must match WordPress loopback format.
+		$expected_ua = 'WordPress/' . wp_get_wp_version() . '; ' . home_url( '/' );
+
+		return $server_agent === $expected_ua;
+	}
 }

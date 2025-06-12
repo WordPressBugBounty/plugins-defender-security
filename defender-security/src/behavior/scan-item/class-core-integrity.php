@@ -35,32 +35,7 @@ class Core_Integrity extends Behavior {
 		$data = $this->owner->raw_data;
 		$file = $data['file'];
 
-		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
-			return array(
-				'id'         => $this->owner->id,
-				'type'       => Scan_Item::TYPE_INTEGRITY,
-				'file_name'  => pathinfo( $file, PATHINFO_BASENAME ),
-				'full_path'  => $file,
-				'date_added' => 'n/a',
-				'size'       => 'n/a',
-				'scenario'   => $data['type'],
-				'deleted'    => true,
-				'short_desc' => $this->get_short_description(),
-			);
-		}
-
-		$file_created_at = filemtime( $file );
-		if ( $file_created_at ) {
-			$file_created_at = $this->format_date_time( $file_created_at );
-		} else {
-			$file_created_at = 'n/a';
-		}
-		$file_size = filesize( $file );
-		if ( ! $file_size ) {
-			$file_size = 'n/a';
-		} else {
-			$file_size = $this->format_bytes_into_readable( $file_size );
-		}
+		list( $file_created_at, $file_size, $deleted ) = $this->get_file_meta( $file );
 
 		return array(
 			'id'         => $this->owner->id,
@@ -70,7 +45,7 @@ class Core_Integrity extends Behavior {
 			'date_added' => $file_created_at,
 			'size'       => $file_size,
 			'scenario'   => $data['type'],
-			'deleted'    => false,
+			'deleted'    => $deleted,
 			'short_desc' => $this->get_short_description(),
 		);
 	}
@@ -115,7 +90,7 @@ class Core_Integrity extends Behavior {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
 		if ( empty( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
+			include_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 		$data = $this->owner->raw_data;
@@ -193,8 +168,7 @@ class Core_Integrity extends Behavior {
 			);
 
 			return array( 'message' => esc_html__( 'This item has been deleted.', 'defender-security' ) );
-		}
-		if ( 'unversion' === $data['type'] && $this->delete_infected_file( $file ) ) {
+		} elseif ( 'unversion' === $data['type'] && $this->delete_infected_file( $file ) ) {
 			return $this->after_delete( $file, $scan, 'core_integrity' );
 		} elseif ( 'dir' === $data['type'] && $this->delete_dir( $file ) ) {
 			return $this->after_delete( $file, $scan, 'core_integrity' );
@@ -215,7 +189,7 @@ class Core_Integrity extends Behavior {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
 		if ( empty( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
+			include_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 		$data = $this->owner->raw_data;

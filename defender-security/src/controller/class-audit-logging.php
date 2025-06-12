@@ -63,20 +63,20 @@ class Audit_Logging extends Event {
 			array( $this, 'main_view' ),
 			$this->parent_slug
 		);
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->model   = wd_di()->get( Model_Audit_Logging::class );
 		$this->service = new Audit();
 		$this->register_routes();
 		if ( $this->model->is_active() ) {
 			$this->service->enqueue_event_listener();
-			add_action( 'shutdown', array( &$this, 'cache_audit_logs' ) );
+			add_action( 'shutdown', array( $this, 'cache_audit_logs' ) );
 			/**
 			 * We will schedule the time for flush data into cloud.
 			 */
 			if ( ! wp_next_scheduled( 'audit_sync_events' ) ) {
 				wp_schedule_event( time() + 15, 'hourly', 'audit_sync_events' );
 			}
-			add_action( 'audit_sync_events', array( &$this, 'sync_events' ) );
+			add_action( 'audit_sync_events', array( $this, 'sync_events' ) );
 
 			/**
 			 * We will schedule the time to clean up old logs.
@@ -84,7 +84,7 @@ class Audit_Logging extends Event {
 			if ( ! wp_next_scheduled( 'audit_clean_up_logs' ) ) {
 				wp_schedule_event( time(), 'hourly', 'audit_clean_up_logs' );
 			}
-			add_action( 'audit_clean_up_logs', array( &$this, 'clean_up_audit_logs' ) );
+			add_action( 'audit_clean_up_logs', array( $this, 'clean_up_audit_logs' ) );
 		}
 	}
 

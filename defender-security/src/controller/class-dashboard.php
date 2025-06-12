@@ -45,10 +45,10 @@ class Dashboard extends Event {
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 		$this->add_main_page();
 		$this->register_routes();
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		add_filter( 'custom_menu_order', '__return_true' );
-		add_filter( 'menu_order', array( &$this, 'menu_order' ) );
-		add_action( 'admin_init', array( &$this, 'maybe_redirect_notification_request' ), 99 );
+		add_filter( 'menu_order', array( $this, 'menu_order' ) );
+		add_action( 'admin_init', array( $this, 'maybe_redirect_notification_request' ), 99 );
 	}
 
 	/**
@@ -246,11 +246,9 @@ class Dashboard extends Event {
 	public function data_frontend(): array {
 		[ $endpoints, $nonces ] = Route::export_routes( 'dashboard' );
 		$firewall               = wd_di()->get( Firewall::class );
-		// Session is Pro feature.
-		$force_hide_modal = ( new WPMUDEV() )->is_pro() && wd_di()->get( Session_Protection::class )->enabled;
 
 		return array_merge(
-			wd_di()->get( Feature_Modal::class )->get_dashboard_modals( $force_hide_modal ),
+			wd_di()->get( Feature_Modal::class )->get_dashboard_modals(),
 			array(
 				'scan'              => wd_di()->get( Scan::class )->data_frontend(),
 				'firewall'          => $firewall->data_frontend(),
@@ -263,11 +261,12 @@ class Dashboard extends Event {
 				'blocklist_monitor' => wd_di()->get( Blocklist_Monitor::class )->data_frontend(),
 				'two_fa'            => wd_di()->get( Two_Factor::class )->data_frontend(),
 				'advanced_tools'    => array(
-					'mask_login'       => wd_di()->get( Mask_Login::class )->dashboard_widget(),
-					'security_headers' => wd_di()->get( Security_Headers::class )->dashboard_widget(),
-					'pwned_passwords'  => wd_di()->get( Password_Protection::class )->dashboard_widget(),
-					'recaptcha'        => wd_di()->get( Recaptcha::class )->dashboard_widget(),
-					'strong_passwords' => wd_di()->get( Strong_Password::class )->dashboard_widget(),
+					'mask_login'         => wd_di()->get( Mask_Login::class )->dashboard_widget(),
+					'security_headers'   => wd_di()->get( Security_Headers::class )->dashboard_widget(),
+					'pwned_passwords'    => wd_di()->get( Password_Protection::class )->dashboard_widget(),
+					'recaptcha'          => wd_di()->get( Recaptcha::class )->dashboard_widget(),
+					'strong_passwords'   => wd_di()->get( Strong_Password::class )->dashboard_widget(),
+					'session_protection' => wd_di()->get( Session_Protection::class )->export(),
 				),
 				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->dashboard_widget(),
 				'tutorials'         => wd_di()->get( Tutorial::class )->data_frontend(),

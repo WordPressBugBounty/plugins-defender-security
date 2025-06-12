@@ -49,7 +49,7 @@ class WAF extends Controller {
 			),
 			$this->parent_slug
 		);
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->register_routes();
 	}
 

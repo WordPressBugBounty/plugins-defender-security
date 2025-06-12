@@ -734,7 +734,7 @@ class Cli {
 					wp_delete_file( $model->geodb_path );
 				}
 				$model->maxmind_license_key = '';
-				$model->geodb_path          = null;
+				$model->geodb_path          = '';
 				$model->save();
 			} catch ( Throwable $th ) {
 				WP_CLI::log( $th->getMessage() );

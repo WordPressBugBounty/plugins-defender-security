@@ -58,7 +58,7 @@ class Password_Protection extends Event {
 				is_multisite() && ! is_main_site()
 				&& ! wd_di()->get( \WP_Defender\Model\Setting\Mask_Login::class )->is_active()
 			) {
-				add_filter( 'network_site_url', array( &$this, 'filter_site_url' ), 100, 2 );
+				add_filter( 'network_site_url', array( $this, 'filter_site_url' ), 100, 2 );
 			}
 			add_action( 'wp_authenticate_user', array( $this, 'handle_login_password' ), 100, 2 );
 			add_action( 'validate_password_reset', array( $this, 'handle_reset_check_password' ), 100, 2 );
@@ -254,8 +254,8 @@ class Password_Protection extends Event {
 
 				return new Response( true, array_merge( $response, $this->data_frontend() ) );
 			}
-			// Maybe track.
-			if ( ! defender_is_wp_cli() && $this->is_tracking_active() ) {
+
+			if ( $this->maybe_track() ) {
 				$prev_data = $this->get_model()->get_old_settings();
 
 				if ( ! empty( $prev_data ) ) {

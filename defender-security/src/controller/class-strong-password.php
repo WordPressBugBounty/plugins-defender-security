@@ -64,6 +64,7 @@ class Strong_Password extends Event {
 			add_action( 'login_enqueue_scripts', array( $this->service, 'scripts' ) );
 			add_action( 'validate_password_reset', array( $this->service, 'on_password_reset' ), 100, 2 );
 			add_action( 'wp_authenticate_user', array( $this->service, 'during_authentication' ), 100, 2 );
+			add_filter( 'random_password', array( $this->service, 'generate_password' ), 10, 2 );
 		}
 	}
 
@@ -125,8 +126,8 @@ class Strong_Password extends Event {
 
 				return new Response( true, array_merge( $response, $this->data_frontend() ) );
 			}
-			// Maybe track.
-			if ( ! defender_is_wp_cli() && $this->is_tracking_active() ) {
+
+			if ( $this->maybe_track() ) {
 				$prev_data = $this->model->get_old_settings();
 				if ( ! empty( $prev_data ) ) {
 					if ( $this->model->enabled && ! $prev_data['enabled'] ) {

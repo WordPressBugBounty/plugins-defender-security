@@ -24,6 +24,7 @@ use WP_Defender\Model\Lockout_Ip;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\Unlock_Me;
 use WP_Defender\Component\IP\Antibot_Global_Firewall as Antibot_Global_Firewall_Component;
+use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
 use WP_Defender\Component\Blacklist_Lockout;
 use WP_Defender\Component\Http\Remote_Address;
 use MaxMind\Db\Reader\InvalidDatabaseException;
@@ -91,7 +92,7 @@ class Firewall extends Event {
 		$this->register_page(
 			$title,
 			$this->slug,
-			array( &$this, 'main_view' ),
+			array( $this, 'main_view' ),
 			$this->parent_slug,
 			null,
 			$this->menu_title( $title )
@@ -122,23 +123,23 @@ class Firewall extends Event {
 		// Schedule cleanup blocklist ips event.
 		$this->schedule_cleanup_blocklist_ips_event();
 
-		add_action( 'firewall_clean_up_logs', array( &$this, 'clean_up_firewall_logs' ) );
-		add_action( 'firewall_cleanup_temp_blocklist_ips', array( &$this, 'clean_up_temporary_ip_blocklist' ) );
+		add_action( 'firewall_clean_up_logs', array( $this, 'clean_up_firewall_logs' ) );
+		add_action( 'firewall_cleanup_temp_blocklist_ips', array( $this, 'clean_up_temporary_ip_blocklist' ) );
 
 		// Clean unwanted records from lockout table.
 		if ( ! wp_next_scheduled( 'wpdef_firewall_clean_up_lockout' ) ) {
 			wp_schedule_event( time() + 10, 'weekly', 'wpdef_firewall_clean_up_lockout' );
 		}
-		add_action( 'wpdef_firewall_clean_up_lockout', array( &$this, 'clean_up_firewall_lockout' ) );
+		add_action( 'wpdef_firewall_clean_up_lockout', array( $this, 'clean_up_firewall_lockout' ) );
 		// Clean old Unlockouts.
 		if ( ! wp_next_scheduled( 'wpdef_firewall_clean_up_unlockout' ) ) {
 			wp_schedule_event( time() + 20, 'weekly', 'wpdef_firewall_clean_up_unlockout' );
 		}
-		add_action( 'wpdef_firewall_clean_up_unlockout', array( &$this, 'clean_up_unlockout' ) );
+		add_action( 'wpdef_firewall_clean_up_unlockout', array( $this, 'clean_up_unlockout' ) );
 
 		// Additional hooks.
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ), 11 );
-		add_action( 'admin_print_scripts', array( &$this, 'print_emoji_script' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ), 11 );
+		add_action( 'admin_print_scripts', array( $this, 'print_emoji_script' ) );
 
 		$this->maybe_extend_mime_types();
 
@@ -593,6 +594,11 @@ class Firewall extends Event {
 			}
 		}
 
+		$global_service = wd_di()->get( Global_IP_Component::class );
+		if ( Global_IP_Component::REASON_SLUG === $reason ) {
+			$global_service->log_event( $ips[0] );
+		}
+
 		$antibot_service = wd_di()->get( Antibot_Global_Firewall_Component::class );
 		if ( Antibot_Global_Firewall_Component::REASON_SLUG === $reason ) {
 			$antibot_service->log_ip_message( 'Blocked IP(s): ' . implode( ', ', $ips ) );
@@ -764,12 +770,10 @@ class Firewall extends Event {
 	/**
 	 * Remove all IP logs.
 	 *
-	 * @param  Request $request  The request object.
-	 *
 	 * @return Response
 	 * @defender_route
 	 */
-	public function empty_logs( Request $request ): Response {
+	public function empty_logs(): Response {
 		if ( Lockout_Log::truncate() ) {
 			$this->log( 'Logs have been successfully deleted.', self::FIREWALL_LOG );
 
@@ -988,7 +992,7 @@ class Firewall extends Event {
 			$strings[] = Notfound_Lockout::get_module_name() . ' '
 						. Notfound_Lockout::get_module_state( (bool) $config['detect_404'] );
 		}
-		// Central IP List.
+		// Custom IP List.
 		if ( isset( $config['global_ip_list'] ) ) {
 			$strings[] = Global_Ip_Lockout::get_module_name() . ' '
 						. Global_Ip_Lockout::get_module_state( (bool) $config['global_ip_list'] );
@@ -1078,7 +1082,7 @@ class Firewall extends Event {
 				)
 			) {
 				// Add action hook here.
-				add_filter( 'upload_mimes', array( &$this, 'extend_mime_types' ) );
+				add_filter( 'upload_mimes', array( $this, 'extend_mime_types' ) );
 			}
 		}
 	}

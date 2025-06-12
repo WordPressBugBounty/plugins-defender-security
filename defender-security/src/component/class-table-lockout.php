@@ -60,12 +60,15 @@ class Table_Lockout extends Component {
 	 */
 	private function get_types(): array {
 		return array(
-			'all'                    => esc_html__( 'All', 'defender-security' ),
-			Lockout_Log::AUTH_FAIL   => esc_html__( 'Failed login attempts', 'defender-security' ),
-			Lockout_Log::AUTH_LOCK   => esc_html__( 'Login lockout', 'defender-security' ),
-			Lockout_Log::ERROR_404   => esc_html__( '404 error', 'defender-security' ),
-			Lockout_Log::LOCKOUT_404 => esc_html__( '404 lockout', 'defender-security' ),
-			Lockout_Log::LOCKOUT_UA  => esc_html__( 'User Agent Lockout', 'defender-security' ),
+			'all'                          => esc_html__( 'All', 'defender-security' ),
+			Lockout_Log::AUTH_FAIL         => esc_html__( 'Failed login attempts', 'defender-security' ),
+			Lockout_Log::AUTH_LOCK         => esc_html__( 'Login lockout', 'defender-security' ),
+			Lockout_Log::ERROR_404         => esc_html__( '404 error', 'defender-security' ),
+			Lockout_Log::LOCKOUT_404       => esc_html__( '404 lockout', 'defender-security' ),
+			Lockout_Log::LOCKOUT_UA        => esc_html__( 'User Agent Lockout', 'defender-security' ),
+			// New IP Lockout type since 5.3.0.
+			Lockout_Log::LOCKOUT_IP_CUSTOM => esc_html__( 'Custom IP Lockout', 'defender-security' ),
+			Lockout_Log::IP_UNLOCK         => esc_html__( 'IP Unlock', 'defender-security' ),
 		);
 	}
 
@@ -91,15 +94,8 @@ class Table_Lockout extends Component {
 	 * @return string The description of the type.
 	 */
 	public function get_type( $type ): string {
-		$types = array(
-			Lockout_Log::AUTH_FAIL        => esc_html__( 'Failed login attempts', 'defender-security' ),
-			Lockout_Log::AUTH_LOCK        => esc_html__( 'Login lockout', 'defender-security' ),
-			Lockout_Log::ERROR_404        => esc_html__( '404 error', 'defender-security' ),
-			Lockout_Log::ERROR_404_IGNORE => esc_html__( '404 error', 'defender-security' ),
-			Lockout_Log::LOCKOUT_404      => esc_html__( '404 lockout', 'defender-security' ),
-			Lockout_Log::LOCKOUT_UA       => esc_html__( 'User Agent Lockout', 'defender-security' ),
-		);
-
+		$types                                  = $this->get_types();
+		$types[ Lockout_Log::ERROR_404_IGNORE ] = esc_html__( '404 error', 'defender-security' );
 		return $types[ $type ] ?? '';
 	}
 

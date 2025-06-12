@@ -58,7 +58,7 @@ class Global_Ip extends Controller {
 	 */
 	public function __construct() {
 		$this->register_routes();
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->model   = wd_di()->get( Global_Ip_Lockout::class );
 		$this->service = wd_di()->get( Global_IP_Component::class );
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
@@ -207,7 +207,7 @@ class Global_Ip extends Controller {
 				true,
 				array(
 					'message'        => esc_html__(
-						'The global IP addresses have been updated.',
+						'The Custom IP List has been updated successfully.',
 						'defender-security'
 					),
 					'global_ip_list' => $this->service->get_formated_global_ip_list(),
@@ -218,7 +218,7 @@ class Global_Ip extends Controller {
 				false,
 				array(
 					'message' => esc_html__(
-						'An error occurred while synchronizing the global IPs.',
+						'An error occurred while synchronizing the Custom IP List.',
 						'defender-security'
 					),
 				)

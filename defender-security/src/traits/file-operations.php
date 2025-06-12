@@ -58,4 +58,24 @@ trait File_Operations {
 	public function get_permission_error( string $file ): WP_Error {
 		return new WP_Error( Error_Code::NOT_WRITEABLE, wp_basename( $file ) );
 	}
+
+	/**
+	 * Get file meta details: created_at, size, and deleted flag.
+	 *
+	 * @param string $file The path to the file.
+	 * @return array An array containing the file's created_at date, size, and a deleted flag.
+	 */
+	private function get_file_meta( string $file ): array {
+		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
+			return array( 'n/a', 'n/a', true );
+		}
+
+		$file_created_at = filemtime( $file );
+		$file_created_at = $file_created_at ? $this->format_date_time( $file_created_at ) : 'n/a';
+
+		$file_size = filesize( $file );
+		$file_size = $file_size ? $this->format_bytes_into_readable( $file_size ) : 'n/a';
+
+		return array( $file_created_at, $file_size, false );
+	}
 }

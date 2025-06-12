@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.2.2
+Version: 5.3.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 6.8
-Stable tag: 5.2.2
+Tested up to: 6.8.1
+Stable tag: 5.3.0
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -26,8 +26,6 @@ Plus, connect for free to WPMU DEV’s AntiBot Global Firewall to block harmful 
 **Enjoy complete site protection from malware, vulnerabilities, bot attacks, and session hijacking from the start with [Defender Pro](https://wpmudev.com/project/wp-defender/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme-above-the-fold&utm_content=wp_defender_pro).**
 
 Level up security immediately with exclusive Pro features like scheduled malware scanning, Safe Repair for suspicious files, and known WordPress vulnerability detection. [Learn more about Pro](https://wpmudev.com/project/wp-defender/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme-above-the-fold&utm_content=wp_defender_pro).
-
-[youtube https://www.youtube.com/watch?v=3rBd7ea91V8]
 
 ### Security Recommendations
 
@@ -73,8 +71,6 @@ Defender's malware scanner security checks for suspicious code and malware. It a
 ### Two-Factor Authentication (2FA) Security
 
 Easily add an extra layer of protection and security to your WordPress sites with Defender's two-factor authentication (2FA) features. Including: mobile app verification (Google Authenticator, Microsoft Authenticator, Authy), backup code generation, lost device emails, WooCommerce 2FA, Biometric Authentication (fingerprint/facial recognition), and Hardware Key Authentication (USB security keys). Easily prevent brute force attacks and login security vulnerabilities.
-
-[youtube https://www.youtube.com/watch?v=w9pfRCuT36Q]
 
 ### Login Protection
 
@@ -257,6 +253,26 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 5.3.0 ( 2025-06-11 ) =
+
+- New: AntiBot Mode
+- Enhance: Improve Session Protection when loading an image
+- Enhance: Add session widget on the Dashboard page
+- Enhance: Rename slug for Expert Services
+- Enhance: Update wp.org screenshots
+- Enhance: Update Session Protection Tracking event
+- Enhance: Change "Central IP List" label to "Custom IP List"
+- Enhance: Change OTP page styling to match the default WordPress login
+- Enhance: Generate strong passwords that meet all verification requirements
+- Enhance: Update malware signatures to detect additional infected files
+- Enhance: Log custom IP Block events
+- Enhance: Log Unblocking event from Unlock Me option
+- Fix: MaxMind key field appears empty on the Local Blocklist page if the MaxMind key is removed from the database
+- Fix: No session logs appear when the Interim login screen is shown
+- Fix: Scan can't detect modifications in the Debug Log Manager plugin
+- Fix: Warning in PHP 8.4
+- Fix: File existence and readability checks in Malware_Result and Plugin_Integrity classes
+
 = 5.2.2 ( 2025-04-23 ) =
 
 - Fix: Plugin_Cross_Sell class error
@@ -312,26 +328,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 - Improvement: Update 404 logic with AntiBot service to better detect and mitigate potential threats
 - Improvement: Enhancing IP Detection in Defender to prevent blocking of server IPs
-
-= 5.0.1 ( 2025-01-31 ) =
-
-- Fix: AntiBot service sync issue
-- Fix: AntiBot toggle behavior is inconsistent when managed on the Hub
-- Fix: Usage Tracking improvements
-
-= 5.0.0 ( 2025-01-27 ) =
-
-- New: AntiBot Global Firewall
-- Enhance: Global IP Blocker renamed to Central IP List and located under Local Firewall
-- Enhance: Prevent execution of CREATE TABLE query on every page load
-- Enhance: Scan lines about suspicious code are displayed even after deleting files
-- Enhance: Update WPMU DEV IP management
-- Enhance: Show Vulnerability details for Pro plugin version
-- Enhance: Usage Tracking improvements
-- Fix: Error while uninstalling Defender
-- Fix: Wrong usage of WPMU DEV Dashboard settings function
-- Fix: SUI Alert appears when trying to make any action to files detected by Malware Scanning
-- Fix: PHP notices appear in logs when running a malware scan
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

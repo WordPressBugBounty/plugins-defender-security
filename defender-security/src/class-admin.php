@@ -87,9 +87,9 @@ class Admin {
 
 		// Display IP detection notice.
 		if ( is_multisite() ) {
-			add_action( 'network_admin_notices', array( &$this, 'admin_notices' ) );
+			add_action( 'network_admin_notices', array( $this, 'admin_notices' ) );
 		} else {
-			add_action( 'admin_notices', array( &$this, 'admin_notices' ) );
+			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		}
 	}
 
@@ -137,9 +137,11 @@ class Admin {
 			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]:hover,
 			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]:active,
 			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]:focus {
+				font-family: Roboto, sans-serif;
+				font-size: 12px;
 				background: #8D00B1;
 				color: #ffffff;
-				font-weight: 700;
+				font-weight: 500;
 			}
 
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"],

@@ -76,7 +76,7 @@ class Main_Setting extends Event {
 		$this->model   = new Model_Main_Setting();
 		$this->service = wd_di()->get( Backup_Settings::class );
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->register_routes();
 
 		// Add cron schedule to clean out outdated logs.

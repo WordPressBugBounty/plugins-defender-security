@@ -404,6 +404,7 @@ trait Defender_Hub_Client {
 	 */
 	public function build_lockout_hub_data(): array {
 		$firewall = wd_di()->get( Firewall::class )->data_frontend();
+		$antibot  = wd_di()->get( Antibot_Global_Firewall::class );
 
 		return array(
 			'last_lockout'           => $firewall['last_lockout'],
@@ -414,7 +415,8 @@ trait Defender_Hub_Client {
 			'ua'                     => wd_di()->get( User_Agent_Lockout::class )->enabled,
 			'ua_week'                => $firewall['ua']['week'],
 			'global_ip_list_enabled' => wd_di()->get( Global_Ip_Lockout::class )->enabled,
-			'antibot_enabled'        => wd_di()->get( Antibot_Global_Firewall::class )->frontend_is_enabled(),
+			'antibot_enabled'        => $antibot->frontend_is_enabled(),
+			'antibot_mode'           => $antibot->frontend_mode(),
 		);
 	}
 
@@ -675,6 +677,7 @@ trait Defender_Hub_Client {
 					'total_lockout'          => (int) $firewall_data['lp_week'] + (int) $firewall_data['nf_week'] + (int) $firewall_data['ua_week'],
 					'global_ip_list_enabled' => $firewall_data['global_ip_list_enabled'],
 					'antibot_enabled'        => $firewall_data['antibot_enabled'],
+					'antibot_mode'           => $firewall_data['antibot_mode'],
 					'advanced'               => array(
 						// This is moved but still keep here for backward compatibility.
 						'multi_factors_auth'  => array(

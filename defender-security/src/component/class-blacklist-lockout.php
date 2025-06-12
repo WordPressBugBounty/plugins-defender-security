@@ -245,14 +245,25 @@ class Blacklist_Lockout extends Component {
 	 * @throws InvalidDatabaseException Thrown for unexpected data is found in DB.
 	 */
 	public function is_geodb_downloaded(): bool {
-		$model = new Model_Blacklist_Lockout();
-		// Likely the case after the config import with existed MaxMind license key.
+		$model       = new Model_Blacklist_Lockout();
+		$license_key = $model->maxmind_license_key;
+		// Using Geo DB without a license key is not advisable.
+		if ( empty( $license_key ) && is_file( $model->geodb_path ) ) {
+			$service_geo = wd_di()->get( MaxMind_Geolocation::class );
+			$service_geo->delete_database();
+			$model->geodb_path = '';
+			$model->save();
+
+			return false;
+		}
+
+		// Likely the case after the config import with the existed MaxMind license key.
 		if (
-			! empty( $model->maxmind_license_key )
+			! empty( $license_key )
 			&& ( is_null( $model->geodb_path ) || ! is_file( $model->geodb_path ) )
 		) {
 			$service_geo = wd_di()->get( MaxMind_Geolocation::class );
-			$tmp         = $service_geo->get_downloaded_url( $model->maxmind_license_key );
+			$tmp         = $service_geo->get_downloaded_url( $license_key );
 			if ( ! is_wp_error( $tmp ) ) {
 				$phar = new PharData( $tmp );
 				$path = $service_geo->get_db_base_path();

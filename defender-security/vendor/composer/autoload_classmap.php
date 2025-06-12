@@ -215,7 +215,6 @@ return array(
     'Gettext\\Headers' => $vendorDir . '/gettext/gettext/src/Headers.php',
     'Gettext\\Languages\\Category' => $vendorDir . '/gettext/languages/src/Category.php',
     'Gettext\\Languages\\CldrData' => $vendorDir . '/gettext/languages/src/CldrData.php',
-    'Gettext\\Languages\\Exporter\\Docs' => $vendorDir . '/gettext/languages/src/Exporter/Docs.php',
     'Gettext\\Languages\\Exporter\\Exporter' => $vendorDir . '/gettext/languages/src/Exporter/Exporter.php',
     'Gettext\\Languages\\Exporter\\Html' => $vendorDir . '/gettext/languages/src/Exporter/Html.php',
     'Gettext\\Languages\\Exporter\\Json' => $vendorDir . '/gettext/languages/src/Exporter/Json.php',

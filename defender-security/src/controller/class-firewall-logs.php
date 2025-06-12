@@ -70,7 +70,7 @@ class Firewall_Logs extends Controller {
 	 */
 	public function __construct( Antibot_Global_Firewall_Client $antibot_client ) {
 		$this->register_routes();
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
 
@@ -322,10 +322,10 @@ class Firewall_Logs extends Controller {
 
 			$global_ip_service = wd_di()->get( Global_IP::class );
 			if ( $global_ip_service->can_blocklist_autosync() ) {
-				$data = array(
+				$global_ip_data = array(
 					'block_list' => array( $ip ),
 				);
-				$global_ip_service->add_to_global_ip_list( $data );
+				$global_ip_service->add_to_global_ip_list( $global_ip_data );
 			}
 
 			/* translators: 1: IP address. 2: IP address list. 3: IP address list. 4: URL for Defender > Firewall > IP Banning. */
@@ -676,7 +676,7 @@ class Firewall_Logs extends Controller {
 		$count = Lockout_Log::count( $filters['from'], $filters['to'], $filters['type'], $filters['ip'], $conditions );
 		$logs  = Lockout_Log::get_logs_and_format( $filters, $paged, $order_by, $order, $per_page );
 
-		if ( - 1 === (int) $per_page ) {
+		if ( - 1 === $per_page ) {
 			$per_page = Lockout_Log::INFINITE_SCROLL_SIZE;
 		}
 

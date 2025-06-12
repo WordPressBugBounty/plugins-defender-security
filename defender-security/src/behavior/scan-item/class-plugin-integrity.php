@@ -35,20 +35,9 @@ class Plugin_Integrity extends Behavior {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$data            = $this->owner->raw_data;
-		$file            = $data['file'];
-		$file_created_at = filemtime( $file );
-		if ( $file_created_at ) {
-			$file_created_at = $this->format_date_time( $file_created_at );
-		} else {
-			$file_created_at = 'n/a';
-		}
-		$file_size = filesize( $file );
-		if ( ! $file_size ) {
-			$file_size = 'n/a';
-		} else {
-			$file_size = $this->format_bytes_into_readable( $file_size );
-		}
+		$data = $this->owner->raw_data;
+		$file = $data['file'];
+		list ( $file_created_at, $file_size, $deleted ) = $this->get_file_meta( $file );
 
 		$is_quarantinable = $this->is_quarantinable( $this->owner->raw_data['file'] );
 
@@ -64,6 +53,7 @@ class Plugin_Integrity extends Behavior {
 				'full_path'  => $file,
 				'date_added' => $file_created_at,
 				'size'       => $file_size,
+				'deleted'    => $deleted,
 				'scenario'   => $data['type'],
 				'short_desc' => $this->get_short_description(),
 			),
@@ -170,7 +160,15 @@ class Plugin_Integrity extends Behavior {
 		$data = $this->owner->raw_data;
 		$scan = Scan::get_last();
 		$file = $data['file'];
-		if ( 'unversion' === $data['type'] && $this->delete_infected_file( $file ) ) {
+		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
+			$scan->remove_issue( $this->owner->id );
+			$this->log(
+				sprintf( '%s is not readable and will be removed from the scan result', $file ),
+				\WP_Defender\Controller\Scan::SCAN_LOG
+			);
+
+			return array( 'message' => esc_html__( 'This item has been deleted.', 'defender-security' ) );
+		} elseif ( 'unversion' === $data['type'] && $this->delete_infected_file( $file ) ) {
 			return $this->after_delete( $file, $scan, 'plugin_integrity' );
 		} elseif ( 'dir' === $data['type'] && $this->delete_dir( $file ) ) {
 			return $this->after_delete( $file, $scan, 'plugin_integrity' );

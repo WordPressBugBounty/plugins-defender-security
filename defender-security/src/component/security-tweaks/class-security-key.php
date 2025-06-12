@@ -184,14 +184,16 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 			update_site_option( 'defender_security_tweaks_' . $this->slug, $values );
 			$this->log( 'Security keys are updated.', Security_Tweak::LOG_FILE_NAME );
 
-			$url        = wp_login_url( network_admin_url( 'admin.php?page=wdf-hardener' ) );
-			$mask_login = new Mask_Login();
-
-			if ( $mask_login->is_active() ) {
-				$url = $mask_login->get_new_login_url();
-			}
+			$mask_login = wd_di()->get( Mask_Login::class );
+			$url        = $mask_login->is_active()
+				? $mask_login->get_new_login_url()
+				: wp_login_url( network_admin_url( 'admin.php?page=wdf-hardener' ) );
 
 			$interval = 3;
+			if ( is_multisite() ) {
+				// Delete cookies forced.
+				wp_clear_auth_cookie();
+			}
 
 			return new Response(
 				true,
@@ -259,7 +261,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	private function get_last_modified_days() {
 		$current_time = time();
 		$days_ago     = ( $current_time - $this->last_modified ) / DAY_IN_SECONDS;
-		$days_ago     = $days_ago ? round( $days_ago ) : 'unknown';
+		$days_ago     = $days_ago ? (int) round( $days_ago ) : 'unknown';
 
 		return $days_ago ?? 1;
 	}

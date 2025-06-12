@@ -10,7 +10,7 @@ namespace WP_Defender\Controller;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Component\Config\Config_Hub_Helper;
-use WP_Defender\Controller;
+use WP_Defender\Event;
 use WP_Defender\Traits\Setting;
 use WP_Defender\Traits\Defender_Dashboard_Client;
 use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
@@ -24,7 +24,7 @@ use WP_Defender\Helper\Analytics\Antibot as Antibot_Analytics;
 /**
  * Class Antibot_Global_Firewall.
  */
-class Antibot_Global_Firewall extends Controller {
+class Antibot_Global_Firewall extends Event {
 	use Setting;
 	use Defender_Dashboard_Client;
 
@@ -65,7 +65,7 @@ class Antibot_Global_Firewall extends Controller {
 	 */
 	public function __construct( Antibot_Global_Firewall_Setting $model, Antibot_Global_Firewall_Component $service, WPMUDEV $wpmudev ) {
 		$this->register_routes();
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 
 		$this->model   = $model;
 		$this->service = $service;
@@ -249,6 +249,7 @@ class Antibot_Global_Firewall extends Controller {
 					'sync_schedule'         => __( 'Twice Daily', 'defender-security' ),
 					'ips_count'             => $this->service->get_blocklisted_ip_count(),
 					'frontend_is_enabled'   => $this->service->frontend_is_enabled(),
+					'frontend_mode'         => $this->service->frontend_mode(),
 					'is_active'             => $this->service->is_active(),
 					'active_tooltip_text'   => __( 'List of exploit attempts detected and blocked across all connected sites by AntiBot Firewall.', 'defender-security' ),
 					'inactive_tooltip_text' => sprintf(
@@ -450,7 +451,7 @@ class Antibot_Global_Firewall extends Controller {
 	}
 
 	/**
-	 * Check if an IP exists in the Local, Central and AntiBot blocklist.
+	 * Check if an IP exists in the Local, Custom and AntiBot blocklist.
 	 *
 	 * @param Request $request The HTTP request object.
 	 *
@@ -526,7 +527,7 @@ class Antibot_Global_Firewall extends Controller {
 		if ( ! $model->is_ip_in_list( $ip, $collection ) ) {
 			$model->add_to_list( $ip, $collection );
 		}
-		// Add to Central IP allowlist.
+		// Add to Custom IP allowlist.
 		$global_ip_service = wd_di()->get( Global_IP::class );
 		if ( $global_ip_service->can_central_ip_autosync() ) {
 			$data = array(
@@ -581,5 +582,57 @@ class Antibot_Global_Firewall extends Controller {
 			$this->model->managed_by = 'hosting';
 			$this->model->save();
 		}
+	}
+
+	/**
+	 * Handle request to switch mode.
+	 *
+	 * @defender_route
+	 * @return Response
+	 */
+	public function switch_mode(): Response {
+		$result = $this->process_switch_mode();
+		if ( $result['success'] ) {
+			if ( $this->maybe_track() ) {
+				wd_di()->get( Antibot_Analytics::class )->track_antibot( false, 'Feature Page' );
+			}
+			return new Response( true, $result['data'] );
+		}
+
+		return new Response( false, $result['data'] );
+	}
+
+	/**
+	 * Process request to switch mode.
+	 *
+	 * @return array
+	 */
+	public function process_switch_mode(): array {
+		$result = $this->service->switch_mode();
+		if ( false !== $result && ! is_wp_error( $result ) ) {
+			return array(
+				'success' => true,
+				'data'    => array(
+					'message'    => sprintf(
+						/* translators: 1. Open tag. 2. Close tag. 3. Mode. */
+						__( '%1$sAntiBot Firewall%2$s mode updated – You\'re now using %3$s Mode.', 'defender-security' ),
+						'<strong>',
+						'</strong>',
+						ucfirst( $result )
+					),
+					'mode'       => $result,
+					'ips_count'  => $this->service->get_blocklisted_ip_count(),
+					'auto_close' => true,
+				),
+			);
+		}
+
+		return array(
+			'success' => false,
+			'data'    => array(
+				'message'    => __( 'Failed to switch. Please try again.', 'defender-security' ),
+				'auto_close' => true,
+			),
+		);
 	}
 }

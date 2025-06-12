@@ -73,17 +73,20 @@ class Antibot_Global_Firewall_Client {
 	/**
 	 * Get the blocklist download URL and hashes.
 	 *
+	 * @param string $mode The mode for fetching the blocklist.
+	 *
 	 * @since 4.8.0
 	 * @return array|WP_Error
 	 */
-	public function get_blocklist_download() {
-		return $this->make_request( 'GET', '/download' );
+	public function get_blocklist_download( $mode ) {
+		$path = '/download/' . rawurlencode( $mode );
+		return $this->make_request( 'GET', $path );
 	}
 
 	/**
 	 * Get Blocklist Statistics.
 	 *
-	 * @return int|\WP_Error
+	 * @return array|\WP_Error
 	 */
 	public function get_blocklist_stats() {
 		$response = $this->make_request( 'GET', '/stats' );
@@ -92,11 +95,7 @@ class Antibot_Global_Firewall_Client {
 			return $response;
 		}
 
-		if ( empty( $response['data'] ) || ! isset( $response['data']['blocked_ips'] ) ) {
-			return 0;
-		}
-
-		return (int) $response['data']['blocked_ips'];
+		return ! empty( $response['data'] ) ? $response['data'] : array();
 	}
 
 	/**

@@ -109,6 +109,15 @@ class Antibot_Global_Firewall extends Component {
 	}
 
 	/**
+	 * Check if the AntiBot Global Firewall is enabled on WPMU DEV.
+	 *
+	 * @return bool True if the AntiBot Global Firewall is enabled, false otherwise.
+	 */
+	public function hosting_is_enabled(): bool {
+		return true === defender_get_hosting_feature_state( 'antibot' );
+	}
+
+	/**
 	 * Check if the AntiBot Global Firewall is enabled based on managed by.
 	 *
 	 * @return bool True if the AntiBot Global Firewall is enabled, false otherwise.
@@ -116,7 +125,7 @@ class Antibot_Global_Firewall extends Component {
 	public function frontend_is_enabled(): bool {
 		return 'plugin' === $this->get_managed_by() ?
 			$this->is_enabled() :
-			true === defender_get_hosting_feature_state( 'antibot' );
+			$this->hosting_is_enabled();
 	}
 
 	/**
@@ -222,7 +231,7 @@ class Antibot_Global_Firewall extends Component {
 	 * @return string|void
 	 */
 	private function download_blocklist() {
-		$response = $this->antibot_client->get_blocklist_download();
+		$response = $this->antibot_client->get_blocklist_download( $this->model_setting->mode );
 
 		if ( is_wp_error( $response ) ) {
 			$this->log( sprintf( 'AntiBot Global Firewall Error: %s', $response->get_error_message() ), Firewall::FIREWALL_LOG );
@@ -260,7 +269,7 @@ class Antibot_Global_Firewall extends Component {
 			return;
 		}
 
-		$this->log( 'AntiBot Global Firewall: Downloaded successfully.', Firewall::FIREWALL_LOG );
+		$this->log( 'AntiBot Global Firewall: Downloaded ' . $this->model_setting->get_mode_label() . ' blocklist successfully.', Firewall::FIREWALL_LOG );
 
 		return $tmp_file;
 	}
@@ -527,9 +536,15 @@ class Antibot_Global_Firewall extends Component {
 			( ! $enable && $hosting_enable )
 		) {
 			$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
+
+			$body = array( 'is_active' => $enable );
+			if ( $enable ) {
+				$body['mode'] = $this->get_hosting_mode();
+			}
+
 			$data = $this->make_wpmu_request(
 				WPMUDEV::API_ANTIBOT_GLOBAL_FIREWALL,
-				array( 'is_active' => $enable ),
+				$body,
 				array(
 					'method'  => 'PUT',
 					'timeout' => $timeout,
@@ -558,13 +573,21 @@ class Antibot_Global_Firewall extends Component {
 			return (int) $cached_data;
 		}
 
-		$blocklisted_ips = $this->antibot_client->get_blocklist_stats();
+		$blocklist_stats = $this->antibot_client->get_blocklist_stats();
 
-		if ( is_wp_error( $blocklisted_ips ) ) {
-			$this->log( 'AntiBot Global Firewall Error: ' . $blocklisted_ips->get_error_message(), Firewall::FIREWALL_LOG );
+		if ( is_wp_error( $blocklist_stats ) ) {
+			$this->log( 'AntiBot Global Firewall Error: ' . $blocklist_stats->get_error_message(), Firewall::FIREWALL_LOG );
 			return 0;
 		}
 
+		$mode                = $this->frontend_mode();
+		$blocklisted_ips_key = Antibot_Global_Firewall_Setting::MODE_BASIC === $mode ? 'blocked_ips' : 'strict_blocked_ips';
+		if ( empty( $blocklist_stats[ $blocklisted_ips_key ] ) ) {
+			$this->log( 'AntiBot Global Firewall Error: Stats missing for mode: ' . $mode, Firewall::FIREWALL_LOG );
+			return 0;
+		}
+
+		$blocklisted_ips = $blocklist_stats[ $blocklisted_ips_key ];
 		set_site_transient( self::BLOCKLIST_STATS_KEY, $blocklisted_ips, 12 * HOUR_IN_SECONDS );
 
 		return $blocklisted_ips;
@@ -604,5 +627,77 @@ class Antibot_Global_Firewall extends Component {
 		}
 
 		$this->log( $message, self::LOG_FILE_NAME );
+	}
+
+	/**
+	 * Get the AntiBot mode status in DB.
+	 *
+	 * @return string The AntiBot mode.
+	 */
+	public function get_mode(): string {
+		return $this->model_setting->mode;
+	}
+
+	/**
+	 * Get the AntiBot mode on WPMU DEV.
+	 *
+	 * @return string The AntiBot mode label.
+	 */
+	public function get_hosting_mode(): string {
+		$mode = defender_get_hosting_feature_state( 'antibot_mode' );
+
+		return '' !== $mode ? $mode : Antibot_Global_Firewall_Setting::MODE_BASIC;
+	}
+
+	/**
+	 * Get AntiBot mode based on managed by.
+	 *
+	 * @return string The AntiBot mode.
+	 */
+	public function frontend_mode(): string {
+		return 'plugin' === $this->get_managed_by() ?
+			$this->get_mode() :
+			$this->get_hosting_mode();
+	}
+
+	/**
+	 * Switch the AntiBot mode.
+	 *
+	 * @return string|false|WP_Error The AntiBot mode value if it's switched, false otherwise.
+	 */
+	public function switch_mode() {
+		if ( 'plugin' === $this->get_managed_by() ) {
+			$this->model_setting->mode = Antibot_Global_Firewall_Setting::MODE_STRICT === $this->get_mode()
+				? Antibot_Global_Firewall_Setting::MODE_BASIC
+				: Antibot_Global_Firewall_Setting::MODE_STRICT;
+			$this->model_setting->save();
+
+			$this->download_and_store_blocklist();
+		} else {
+			if ( ! $this->wpmudev->is_wpmu_hosting() ) {
+				return false;
+			}
+
+			$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
+			$data = $this->make_wpmu_request(
+				WPMUDEV::API_ANTIBOT_GLOBAL_FIREWALL,
+				array(
+					'is_active' => $this->hosting_is_enabled(),
+					'mode'      => Antibot_Global_Firewall_Setting::MODE_STRICT === $this->get_hosting_mode()
+						? Antibot_Global_Firewall_Setting::MODE_BASIC
+						: Antibot_Global_Firewall_Setting::MODE_STRICT,
+				),
+				array( 'method' => 'PUT' )
+			);
+
+			if ( is_wp_error( $data ) ) {
+				$this->log( 'AntiBot Global Firewall Error: ' . $data->get_error_message(), Firewall::FIREWALL_LOG );
+				return $data;
+			}
+		}
+
+		delete_site_transient( self::BLOCKLIST_STATS_KEY );
+
+		return $this->frontend_mode();
 	}
 }

@@ -42,6 +42,15 @@ abstract class Event extends Controller {
 	}
 
 	/**
+	 * Check if the current moment is right for tracking.
+	 *
+	 * @return bool
+	 */
+	protected function maybe_track(): bool {
+		return ! defender_is_wp_cli() && $this->is_tracking_active();
+	}
+
+	/**
 	 *  Has the data changed?
 	 *
 	 * @param  array $old_data  Old data to compare.

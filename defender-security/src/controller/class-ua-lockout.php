@@ -53,7 +53,7 @@ class UA_Lockout extends Event {
 		$this->register_routes();
 		$this->model   = $this->get_model();
 		$this->service = wd_di()->get( User_Agent_Service::class );
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 	}
 
 	/**

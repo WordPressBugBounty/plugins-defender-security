@@ -405,14 +405,14 @@ class Upgrader {
 		if ( version_compare( $db_version, '5.0.2', '<' ) ) {
 			$this->upgrade_5_0_2();
 		}
-		if ( version_compare( $db_version, '5.1.0', '<' ) ) {
-			$this->upgrade_5_1_0();
-		}
 		if ( version_compare( $db_version, '5.1.1', '<' ) ) {
 			$this->upgrade_5_1_1();
 		}
 		if ( version_compare( $db_version, '5.2.0', '<' ) ) {
 			$this->upgrade_5_2_0();
+		}
+		if ( version_compare( $db_version, '5.3.0', '<' ) ) {
+			$this->upgrade_5_3_0();
 		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
@@ -484,7 +484,6 @@ class Upgrader {
 	 * @since 2.4.7
 	 */
 	private function add_index_to_defender_scan_item( $wpdb ) {
-		$table = $wpdb->base_prefix . 'defender_scan_item';
 		// Check index already exists or not.
 		$result = $wpdb->get_row( "SHOW INDEX FROM {$wpdb->base_prefix}defender_scan_item WHERE Key_name = 'type';", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		if ( is_array( $result ) ) {
@@ -521,7 +520,6 @@ class Upgrader {
 	 * @since 2.4.7
 	 */
 	private function add_index_to_defender_lockout( $wpdb ) {
-		$table = $wpdb->base_prefix . 'defender_lockout';
 		// Check index already exists or not.
 		$result = $wpdb->get_row( "SHOW INDEX FROM {$wpdb->base_prefix}defender_lockout WHERE Key_name = 'ip';", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		if ( is_array( $result ) ) {
@@ -1490,8 +1488,6 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	 * @return void
 	 */
 	private function upgrade_3_11_0(): void {
-		// Add the "What's new" modal.
-		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 		// Move Global IP settings.
 		$option = get_site_option( wd_di()->get( Model_Blacklist_Lockout::class )->get_table() );
 		if ( ! empty( $option ) && is_string( $option ) ) {
@@ -1545,8 +1541,6 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	private function upgrade_4_0_0(): void {
 		$bootstrap = wd_di()->get( Bootstrap::class );
 		$bootstrap->create_table_quarantine();
-
-		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
 
 	/**
@@ -1679,8 +1673,6 @@ To complete your login, copy and paste the temporary password into the Password 
 		$model->ip_detection_type = 'manual';
 		$model->save();
 
-		// Add the "What's new" modal.
-		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 		// Add tracking.
 		$firewall_analytics = wd_di()->get( Firewall_Analytics::class );
 		$detection_method   = Firewall_Analytics::get_detection_method_label(
@@ -1701,7 +1693,6 @@ To complete your login, copy and paste the temporary password into the Password 
 	 */
 	private function upgrade_5_0_0(): void {
 		update_site_option( \WP_Defender\Component\IP\Antibot_Global_Firewall::NOTICE_SLUG, true );
-		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
 
 	/**
@@ -1712,15 +1703,6 @@ To complete your login, copy and paste the temporary password into the Password 
 	private function upgrade_5_0_2(): void {
 		delete_site_transient( 'wpdef_antibot_global_firewall_db_blocklist_count' );
 		wd_di()->get( Firewall::class )->set_whitelist_server_public_ip();
-	}
-
-	/**
-	 * Upgrade to 5.1.0.
-	 *
-	 * @return void
-	 */
-	private function upgrade_5_1_0(): void {
-		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
 
 	/**
@@ -1777,5 +1759,25 @@ To complete your login, copy and paste the temporary password into the Password 
 		wd_di()->get( \WP_Defender\Controller\Strong_Password::class )->remove_data();
 		// Add the "What's new" modal.
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+	}
+
+	/**
+	 * Upgrade to 5.3.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_3_0(): void {
+		// Add the "What's new" modal.
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+		// Add composite index to the defender_lockout table.
+		global $wpdb;
+		// Check if the index already exists.
+		$wpdb->query( "SHOW INDEX FROM {$wpdb->base_prefix}defender_lockout_log WHERE Key_name = 'idx_ip_date'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		if ( 0 === $wpdb->num_rows ) {
+			// If the index does not exist, create it.
+			$prev_val = $wpdb->hide_errors();
+			$wpdb->query( "ALTER TABLE {$wpdb->base_prefix}defender_lockout_log ADD INDEX idx_ip_date (ip, date DESC);" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->show_errors( $prev_val );
+		}
 	}
 }

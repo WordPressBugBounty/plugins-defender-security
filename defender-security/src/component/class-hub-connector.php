@@ -141,7 +141,7 @@ class Hub_Connector extends Component {
 		$view = defender_get_data_from_request( 'view', 'g' );
 		switch ( $view ) {
 			case 'blocklist':
-				return __( 'Central IP Allow/Block list', 'defender-security' );
+				return __( 'Custom IP Allow/Block list', 'defender-security' );
 			default:
 				return __( 'AntiBot Global Firewall', 'defender-security' );
 		}

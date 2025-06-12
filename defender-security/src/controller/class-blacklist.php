@@ -60,10 +60,10 @@ class Blacklist extends Controller {
 	 */
 	public function __construct() {
 		$this->register_routes();
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->model   = wd_di()->get( Model_Blacklist_Lockout::class );
 		$this->service = wd_di()->get( Blacklist_Lockout::class );
-		add_action( 'wd_blacklist_this_ip', array( &$this, 'blacklist_an_ip' ) );
+		add_action( 'wd_blacklist_this_ip', array( $this, 'blacklist_an_ip' ) );
 		// Update MaxMind's DB.
 		if ( ! empty( $this->model->maxmind_license_key ) ) {
 			if ( ! wp_next_scheduled( 'wpdef_update_geoip' ) ) {
@@ -73,7 +73,7 @@ class Blacklist extends Controller {
 			$bind_updater = (bool) apply_filters( 'wd_update_maxmind_database', true );
 			// Bind to the scheduled updater action.
 			if ( $bind_updater ) {
-				add_action( 'wpdef_update_geoip', array( &$this, 'update_database' ) );
+				add_action( 'wpdef_update_geoip', array( $this, 'update_database' ) );
 			}
 		}
 	}
@@ -503,12 +503,10 @@ class Blacklist extends Controller {
 	/**
 	 * Query locked IPs and return the results as a Response object.
 	 *
-	 * @param  Request $request  The request object.
-	 *
 	 * @return Response
 	 * @defender_route
 	 */
-	public function query_locked_ips( Request $request ) {
+	public function query_locked_ips() {
 		$results    = Lockout_Ip::query_locked_ip();
 		$locked_ips = array();
 		if ( ! empty( $results ) ) {
@@ -532,13 +530,11 @@ class Blacklist extends Controller {
 	/**
 	 * Get Listed IPs.
 	 *
-	 * @param  Request $request  Request object.
-	 *
 	 * @return Response
 	 * @defender_route
 	 * @throws Exception If table is not defined.
 	 */
-	public function get_listed_ips( Request $request ): Response {
+	public function get_listed_ips(): Response {
 		return new Response( true, $this->model->export() );
 	}
 

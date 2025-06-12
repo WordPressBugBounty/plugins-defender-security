@@ -33,10 +33,10 @@ class Tutorial extends Controller {
 			$this->register_page(
 				esc_html__( 'Tutorials', 'defender-security' ),
 				$this->slug,
-				array( &$this, 'main_view' ),
+				array( $this, 'main_view' ),
 				$this->parent_slug
 			);
-			add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
+			add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 			$this->register_routes();
 		}
 	}

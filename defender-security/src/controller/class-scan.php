@@ -96,12 +96,12 @@ class Scan extends Event {
 		}
 
 		$this->register_routes();
-		add_action( 'defender_enqueue_assets', array( &$this, 'enqueue_assets' ) );
-		add_action( 'wp_ajax_defender_process_scan', array( &$this, 'process' ) );
-		add_action( 'wp_ajax_nopriv_defender_process_scan', array( &$this, 'process' ) );
-		add_action( 'defender/async_scan', array( &$this, 'process' ) );
+		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
+		add_action( 'wp_ajax_defender_process_scan', array( $this, 'process' ) );
+		add_action( 'wp_ajax_nopriv_defender_process_scan', array( $this, 'process' ) );
+		add_action( 'defender/async_scan', array( $this, 'process' ) );
 		// Clean up data after successful core update.
-		add_action( '_core_updated_successfully', array( &$this, 'clean_up_data' ) );
+		add_action( '_core_updated_successfully', array( $this, 'clean_up_data' ) );
 
 		global $pagenow;
 		// since 2.6.2.

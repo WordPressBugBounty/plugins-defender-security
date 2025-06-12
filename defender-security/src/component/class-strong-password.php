@@ -268,4 +268,39 @@ class Strong_Password extends Component {
 			$errors->add( self::CODE, $this->model->get_message() );
 		}
 	}
+
+	/**
+	 * Generate a strong password with a mix of character types.
+	 *
+	 * @param string $password The password to be generated.
+	 * @param int    $length   The length of the password to be generated (12 or 24).
+	 *
+	 * @return string Strong password.
+	 */
+	public function generate_password( $password, $length ) {
+		if ( ! in_array( $length, array( 12, 24 ), true ) ) {
+			return $password;
+		}
+
+		$upper   = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$lower   = 'abcdefghijklmnopqrstuvwxyz';
+		$numbers = '0123456789';
+		$symbols = '!@#$%^&*()_+-={};:\'",.<>?~[]|`';
+
+		// Ensure the password includes at least one character from each set to meet strength requirements.
+		$password  = '';
+		$password .= $upper[ random_int( 0, strlen( $upper ) - 1 ) ];
+		$password .= $lower[ random_int( 0, strlen( $lower ) - 1 ) ];
+		$password .= $numbers[ random_int( 0, strlen( $numbers ) - 1 ) ];
+		$password .= $symbols[ random_int( 0, strlen( $symbols ) - 1 ) ];
+
+		// Fill the rest of the password length with random characters from all character sets.
+		$all = $upper . $lower . $numbers . $symbols;
+		for ( $i = strlen( $password ); $i < $length; $i++ ) {
+			$password .= $all[ random_int( 0, strlen( $all ) - 1 ) ];
+		}
+
+		// Shuffle the password to prevent predictable character order.
+		return str_shuffle( $password );
+	}
 }
