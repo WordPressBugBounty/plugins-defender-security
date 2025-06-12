@@ -349,7 +349,8 @@ class Antibot_Global_Firewall extends Event {
 
 		delete_site_option( Antibot_Global_Firewall_Component::NOTICE_SLUG );
 		delete_site_option( Antibot_Global_Firewall_Component::DOWNLOAD_SYNC_NEXT_RUN_OPTION );
-		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_KEY );
+		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_KEY . '_' . Antibot_Global_Firewall_Setting::MODE_BASIC );
+		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_KEY . '_' . Antibot_Global_Firewall_Setting::MODE_STRICT );
 		delete_site_transient( Antibot_Global_Firewall_Component::IS_SWITCHING_TO_PLUGIN_IN_PROGRESS );
 	}
 
@@ -385,16 +386,17 @@ class Antibot_Global_Firewall extends Event {
 			return new Response(
 				true,
 				array(
-					'message'    => sprintf(
+					'message'       => sprintf(
 						/* translators: 1. Open tag. 2. Close tag. 3. Managed by label. */
 						__( '%1$sAntiBot%2$s blocklist is now being managed by %3$s.', 'defender-security' ),
 						'<strong>',
 						'</strong>',
 						$this->service->get_managed_by_label()
 					),
-					'managed_by' => $result,
-					'ips_count'  => $this->service->get_blocklisted_ip_count(),
-					'auto_close' => true,
+					'managed_by'    => $result,
+					'frontend_mode' => $this->service->frontend_mode(),
+					'ips_count'     => $this->service->get_blocklisted_ip_count(),
+					'auto_close'    => true,
 				)
 			);
 		}

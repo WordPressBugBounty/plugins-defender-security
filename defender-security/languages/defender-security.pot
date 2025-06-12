@@ -2,9 +2,9 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 5.3.0\n"
+"Project-Id-Version: Defender Pro 5.3.1\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
-"POT-Creation-Date: 2025-06-11 08:37:42+00:00\n"
+"POT-Creation-Date: 2025-06-12 08:43:54+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -6083,45 +6083,45 @@ msgid ""
 "enable %2$s."
 msgstr ""
 
-#: src/class-upgrader.php:718
+#: src/class-upgrader.php:721
 msgid "Basic config"
 msgstr ""
 
-#: src/class-upgrader.php:719 src/component/class-backup-settings.php:612
+#: src/class-upgrader.php:722 src/component/class-backup-settings.php:612
 msgid "Basic Config"
 msgstr ""
 
-#: src/class-upgrader.php:1342
+#: src/class-upgrader.php:1345
 msgid "Scan of {SITE_URL} complete."
 msgstr ""
 
-#: src/class-upgrader.php:1343
+#: src/class-upgrader.php:1346
 msgid "Malware Scan of {SITE_URL} is complete."
 msgstr ""
 
-#: src/class-upgrader.php:1348
+#: src/class-upgrader.php:1351
 msgid "{ISSUES_COUNT} issues found."
 msgstr ""
 
-#: src/class-upgrader.php:1349
+#: src/class-upgrader.php:1352
 msgid "{ISSUES_COUNT} issue(s) found."
 msgstr ""
 
-#: src/class-upgrader.php:1383
+#: src/class-upgrader.php:1386
 msgid ""
 "{ISSUES_COUNT} vulnerabilities were identified for {SITE_URL} during a "
 "Malware Scan."
 msgstr ""
 
-#: src/class-upgrader.php:1384
+#: src/class-upgrader.php:1387
 msgid "Malware Scan identified {ISSUES_COUNT} issue(s) on {SITE_URL}."
 msgstr ""
 
-#: src/class-upgrader.php:1389
+#: src/class-upgrader.php:1392
 msgid "See details for each issue below."
 msgstr ""
 
-#: src/class-upgrader.php:1390
+#: src/class-upgrader.php:1393
 msgid "The identified issue(s) is/are listed below."
 msgstr ""
 
@@ -8101,37 +8101,37 @@ msgstr ""
 msgid "%s is Inactive."
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:373
+#: src/controller/class-antibot-global-firewall.php:374
 msgid "Your site has been disconnected successfully!"
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:390
+#: src/controller/class-antibot-global-firewall.php:391
 #. translators: 1. Open tag. 2. Close tag. 3. Managed by label.
 msgid "%1$sAntiBot%2$s blocklist is now being managed by %3$s."
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:405
-#: src/controller/class-antibot-global-firewall.php:633
+#: src/controller/class-antibot-global-firewall.php:407
+#: src/controller/class-antibot-global-firewall.php:635
 msgid "Failed to switch. Please try again."
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:477
-#: src/controller/class-antibot-global-firewall.php:520
+#: src/controller/class-antibot-global-firewall.php:479
+#: src/controller/class-antibot-global-firewall.php:522
 msgid "Invalid IP address."
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:490
+#: src/controller/class-antibot-global-firewall.php:492
 msgid "The IP address is searched successfully."
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:553
+#: src/controller/class-antibot-global-firewall.php:555
 #. translators: 1: IP address. 2: Opening anchor tag. 3: Closing anchor tag.
 msgid ""
 "IP %1$s has been added to your Site's allowlist. You can manage it in "
 "%2$sIP Lockouts%3$s."
 msgstr ""
 
-#: src/controller/class-antibot-global-firewall.php:618
+#: src/controller/class-antibot-global-firewall.php:620
 #. translators: 1. Open tag. 2. Close tag. 3. Mode.
 msgid "%1$sAntiBot Firewall%2$s mode updated – You're now using %3$s Mode."
 msgstr ""

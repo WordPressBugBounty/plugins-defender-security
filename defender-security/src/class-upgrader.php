@@ -414,6 +414,9 @@ class Upgrader {
 		if ( version_compare( $db_version, '5.3.0', '<' ) ) {
 			$this->upgrade_5_3_0();
 		}
+		if ( version_compare( $db_version, '5.3.1', '<' ) ) {
+			$this->upgrade_5_3_1();
+		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
 		// Don't run any function below this line.
@@ -1779,5 +1782,14 @@ To complete your login, copy and paste the temporary password into the Password 
 			$wpdb->query( "ALTER TABLE {$wpdb->base_prefix}defender_lockout_log ADD INDEX idx_ip_date (ip, date DESC);" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->show_errors( $prev_val );
 		}
+	}
+
+	/**
+	 * Upgrade to 5.3.1.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_3_1(): void {
+		delete_site_transient( \WP_Defender\Component\IP\Antibot_Global_Firewall::BLOCKLIST_STATS_KEY );
 	}
 }

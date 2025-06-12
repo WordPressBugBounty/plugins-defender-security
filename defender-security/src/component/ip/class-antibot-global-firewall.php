@@ -568,7 +568,9 @@ class Antibot_Global_Firewall extends Component {
 	 * @return int The number of blocklisted IPs.
 	 */
 	public function get_cached_blocklisted_ips(): int {
-		$cached_data = get_site_transient( self::BLOCKLIST_STATS_KEY );
+		$mode        = $this->frontend_mode();
+		$stats_key   = self::BLOCKLIST_STATS_KEY . '_' . $mode;
+		$cached_data = get_site_transient( $stats_key );
 		if ( false !== $cached_data ) {
 			return (int) $cached_data;
 		}
@@ -580,7 +582,6 @@ class Antibot_Global_Firewall extends Component {
 			return 0;
 		}
 
-		$mode                = $this->frontend_mode();
 		$blocklisted_ips_key = Antibot_Global_Firewall_Setting::MODE_BASIC === $mode ? 'blocked_ips' : 'strict_blocked_ips';
 		if ( empty( $blocklist_stats[ $blocklisted_ips_key ] ) ) {
 			$this->log( 'AntiBot Global Firewall Error: Stats missing for mode: ' . $mode, Firewall::FIREWALL_LOG );
@@ -588,7 +589,7 @@ class Antibot_Global_Firewall extends Component {
 		}
 
 		$blocklisted_ips = $blocklist_stats[ $blocklisted_ips_key ];
-		set_site_transient( self::BLOCKLIST_STATS_KEY, $blocklisted_ips, 12 * HOUR_IN_SECONDS );
+		set_site_transient( $stats_key, $blocklisted_ips, 12 * HOUR_IN_SECONDS );
 
 		return $blocklisted_ips;
 	}
@@ -667,23 +668,29 @@ class Antibot_Global_Firewall extends Component {
 	 */
 	public function switch_mode() {
 		if ( 'plugin' === $this->get_managed_by() ) {
-			$this->model_setting->mode = Antibot_Global_Firewall_Setting::MODE_STRICT === $this->get_mode()
+			$mode = $this->get_mode();
+
+			$this->model_setting->mode = Antibot_Global_Firewall_Setting::MODE_STRICT === $mode
 				? Antibot_Global_Firewall_Setting::MODE_BASIC
 				: Antibot_Global_Firewall_Setting::MODE_STRICT;
 			$this->model_setting->save();
 
 			$this->download_and_store_blocklist();
+
+			delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $mode );
 		} else {
 			if ( ! $this->wpmudev->is_wpmu_hosting() ) {
 				return false;
 			}
+
+			$mode = $this->get_hosting_mode();
 
 			$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 			$data = $this->make_wpmu_request(
 				WPMUDEV::API_ANTIBOT_GLOBAL_FIREWALL,
 				array(
 					'is_active' => $this->hosting_is_enabled(),
-					'mode'      => Antibot_Global_Firewall_Setting::MODE_STRICT === $this->get_hosting_mode()
+					'mode'      => Antibot_Global_Firewall_Setting::MODE_STRICT === $mode
 						? Antibot_Global_Firewall_Setting::MODE_BASIC
 						: Antibot_Global_Firewall_Setting::MODE_STRICT,
 				),
@@ -694,9 +701,9 @@ class Antibot_Global_Firewall extends Component {
 				$this->log( 'AntiBot Global Firewall Error: ' . $data->get_error_message(), Firewall::FIREWALL_LOG );
 				return $data;
 			}
-		}
 
-		delete_site_transient( self::BLOCKLIST_STATS_KEY );
+			delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $mode );
+		}
 
 		return $this->frontend_mode();
 	}
