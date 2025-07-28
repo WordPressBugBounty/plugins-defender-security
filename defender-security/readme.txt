@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.3.1
+Version: 5.4.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 6.8.1
-Stable tag: 5.3.1
+Tested up to: 6.8.2
+Stable tag: 5.4.0
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -56,7 +56,8 @@ Defender's one-click security hardening recommendations instantly adds layers of
 * Google reCAPTCHA security - easy to add, stop fraud and abuse - including BuddyPress and WooCommerce
 * Pwned Password Check - Increase security by protecting against compromised passwords
 * Force Password Reset - Force users with selected roles to reset passwords
-* Force Strong Passwords – Ensure users create secure credentials by enforcing robust password requirements.
+* Force Strong Passwords – Ensure users create secure credentials by enforcing robust password requirements
+* User Agent Blocklist Presets – Easily block unwanted bots and scripts using curated user agent presets.
 
 ### Learn The Ropes With These Hands-On Defender Security Plugin Tutorials
 
@@ -82,7 +83,7 @@ Improve your website security with Defender's IP manager and firewall. Manually 
 
 ### User Agent Banning
 
-Add user agents to the block or allowlist and stop bad bots from spamming and scraping your site. All major search engines and special network bots are allow-listed out of the box. Easy to set up, Defender's user agent banning tool does all the security work, with no editing of the .htaccess file required.
+Add user agents to the block or allowlist and stop bad bots from spamming and scraping your site. All major search engines and special network bots are allow-listed out of the box. Easy to set up, Defender's user agent banning tool now includes built-in bot and script presets to help you quickly block malicious traffic. It does all the security work for you—no editing of the .htaccess file required.
 
 ### Google reCAPTCHA Integration
 
@@ -253,6 +254,24 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 5.4.0 ( 2025-07-22 ) =
+
+- New: User Agent Blocklist Presets
+- New: Bot Trap to block spam User Agent IPs
+- Enhance: Update Vue.js and Axios versions and related packages
+- Enhance: Remove Tutorials menu and widget
+- Enhance: Remove widget on Dashboard page to discover other free plugins by WPMU DEV
+- Enhance: Remove recommended-plugins-notice submodule for Free version
+- Enhance: Update Malware Signatures to detect suspicious code
+- Enhance: Remove "Add Spam User Agents" button
+- Enhance: Create new wd_404_attempt hook to extend 404 Detection flow
+- Enhance: Add Session key to config structure
+- Enhance: Add Force Strong Password key to config structure
+- Fix: Defender forcibly logs out users for inactivity
+- Fix: Unable to save secure password when Strong Passwords and Password Reset are both enabled
+- Fix: Documentation buttons are missing aria-hidden tag
+- Fix: Error when creating multisite and running Malware Scan
+
 = 5.3.1 ( 2025-06-12 ) =
 
 - Fix: Sync malicious IP count displayed in Defender and the Hub
@@ -304,34 +323,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Enhance: Improve cron events for AntiBot Global Firewall on multisite
 - Enhance: Remove manual "All headers" option and migrate to Automatic IP detection for improved compatibility and security
 - Enhance: Update User Agent logic with AntiBot service to better detect potential threats
-
-= 5.1.0 ( 2025-02-26 ) =
-
-- New: Enforce strong password
-- Enhance: Manage all password-related settings in one place
-- Enhance: Improve lockout mechanism
-- Enhance: Upgrade plugin packages
-- Enhance: Support Unit server
-- Enhance: Translation improvements
-- Enhance: Improve IP Lockout redirect when user adds IP to Allowlist
-- Enhance: Create a new cookie to avoid Lockout caching in Hummingbird plugin
-- Enhance: Update minimum supported WordPress version
-- Enhance: Enable Plugin & Suspicious code scan by default on fresh installations
-- Enhance: Improve Malware_Result class
-- Enhance: Minor code improvements
-- Fix: Defender does not detect themes with vulnerabilities
-- Fix: Error while pfsockopen function is disabled
-- Fix: NaN is showing on AntiBot page when language is changed to German in the Dashboard plugin
-- Fix: Form does not submit if Google reCAPTCHA is enabled in both Defender and Forminator plugins
-- Fix: Malware Scanner highlights WordPress core files on IIS server
-- Fix: Database error related to AntiBot feature
-- Fix: Salt keys appear before open php tag
-- Fix: Google reCAPTCHA compact style is not working
-
-= 5.0.2 ( 2025-02-14 ) =
-
-- Improvement: Update 404 logic with AntiBot service to better detect and mitigate potential threats
-- Improvement: Enhancing IP Detection in Defender to prevent blocking of server IPs
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

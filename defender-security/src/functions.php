@@ -368,7 +368,6 @@ function is_defender_page(): bool {
 		'wdf-advanced-tools',
 		'wdf-notification',
 		'wdf-setting',
-		'wdf-tutorial',
 		'wdf-expert-services',
 	);
 

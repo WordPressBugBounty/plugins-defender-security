@@ -269,7 +269,6 @@ class Dashboard extends Event {
 					'session_protection' => wd_di()->get( Session_Protection::class )->export(),
 				),
 				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->dashboard_widget(),
-				'tutorials'         => wd_di()->get( Tutorial::class )->data_frontend(),
 				'notifications'     => wd_di()->get( Notification::class )->data_frontend(),
 				'settings'          => wd_di()->get( Main_Setting::class )->data_frontend(),
 				'countries'         => $firewall->dashboard_widget(),

@@ -111,6 +111,7 @@ class Firewall extends Event {
 		wd_di()->get( UA_Lockout::class );
 		wd_di()->get( Global_Ip::class );
 		wd_di()->get( Antibot_Global_Firewall::class );
+		wd_di()->get( Bot_Trap::class );
 
 		// Integrate MainWP plugin.
 		wd_di()->get( Main_Wp::class );
@@ -564,7 +565,7 @@ class Firewall extends Event {
 	 *
 	 * @return void
 	 */
-	private function actions_for_blocked(
+	public function actions_for_blocked(
 		string $message,
 		int $remaining_time = 0,
 		string $reason = '',
@@ -844,6 +845,8 @@ class Firewall extends Event {
 		( new Global_Ip() )->remove_data();
 		// Remove AntiBot Global Firewall data.
 		wd_di()->get( Antibot_Global_Firewall::class )->remove_data();
+		// Remove Bot Trap data.
+		wd_di()->get( Bot_Trap::class )->remove_data();
 		// Clear Trusted Proxy data.
 		$trusted_proxy_preset = wd_di()->get( Trusted_Proxy_Preset::class );
 		foreach ( array_keys( Firewall_Service::trusted_proxy_presets() ) as $preset ) {

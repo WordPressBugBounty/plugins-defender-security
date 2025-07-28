@@ -16,7 +16,7 @@ trait File_Operations {
 	/**
 	 * Deletes a file if it exists and is writable.
 	 *
-	 * @param  string $file  The path to the file to be deleted.
+	 * @param string $file The path to the file to be deleted.
 	 *
 	 * @return bool Returns true if the file was successfully deleted, false otherwise.
 	 */
@@ -33,9 +33,9 @@ trait File_Operations {
 	/**
 	 * Handle actions after deleting a file or folder.
 	 *
-	 * @param  string    $deleted_file  The file or folder that was deleted.
-	 * @param  Scan|null $related_scan  The scan instance related to the deletion.
-	 * @param  string    $scan_type  The type of scan.
+	 * @param string    $deleted_file The file or folder that was deleted.
+	 * @param Scan|null $related_scan The scan instance related to the deletion.
+	 * @param string    $scan_type The type of scan.
 	 *
 	 * @return array An array with a message confirming the deletion.
 	 */
@@ -51,7 +51,7 @@ trait File_Operations {
 	/**
 	 * Returns a WP_Error object with an error code indicating that the file is not writeable.
 	 *
-	 * @param  string $file  The path to the file that is not writeable.
+	 * @param string $file The path to the file that is not writeable.
 	 *
 	 * @return WP_Error The WP_Error object with the error code and the basename of the file.
 	 */

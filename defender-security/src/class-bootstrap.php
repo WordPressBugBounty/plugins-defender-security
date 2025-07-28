@@ -75,7 +75,6 @@ class Bootstrap {
 						$screen_prefix . '_page_wdf-advanced-tools' . $screen_suffix,
 						$screen_prefix . '_page_wdf-notification' . $screen_suffix,
 						$screen_prefix . '_page_wdf-setting' . $screen_suffix,
-						$screen_prefix . '_page_wdf-tutorial' . $screen_suffix,
 					),
 				)
 			);

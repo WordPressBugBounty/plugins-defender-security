@@ -21,8 +21,8 @@ class Feature_Modal extends Component {
 	/**
 	 * Feature data for the last active "What's new" modal.
 	 */
-	public const FEATURE_SLUG    = 'wd_show_feature_antibot_protection_mode';
-	public const FEATURE_VERSION = '5.3.0';
+	public const FEATURE_SLUG    = 'wd_show_feature_bot_protection';
+	public const FEATURE_VERSION = '5.4.0';
 
 	/**
 	 * Get modals that are displayed on the Dashboard page.

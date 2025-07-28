@@ -230,7 +230,7 @@ class Firewall_Logs extends Controller {
 		if ( 0 === $paged ) {
 			$paged = 1;
 		}
-		$logs = Lockout_Log::query_logs( $filters, $paged, 'date', 'desc', $per_page );
+		$logs = Lockout_Log::query_logs( $filters, $paged, 'id', 'desc', $per_page );
 
 		$tl_component = new Table_Lockout();
 
@@ -499,14 +499,16 @@ class Firewall_Logs extends Controller {
 		return new Response(
 			true,
 			array(
-				'message' => sprintf(
+				'message'                 => sprintf(
 					$message,
 					'<strong>' . $data['ua'] . '</strong>',
 					$data['list'],
 					$data['list'],
 					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=ua-lockout' ) . '">' . esc_html__( 'User Agent Banning', 'defender-security' ) . '</a>'
 				),
-				'logs'    => $logs,
+				'logs'                    => $logs,
+				// Include blocklist preset values for the frontend.
+				'blocklist_preset_values' => $model->blocklist_preset_values,
 			)
 		);
 	}
@@ -613,14 +615,6 @@ class Firewall_Logs extends Controller {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_enqueue_script( 'def-momentjs', defender_asset_url( '/assets/js/vendor/moment/moment.min.js' ), array(), DEFENDER_VERSION, true );
-		wp_enqueue_script(
-			'def-daterangepicker',
-			defender_asset_url( '/assets/js/vendor/daterangepicker/daterangepicker.js' ),
-			array(),
-			DEFENDER_VERSION,
-			true
-		);
 		wp_localize_script(
 			'def-iplockout',
 			'lockout_logs',
@@ -634,11 +628,13 @@ class Firewall_Logs extends Controller {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
+		$type = defender_get_data_from_request( 'type', 'g' );
+
 		$def_filters  = array( 'misc' => wd_di()->get( Table_Lockout::class )->get_filters() );
 		$init_filters = array(
 			'from'       => strtotime( '-30 days' ),
 			'to'         => time(),
-			'type'       => '',
+			'type'       => $type,
 			'ip'         => '',
 			'ban_status' => '',
 		);
@@ -675,11 +671,6 @@ class Firewall_Logs extends Controller {
 
 		$count = Lockout_Log::count( $filters['from'], $filters['to'], $filters['type'], $filters['ip'], $conditions );
 		$logs  = Lockout_Log::get_logs_and_format( $filters, $paged, $order_by, $order, $per_page );
-
-		if ( - 1 === $per_page ) {
-			$per_page = Lockout_Log::INFINITE_SCROLL_SIZE;
-		}
-
 		return array(
 			'count'       => $count,
 			'logs'        => $logs,

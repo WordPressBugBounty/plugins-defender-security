@@ -375,6 +375,9 @@ class Notfound_Lockout extends Component {
 				break;
 		}
 		$model->save();
+		// @since 5.4.0 Action hook triggered after a failed 404 attempt.
+		do_action( 'wd_404_attempt', $model, $scenario, $uri );
+
 		if ( Lockout_Log::LOCKOUT_404 === $model->type ) {
 			do_action( 'defender_notify', 'firewall-notification', $model );
 		}

@@ -365,33 +365,6 @@ class Admin {
 			/* 3 https://wordpress.org */ '/plugins/defender-security/',
 			/* 4      Email Button CTA */ esc_html__( 'Get Fast!', 'defender-security' )
 		);
-		// Recommended plugin notice.
-		$this->register_recommended_plugin_notice();
-	}
-
-	/**
-	 * Register the recommended plugin notice.
-	 *
-	 * @return void
-	 */
-	protected function register_recommended_plugin_notice() {
-		if ( ! file_exists( defender_path( 'extra/recommended-plugins-notice/notice.php' ) ) ) {
-			return;
-		}
-		/* @noinspection PhpIncludeInspection */
-		require_once defender_path( 'extra/recommended-plugins-notice/notice.php' );
-
-		do_action(
-			// It's from the extra WPMUDEV_Recommended_Plugins_Notice_Registered_Plugin package.
-			'wpmudev-recommended-plugins-register-notice', // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			DEFENDER_PLUGIN_BASENAME, // Plugin basename.
-			'Defender', // Plugin Name.
-			array(
-				'toplevel_page_wp-defender',
-				'toplevel_page_wp-defender-network',
-			),
-			array( 'after', '.sui-wrap .sui-header' )
-		);
 	}
 
 	/**

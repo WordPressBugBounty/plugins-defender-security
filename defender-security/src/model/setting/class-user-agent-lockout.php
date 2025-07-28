@@ -8,11 +8,19 @@
 namespace WP_Defender\Model\Setting;
 
 use Calotes\Model\Setting;
+use WP_Defender\Component\User_Agent as User_Agent_Service;
 
 /**
  * Model for user agent lockout settings.
+ *
+ * Since with v5.4.0 blocklisted UA has groups:
+ * 'Blocklist Presets' is associated with the properties $blocklist_presets & $blocklist_preset_values,
+ * 'Scripts Presets' is associated with the properties $script_presets & $script_preset_values,
+ * 'Custom User Agents' is associated with the property $blacklist.
  */
 class User_Agent_Lockout extends Setting {
+	const BOT_TRAP_LOCKOUT_TYPE_ALLOWED          = array( 'temporary', 'permanent' );
+	const BOT_TRAP_LOCKOUT_DURATION_UNIT_ALLOWED = array( 'seconds', 'minutes', 'hours' );
 
 	/**
 	 * Option name.
@@ -22,7 +30,7 @@ class User_Agent_Lockout extends Setting {
 	protected $table = 'wd_user_agent_settings';
 
 	/**
-	 * Is module enabled.
+	 * Is module enabled?
 	 *
 	 * @var bool
 	 * @defender_property
@@ -63,12 +71,90 @@ class User_Agent_Lockout extends Setting {
 	public $empty_headers = false;
 
 	/**
+	 * Is blocklist presets enabled?
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public $blocklist_presets = true;
+
+	/**
+	 * The list of Blocklist presets.
+	 *
+	 * @var array
+	 * @defender_property
+	 */
+	public $blocklist_preset_values = array();
+
+	/**
+	 * Is script presets enabled?
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public $script_presets = false;
+
+	/**
+	 * The list of Script presets.
+	 *
+	 * @var array
+	 * @defender_property
+	 */
+	public $script_preset_values = array();
+
+	/**
+	 * Is bot trap enabled?
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public $bot_trap_enabled = false;
+
+	/**
+	 * How the lock is going to be, if we choose permanent, then their IP will be blacklisted.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @rule in[temporary,permanent]
+	 */
+	public $bot_trap_lockout_type = 'temporary';
+
+	/**
+	 * Duration for the lockout.
+	 *
+	 * @var int
+	 * @defender_property
+	 * @rule required|integer
+	 */
+	public $bot_trap_lockout_duration = 300;
+
+	/**
+	 * Duration unit.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @rule in[seconds,minutes,hours]
+	 */
+	public $bot_trap_lockout_duration_unit = 'seconds';
+
+	/**
+	 * The message to show on frontend when a bot trap is triggered.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @sanitize sanitize_textarea_field
+	 */
+	public $bot_trap_message = '';
+
+	/**
 	 * Rules for validation.
 	 *
 	 * @var array
 	 */
 	protected $rules = array(
-		array( array( 'enabled', 'empty_headers' ), 'boolean' ),
+		array( array( 'enabled', 'empty_headers', 'blocklist_presets', 'script_presets' ), 'boolean' ),
+		array( array( 'bot_trap_lockout_type' ), 'in', self::BOT_TRAP_LOCKOUT_TYPE_ALLOWED ),
+		array( array( 'bot_trap_lockout_duration_unit' ), 'in', self::BOT_TRAP_LOCKOUT_DURATION_UNIT_ALLOWED ),
 	);
 
 	/**
@@ -83,12 +169,18 @@ class User_Agent_Lockout extends Setting {
 		$whitelist .= "\ngooglebot\nia_archiver\nlinkedinbot\nmediapartners-google\nmsnbot\nnetcraftsurvey";
 		$whitelist .= "\noutbrain\npinterest\nquora\nslackbot\nslurp\ntweetmemebot\ntwitterbot\nuptimerobot";
 		$whitelist .= "\nurlresolver\nvkshare\nw3c_validator\nwordpress\nwp rocket\nyandex";
+		$message    = esc_html__( 'You have been blocked from accessing this website.', 'defender-security' );
 
 		return array(
-			'message'   => esc_html__( 'You have been blocked from accessing this website.', 'defender-security' ),
-			'whitelist' => $whitelist,
+			'message'                 => $message,
+			'bot_trap_message'        => $message,
+			'whitelist'               => $whitelist,
 			// Blocked User Agents.
-			'blacklist' => "MJ12Bot\nDotBot",
+			'blacklist'               => '',
+			'blocklist_presets'       => true,
+			'blocklist_preset_values' => array( 'mj12bot', 'dotbot' ),
+			'script_presets'          => false,
+			'script_preset_values'    => array(),
 		);
 	}
 
@@ -100,10 +192,15 @@ class User_Agent_Lockout extends Setting {
 	 * @return void
 	 */
 	protected function before_load(): void {
-		$default_values  = $this->get_default_values();
-		$this->message   = $default_values['message'];
-		$this->whitelist = $default_values['whitelist'];
-		$this->blacklist = $default_values['blacklist'];
+		$default_values                = $this->get_default_values();
+		$this->message                 = $default_values['message'];
+		$this->whitelist               = $default_values['whitelist'];
+		$this->blacklist               = $default_values['blacklist'];
+		$this->blocklist_presets       = $default_values['blocklist_presets'];
+		$this->blocklist_preset_values = $default_values['blocklist_preset_values'];
+		$this->script_presets          = $default_values['script_presets'];
+		$this->script_preset_values    = $default_values['script_preset_values'];
+		$this->bot_trap_message        = $default_values['bot_trap_message'];
 	}
 
 	/**
@@ -160,25 +257,31 @@ class User_Agent_Lockout extends Setting {
 	 * @return array
 	 */
 	public function get_access_status( $ua ): array {
-		$blocklist = str_replace( '#', '\#', $this->get_lockout_list( 'blocklist' ) );
+		$blocklist = str_replace( '#', '\#', $this->get_all_selected_blocklist_ua() );
 		$allowlist = str_replace( '#', '\#', $this->get_lockout_list( 'allowlist' ) );
 
-		$blocklist_regex_pattern = '#' . implode( '|', $blocklist ) . '#i';
-		$allowlist_regex_pattern = '#' . implode( '|', $allowlist ) . '#i';
+		// Escape regex special characters in each item before building the pattern.
+		$blocklist_escaped = array_map( 'preg_quote', $blocklist, array_fill( 0, count( $blocklist ), '#' ) );
+		$allowlist_escaped = array_map( 'preg_quote', $allowlist, array_fill( 0, count( $allowlist ), '#' ) );
+
+		$blocklist_regex_pattern = '#' . implode( '|', $blocklist_escaped ) . '#i';
+		$allowlist_regex_pattern = '#' . implode( '|', $allowlist_escaped ) . '#i';
 
 		$blocklist_match = preg_match( $blocklist_regex_pattern, $ua );
 		$allowlist_match = preg_match( $allowlist_regex_pattern, $ua );
 
 		if ( empty( $blocklist_match ) && empty( $allowlist_match ) ) {
-
 			return array( 'na' );
 		}
 
 		$result = array();
 
-		if ( ! empty( $blocklist_match ) && empty( $allowlist_match ) ) {
+		// Check blocklist first - if it matches, add 'banned'.
+		if ( ! empty( $blocklist_match ) ) {
 			$result[] = 'banned';
 		}
+
+		// Check allowlist - if it matches, add 'allowlist'.
 		if ( ! empty( $allowlist_match ) ) {
 			$result[] = 'allowlist';
 		}
@@ -195,9 +298,15 @@ class User_Agent_Lockout extends Setting {
 	 * @return bool Returns true if the user agent is in the list, false otherwise.
 	 */
 	public function is_ua_in_list( $ua, $collection ): bool {
-		$arr = str_replace( '#', '\#', $this->get_lockout_list( $collection ) );
+		if ( 'allowlist' === $collection ) {
+			$arr = str_replace( '#', '\#', $this->get_lockout_list( $collection ) );
+		} else {
+			$arr = str_replace( '#', '\#', $this->get_all_selected_blocklist_ua() );
+		}
 
-		$list_regex_pattern = '#' . implode( '|', $arr ) . '#i';
+		// Escape regex special characters in each item before building the pattern.
+		$arr_escaped        = array_map( 'preg_quote', $arr, array_fill( 0, count( $arr ), '#' ) );
+		$list_regex_pattern = '#' . implode( '|', $arr_escaped ) . '#i';
 
 		$list_match = preg_match( $list_regex_pattern, $ua );
 
@@ -207,44 +316,66 @@ class User_Agent_Lockout extends Setting {
 	/**
 	 * Remove User Agent from a list.
 	 *
-	 * @param string $ua   The user agent to remove.
+	 * @param string $ua The user agent to remove.
 	 * @param string $collection blocklist|allowlist.
 	 *
 	 * @return void
 	 */
 	public function remove_from_list( $ua, $collection ) {
-		$arr = $this->get_lockout_list( $collection );
-		// Array can contain uppercase.
-		$orig_arr = str_replace( '#', '\#', $this->get_lockout_list( $collection, false ) );
+		if ( 'allowlist' === $collection ) {
+			$arr = $this->get_lockout_list( $collection );
+			// Array can contain uppercase.
+			$orig_arr = str_replace( '#', '\#', $this->get_lockout_list( $collection, false ) );
+		} else {
+			$arr = $this->get_all_selected_blocklist_ua();
+			// Array can contain uppercase.
+			$orig_arr = str_replace( '#', '\#', $this->get_all_selected_blocklist_ua( false ) );
+		}
 
 		$list_regex_pattern = '#' . implode( '|', $arr ) . '#i';
-
-		$list_match = preg_match( $list_regex_pattern, $ua );
-
+		$list_match         = preg_match( $list_regex_pattern, $ua );
 		if ( false !== $list_match ) {
-
-			// Plain string match. For e.g. r.n regex matches ran & run but we can add/block UA string name if user send the useragent name as run then we include that in allowlist so run won't be blocked but ran will be blocked.
-			$key = array_search( $ua, $arr, true );
-
-			if ( false !== $key && isset( $orig_arr[ $key ] ) ) {
-				unset( $orig_arr[ $key ] );
-				$is_string_match = true;
-			} else {
-				// If plain string not matched then add the user agent in opposite list if unban is clicked then add that string to allow list, else if ban user agent clicked then add that string to blocklist though allow list take higher priority i.e. in allow list r.n present then adding r.n or run or ran in blocklist won't block the user agent because of priority.
-				$is_string_match = false;
-			}
-
 			if ( 'blocklist' === $collection ) {
-				$this->blacklist = implode( PHP_EOL, $orig_arr );
+				// Check in 'Blocklist Presets'.
+				if ( $this->blocklist_presets ) {
+					$key = array_search( $ua, $this->blocklist_preset_values, true );
+					if ( false !== $key ) {
+						unset( $this->blocklist_preset_values[ $key ] );
+						$this->blocklist_preset_values = array_values( $this->blocklist_preset_values );
+					}
+				}
+				// Check in 'Script Presets' using Regex.
+				if ( $this->script_presets ) {
+					if ( false !== strpos( $ua, User_Agent_Service::GO_HTTP_CLIENT_KEY . '/' ) ) {
+						$key_script_preset = User_Agent_Service::GO_HTTP_CLIENT_KEY;
+					} elseif ( false !== strpos( $ua, User_Agent_Service::PYTHON_REQUESTS_KEY . '/' ) ) {
+						$key_script_preset = User_Agent_Service::PYTHON_REQUESTS_KEY;
+					} else {
+						$key_script_preset = '';
+					}
 
-				if ( false === $is_string_match ) {
-					$this->whitelist = $this->push_ua_to_list( $ua, 'allowlist' );
+					$key = array_search( $key_script_preset, $this->script_preset_values, true );
+					if ( false !== $key ) {
+						unset( $this->script_preset_values[ $key ] );
+						$this->script_preset_values = array_values( $this->script_preset_values );
+					}
+				}
+				// Check 'Custom User Agents' case.
+				$arr_blocklist = $this->get_lockout_list( 'blocklist', false );
+				if ( ! empty( $arr_blocklist ) ) {
+					$key = array_search( $ua, $arr_blocklist, true );
+					if ( false !== $key && isset( $arr_blocklist[ $key ] ) ) {
+						unset( $arr_blocklist[ $key ] );
+						// Convert back to string.
+						$this->blacklist = implode( PHP_EOL, $arr_blocklist );
+					}
 				}
 			} elseif ( 'allowlist' === $collection ) {
-				$this->whitelist = implode( PHP_EOL, $orig_arr );
-
-				if ( false === $is_string_match ) {
-					$this->blacklist = $this->push_ua_to_list( $ua, 'blocklist' );
+				$key = array_search( $ua, $arr, true );
+				if ( false !== $key && isset( $arr[ $key ] ) ) {
+					unset( $arr[ $key ] );
+					// Convert back to string.
+					$this->whitelist = implode( PHP_EOL, $arr );
 				}
 			}
 
@@ -262,7 +393,15 @@ class User_Agent_Lockout extends Setting {
 	 */
 	public function add_to_list( $ua, $collection ) {
 		if ( 'blocklist' === $collection ) {
-			$this->blacklist = $this->push_ua_to_list( $ua, $collection );
+			if ( User_Agent_Service::is_blocklist_presets( $ua ) ) {
+				$this->blocklist_presets         = true;
+				$this->blocklist_preset_values[] = $ua;
+			} elseif ( User_Agent_Service::is_script_presets( $ua ) ) {
+				$this->script_presets         = true;
+				$this->script_preset_values[] = $ua;
+			} else {
+				$this->blacklist = $this->push_ua_to_list( $ua, $collection );
+			}
 		} elseif ( 'allowlist' === $collection ) {
 			$this->whitelist = $this->push_ua_to_list( $ua, $collection );
 		}
@@ -271,7 +410,7 @@ class User_Agent_Lockout extends Setting {
 	}
 
 	/**
-	 * Push the UA to either blocklist or allowlist
+	 * Push the UA to either blocklist (only in 'Custom User Agents') or allowlist
 	 *
 	 * @param string $ua   User agent name.
 	 * @param string $collection List type i.e. blocklist or allowlist.
@@ -304,5 +443,20 @@ class User_Agent_Lockout extends Setting {
 	 */
 	public static function get_module_state( $flag ): string {
 		return $flag ? esc_html__( 'active', 'defender-security' ) : esc_html__( 'inactive', 'defender-security' );
+	}
+
+	/**
+	 * Get the list of all selected blocklisted UA values.
+	 *
+	 * @param bool $lower Whether to convert the list to lowercase.
+	 *
+	 * @return array
+	 */
+	public function get_all_selected_blocklist_ua( $lower = true ): array {
+		$blocklist_custom  = $this->get_lockout_list( 'blocklist', $lower );
+		$blocklist_presets = $this->blocklist_presets ? $this->blocklist_preset_values : array();
+		$script_presets    = $this->script_presets ? $this->script_preset_values : array();
+
+		return array_merge( $blocklist_custom, $blocklist_presets, $script_presets );
 	}
 }

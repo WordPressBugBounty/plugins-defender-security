@@ -336,4 +336,25 @@ trait IO {
 		update_site_option( $last_run_key, time() );
 		delete_site_option( $lock_key );
 	}
+
+	/**
+	 * Detect the line ending style used in a given text.
+	 *
+	 * @param string $text The text to analyze.
+	 *
+	 * @return string The detected line ending style: "\r\n" for Windows, "\n" for Unix, or "\r" for Classic Mac.
+	 */
+	public function detect_line_ending( string $text ): string {
+		$count_crlf = substr_count( $text, "\r\n" );
+		$count_lf   = substr_count( $text, "\n" ) - $count_crlf;
+		$count_cr   = substr_count( $text, "\r" ) - $count_crlf;
+
+		if ( $count_crlf >= $count_lf && $count_crlf >= $count_cr ) {
+			return "\r\n"; // Windows-style.
+		} elseif ( $count_lf >= $count_cr ) {
+			return "\n";   // Unix-style.
+		} else {
+			return "\r";   // Classic Mac (rare).
+		}
+	}
 }

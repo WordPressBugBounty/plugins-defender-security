@@ -649,7 +649,6 @@ class Notification extends Event {
 			'notification',
 			array_merge( $this->data_frontend(), $this->dump_routes_and_nonces() )
 		);
-		wp_enqueue_script( 'def-momentjs', defender_asset_url( '/assets/js/vendor/moment/moment.min.js' ), array(), DEFENDER_VERSION, true );
 		wp_enqueue_script( 'def-notification' );
 		$this->enqueue_main_assets();
 		wp_enqueue_style(

@@ -90,22 +90,92 @@ class UA_Lockout extends Event {
 	 * @throws Exception  If the table is not defined.
 	 */
 	public function save_settings( Request $request ) {
-		$data        = $request->get_data_by_model( $this->model );
-		$old_enabled = (bool) $this->model->enabled;
-		$prev_data   = $this->model->export();
+		$data                 = $request->get_data_by_model( $this->model );
+		$old_enabled          = (bool) $this->model->enabled;
+		$old_bot_trap_enabled = (bool) $this->model->bot_trap_enabled;
+		$prev_data            = $this->model->export();
 
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
+			$arr_blocklist = $this->model->get_lockout_list( 'blocklist' );
+			if ( ! empty( $arr_blocklist ) ) {
+				// Update 'Custom User Agents' if 'Blocklist Presets' is enabled.
+				if ( $data['blocklist_presets'] && ! empty( $data['blocklist_preset_values'] ) ) {
+					// Check and remove duplicates.
+					$common_result = array_intersect( $arr_blocklist, $data['blocklist_preset_values'] );
+					if ( ! empty( $common_result ) ) {
+						$arr_blocklist          = User_Agent_Service::check_and_remove_duplicates(
+							$arr_blocklist,
+							$common_result
+						);
+						$this->model->blacklist = implode( PHP_EOL, $arr_blocklist );
+					}
+				}
+				// Update 'Custom User Agents' if 'Scripts Presets' is enabled.
+				if ( $data['script_presets'] && ! empty( $data['script_preset_values'] ) ) {
+					// Check and remove duplicates.
+					$common_result = array_intersect( $arr_blocklist, $data['script_preset_values'] );
+					if ( ! empty( $common_result ) ) {
+						$arr_blocklist          = User_Agent_Service::check_and_remove_duplicates(
+							$arr_blocklist,
+							$common_result
+						);
+						$this->model->blacklist = implode( PHP_EOL, $arr_blocklist );
+					}
+				}
+			}
+
 			$this->model->save();
 			Config_Hub_Helper::set_clear_active_flag();
+
+			if (
+				( ! $this->model->enabled && $old_enabled ) ||
+				( ! $this->model->bot_trap_enabled && $old_bot_trap_enabled )
+			) {
+				wd_di()->get( Bot_Trap::class )->remove_data();
+			} elseif (
+				( $this->model->enabled && ! $old_enabled && $this->model->bot_trap_enabled ) ||
+				( $this->model->bot_trap_enabled && ! $old_bot_trap_enabled && $this->model->enabled )
+			) {
+				wd_di()->get( Bot_Trap::class )->rotate_hash();
+			}
+
 			// Maybe track.
-			if ( ! defender_is_wp_cli() && $this->is_feature_state_changed( $prev_data, $data ) ) {
-				$track_data = array(
-					'Action'                      => $data['enabled'] ? 'Enabled' : 'Disabled',
-					'No of Bots in the Whitelist' => count( $this->model->get_lockout_list( 'allowlist', false ) ),
-					'No of Bots in the Blocklist' => count( $this->model->get_lockout_list( 'blocklist', false ) ),
-				);
-				$this->track_feature( 'def_user_agent_banning', $track_data );
+			if ( ! defender_is_wp_cli() ) {
+				if ( $this->is_feature_state_changed( $prev_data, $data ) ) {
+					$track_data = array(
+						'Action'                      => $data['enabled'] ? 'Enabled' : 'Disabled',
+						'No of Bots in the Whitelist' => count( $this->model->get_lockout_list( 'allowlist', false ) ),
+						'No of Bots in the Blocklist' => count( $this->model->get_lockout_list( 'blocklist', false ) ),
+					);
+					$this->track_feature( 'def_user_agent_banning', $track_data );
+				}
+				// New one for 'Blocklist Presets'.
+				if (
+					( $prev_data['blocklist_presets'] !== $data['blocklist_presets'] ) ||
+					( count( $prev_data['blocklist_preset_values'] ) !==
+						count( array_intersect( $prev_data['blocklist_preset_values'], $data['blocklist_preset_values'] ) )
+					)
+				) {
+					$track_data = array(
+						'Action'                 => $data['blocklist_presets'] ? 'Enabled' : 'Disabled',
+						'List of Activated Bots' => implode( ', ', $data['blocklist_preset_values'] ),
+					);
+					$this->track_feature( 'def_ua_blocklist_preset', $track_data );
+				}
+				// New one for 'Script Presets'.
+				if (
+					( $prev_data['script_presets'] !== $data['script_presets'] ) ||
+					( count( $prev_data['script_preset_values'] ) !==
+						count( array_intersect( $prev_data['script_preset_values'], $data['script_preset_values'] ) )
+					)
+				) {
+					$track_data = array(
+						'Action'                    => $data['script_presets'] ? 'Enabled' : 'Disabled',
+						'List of Activated Scripts' => implode( ', ', $data['script_preset_values'] ),
+					);
+					$this->track_feature( 'def_ua_scripts_preset', $track_data );
+				}
 			}
 
 			return new Response(
@@ -163,9 +233,10 @@ class UA_Lockout extends Event {
 			array(
 				'model' => $arr_model,
 				'misc'  => array(
-					'no_ua'        => '' === $arr_model['blacklist'] && '' === $arr_model['whitelist'],
-					'module_name'  => User_Agent_Lockout::get_module_name(),
-					'spam_ua_list' => User_Agent_Service::get_spam_user_agent_list(),
+					'no_ua'             => '' === $arr_model['blacklist'] && '' === $arr_model['whitelist'],
+					'module_name'       => User_Agent_Lockout::get_module_name(),
+					'blocklist_presets' => User_Agent_Service::get_blocklist_presets(),
+					'script_presets'    => User_Agent_Service::get_script_presets(),
 				),
 			),
 			$this->dump_routes_and_nonces()

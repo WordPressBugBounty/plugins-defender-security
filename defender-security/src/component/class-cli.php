@@ -20,7 +20,6 @@ use WP_Defender\Model\Audit_Log;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Model\Lockout_Ip;
 use WP_Defender\Model\Lockout_Log;
-use WP_Defender\Controller\Tutorial;
 use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Two_Factor;
 use WP_Defender\Model\Scan as Model_Scan;
@@ -578,7 +577,6 @@ class Cli {
 
 				wd_di()->get( \WP_Defender\Controller\Mask_Login::class )->remove_settings();
 				wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_settings();
-				wd_di()->get( Tutorial::class )->remove_settings();
 				wd_di()->get( Two_Factor::class )->remove_settings();
 				wd_di()->get( Blocklist_Monitor::class )->remove_settings();
 				wd_di()->get( Main_Setting::class )->remove_settings();

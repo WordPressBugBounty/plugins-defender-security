@@ -18,7 +18,6 @@ use WP_Defender\Controller\Scan;
 use WP_Defender\Component\Crypt;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Controller\Onboard;
-use WP_Defender\Controller\Tutorial;
 use WP_Defender\Controller\Webauthn;
 use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Recaptcha;
@@ -189,6 +188,7 @@ trait Defender_Bootstrap {
 		wp_clear_scheduled_hook( 'wpdef_smart_ip_detection_ping' );
 		wp_clear_scheduled_hook( 'wpdef_confirm_antibot_toggle_on_hosting' );
 		wp_clear_scheduled_hook( 'wpdef_firewall_whitelist_server_public_ip' );
+		wp_clear_scheduled_hook( 'wpdef_rotate_bot_trap_secret_hash' );
 
 		// Remove old legacy cron jobs if they exist.
 		wp_clear_scheduled_hook( 'lockoutReportCron' );
@@ -406,7 +406,6 @@ SQL;
 		wd_di()->get( Recaptcha::class );
 		wd_di()->get( Notification::class );
 		wd_di()->get( Main_Setting::class );
-		wd_di()->get( Tutorial::class );
 		wd_di()->get( Blocklist_Monitor::class );
 		wd_di()->get( Password_Protection::class );
 		wd_di()->get( Password_Reset::class );
@@ -462,7 +461,7 @@ SQL;
 	 */
 	private function register_scripts(): void {
 		$base_url     = WP_DEFENDER_BASE_URL;
-		$dependencies = array( 'def-vue', 'defender', 'wp-i18n' );
+		$dependencies = array( 'def-vue', 'def-manifest', 'defender', 'wp-i18n' );
 		$js_files     = array(
 			'wpmudev-sui'         => array(
 				$base_url . 'assets/js/shared-ui.js',
@@ -471,7 +470,10 @@ SQL;
 				$base_url . 'assets/js/scripts.js',
 			),
 			'def-vue'             => array(
-				$base_url . 'assets/js/vendor/vue.runtime.min.js',
+				$base_url . 'assets/app/vendor.js',
+			),
+			'def-manifest'        => array(
+				$base_url . 'assets/app/manifest.js',
 			),
 			'def-dashboard'       => array(
 				$base_url . 'assets/app/dashboard.js',
@@ -515,10 +517,6 @@ SQL;
 			),
 			'def-onboard'         => array(
 				$base_url . 'assets/app/onboard.js',
-				$dependencies,
-			),
-			'def-tutorial'        => array(
-				$base_url . 'assets/app/tutorial.js',
 				$dependencies,
 			),
 			'def-expert-services' => array(
@@ -576,6 +574,7 @@ SQL;
 				'upgrade_title'               => esc_html__( 'UPGRADE TO PRO', 'defender-security' ),
 				'tracking_modal'              => $is_tracking ? 'show' : 'hide',
 				'hosted'                      => $wpmu_dev->is_wpmu_hosting(),
+				'file_upload_nonce'           => wp_create_nonce( 'defender_file_upload' ),
 			)
 		);
 

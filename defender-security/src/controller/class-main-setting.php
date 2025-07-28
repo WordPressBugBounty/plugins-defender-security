@@ -184,7 +184,6 @@ class Main_Setting extends Event {
 
 		wd_di()->get( Mask_Login::class )->remove_settings();
 		wd_di()->get( Notification::class )->remove_settings();
-		wd_di()->get( Tutorial::class )->remove_settings();
 		wd_di()->get( Two_Factor::class )->remove_settings();
 		wd_di()->get( Blocklist_Monitor::class )->remove_settings();
 		$this->set_intention( 'Data Reset' );
@@ -627,7 +626,7 @@ class Main_Setting extends Event {
 		$data        = $request->get_data();
 		$key         = trim( $data['key'] );
 		$name        = trim( $data['name'] );
-		$description = trim( $data['description'] );
+		$description = trim( $data['desc'] );
 		if ( empty( $name ) || empty( $key ) ) {
 			return new Response(
 				false,

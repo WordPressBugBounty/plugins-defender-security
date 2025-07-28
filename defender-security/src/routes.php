@@ -117,9 +117,6 @@ function defender_init_routes() {
 			'skip'             => 'skip',
 			'antibot_reminder' => 'antibot_reminder',
 		),
-		'tutorial'          => array(
-			'hide' => 'hide',
-		),
 		'blocklist_monitor' => array(
 			'blacklist_status'        => 'blacklist_status',
 			'toggle_blacklist_status' => 'toggle_blacklist_status',

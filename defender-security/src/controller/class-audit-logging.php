@@ -322,15 +322,6 @@ class Audit_Logging extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-
-		wp_enqueue_script( 'def-moment', defender_asset_url( '/assets/js/vendor/moment/moment.min.js' ), array(), DEFENDER_VERSION, true );
-		wp_enqueue_script(
-			'def-daterangepicker',
-			defender_asset_url( '/assets/js/vendor/daterangepicker/daterangepicker.js' ),
-			array(),
-			DEFENDER_VERSION,
-			true
-		);
 		wp_localize_script(
 			'def-audit',
 			'audit',

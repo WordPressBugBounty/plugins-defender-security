@@ -66,6 +66,7 @@ class Table_Lockout extends Component {
 			Lockout_Log::ERROR_404         => esc_html__( '404 error', 'defender-security' ),
 			Lockout_Log::LOCKOUT_404       => esc_html__( '404 lockout', 'defender-security' ),
 			Lockout_Log::LOCKOUT_UA        => esc_html__( 'User Agent Lockout', 'defender-security' ),
+			Lockout_Log::LOCKOUT_BOT_TRAP  => esc_html__( 'Bot Trap Lockout', 'defender-security' ),
 			// New IP Lockout type since 5.3.0.
 			Lockout_Log::LOCKOUT_IP_CUSTOM => esc_html__( 'Custom IP Lockout', 'defender-security' ),
 			Lockout_Log::IP_UNLOCK         => esc_html__( 'IP Unlock', 'defender-security' ),

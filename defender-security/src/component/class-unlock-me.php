@@ -168,7 +168,7 @@ class Unlock_Me extends Component {
 		}
 		$model->type = \WP_Defender\Model\Lockout_Log::IP_UNLOCK;
 		/* translators: %s: IP address */
-		$model->log = sprintf( esc_html__( '%s was unlocked via "Unlock Me (Email)"', 'defender-security' ), $first_ip );
+		$model->log = sprintf( __( '%s was unlocked via "Unlock Me (Email)"', 'defender-security' ), $first_ip );
 		$model->save();
 		// Redirect.
 		wp_safe_redirect( Mask_Login::maybe_masked_login_url() );

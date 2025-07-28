@@ -46,6 +46,7 @@ use WP_Defender\Component\Two_Factor\Providers\Fallback_Email;
 use WP_Defender\Helper\Analytics\Firewall as Firewall_Analytics;
 use WP_Defender\Model\Setting\Blacklist_Lockout as Model_Blacklist_Lockout;
 use WP_Defender\Model\Setting\Firewall as Model_Firewall;
+use WP_Defender\Component\User_Agent as User_Agent_Service;
 use function WP_Filesystem;
 
 /**
@@ -416,6 +417,9 @@ class Upgrader {
 		}
 		if ( version_compare( $db_version, '5.3.1', '<' ) ) {
 			$this->upgrade_5_3_1();
+		}
+		if ( version_compare( $db_version, '5.4.0', '<' ) ) {
+			$this->upgrade_5_4_0();
 		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
@@ -1791,5 +1795,58 @@ To complete your login, copy and paste the temporary password into the Password 
 	 */
 	private function upgrade_5_3_1(): void {
 		delete_site_transient( \WP_Defender\Component\IP\Antibot_Global_Firewall::BLOCKLIST_STATS_KEY );
+	}
+
+	/**
+	 * Improve UA Blocklist.
+	 *
+	 * @return void
+	 */
+	private function improve_ua_blocklist(): void {
+		$settings         = wd_di()->get( User_Agent_Lockout::class );
+		$blocklist_custom = $settings->get_lockout_list( 'blocklist' );
+		if ( empty( $blocklist_custom ) ) {
+			return;
+		}
+		// Get 'Blocklist Presets', check and remove duplicates on 'Custom User Agents'.
+		$blocklist_presets = User_Agent_Service::get_nested_keys_of_blocklist_presets();
+		$common_result     = array_intersect( $blocklist_custom, $blocklist_presets );
+		if ( ! empty( $common_result ) ) {
+			$blocklist_custom = User_Agent_Service::check_and_remove_duplicates(
+				$blocklist_custom,
+				$common_result
+			);
+			// Convert back to string.
+			$settings->blacklist = implode( PHP_EOL, $blocklist_custom );
+			// Enable option with nested suboptions.
+			$settings->blocklist_presets       = true;
+			$settings->blocklist_preset_values = $common_result;
+		}
+		// The same, but for 'Script Presets'.
+		$script_presets = array_keys( User_Agent_Service::get_script_presets() );
+		$common_result  = array_intersect( $blocklist_custom, $script_presets );
+		if ( ! empty( $common_result ) ) {
+			$blocklist_custom = User_Agent_Service::check_and_remove_duplicates(
+				$blocklist_custom,
+				$common_result
+			);
+			// Convert back to string.
+			$settings->blacklist = implode( PHP_EOL, $blocklist_custom );
+			// Enable option with nested suboptions.
+			$settings->script_presets       = true;
+			$settings->script_preset_values = $common_result;
+		}
+		$settings->save();
+	}
+
+	/**
+	 * Upgrade to 5.4.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_4_0(): void {
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+
+		$this->improve_ua_blocklist();
 	}
 }

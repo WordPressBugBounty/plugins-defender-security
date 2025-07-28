@@ -28,6 +28,7 @@ class Lockout_Log extends DB {
 	public const ERROR_404        = '404_error';
 	public const LOCKOUT_404      = '404_lockout';
 	public const ERROR_404_IGNORE = '404_error_ignore';
+	public const LOCKOUT_BOT_TRAP = 'bot_trap';
 
 	public const LOCKOUT_UA = 'ua_lockout';
 	// Different IP Lockout types.
@@ -160,12 +161,7 @@ class Lockout_Log extends DB {
 		if ( ! empty( $order_by ) && ! empty( $order ) ) {
 			$orm->order_by( $order_by, $order );
 		}
-
-		if ( - 1 === (int) $page_size ) {
-			$page_size = self::INFINITE_SCROLL_SIZE;
-		}
-
-		if ( false !== $page_size ) {
+		if ( false !== $page_size && -1 !== (int) $page_size ) {
 			$offset = ( $paged - 1 ) * $page_size;
 			$orm->limit( "$offset,$page_size" );
 		}
@@ -451,7 +447,6 @@ class Lockout_Log extends DB {
 		return $tag;
 	}
 
-
 	/**
 	 * Returns the CSS class for the log container based on the given type.
 	 *
@@ -464,6 +459,7 @@ class Lockout_Log extends DB {
 			case self::AUTH_LOCK:
 			case self::LOCKOUT_404:
 			case self::LOCKOUT_UA:
+			case self::LOCKOUT_BOT_TRAP:
 				$class = 'sui-error';
 				break;
 			case self::AUTH_FAIL:
@@ -629,6 +625,10 @@ class Lockout_Log extends DB {
 				$log['type_label']  = esc_html__( 'Type', 'defender-security' );
 				$log['type_value']  = str_replace( '_', ' ', $item->type );
 				$arr_statuses       = $arr_ip_statuses;
+
+				if ( 'bot_trap' === $item->type ) {
+					$log['access_status_ua'] = $ua_model->get_access_status( $item->user_agent );
+				}
 			}
 			// There may be several statuses.
 			$log['access_status']      = $arr_statuses;
@@ -653,10 +653,10 @@ class Lockout_Log extends DB {
 		$orm = self::get_orm();
 		// Query the latest log for the current IP.
 		$latest_log = $orm->get_repository( self::class )
-                      ->select( 'date' )
-                      ->where( 'ip', $this->ip )
-                      ->order_by( 'date', 'desc' )
-                      ->first();
+					->select( 'date' )
+					->where( 'ip', $this->ip )
+					->order_by( 'date', 'desc' )
+					->first();
 
 		if ( $latest_log ) {
 			// Return true if the log is within the 5-minute timeframe.

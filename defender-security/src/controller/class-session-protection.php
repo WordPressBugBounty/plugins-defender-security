@@ -169,6 +169,12 @@ class Session_Protection extends Event {
 	 * @return null|void
 	 */
 	public function import_data( array $data ) {
+		$this->model->import( $data );
+		if ( $this->model->validate() ) {
+			$this->model->save();
+			$this->service->update_last_activity();
+			return;
+		}
 	}
 
 	/**
@@ -193,7 +199,9 @@ class Session_Protection extends Event {
 	 * @return array
 	 */
 	public function export_strings() {
-		return array();
+		return array(
+			$this->model->is_active() ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
+		);
 	}
 
 	/**

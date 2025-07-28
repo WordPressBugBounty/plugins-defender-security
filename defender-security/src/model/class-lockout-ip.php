@@ -66,12 +66,14 @@ class Lockout_Ip extends DB {
 	 * Table column for lock time.
 	 *
 	 * @since 3.7.0 Used as timestamp for Login/404 lockouts.
+	 * @since 5.4.0 Used as timestamp for Bot Trap lockouts too.
+	 *
 	 * @var int
 	 * @defender_property
 	 */
 	public $lock_time;
 	/**
-	 * Todo: need to use this column less. The lock_time column is used for both lockouts.
+	 * Todo: need to use this column less. The lock_time column is used for Login/404/Bot Trap lockouts.
 	 *
 	 * @var int
 	 * @defender_property

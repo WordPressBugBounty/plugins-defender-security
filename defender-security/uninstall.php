@@ -75,7 +75,6 @@ if ( $uninstall_settings ) {
 	// Start of Firewall parent and submodules.
 	wd_di()->get( \WP_Defender\Controller\Firewall::class )->remove_settings();
 	// End.
-	wd_di()->get( \WP_Defender\Controller\Tutorial::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Two_Factor::class )->remove_settings();
 	wd_di()->get( \WP_Defender\Controller\Blocklist_Monitor::class )->remove_settings();
@@ -105,7 +104,6 @@ if ( $uninstall_data ) {
 	wd_di()->get( \WP_Defender\Controller\Firewall::class )->remove_data();
 	// End.
 	wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_data();
-	wd_di()->get( \WP_Defender\Controller\Tutorial::class )->remove_data();
 	wd_di()->get( \WP_Defender\Controller\Two_Factor::class )->remove_data();
 	wd_di()->get( \WP_Defender\Component\Backup_Settings::class )->clear_configs();
 	// Remove all data of Advanced Tools.

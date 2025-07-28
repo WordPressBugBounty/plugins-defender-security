@@ -57,6 +57,8 @@ class Strong_Password extends Event {
 			) {
 				add_filter( 'network_site_url', array( $this->helper, 'filter_site_url' ), 100, 2 );
 			}
+			remove_action( 'user_profile_update_errors', 'slt_fsp_validate_profile_update', 0 );
+			remove_action( 'resetpass_form', 'slt_fsp_validate_resetpass_form', 10 );
 			if ( is_admin() ) {
 				add_action( 'admin_enqueue_scripts', array( $this->service, 'scripts' ) );
 				add_action( 'user_profile_update_errors', array( $this->service, 'on_profile_update' ), 100, 3 );
@@ -178,6 +180,10 @@ class Strong_Password extends Event {
 	 * @return null|void
 	 */
 	public function import_data( array $data ) {
+		$this->model->import( $data );
+		if ( $this->model->validate() ) {
+			$this->model->save();
+		}
 	}
 
 	/**
@@ -200,8 +206,10 @@ class Strong_Password extends Event {
 	 *
 	 * @return array
 	 */
-	public function export_strings() {
-		return array();
+	public function export_strings(): array {
+		return array(
+			$this->model->is_active() ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
+		);
 	}
 
 	/**
