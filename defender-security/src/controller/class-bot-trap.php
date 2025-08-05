@@ -8,6 +8,7 @@
 namespace WP_Defender\Controller;
 
 use WP_Defender\Controller;
+use WP_Defender\Component\Blacklist_Lockout;
 use WP_Defender\Component\Bot_Trap as Bot_Trap_Component;
 use WP_Defender\Component\Known_Bots\Known_Bots_Factory;
 use WP_Defender\Model\Lockout_Ip;
@@ -40,11 +41,16 @@ class Bot_Trap extends Controller {
 
 		if ( $this->service->is_enabled() ) {
 			add_action( 'init', array( $this, 'init' ) );
-			add_action( 'wp_footer', array( $this, 'inject_footer' ) );
 			add_action( 'wpdef_rotate_bot_trap_secret_hash', array( $this, 'rotate_hash' ) );
-			add_action( 'template_redirect', array( $this, 'handle_hash_url' ) );
 			add_filter( 'query_vars', array( $this, 'add_query_var' ) );
 			add_action( 'after_switch_theme', array( $this, 'flush_rewrite' ) );
+
+			$service = wd_di()->get( Blacklist_Lockout::class );
+			$ip      = $this->get_user_ip();
+			if ( ! $service->are_ips_whitelisted( $ip ) ) {
+				add_action( 'wp_footer', array( $this, 'inject_footer' ) );
+				add_action( 'template_redirect', array( $this, 'handle_hash_url' ) );
+			}
 		}
 	}
 
