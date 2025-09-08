@@ -281,7 +281,7 @@ class Core_Audit extends Audit_Event {
 		if ( 'theme' === $options['type'] ) {
 			$theme = wp_get_theme( $options['theme'] );
 			if ( is_object( $theme ) ) {
-				$name    = $theme->Name; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+				$name    = $theme->get( 'Name' );
 				$version = $theme->get( 'Version' );
 
 				return array(

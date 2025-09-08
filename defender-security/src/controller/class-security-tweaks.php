@@ -1104,12 +1104,10 @@ class Security_Tweaks extends Event {
 	/**
 	 * Handle tweaks rating notice.
 	 *
-	 * @param  Request $request  Request.
-	 *
 	 * @return Response
 	 * @defender_route
 	 */
-	public function handle_notice( Request $request ): Response {
+	public function handle_notice(): Response {
 		update_site_option( Rate::SLUG_FOR_BUTTON_RATE, true );
 
 		return new Response( true, array() );
@@ -1118,12 +1116,10 @@ class Security_Tweaks extends Event {
 	/**
 	 * Attention: Tweaks rating notice doesn't have postpone_notice route.
 	 *
-	 * @param  Request $request  Request object.
-	 *
 	 * @defender_route
 	 * @return Response
 	 */
-	public function refuse_notice( Request $request ): Response {
+	public function refuse_notice(): Response {
 		update_site_option( Rate::SLUG_FOR_BUTTON_THANKS, true );
 
 		return new Response( true, array() );

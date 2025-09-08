@@ -38,6 +38,7 @@ use WP_Defender\Controller\Security_Headers;
 use WP_Defender\Controller\Blocklist_Monitor;
 use WP_Defender\Controller\Session_Protection;
 use WP_Defender\Controller\Password_Protection;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Component\Logger\Rotation_Logger;
 use WP_Defender\Component\Firewall as Firewall_Component;
 use WP_Defender\Controller\Firewall as Firewall_Controller;
@@ -45,13 +46,13 @@ use WP_Defender\Controller\Hub_Connector as Hub_Connector_Controller;
 use WP_Defender\Model\Onboard as Onboard_Model;
 
 trait Defender_Bootstrap {
-
 	/**
 	 * Table name for quarantine.
 	 *
 	 * @var string
 	 */
 	private $quarantine_table = 'defender_quarantine';
+
 	/**
 	 * Table name for scan item.
 	 *
@@ -72,7 +73,7 @@ trait Defender_Bootstrap {
 
 		return $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
-				"SELECT COUNT(`ENGINE`) = %d FROM   information_schema.TABLES WHERE TABLE_SCHEMA = %s AND `ENGINE` = %s AND TABLE_NAME IN ( '{$wpdb->users}', '{$wpdb->base_prefix}defender_scan_item' );",
+				"SELECT COUNT(`ENGINE`) = %d FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND `ENGINE` = %s AND TABLE_NAME IN ( '{$wpdb->users}', '{$wpdb->base_prefix}defender_scan_item' );",
 				$total_table,
 				$wpdb->dbname,
 				'innodb',
@@ -419,6 +420,10 @@ SQL;
 			wd_di()->get( Quarantine::class );
 		}
 		wd_di()->get( Data_Tracking::class );
+
+		if ( is_multisite() ) {
+			wd_di()->get( Network_Cron_Manager::class );
+		}
 	}
 
 	/**
@@ -470,10 +475,10 @@ SQL;
 				$base_url . 'assets/js/scripts.js',
 			),
 			'def-vue'             => array(
-				$base_url . 'assets/app/vendor.js',
+				$base_url . 'assets/js/vendor.js',
 			),
 			'def-manifest'        => array(
-				$base_url . 'assets/app/manifest.js',
+				$base_url . 'assets/js/manifest.js',
 			),
 			'def-dashboard'       => array(
 				$base_url . 'assets/app/dashboard.js',
@@ -575,6 +580,7 @@ SQL;
 				'tracking_modal'              => $is_tracking ? 'show' : 'hide',
 				'hosted'                      => $wpmu_dev->is_wpmu_hosting(),
 				'file_upload_nonce'           => wp_create_nonce( 'defender_file_upload' ),
+				'wpmudev_hub_link'            => 'https://wpmudev.com/hub2/',
 			)
 		);
 

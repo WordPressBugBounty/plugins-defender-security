@@ -75,7 +75,7 @@ class Plugin_Integrity extends Behavior {
 	}
 
 	/**
-	 * Retrieve hash for a given plugin from wordpress.org.
+	 * Retrieve hash for a given plugin from wp.org.
 	 *
 	 * @param  string $slug  Plugin folder.
 	 * @param  string $version  Plugin version.
@@ -142,21 +142,13 @@ class Plugin_Integrity extends Behavior {
 		 */
 		$excluded_slugs = (array) apply_filters( 'wd_scan_excluded_plugin_slugs', array() );
 
-		foreach ( $this->get_plugins() as $slug => $plugin ) {
-			if ( false === strpos( $slug, '/' ) ) {
-				// Todo: get correct hashes for single-file plugins.
-				// Separate case for 'Hello Dolly'.
-				$base_slug = 'hello.php' === $slug ? 'hello-dolly' : $slug;
-			} else {
-				$base_slug = explode( '/', $slug );
-				$base_slug = array_shift( $base_slug );
-			}
-
-			if ( in_array( $base_slug, $excluded_slugs, true ) ) {
+		foreach ( $this->get_plugins() as $plugin_file => $plugin ) {
+			$slug = $this->get_plugin_slug_by( $plugin_file );
+			if ( in_array( $slug, $excluded_slugs, true ) ) {
 				continue;
 			}
 
-			$plugin_hashes = $this->get_plugin_hash( $base_slug, $plugin['Version'] );
+			$plugin_hashes = $this->get_plugin_hash( $slug, $plugin['Version'] );
 
 			if ( ! empty( $plugin_hashes ) ) {
 				$all_plugin_hashes = array_merge( $all_plugin_hashes, $plugin_hashes );

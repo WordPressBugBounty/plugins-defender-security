@@ -8,8 +8,8 @@
 namespace WP_Defender\Controller;
 
 use ActionScheduler;
+use WP_Defender\Component\Breadcrumbs;
 use WP_Defender\Event;
-use WP_Defender\Admin;
 use Valitron\Validator;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
@@ -78,7 +78,7 @@ class Scan extends Event {
 	 */
 	public function __construct() {
 		$this->register_page(
-			esc_html__( 'Malware Scanning', 'defender-security' ),
+			$this->get_title(),
 			$this->slug,
 			array(
 				$this,
@@ -126,6 +126,22 @@ class Scan extends Event {
 			'action_scheduler_completed_action',
 			array( $this, 'scan_completed_analytics' )
 		);
+		add_action( 'admin_init', array( $this, 'mark_page_visited' ) );
+	}
+
+	/**
+	 * Return the title of the page.
+	 *
+	 * @return string The title of the page.
+	 */
+	public function get_title(): string {
+		$default = esc_html__( 'Malware Scanning', 'defender-security' );
+		// Check if the user has already visited the feature page.
+		if ( wd_di()->get( Breadcrumbs::class )->get_meta_key() ) {
+			return $default;
+		}
+
+		return $default . '<span class=wd-new-feature-dot></span>';
 	}
 
 	/**
@@ -309,6 +325,14 @@ class Scan extends Event {
 				}
 			} elseif ( Scan_Item::TYPE_SUSPICIOUS === $scan_item->type ) {
 				$threat_type = 'Suspicious function';
+			} elseif (
+				in_array(
+					$scan_item->type,
+					Model_Scan::get_abandoned_types(),
+					true
+				)
+			) {
+				$threat_type = 'Outdated & removed plugins';
 			}
 
 			$this->track_feature(
@@ -634,11 +658,11 @@ class Scan extends Event {
 				),
 				'per_page' => array(
 					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
+					'sanitize' => 'intval',
 				),
 				'paged'    => array(
 					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
+					'sanitize' => 'intval',
 				),
 			)
 		);
@@ -673,12 +697,10 @@ class Scan extends Event {
 	 * Handle notice.
 	 * Send the notice to the admin dashboard of the site.
 	 *
-	 * @param  Request $request  Request object.
-	 *
 	 * @return Response Response object.
 	 * @defender_route
 	 */
-	public function handle_notice( Request $request ): Response {
+	public function handle_notice(): Response {
 		update_site_option( Rate::SLUG_FOR_BUTTON_RATE, true );
 
 		return new Response( true, array() );
@@ -688,12 +710,10 @@ class Scan extends Event {
 	 * Handle postponed notice.
 	 * Reset counters for postponed notice.
 	 *
-	 * @param  Request $request  Request object.
-	 *
 	 * @return Response Response object.
 	 * @defender_route
 	 */
-	public function postpone_notice( Request $request ): Response {
+	public function postpone_notice(): Response {
 		Rate::reset_counters();
 
 		return new Response( true, array() );
@@ -703,15 +723,53 @@ class Scan extends Event {
 	 * Handle refuse notice.
 	 * Send the refuse notice to the admin dashboard of the site.
 	 *
+	 * @return Response Response object.
+	 * @defender_route
+	 */
+	public function refuse_notice(): Response {
+		update_site_option( Rate::SLUG_FOR_BUTTON_THANKS, true );
+
+		return new Response( true, array() );
+	}
+
+	/**
+	 * Update the run background state for active scan.
+	 *
 	 * @param  Request $request  Request object.
 	 *
 	 * @return Response Response object.
 	 * @defender_route
 	 */
-	public function refuse_notice( Request $request ): Response {
-		update_site_option( Rate::SLUG_FOR_BUTTON_THANKS, true );
+	public function update_background( Request $request ): Response {
+		$data = $request->get_data(
+			array(
+				'run_background' => array(
+					'type'     => 'boolean',
+					'sanitize' => 'rest_sanitize_boolean',
+				),
+			)
+		);
 
-		return new Response( true, array() );
+		$run_background = $data['run_background'] ?? false;
+		$scan           = Model_Scan::get_active();
+
+		if ( is_object( $scan ) && $run_background ) {
+			set_site_transient( 'defender_run_background', $scan->id, HOUR_IN_SECONDS * 2 );
+
+			return new Response(
+				true,
+				array(
+					'scan' => $scan->to_array(),
+				)
+			);
+		}
+
+		return new Response(
+			false,
+			array(
+				'message' => esc_html__( 'No active scan found', 'defender-security' ),
+			)
+		);
 	}
 
 	/**
@@ -776,6 +834,7 @@ class Scan extends Event {
 	public function remove_data(): void {
 		delete_site_option( Model_Scan::IGNORE_INDEXER );
 		delete_site_option( Core_Integrity::ISSUE_CHECKSUMS );
+		wd_di()->get( Breadcrumbs::class )->delete_meta_key();
 	}
 
 	/**
@@ -829,6 +888,8 @@ class Scan extends Event {
 				'rating_type'         => '',
 			);
 		}
+		$misc['outdated_period'] = \WP_Defender\Behavior\Scan\Abandoned_Plugin::get_outdated_period();
+		$misc['labels']          = $settings->labels();
 
 		// Todo: add logic for deactivated scan settings. Maybe display some notice.
 		$data = array(
@@ -836,10 +897,11 @@ class Scan extends Event {
 			'settings'     => $settings->export(),
 			'report'       => $report_text,
 			'active_tools' => array(
-				'integrity_check'    => $settings->integrity_check,
-				'check_known_vuln'   => $settings->check_known_vuln,
-				'scan_malware'       => $settings->scan_malware,
-				'scheduled_scanning' => $settings->scheduled_scanning,
+				'integrity_check'        => $settings->integrity_check,
+				'check_known_vuln'       => $settings->check_known_vuln,
+				'scan_malware'           => $settings->scan_malware,
+				'scheduled_scanning'     => $settings->scheduled_scanning,
+				'check_abandoned_plugin' => $settings->check_abandoned_plugin,
 			),
 			'notification' => $report->to_string(),
 			'next_run'     => $report->get_next_run_as_string(),
@@ -893,8 +955,10 @@ class Scan extends Event {
 			// Pro version. Check all parent types.
 			return $file_change_check || $settings->check_known_vuln || $settings->scan_malware;
 		} else {
-			// Free version. Check the 'File change detection' type because only it's available with nested types.
-			return $file_change_check;
+			// Free version:
+			// Check the 'File change detection' type because only it's available with nested types.
+			// Check the Abandoned plugin type.
+			return $file_change_check || $settings->check_abandoned_plugin;
 		}
 	}
 
@@ -1038,11 +1102,26 @@ class Scan extends Event {
 
 			$scan_model     = wd_di()->get( Model_Scan::class );
 			$analytics_data = $scan_analytics->scan_completed( $scan_model );
+			if ( empty( $analytics_data ) ) {
+				return;
+			}
 
 			$this->track_feature(
 				$analytics_data['event'],
 				$analytics_data['data']
 			);
 		}
+	}
+
+	/**
+	 * Marks the feature page as visited.
+	 *
+	 * @return void
+	 */
+	public function mark_page_visited(): void {
+		if ( 'wdf-scan' !== defender_get_current_page() ) {
+			return;
+		}
+		wd_di()->get( Breadcrumbs::class )->update_meta_key();
 	}
 }

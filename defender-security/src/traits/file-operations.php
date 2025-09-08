@@ -10,6 +10,7 @@ namespace WP_Defender\Traits;
 use WP_Error;
 use WP_Defender\Model\Scan;
 use WP_Defender\Component\Error_Code;
+use WP_Filesystem_Base;
 
 trait File_Operations {
 
@@ -23,7 +24,7 @@ trait File_Operations {
 	public function delete_infected_file( string $file ): bool {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -56,6 +57,7 @@ trait File_Operations {
 	 * @return WP_Error The WP_Error object with the error code and the basename of the file.
 	 */
 	public function get_permission_error( string $file ): WP_Error {
+		$this->log( sprintf( 'ISSUE: %s is not writeable', $file ), \WP_Defender\Controller\Scan::SCAN_LOG );
 		return new WP_Error( Error_Code::NOT_WRITEABLE, wp_basename( $file ) );
 	}
 

@@ -16,12 +16,12 @@ trait IP {
 	/**
 	 * Check if the IP is IPv4 address.
 	 *
-	 * @param  mixed $ip  IP address.
+	 * @param  string $ip  The IP address to check.
 	 *
-	 * @return mixed
+	 * @return bool Returns true if the IP address is an IPv4 address, false otherwise.
 	 */
 	private function is_v4( $ip ) {
-		return filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 );
 	}
 
 	/**
@@ -32,7 +32,7 @@ trait IP {
 	 * @return bool Returns true if the IP address is an IPv6 address, false otherwise.
 	 */
 	private function is_v6( $ip ) {
-		return filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 );
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 );
 	}
 
 	/**
@@ -134,7 +134,7 @@ trait IP {
 		}
 		$ip      = ip2long( $ip );
 		$subnet  = ip2long( $subnet );
-		$mask    = - 1 << ( 32 - $bits );
+		$mask    = - 1 << ( 32 - (int) $bits );
 		$subnet &= $mask;// nb: in case the supplied subnet wasn't correctly aligned.
 
 		return ( $ip & $mask ) === $subnet;
@@ -157,8 +157,8 @@ trait IP {
 		$subnet            = inet_pton( $subnet );
 		$b_subnet          = $this->ine_to_bits( $subnet );
 
-		$ip_net_bits = substr( $b_ip, 0, $bits );
-		$subnet_bits = substr( $b_subnet, 0, $bits );
+		$ip_net_bits = substr( $b_ip, 0, (int) $bits );
+		$subnet_bits = substr( $b_subnet, 0, (int) $bits );
 
 		return $ip_net_bits === $subnet_bits;
 	}
@@ -459,7 +459,7 @@ trait IP {
 	public function check_ip_by_remote_addr( $blocked_ip ): string {
 		$ip_addr = defender_get_data_from_request( 'REMOTE_ADDR', 's' );
 
-		return ! empty( $ip_addr ) ? $ip_addr : $blocked_ip;
+		return '' !== $ip_addr ? $ip_addr : $blocked_ip;
 	}
 
 	/**
@@ -494,7 +494,7 @@ trait IP {
 	 */
 	public function request_is_from_server(): bool {
 		$user_ips = $this->get_user_ip();
-		if ( empty( $user_ips ) ) {
+		if ( array() === $user_ips ) {
 			return false;
 		}
 
@@ -528,13 +528,13 @@ trait IP {
 		 */
 		$trusted_ips = (array) apply_filters( 'wp_defender_server_ips', array_unique( $trusted_ips ) );
 		// Only return true if the request IP is in the trusted list.
-		if ( ! empty( array_intersect( $user_ips, $trusted_ips ) ) ) {
+		if ( array() !== array_intersect( $user_ips, $trusted_ips ) ) {
 			return true;
 		}
 
 		// User-Agent missing? Not a valid loopback.
 		$server_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-		if ( empty( $server_agent ) ) {
+		if ( '' === $server_agent ) {
 			return false;
 		}
 

@@ -13,7 +13,6 @@ use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Component\Session_Protection as Service;
 use WP_Defender\Model\Setting\Session_Protection as Settings;
-use WP_Defender\Component\Breadcrumbs;
 
 /**
  * Handle session protection module.
@@ -80,14 +79,11 @@ class Session_Protection extends Event {
 	 * @return array
 	 */
 	public function data_frontend(): array {
-		$is_visited = wd_di()->get( Breadcrumbs::class )->get_meta_key();
-
 		return array_merge(
 			array(
-				'model'            => $this->model->export(),
-				'properties'       => $this->service::session_lock_properties(),
-				'show_feature_dot' => wd_di()->get( \WP_Defender\Behavior\WPMUDEV::class )->is_pro() && ! $is_visited,
-				'roles'            => $this->get_all_editable_roles(),
+				'model'      => $this->model->export(),
+				'properties' => $this->service::session_lock_properties(),
+				'roles'      => $this->get_all_editable_roles(),
 			),
 			$this->dump_routes_and_nonces()
 		);
@@ -189,7 +185,6 @@ class Session_Protection extends Event {
 	 * Remove all data.
 	 */
 	public function remove_data() {
-		wd_di()->get( Breadcrumbs::class )->delete_meta_key();
 		delete_site_transient( Service::LOGOUT_MSG_TRANSIENT_KEY );
 	}
 

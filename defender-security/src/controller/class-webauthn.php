@@ -219,6 +219,7 @@ class Webauthn extends Controller {
 
 			// Set transition for later use.
 			$encoded = wp_json_encode( $public_key_credential_creation_options );
+			// This is not obfuscation. Just encode the resulting string.
 			$this->set_trans_val( 'pub_key_cco', base64_encode( $encoded ), $client_id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 
 			// Send Challenge.
@@ -466,14 +467,13 @@ class Webauthn extends Controller {
 				$allowed_credentials
 			);
 
-			// set transition for later use.
+			// Set transition for later use.
+			$encoded   = wp_json_encode( $public_key_credential_request_options );
 			$client_id = time() . defender_generate_random_string( 24 );
-			$this->set_trans_val( 'pub_key_cro', base64_encode( wp_json_encode( $public_key_credential_request_options ) ), $client_id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+			// This is not obfuscation. Just encode the resulting string.
+			$this->set_trans_val( 'pub_key_cro', base64_encode( $encoded ), $client_id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 
-			$public_key_credential_request_options             = json_decode(
-				wp_json_encode( $public_key_credential_request_options ),
-				true
-			);
+			$public_key_credential_request_options             = json_decode( $encoded, true );
 			$public_key_credential_request_options['clientID'] = $client_id;
 			wp_send_json_success( $public_key_credential_request_options );
 		} catch ( Error $error ) {

@@ -163,7 +163,7 @@ class Audit_Log extends DB {
 		$model = $orm->get_repository( self::class )
 					->where( 'synced', 'in', array( 0, 1 ) )
 					->order_by( 'id', 'desc' )
-					->limit( '0,2' )
+					->limit( 2, 0 )
 					->get();
 
 		return array_pop( $model );
@@ -223,8 +223,8 @@ class Audit_Log extends DB {
 		if ( false !== $paged ) {
 			// If paged == false, then it will be no paging.
 			$per_page = 20;
-			$offset   = ( ( $paged - 1 ) * $per_page ) . ',' . $per_page;
-			$builder->limit( $offset );
+			$offset   = ( $paged - 1 ) * $per_page;
+			$builder->limit( $per_page, $offset );
 		}
 
 		return $builder->get();

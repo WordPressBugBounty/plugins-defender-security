@@ -134,6 +134,7 @@ class Cli {
 			case 'suspicious_code':
 				$type = Scan_Item::TYPE_SUSPICIOUS;
 				break;
+			// Todo: add Abandoned type.
 			default:
 				WP_CLI::error( sprintf( 'Unknown scan type %s', $type ) );
 				break;

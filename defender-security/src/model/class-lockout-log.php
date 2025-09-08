@@ -163,7 +163,7 @@ class Lockout_Log extends DB {
 		}
 		if ( false !== $page_size && -1 !== (int) $page_size ) {
 			$offset = ( $paged - 1 ) * $page_size;
-			$orm->limit( "$offset,$page_size" );
+			$orm->limit( $page_size, $offset );
 		}
 
 		return $orm->get();
@@ -439,6 +439,7 @@ class Lockout_Log extends DB {
 				$tag = 'Unlock';
 				break;
 			case self::LOCKOUT_UA:
+			case self::LOCKOUT_BOT_TRAP:
 			default:
 				$tag = 'bots';
 				break;
@@ -664,5 +665,17 @@ class Lockout_Log extends DB {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get UA lockout types.
+	 *
+	 * @return array
+	 */
+	public static function get_ua_lockout_types(): array {
+		return array(
+			self::LOCKOUT_UA,
+			self::LOCKOUT_BOT_TRAP,
+		);
 	}
 }

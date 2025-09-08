@@ -131,7 +131,7 @@ class Bot_Trap extends Component {
 
 		return $this->start_comment . $eol .
 			'User-agent: *' . $eol .
-			"Disallow: {$disallow_path}" . $eol .
+			"Disallow: /{$disallow_path}" . $eol .
 			$this->end_comment;
 	}
 

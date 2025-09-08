@@ -124,7 +124,7 @@ class Unlock_Me extends Component {
 				$model->status = Lockout_Ip::STATUS_NORMAL;
 				$model->save();
 				$this->log(
-					'Unlock Me. Success. IP ' . $ip . ' have been unblocked from Active lockouts.',
+					'Unlock Me. Success. IP ' . $model->ip . ' have been unblocked from Active lockouts.',
 					Firewall::FIREWALL_LOG
 				);
 			}

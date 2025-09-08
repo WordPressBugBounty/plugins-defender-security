@@ -581,4 +581,18 @@ class Global_IP extends Component {
 		$model->save();
 		// We don’t use defender_notify hook for LOCKOUT_IP_CUSTOM.
 	}
+
+	/**
+	 * Handle expired membership by automatically disabling the Central IP module.
+	 * Logs the action when the feature is disabled due to expired membership.
+	 *
+	 * @return void
+	 */
+	public function handle_expired_membership(): void {
+		if ( $this->is_expired_membership_type() && $this->model->enabled ) {
+			$this->model->enabled = false;
+			$this->model->save();
+			$this->log( 'Central IP automatically disabled due to expired membership.', 'central_ip.log' );
+		}
+	}
 }

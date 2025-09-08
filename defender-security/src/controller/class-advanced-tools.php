@@ -8,8 +8,6 @@
 namespace WP_Defender\Controller;
 
 use WP_Defender\Event;
-use WP_Defender\Behavior\WPMUDEV;
-use WP_Defender\Component\Breadcrumbs;
 use WP_Defender\Integrations\MaxMind_Geolocation;
 use WP_Defender\Model\Setting\Session_Protection as Model_Session_Protection;
 
@@ -25,19 +23,11 @@ class Advanced_Tools extends Event {
 	 * @var string
 	 */
 	public $slug = 'wdf-advanced-tools';
-	/**
-	 * The WPMUDEV instance used for interacting with WPMUDEV services.
-	 *
-	 * @var WPMUDEV
-	 */
-	private $wpmudev;
 
 	/**
 	 * Constructor method
 	 */
 	public function __construct() {
-		$this->wpmudev = wd_di()->get( WPMUDEV::class );
-
 		$this->register_page(
 			$this->get_title(),
 			$this->slug,
@@ -46,7 +36,6 @@ class Advanced_Tools extends Event {
 		);
 		$this->register_routes();
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
-		add_action( 'admin_init', array( $this, 'mark_page_visited' ) );
 	}
 
 	/**
@@ -245,34 +234,6 @@ class Advanced_Tools extends Event {
 	 * @return string The title of the page.
 	 */
 	public function get_title(): string {
-		$default = esc_html__( 'Tools', 'defender-security' );
-		// Breadcrumbs are only for Pro features.
-		if ( ! $this->wpmudev->is_pro() ) {
-			return $default;
-		}
-		// Check if the user has already visited the feature page.
-		if ( wd_di()->get( Breadcrumbs::class )->get_meta_key() ) {
-			return $default;
-		}
-
-		return $default . '<span class=wd-new-feature-dot></span>';
-	}
-
-	/**
-	 * Marks the feature page as visited.
-	 *
-	 * @return void
-	 */
-	public function mark_page_visited(): void {
-		// Breadcrumbs are only for Pro features.
-		if ( ! $this->wpmudev->is_pro() ) {
-			return;
-		}
-		if ( 'wdf-advanced-tools' !== defender_get_current_page() ||
-			Model_Session_Protection::get_module_slug() !== defender_get_data_from_request( 'view', 'g' )
-		) {
-			return;
-		}
-		wd_di()->get( Breadcrumbs::class )->update_meta_key();
+		return esc_html__( 'Tools', 'defender-security' );
 	}
 }

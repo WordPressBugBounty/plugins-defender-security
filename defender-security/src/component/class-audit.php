@@ -194,6 +194,7 @@ class Audit extends Component {
 			// Count the logs that should be deleted.
 			$logs_count = Audit_Log::count( $date_from->getTimestamp(), $date_to->getTimestamp() );
 			if ( $logs_count > 0 ) {
+				$this->log( 'Cleaning up old logs from ' . $date_from->format( 'Y-m-d H:i:s' ) . ' to ' . $date_to->format( 'Y-m-d H:i:s' ), self::AUDIT_LOG );
 				Audit_Log::delete_old_logs(
 					$date_from->getTimestamp(),
 					$date_to->getTimestamp(),

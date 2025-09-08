@@ -127,11 +127,11 @@ trait Defender_Dashboard_Client {
 	public function is_site_connected_to_hub(): bool {
 		// The case if Pro version is activated, it is TFH account and a site is from 3rd party hosting.
 		if ( WP_DEFENDER_PRO_PATH === DEFENDER_PLUGIN_BASENAME && $this->is_another_hosted_site_connected_to_tfh() ) {
-			return ! empty( $this->get_api_key() );
+			return '' !== $this->get_api_key();
 		} else {
 			$hub_site_id = $this->get_site_id();
 
-			return ! empty( $hub_site_id ) && is_int( $hub_site_id );
+			return is_int( $hub_site_id ) && $hub_site_id > 0;
 		}
 	}
 
@@ -207,6 +207,15 @@ trait Defender_Dashboard_Client {
 			return Data::get()->membership_type();
 		}
 		return 'free';
+	}
+
+	/**
+	 * Check if the membership type is expired.
+	 *
+	 * @return bool True if membership is expired, false otherwise.
+	 */
+	public function is_expired_membership_type(): bool {
+		return 'expired' === $this->get_membership_type();
 	}
 
 	/**

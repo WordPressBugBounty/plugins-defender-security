@@ -322,12 +322,66 @@ class Blacklist_Lockout extends Component {
 				return true;
 			}
 
-			if ( move_uploaded_file( $model->geodb_path, $rel_path ) ) {
-				$model->geodb_path = $rel_path;
-				$model->save();
+			if ( $this->validate_geodb_file( $model->geodb_path ) ) {
+				global $wp_filesystem;
+				if ( empty( $wp_filesystem ) ) {
+					require_once ABSPATH . '/wp-admin/includes/file.php';
+					WP_Filesystem();
+				}
+
+				if ( $wp_filesystem->move( $model->geodb_path, $rel_path ) ) {
+					$wp_filesystem->chmod( $rel_path, 0644 );
+					$model->geodb_path = $rel_path;
+					$model->save();
+				}
 			} else {
 				return false;
 			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validates GeoDB file for security before processing.
+	 *
+	 * @param string $file_path Path to the file to validate.
+	 * @return bool True if file is valid, false otherwise.
+	 */
+	private function validate_geodb_file( $file_path ): bool {
+		if ( ! file_exists( $file_path ) ) {
+			return false;
+		}
+
+		$allowed_extensions = array( 'mmdb' );
+		$file_extension     = strtolower( pathinfo( $file_path, PATHINFO_EXTENSION ) );
+
+		if ( ! in_array( $file_extension, $allowed_extensions, true ) ) {
+			return false;
+		}
+
+		$file_size = filesize( $file_path );
+		$max_size  = 100 * 1024 * 1024; // 100MB.
+
+		if ( $max_size < $file_size || 0 === $file_size ) {
+			return false;
+		}
+
+		global $wp_filesystem;
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
+		// Read only first 4 bytes for header validation.
+		$header = $wp_filesystem->get_contents( $file_path );
+		if ( false === $header || strlen( $header ) < 4 ) {
+			return false;
+		}
+		$header = substr( $header, 0, 4 );
+		// MaxMind DB format magic bytes: 0xABCDEF00 .
+		if ( "\xab\xcd\xef\x00" !== $header ) {
+			return false;
 		}
 
 		return true;

@@ -222,7 +222,7 @@ class Firewall_Logs extends Controller {
 		if ( 0 === $per_page ) {
 			$per_page = 20;
 		}
-		if ( - 1 === (int) $per_page ) {
+		if ( - 1 === $per_page ) {
 			$per_page = false;
 		}
 
@@ -254,6 +254,7 @@ class Firewall_Logs extends Controller {
 			esc_html__( 'Type', 'defender-security' ),
 			esc_html__( 'IP address', 'defender-security' ),
 			esc_html__( 'IP Status', 'defender-security' ),
+			esc_html__( 'User Agent Name', 'defender-security' ),
 			esc_html__( 'User Agent Status', 'defender-security' ),
 		);
 		fputcsv( $fp, $headers, ',', '"', '\\' );
@@ -266,6 +267,7 @@ class Firewall_Logs extends Controller {
 				$tl_component->get_type( $log->type ),
 				$log->ip,
 				$tl_component->get_ip_status_text( $log->ip ),
+				$log->user_agent,
 				$ua_component->get_status_text( $log->type, $log->tried ),
 			);
 			fputcsv( $fp, $item, ',', '"', '\\' );
@@ -275,7 +277,7 @@ class Firewall_Logs extends Controller {
 				flush();
 			}
 		}
-
+		// WP_Filesystem is not suitable here because it abstracts to reading/writing files on disk, not to output streams.
 		fclose( $fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		exit();
 	}

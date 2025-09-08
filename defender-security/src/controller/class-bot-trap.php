@@ -49,6 +49,7 @@ class Bot_Trap extends Controller {
 			$ip      = $this->get_user_ip();
 			if ( ! $service->are_ips_whitelisted( $ip ) ) {
 				add_action( 'wp_footer', array( $this, 'inject_footer' ) );
+				add_action( 'login_footer', array( $this, 'inject_footer' ) );
 				add_action( 'template_redirect', array( $this, 'handle_hash_url' ) );
 			}
 		}

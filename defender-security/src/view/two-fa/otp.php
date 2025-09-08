@@ -311,7 +311,7 @@ END;
 					<?php foreach ( $providers as $slug => $provider ) { ?>
 							<li class="wpdef-2fa-link" id="wpdef-2fa-link-<?php echo esc_attr( $slug ); ?>"
 								data-slug="<?php echo esc_attr( $slug ); ?>">
-
+								<!-- The label value is escaped on backend. It's safe. -->
 								<?php echo $provider->get_login_label(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 
 							</li>

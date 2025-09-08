@@ -473,6 +473,8 @@
 			});
 		});
 	</script>
+	<script src="<?php echo plugins_url( 'assets/js/vendor.js', WP_DEFENDER_FILE ); ?>"></script>
+	<script src="<?php echo plugins_url( 'assets/js/manifest.js', WP_DEFENDER_FILE ); ?>"></script>
 	<script src="<?php echo plugins_url( 'assets/js/altcha.js', WP_DEFENDER_FILE ); ?>"></script>
 <?php } else if ( ! empty( $is_unlock_me ) ) { ?>
 	<script>

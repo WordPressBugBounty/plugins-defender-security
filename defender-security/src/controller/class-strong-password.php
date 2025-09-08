@@ -10,6 +10,7 @@ namespace WP_Defender\Controller;
 use WP_Defender\Event;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
+use WP_Defender\Integrations\Woocommerce;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\Strong_Password as Service;
 use WP_Defender\Model\Setting\Strong_Password as Settings;
@@ -64,9 +65,13 @@ class Strong_Password extends Event {
 				add_action( 'user_profile_update_errors', array( $this->service, 'on_profile_update' ), 100, 3 );
 			}
 			add_action( 'login_enqueue_scripts', array( $this->service, 'scripts' ) );
+			add_action( 'wp_enqueue_scripts', array( $this->service, 'scripts' ) );
 			add_action( 'validate_password_reset', array( $this->service, 'on_password_reset' ), 100, 2 );
 			add_action( 'wp_authenticate_user', array( $this->service, 'during_authentication' ), 100, 2 );
 			add_filter( 'random_password', array( $this->service, 'generate_password' ), 10, 2 );
+			if ( wd_di()->get( Woocommerce::class )->is_wc_login_context() ) {
+				add_filter( 'woocommerce_reset_password_message', array( $this->service, 'add_woocommerce_error_message' ) );
+			}
 		}
 	}
 
@@ -197,9 +202,7 @@ class Strong_Password extends Event {
 	/**
 	 * Remove all data.
 	 */
-	public function remove_data() {
-		$this->delete_visited_meta();
-	}
+	public function remove_data() {}
 
 	/**
 	 * Export strings.
@@ -219,17 +222,5 @@ class Strong_Password extends Event {
 	 */
 	public function dashboard_widget(): array {
 		return array( 'model' => $this->model->export() );
-	}
-
-	/**
-	 * Delete the 'wd_password_rules_visited' meta key.
-	 * We can remove it in the future releases and use delete_meta_key() of Breadcrumbs class.
-	 *
-	 * @return void
-	 */
-	private function delete_visited_meta() {
-		global $wpdb;
-
-		$wpdb->delete( $wpdb->usermeta, array( 'meta_key' => 'wd_password_rules_visited' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery
 	}
 }

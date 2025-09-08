@@ -173,7 +173,10 @@ class Strong_Password extends Component {
 		}
 		// Collect all locations.
 		$pages = array( 'profile.php', 'user-new.php', 'user-edit.php', 'wp-login.php' );
-		if ( in_array( $hook_suffix, $pages, true ) ) {
+
+		$is_wc_context = wd_di()->get( \WP_Defender\Integrations\Woocommerce::class )->is_wc_login_context();
+		if ( in_array( $hook_suffix, $pages, true ) || $is_wc_context ) {
+			wp_dequeue_script( 'wc-password-strength-meter' );
 			wp_enqueue_style( 'wd-strong-password', plugins_url( 'assets/css/strong-password.css', WP_DEFENDER_FILE ), array( 'dashicons' ), DEFENDER_VERSION );
 			wp_enqueue_script(
 				'wd-strong-password',
@@ -302,5 +305,20 @@ class Strong_Password extends Component {
 
 		// Shuffle the password to prevent predictable character order.
 		return str_shuffle( $password );
+	}
+
+	/**
+	 * Add WooCommerce error message for password reset warnings.
+	 *
+	 * @param  string $wc_message  WooCommerce default error message.
+	 * @return string              WooCommerce error message.
+	 */
+	public function add_woocommerce_error_message( $wc_message ) {
+		if ( isset( $_COOKIE[ self::COOKIE_KEY ] ) && function_exists( 'wc_print_notice' ) ) {
+			$message = $this->model->get_message();
+			wc_print_notice( $message, 'error' );
+			$this->helper->remove_cookie_notice( self::COOKIE_KEY );
+		}
+		return $wc_message;
 	}
 }

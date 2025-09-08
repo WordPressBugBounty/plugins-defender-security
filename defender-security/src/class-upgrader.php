@@ -421,6 +421,9 @@ class Upgrader {
 		if ( version_compare( $db_version, '5.4.0', '<' ) ) {
 			$this->upgrade_5_4_0();
 		}
+		if ( version_compare( $db_version, '5.5.0', '<' ) ) {
+			$this->upgrade_5_5_0();
+		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
 		// Don't run any function below this line.
@@ -1848,5 +1851,16 @@ To complete your login, copy and paste the temporary password into the Password 
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 
 		$this->improve_ua_blocklist();
+	}
+
+	/**
+	 * Upgrade to 5.5.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_5_0(): void {
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+		// Remove the prev Breadcrumbs.
+		wd_di()->get( \WP_Defender\Component\Breadcrumbs::class )->delete_previous_meta();
 	}
 }

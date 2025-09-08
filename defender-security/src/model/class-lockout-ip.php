@@ -197,9 +197,9 @@ class Lockout_Ip extends DB {
 	/**
 	 * Retrieves bulk IPs based on the provided status, IPs, and limit.
 	 *
-	 * @param  string          $status  The status of the IPs to retrieve.
-	 * @param  array|null      $ips  An array of IPs to retrieve. If null, retrieves all IPs with the given status.
-	 * @param  int|string|null $limit  The maximum number of IPs to retrieve. If null, retrieves all IPs.
+	 * @param  string     $status  The status of the IPs to retrieve.
+	 * @param  array|null $ips  An array of IPs to retrieve. If null, retrieves all IPs with the given status.
+	 * @param  int|null   $limit  The maximum number of IPs to retrieve. If null, retrieves all IPs.
 	 *
 	 * @return array An array of IP models.
 	 */

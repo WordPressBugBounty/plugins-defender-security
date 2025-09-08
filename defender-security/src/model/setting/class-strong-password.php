@@ -84,7 +84,7 @@ class Strong_Password extends Setting {
 	 * @return string
 	 */
 	public function get_message(): string {
-		if ( empty( $this->message ) ) {
+		if ( '' === $this->message ) {
 			return $this->get_default_message();
 		}
 		return $this->message;

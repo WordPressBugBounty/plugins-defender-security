@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.4.1
+Version: 5.5.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 6.8.2
-Stable tag: 5.4.1
+Stable tag: 5.5.0
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -254,6 +254,27 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 5.5.0 ( 2025-09-02 ) =
+
+- New: Detection of outdated and removed plugins in scans
+- New: Scan process runs in the background
+- Enhance: Display User Agent name in Bot Trap logs
+- Enhance: Improve Blocklist Lockout with updates for the move_uploaded_file function
+- Enhance: Update YARA rules for better Malware detection
+- Enhance: Tab improvements in Security Headers
+- Enhance: Improve WooCommerce compatibility with Force Strong and Pwned Password features
+- Enhance: Enable "Unlock Me" option by default on AntiBot activation
+- Enhance: Migrate "audit_clean_up_logs" multisite event to the centralized Cron Manager system
+- Enhance: Rename "File Change Detection" to "Issue Type" on the Malware Scanning page
+- Enhance: Remove "In progress" upsell during onboarding
+- Enhance: Improve flow for expired members
+- Enhance: Improve code style in Defender core
+- Fix: Defender Bot Trap causing invalid robots.txt
+- Fix: Blank Defender > Get Started page when WPMU DEV branding is enabled
+- Fix: Error on WooCommerce > Login page when logging in using a weak password and Strong Passwords option is enabled
+- Fix: Improve Vulnerability Scan for free and premium plugins using the same slug
+- Fix: Default login pages return error 500 instead of 403 when Mask Login area is active and configured
+
 = 5.4.1 ( 2025-08-05 ) =
 
 - Enhance: Add a button to direct the users to the AntiBot Statistics page
@@ -309,26 +330,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 = 5.2.1 ( 2025-04-23 ) =
 
 - Enhance: Add a new menu item to help you discover other free plugins by WPMU DEV and more
-
-= 5.2.0 ( 2025-04-07 ) =
-
-- New: Session Protection
-- Enhance: Compatibility with WordPress 6.8
-- Enhance: Add a toggle to block popular spam/malicious User Agents
-- Enhance: Remove Semrush and Ahrefs from the default User Agent blocklist
-- Enhance: Improve the wpdef_sec_key_gen cron process on multisite
-- Enhance: Update Malware Signatures to detect suspicious code
-- Enhance: Improve the Quarantine flow during upgrade from free to pro plugin version
-- Enhance: Improve the class representing the vulnerability result
-- Enhance: Improve Trusted IP popup flow
-- Fix: Masked Login URL bypassed by using encoded characters
-- Fix: Audit Logging showing wrong time
-
-= 5.1.1 ( 2025-03-03 ) =
-
-- Enhance: Improve cron events for AntiBot Global Firewall on multisite
-- Enhance: Remove manual "All headers" option and migrate to Automatic IP detection for improved compatibility and security
-- Enhance: Update User Agent logic with AntiBot service to better detect potential threats
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

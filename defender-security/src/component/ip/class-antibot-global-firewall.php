@@ -124,7 +124,7 @@ class Antibot_Global_Firewall extends Component {
 	 */
 	public function frontend_is_enabled(): bool {
 		return 'plugin' === $this->get_managed_by() ?
-			$this->is_enabled() :
+			! $this->is_expired_membership_type() && $this->is_enabled() :
 			$this->hosting_is_enabled();
 	}
 

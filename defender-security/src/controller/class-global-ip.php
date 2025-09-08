@@ -71,6 +71,7 @@ class Global_Ip extends Controller {
 		if ( $this->service->can_blocklist_autosync() ) {
 			add_action( 'wd_blacklist_this_ip', array( $this, 'blacklist_an_ip' ) );
 		}
+		add_action( 'init', array( $this->service, 'handle_expired_membership' ) );
 	}
 
 	/**
@@ -168,6 +169,8 @@ class Global_Ip extends Controller {
 						Global_Ip_Lockout::get_module_name()
 					),
 					'is_show_dashboard_notice' => $this->service->is_show_dashboard_notice(),
+					'current_plan'             => $this->service->get_membership_type(),
+					'is_expired_membership'    => $this->service->is_expired_membership_type(),
 				),
 				'hub'   => array(
 					'global_ip_list'        => $this->service->get_formated_global_ip_list(),
@@ -193,13 +196,11 @@ class Global_Ip extends Controller {
 	/**
 	 * Refresh Global IP list.
 	 *
-	 * @param  Request $request  The request object.
-	 *
 	 * @return Response
 	 * @defender_route
 	 * @since 3.4.0
 	 */
-	public function refresh_global_ip_list( Request $request ): Response {
+	public function refresh_global_ip_list(): Response {
 		$data = $this->service->fetch_global_ip_list();
 
 		if ( ! is_wp_error( $data ) ) {

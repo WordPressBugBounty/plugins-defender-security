@@ -87,7 +87,7 @@ class Session_Protection extends Setting {
 	 * @return bool
 	 */
 	public function has_properties(): bool {
-		return ! empty( $this->lock_properties );
+		return array() !== $this->lock_properties;
 	}
 
 	/**
@@ -127,7 +127,7 @@ class Session_Protection extends Setting {
 	public function get_default_duration(): int {
 		$tweak_duration = wd_di()->get( Login_Duration::class )->get_tweak_duration();
 
-		return ! empty( $tweak_duration )
+		return $tweak_duration > 0
 			? $tweak_duration
 			: $this->login_duration;
 	}

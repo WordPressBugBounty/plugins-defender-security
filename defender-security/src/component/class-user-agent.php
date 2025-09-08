@@ -263,7 +263,7 @@ class User_Agent extends Component {
 	 * @return string Human-readable text if log_type is UA else empty string.
 	 */
 	public function get_status_text( $log_type, $user_agent ): string {
-		if ( Lockout_Log::LOCKOUT_UA !== $log_type ) {
+		if ( ! in_array( $log_type, Lockout_Log::get_ua_lockout_types(), true ) ) {
 			return '';
 		}
 

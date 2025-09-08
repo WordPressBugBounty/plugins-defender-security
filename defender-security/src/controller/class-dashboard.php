@@ -78,9 +78,10 @@ class Dashboard extends Event {
 	public function menu_order( $menu_order ) {
 		global $submenu;
 		if ( isset( $submenu['wp-defender'] ) ) {
-			$defender_menu          = $submenu['wp-defender'];
-			$defender_menu[0][0]    = esc_html__( 'Dashboard', 'defender-security' );
-			$defender_menu          = array_values( $defender_menu );
+			$defender_menu       = $submenu['wp-defender'];
+			$defender_menu[0][0] = esc_html__( 'Dashboard', 'defender-security' );
+			$defender_menu       = array_values( $defender_menu );
+			// Change the global $submenu variable, because otherwise the menu name/order will not change.
 			$submenu['wp-defender'] = $defender_menu; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		}
 
@@ -93,6 +94,7 @@ class Dashboard extends Event {
 			: null;
 		foreach ( $menu as $k => $item ) {
 			if ( 'wp-defender' === $item[2] ) {
+				// Add a badge next to the "Defender" menu item in the global $menu variable.
 				$menu[ $k ][0] .= $indicator; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 			}
 		}

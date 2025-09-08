@@ -159,6 +159,7 @@ class Mask_Login extends Event {
 	 */
 	public function show_login_page(): void {
 		global $error, $interim_login, $action, $user_login, $user, $redirect_to;
+		// Simulate the environment as a "login page".
 		$GLOBALS['pagenow'] = 'wp-login.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		if ( $this->service->is_recovery_mode() ) {
 			( new WP_Recovery_Mode() )->initialize();
@@ -472,11 +473,6 @@ class Mask_Login extends Event {
 	 * @return void
 	 */
 	public function maybe_lock(): void {
-		$forbidden_message = esc_html__(
-			'This feature is forbidden temporarily for security reason. Try login again.',
-			'defender-security'
-		);
-
 		if ( 'custom_url' === $this->get_model()->redirect_traffic && strlen( $this->get_model()->redirect_traffic_url ) ) {
 			if ( 'url' === $this->get_model()->is_url_or_slug() ) {
 				$redirect_url = wp_sanitize_redirect( $this->get_model()->redirect_traffic_url );
@@ -484,7 +480,7 @@ class Mask_Login extends Event {
 
 				// Give up if malformed URL.
 				if ( false === $lp ) {
-					wp_die( esc_html( $forbidden_message ) );
+					$this->show_forbidden_screen();
 				}
 				// If the URL is without scheme, e.g. example.com, then add 'http' protocol at the beginning of the URL.
 				if ( ! isset( $lp['scheme'] ) && isset( $lp['path'] ) ) {
@@ -528,7 +524,20 @@ class Mask_Login extends Event {
 		// Handle user profile email change request.
 		$this->handle_email_change_request();
 
-		wp_die( esc_html( $forbidden_message ) );
+		$this->show_forbidden_screen();
+	}
+
+	/**
+	 * Show the forbidden screen.
+	 */
+	public function show_forbidden_screen(): void {
+		wp_die(
+			esc_html__( 'This feature is forbidden temporarily for security reason. Try login again.', 'defender-security' ),
+			esc_html__( 'Forbidden', 'defender-security' ),
+			array(
+				'response' => 403,
+			)
+		);
 	}
 
 	/**

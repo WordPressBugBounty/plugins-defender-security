@@ -126,23 +126,32 @@ class Scan extends Setting {
 	public $quarantine_expire_schedule = 'thirty_days';
 
 	/**
+	 * Enable Abandoned or outdated plugins.
+	 *
+	 * @defender_property
+	 * @var bool
+	 */
+	public $check_abandoned_plugin = true;
+
+	/**
 	 * Define settings labels.
 	 *
 	 * @return array
 	 */
 	public function labels(): array {
 		return array(
-			'integrity_check'    => esc_html__( 'File change detection', 'defender-security' ),
-			'check_core'         => esc_html__( 'Scan core files', 'defender-security' ),
-			'check_plugins'      => esc_html__( 'Scan plugin files', 'defender-security' ),
-			'check_known_vuln'   => esc_html__( 'Known vulnerabilities', 'defender-security' ),
-			'scan_malware'       => esc_html__( 'Suspicious Code', 'defender-security' ),
-			'filesize'           => esc_html__( 'Max included file size', 'defender-security' ),
-			'scheduled_scanning' => esc_html__( 'Scheduled Scanning', 'defender-security' ),
-			'frequency'          => esc_html__( 'Frequency', 'defender-security' ),
-			'day'                => esc_html__( 'Day of the week', 'defender-security' ),
-			'day_n'              => esc_html__( 'Day of the month', 'defender-security' ),
-			'time'               => esc_html__( 'Time of day', 'defender-security' ),
+			'integrity_check'        => esc_html__( 'File change detection', 'defender-security' ),
+			'check_core'             => esc_html__( 'Scan core files', 'defender-security' ),
+			'check_plugins'          => esc_html__( 'Scan plugin files', 'defender-security' ),
+			'check_abandoned_plugin' => esc_html__( 'Outdated & removed plugins', 'defender-security' ),
+			'check_known_vuln'       => esc_html__( 'Known vulnerabilities', 'defender-security' ),
+			'scan_malware'           => esc_html__( 'Suspicious code', 'defender-security' ),
+			'filesize'               => esc_html__( 'Max included file size', 'defender-security' ),
+			'scheduled_scanning'     => esc_html__( 'Scheduled Scanning', 'defender-security' ),
+			'frequency'              => esc_html__( 'Frequency', 'defender-security' ),
+			'day'                    => esc_html__( 'Day of the week', 'defender-security' ),
+			'day_n'                  => esc_html__( 'Day of the month', 'defender-security' ),
+			'time'                   => esc_html__( 'Time of day', 'defender-security' ),
 		);
 	}
 
@@ -177,9 +186,7 @@ class Scan extends Setting {
 				'<strong>' . esc_html__( 'File change detection', 'defender-security' ) . '</strong>'
 			);
 			// Case#2: all scan types are unchecked and Scheduled Scanning is checked.
-		} elseif ( ! $this->integrity_check && ! $this->check_known_vuln && ! $this->scan_malware
-					&& $this->scheduled_scanning
-		) {
+		} elseif ( ! $this->is_enabled_any_scan_type() && $this->scheduled_scanning ) {
 			$this->errors[] = esc_html__(
 				'You have not selected a scan type. Please enable at least one scan type and save the settings again.',
 				'defender-security'
@@ -217,5 +224,17 @@ class Scan extends Setting {
 		$this->day       = $day;
 		$this->day_n     = '1';
 		$this->time      = $current_hours . ':' . $mins;
+	}
+
+	/**
+	 * Is enabled any scan type at least?
+	 *
+	 * @return bool
+	 */
+	private function is_enabled_any_scan_type(): bool {
+		return $this->integrity_check
+			|| $this->check_known_vuln
+			|| $this->scan_malware
+			|| $this->check_abandoned_plugin;
 	}
 }

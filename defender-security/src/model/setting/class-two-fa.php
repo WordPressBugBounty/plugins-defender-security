@@ -205,7 +205,7 @@ To complete your login, copy and paste the temporary password into the Password 
 		$this->email_subject       = $default_values['email_subject'];
 		$this->email_sender        = $default_values['email_sender'];
 		$this->email_body          = $default_values['email_body'];
-		$this->app_title           = empty( $default_values['app_title'] )
+		$this->app_title           = '' === $default_values['app_title']
 			? wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 			: $default_values['app_title'];
 		$this->force_auth_mess     = $default_values['message'];

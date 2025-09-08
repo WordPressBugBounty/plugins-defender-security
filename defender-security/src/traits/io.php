@@ -11,6 +11,7 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use WP_Defender\Helper\File as File_Helper;
 use WP_Defender\Component\Logger\Rotation_Logger as Logger;
+use WP_Filesystem_Base;
 
 trait IO {
 
@@ -25,7 +26,7 @@ trait IO {
 	protected function get_tmp_path( bool $main_site_path = false ): string {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -65,7 +66,7 @@ trait IO {
 	 * @return string The path to the log file.
 	 */
 	public function get_log_path( $category = '' ): string {
-		$file = empty( $category ) ? wd_internal_log() : $category;
+		$file = '' === $category ? wd_internal_log() : $category;
 
 		$logger    = new Logger();
 		$file_name = $logger->generate_file_name( $file );
@@ -92,7 +93,7 @@ trait IO {
 	public function delete_dir( $dir ): bool {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -200,7 +201,7 @@ trait IO {
 	protected function hash_file( string $file_path, string $convert_to = '' ) {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -230,7 +231,7 @@ trait IO {
 	 * @throws \RuntimeException If the lock file name is not defined.
 	 */
 	protected function get_lock_path(): string {
-		if ( empty( $this->lock_filename ) ) {
+		if ( '' === $this->lock_filename ) {
 			throw new \RuntimeException( 'Lock file name must be defined in the class using IO trait.' );
 		}
 
@@ -262,7 +263,7 @@ trait IO {
 	public function has_lock(): bool {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -313,8 +314,8 @@ trait IO {
 		}
 
 		// Check if another process is running.
-		$lock_time = get_site_option( $lock_key, 0 );
-		if ( $lock_time && ( $now < $lock_time + $lock_duration ) ) {
+		$lock_time = (int) get_site_option( $lock_key, 0 );
+		if ( $lock_time > 0 && ( $now < $lock_time + $lock_duration ) ) {
 			return false;
 		}
 

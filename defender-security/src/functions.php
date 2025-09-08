@@ -812,3 +812,17 @@ function defender_is_wp_org_version(): bool {
 	return ! wd_di()->get( WPMUDEV::class )->is_pro()
 		&& ( defined( 'WP_DEFENDER_PRO' ) && ! WP_DEFENDER_PRO );
 }
+
+/**
+ * Get the user agent of the plugin.
+ *
+ * @return string
+ */
+function defender_get_own_user_agent(): string {
+	return defender_is_wp_org_version()
+		? sprintf( 'Mozilla/5.0 (compatible; Defender/%1$s)', DEFENDER_VERSION )
+		: sprintf(
+			'Mozilla/5.0 (compatible; WPMU DEV Defender/%1$s; +https://wpmudev.com)',
+			DEFENDER_VERSION
+		);
+}

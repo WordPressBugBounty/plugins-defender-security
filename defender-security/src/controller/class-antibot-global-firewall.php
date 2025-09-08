@@ -88,6 +88,7 @@ class Antibot_Global_Firewall extends Event {
 		if ( $this->wpmudev->is_wpmu_hosting() ) {
 			add_action( 'init', array( $this, 'sync_state' ) );
 		}
+		add_action( 'init', array( $this, 'handle_expired_membership' ) );
 	}
 
 	/**
@@ -257,6 +258,9 @@ class Antibot_Global_Firewall extends Event {
 						__( '%s is Inactive.', 'defender-security' ),
 						$module_name
 					),
+					'current_user'          => esc_html( wp_get_current_user()->display_name ?? __( 'User', 'defender-security' ) ),
+					'current_plan'          => $this->get_membership_type(),
+					'is_expired_membership' => $this->is_expired_membership_type(),
 				),
 			),
 			$this->dump_routes_and_nonces()
@@ -551,7 +555,7 @@ class Antibot_Global_Firewall extends Event {
 			true,
 			array(
 				'message'  => sprintf(
-				/* translators: 1: IP address. 2: Opening anchor tag. 3: Closing anchor tag. */
+					/* translators: 1: IP address. 2: Opening anchor tag. 3: Closing anchor tag. */
 					esc_html__(
 						'IP %1$s has been added to your Site\'s allowlist. You can manage it in %2$sIP Lockouts%3$s.',
 						'defender-security'
@@ -636,5 +640,18 @@ class Antibot_Global_Firewall extends Event {
 				'auto_close' => true,
 			),
 		);
+	}
+
+	/**
+	 * Handle expired membership by automatically disabling the AntiBot Global Firewall module.
+	 * Logs the action when the feature is disabled due to expired membership.
+	 *
+	 * @return void
+	 */
+	public function handle_expired_membership(): void {
+		if ( $this->is_expired_membership_type() && $this->model->enabled ) {
+			$this->service->managed_by_plugin_action( false );
+			$this->log( 'AntiBot Global Firewall automatically disabled due to expired membership.', Antibot_Global_Firewall_Component::LOG_FILE_NAME );
+		}
 	}
 }

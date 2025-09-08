@@ -224,8 +224,8 @@ class User_Agent_Lockout extends Setting {
 	 * @return array
 	 */
 	public function get_lockout_list( $type = 'blocklist', $lower = true ): array {
-		$data = ( 'blocklist' === $type ) ? $this->blacklist : $this->whitelist;
-		$arr  = is_array( $data ) ? $data : array_filter( preg_split( "/\r\n|\n|\r/", $data ) );
+		$data = 'blocklist' === $type ? $this->blacklist : $this->whitelist;
+		$arr  = array_filter( preg_split( "/\r\n|\n|\r/", $data ), 'boolval' );
 		$arr  = array_map( 'trim', $arr );
 		if ( $lower ) {
 			$arr = array_map( 'strtolower', $arr );
@@ -270,19 +270,19 @@ class User_Agent_Lockout extends Setting {
 		$blocklist_match = preg_match( $blocklist_regex_pattern, $ua );
 		$allowlist_match = preg_match( $allowlist_regex_pattern, $ua );
 
-		if ( empty( $blocklist_match ) && empty( $allowlist_match ) ) {
+		if ( 1 !== $blocklist_match && 1 !== $allowlist_match ) {
 			return array( 'na' );
 		}
 
 		$result = array();
 
 		// Check blocklist first - if it matches, add 'banned'.
-		if ( ! empty( $blocklist_match ) ) {
+		if ( 1 === $blocklist_match ) {
 			$result[] = 'banned';
 		}
 
 		// Check allowlist - if it matches, add 'allowlist'.
-		if ( ! empty( $allowlist_match ) ) {
+		if ( 1 === $allowlist_match ) {
 			$result[] = 'allowlist';
 		}
 
@@ -308,9 +308,7 @@ class User_Agent_Lockout extends Setting {
 		$arr_escaped        = array_map( 'preg_quote', $arr, array_fill( 0, count( $arr ), '#' ) );
 		$list_regex_pattern = '#' . implode( '|', $arr_escaped ) . '#i';
 
-		$list_match = preg_match( $list_regex_pattern, $ua );
-
-		return ! empty( $list_match );
+		return 1 === preg_match( $list_regex_pattern, $ua );
 	}
 
 	/**
@@ -362,7 +360,7 @@ class User_Agent_Lockout extends Setting {
 				}
 				// Check 'Custom User Agents' case.
 				$arr_blocklist = $this->get_lockout_list( 'blocklist', false );
-				if ( ! empty( $arr_blocklist ) ) {
+				if ( array() !== $arr_blocklist ) {
 					$key = array_search( $ua, $arr_blocklist, true );
 					if ( false !== $key && isset( $arr_blocklist[ $key ] ) ) {
 						unset( $arr_blocklist[ $key ] );

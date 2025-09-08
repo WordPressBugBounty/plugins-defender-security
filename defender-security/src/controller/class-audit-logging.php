@@ -81,10 +81,19 @@ class Audit_Logging extends Event {
 			/**
 			 * We will schedule the time to clean up old logs.
 			 */
-			if ( ! wp_next_scheduled( 'audit_clean_up_logs' ) ) {
-				wp_schedule_event( time(), 'hourly', 'audit_clean_up_logs' );
+			if ( is_multisite() ) {
+				$network_cron_manager = wd_di()->get( \WP_Defender\Component\Network_Cron_Manager::class );
+				$network_cron_manager->register_callback(
+					'audit_clean_up_logs',
+					array( $this->service, 'audit_clean_up_logs' ),
+					HOUR_IN_SECONDS
+				);
+			} else {
+				if ( ! wp_next_scheduled( 'audit_clean_up_logs' ) ) {
+					wp_schedule_event( time(), 'hourly', 'audit_clean_up_logs' );
+				}
+				add_action( 'audit_clean_up_logs', array( $this->service, 'audit_clean_up_logs' ) );
 			}
-			add_action( 'audit_clean_up_logs', array( $this, 'clean_up_audit_logs' ) );
 		}
 	}
 
@@ -95,16 +104,6 @@ class Audit_Logging extends Event {
 	 */
 	public function sync_events(): void {
 		$this->service->flush();
-	}
-
-	/**
-	 * Clean up all the old logs from the local storage, this will happen per hourly basis.
-	 *
-	 * @return void
-	 * @throws Exception When the $duration cannot be parsed as an interval.
-	 */
-	public function clean_up_audit_logs(): void {
-		$this->service->audit_clean_up_logs();
 	}
 
 	/**
@@ -391,6 +390,7 @@ class Audit_Logging extends Event {
 			'weekCount'  => $week_count,
 			'dayCount'   => $day_count,
 			'lastEvent'  => $last,
+			'report'     => wd_di()->get( Audit_Report::class )->to_string(),
 		);
 	}
 

@@ -82,7 +82,7 @@ trait Array_Utils {
 		}
 
 		// Sort associative arrays by key for consistent comparison.
-		if ( ! empty( $normalized ) ) {
+		if ( array() !== $normalized ) {
 			ksort( $normalized );
 		}
 

@@ -832,18 +832,23 @@ class Main_Setting extends Event {
 			global $wpdb;
 			$offset = 0;
 			$limit  = 100;
-			// Variable within condition is for comparison.
-			while ( $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id FROM {$wpdb->blogs} LIMIT %d, %d", $offset, $limit ), ARRAY_A ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery, Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
-				if ( ! empty( $blogs ) && is_array( $blogs ) ) {
-					foreach ( $blogs as $blog ) {
-						switch_to_blog( $blog['blog_id'] );
+			$blogs  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->prepare( "SELECT blog_id FROM {$wpdb->blogs} LIMIT %d, %d", $offset, $limit ),
+				ARRAY_A
+			);
+			while ( ! empty( $blogs ) && is_array( $blogs ) ) {
+				foreach ( $blogs as $blog ) {
+					switch_to_blog( $blog['blog_id'] );
 
-						$this->clear_logs_from_files( $time_limit );
+					$this->clear_logs_from_files( $time_limit );
 
-						restore_current_blog();
-					}
+					restore_current_blog();
 				}
 				$offset += $limit;
+				$blogs   = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+					$wpdb->prepare( "SELECT blog_id FROM {$wpdb->blogs} LIMIT %d, %d", $offset, $limit ),
+					ARRAY_A
+				);
 			}
 		} else {
 			$this->clear_logs_from_files( $time_limit );
