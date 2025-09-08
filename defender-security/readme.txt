@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.5.0
+Version: 5.5.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 6.8.2
-Stable tag: 5.5.0
+Stable tag: 5.5.1
 Requires PHP: 7.4
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -253,6 +253,11 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 4. Done!
 
 == Changelog ==
+
+= 5.5.1 ( 2025-09-04 ) =
+
+- Enhance: Change Outdated Plugin threshold to 2 Years
+- Enhance: Create hook to customize Outdated Plugin threshold
 
 = 5.5.0 ( 2025-09-02 ) =
 

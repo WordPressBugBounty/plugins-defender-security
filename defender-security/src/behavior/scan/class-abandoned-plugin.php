@@ -34,7 +34,7 @@ class Abandoned_Plugin extends Behavior {
 	 *
 	 * @var string
 	 */
-	private const OUTDATED_PERIOD = '6 months';
+	private const OUTDATED_PERIOD = '2 years';
 
 	/**
 	 * Initialize Scan instance.
@@ -51,7 +51,10 @@ class Abandoned_Plugin extends Behavior {
 	 * @return string
 	 */
 	public static function get_outdated_period() {
-		return self::OUTDATED_PERIOD;
+		// Filter to override outdated threshold period.
+		$period = (string) apply_filters( 'wpdef_scan_outdated_period', self::OUTDATED_PERIOD );
+		// If time period is invalid, use the default one.
+		return strtotime( '- ' . $period ) ? $period : self::OUTDATED_PERIOD;
 	}
 
 	/**
