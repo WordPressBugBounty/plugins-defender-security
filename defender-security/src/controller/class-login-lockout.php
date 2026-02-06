@@ -70,7 +70,7 @@ class Login_Lockout extends Event {
 	 */
 	public function save_settings( Request $request ) {
 		$data        = $request->get_data_by_model( $this->model );
-		$old_enabled = (bool) $this->model->enabled;
+		$old_enabled = $this->model->enabled;
 		$prev_data   = $this->model->export();
 
 		$this->model->import( $data );
@@ -191,7 +191,7 @@ class Login_Lockout extends Event {
 	 * @param  array $data  Data to be imported into the model.
 	 */
 	public function import_data( array $data ) {
-		if ( ! empty( $data ) ) {
+		if ( array() !== $data ) {
 			// Upgrade for old versions.
 			$data  = $this->adapt_data( $data );
 			$model = $this->model;

@@ -14,10 +14,10 @@ use Safe\Exceptions\ImageException;
  * getimagesize can also return some more information
  * in imageinfo parameter.
  *
- * @param string $filename This parameter specifies the file you wish to retrieve information
+ * @param string     $filename  This parameter specifies the file you wish to retrieve information
  * about. It can reference a local file or (configuration permitting) a
  * remote file using one of the supported streams.
- * @param array $imageinfo This optional parameter allows you to extract some extended
+ * @param array|null $imageinfo This optional parameter allows you to extract some extended
  * information from the image file. Currently, this will return the
  * different JPG APP markers as an associative array.
  * Some programs use these APP markers to embed text information in
@@ -28,6 +28,7 @@ use Safe\Exceptions\ImageException;
  *
  * The imageinfo only supports
  * JFIF files.
+ *
  * @return array Returns an array with up to 7 elements. Not all image types will include
  * the channels and bits elements.
  *
@@ -66,7 +67,7 @@ use Safe\Exceptions\ImageException;
  * @throws ImageException
  *
  */
-function getimagesize(string $filename, array &$imageinfo = null): array
+function getimagesize(string $filename, ?array &$imageinfo = null): array
 {
     error_clear_last();
     $result = \getimagesize($filename, $imageinfo);
@@ -81,17 +82,18 @@ function getimagesize(string $filename, array &$imageinfo = null): array
  * image2wbmp outputs or save a WBMP
  * version of the given image.
  *
- * @param resource $image An image resource, returned by one of the image creation functions,
+ * @param resource    $image      An image resource, returned by one of the image creation functions,
  * such as imagecreatetruecolor.
- * @param string|null $filename Path to the saved file. If not given, the raw image stream will be
+ * @param string|null $filename   Path to the saved file. If not given, the raw image stream will be
  * output directly.
- * @param int $foreground You can set the foreground color with this parameter by setting an
+ * @param int|null    $foreground You can set the foreground color with this parameter by setting an
  * identifier obtained from imagecolorallocate.
  * The default foreground color is black.
+ *
  * @throws ImageException
  *
  */
-function image2wbmp($image, ?string $filename = null, int $foreground = null): void
+function image2wbmp($image, ?string $filename = null, ?int $foreground = null): void
 {
     error_clear_last();
     if ($foreground !== null) {
@@ -110,15 +112,16 @@ function image2wbmp($image, ?string $filename = null, int $foreground = null): v
 /**
  *
  *
- * @param resource $image An image resource, returned by one of the image creation functions,
+ * @param resource   $image  An image resource, returned by one of the image creation functions,
  * such as imagecreatetruecolor.
- * @param array $affine Array with keys 0 to 5.
- * @param array $clip Array with keys "x", "y", "width" and "height".
+ * @param array      $affine Array with keys 0 to 5.
+ * @param array|null $clip   Array with keys "x", "y", "width" and "height".
+ *
  * @return resource Return affined image resource on success.
  * @throws ImageException
  *
  */
-function imageaffine($image, array $affine, array $clip = null)
+function imageaffine($image, array $affine, ?array $clip = null)
 {
     error_clear_last();
     if ($clip !== null) {
@@ -1290,7 +1293,7 @@ function imagefilltoborder($image, int $x, int $y, int $border, int $color): voi
  *
  *
  *
- * @param int $arg1
+ * @param int|null $arg1
  *
  *
  * IMG_FILTER_BRIGHTNESS: Brightness level.
@@ -1324,7 +1327,7 @@ function imagefilltoborder($image, int $x, int $y, int $border, int $color): voi
  *
  *
  *
- * @param int $arg2
+ * @param int|null $arg2
  *
  *
  * IMG_FILTER_COLORIZE: Value of green component.
@@ -1342,7 +1345,7 @@ function imagefilltoborder($image, int $x, int $y, int $border, int $color): voi
  *
  *
  *
- * @param int $arg3
+ * @param int|null $arg3
  *
  *
  * IMG_FILTER_COLORIZE: Value of blue component.
@@ -1355,7 +1358,7 @@ function imagefilltoborder($image, int $x, int $y, int $border, int $color): voi
  *
  *
  *
- * @param int $arg4
+ * @param int|null $arg4
  *
  *
  * IMG_FILTER_COLORIZE: Alpha channel, A value
@@ -1367,7 +1370,7 @@ function imagefilltoborder($image, int $x, int $y, int $border, int $color): voi
  * @throws ImageException
  *
  */
-function imagefilter($image, int $filtertype, int $arg1 = null, int $arg2 = null, int $arg3 = null, int $arg4 = null): void
+function imagefilter($image, int $filtertype, ?int $arg1 = null, ?int $arg2 = null, ?int $arg3 = null, ?int $arg4 = null): void
 {
     error_clear_last();
     if ($arg4 !== null) {
@@ -2542,16 +2545,17 @@ function imagettftext($image, float $size, float $angle, int $x, int $y, int $co
  * imagewbmp outputs or save a WBMP
  * version of the given image.
  *
- * @param resource $image An image resource, returned by one of the image creation functions,
+ * @param resource $image      An image resource, returned by one of the image creation functions,
  * such as imagecreatetruecolor.
- * @param mixed $to The path or an open stream resource (which is automatically being closed after this function returns) to save the file to. If not set or NULL, the raw image stream will be outputted directly.
- * @param int $foreground You can set the foreground color with this parameter by setting an
+ * @param mixed    $to         The path or an open stream resource (which is automatically being closed after this function returns) to save the file to. If not set or NULL, the raw image stream will be outputted directly.
+ * @param int|null $foreground You can set the foreground color with this parameter by setting an
  * identifier obtained from imagecolorallocate.
  * The default foreground color is black.
+ *
  * @throws ImageException
  *
  */
-function imagewbmp($image, $to = null, int $foreground = null): void
+function imagewbmp($image, $to = null, ?int $foreground = null): void
 {
     error_clear_last();
     if ($foreground !== null) {
@@ -2590,23 +2594,24 @@ function imagewebp($image, $to = null, int $quality = 80): void
  * Outputs or save an XBM version of the given
  * image.
  *
- * @param resource $image An image resource, returned by one of the image creation functions,
+ * @param resource    $image      An image resource, returned by one of the image creation functions,
  * such as imagecreatetruecolor.
- * @param string|null $filename The path to save the file to, given as string. If NULL, the raw image stream will be output directly.
+ * @param string|null $filename   The path to save the file to, given as string. If NULL, the raw image stream will be output directly.
  *
  * The filename (without the .xbm extension) is also
  * used for the C identifiers of the XBM, whereby non
  * alphanumeric characters of the current locale are substituted by
  * underscores. If filename is set to NULL,
  * image is used to build the C identifiers.
- * @param int $foreground You can set the foreground color with this parameter by setting an
+ * @param int|null    $foreground You can set the foreground color with this parameter by setting an
  * identifier obtained from imagecolorallocate.
  * The default foreground color is black. All other colors are treated as
  * background.
+ *
  * @throws ImageException
  *
  */
-function imagexbm($image, ?string $filename, int $foreground = null): void
+function imagexbm($image, ?string $filename, ?int $foreground = null): void
 {
     error_clear_last();
     if ($foreground !== null) {

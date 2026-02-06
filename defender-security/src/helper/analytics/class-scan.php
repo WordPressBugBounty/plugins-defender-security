@@ -76,10 +76,10 @@ class Scan extends Event {
 	 *
 	 * @param  Scan_Model $scan_model  Scan model object.
 	 *
-	 * @return array[
+	 * @return array{
 	 *   'event' => string,
 	 *   'data' => array
-	 * ]
+	 * }
 	 */
 	public function scan_completed( Scan_Model $scan_model ): array {
 		$last_scan = $scan_model::get_last();
@@ -101,6 +101,20 @@ class Scan extends Event {
 
 		if ( isset( $scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ] ) ) {
 			$data['Suspicious Code'] = $scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ];
+			// Additional JS file count if found.
+			$items          = $last_scan->get_issues( Scan_Item::TYPE_SUSPICIOUS, Scan_Item::STATUS_ACTIVE );
+			$count_js_files = 0;
+			foreach ( $items as $item ) {
+				if (
+					isset( $item->raw_data['file'] ) && is_file( $item->raw_data['file'] ) &&
+					'js' === strtolower( pathinfo( $item->raw_data['file'], PATHINFO_EXTENSION ) )
+				) {
+					++$count_js_files;
+				}
+			}
+			if ( $count_js_files > 0 ) {
+				$data['JS file Detection'] = $count_js_files;
+			}
 		}
 
 		if ( isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CHECK ] ) ) {

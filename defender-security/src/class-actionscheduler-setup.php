@@ -59,8 +59,16 @@ class ActionScheduler_Setup {
 	private static function register_tables(): void {
 		self::load_dependencies();
 
+		if ( ! class_exists( 'ActionScheduler_HybridStore' ) ) {
+			return;
+		}
+
 		$store = new ActionScheduler_HybridStore();
 		add_action( 'action_scheduler/created_table', array( $store, 'set_autoincrement' ), 10, 2 );
+
+		if ( ! class_exists( 'ActionScheduler_StoreSchema' ) || ! class_exists( 'ActionScheduler_LoggerSchema' ) ) {
+			return;
+		}
 
 		$store_schema  = new ActionScheduler_StoreSchema();
 		$logger_schema = new ActionScheduler_LoggerSchema();
@@ -78,6 +86,10 @@ class ActionScheduler_Setup {
 	 */
 	private static function tables_exist(): bool {
 		self::load_dependencies();
+
+		if ( ! class_exists( 'ActionScheduler_StoreSchema' ) ) {
+			return false;
+		}
 
 		$store_schema = new ActionScheduler_StoreSchema();
 		return $store_schema->tables_exist();

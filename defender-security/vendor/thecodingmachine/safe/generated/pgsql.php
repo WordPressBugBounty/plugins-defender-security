@@ -118,7 +118,7 @@ function pg_close($connection = null): void
  *
  * The options parameter can be used to set command line parameters
  * to be invoked by the server.
- * @param int $connect_type If PGSQL_CONNECT_FORCE_NEW is passed, then a new connection
+ * @param int|null $connect_type If PGSQL_CONNECT_FORCE_NEW is passed, then a new connection
  * is created, even if the connection_string is identical to
  * an existing connection.
  *
@@ -126,11 +126,12 @@ function pg_close($connection = null): void
  * connection is established asynchronously. The state of the connection
  * can then be checked via pg_connect_poll or
  * pg_connection_status.
+ *
  * @return resource PostgreSQL connection resource on success, FALSE on failure.
  * @throws PgsqlException
  *
  */
-function pg_connect(string $connection_string, int $connect_type = null)
+function pg_connect(string $connection_string, ?int $connect_type = null)
 {
     error_clear_last();
     if ($connect_type !== null) {
@@ -200,20 +201,21 @@ function pg_convert($connection, string $table_name, array $assoc_array, int $op
  * rows. It issues a COPY FROM SQL command
  * internally to insert records.
  *
- * @param resource $connection PostgreSQL database connection resource.
- * @param string $table_name Name of the table into which to copy the rows.
- * @param array $rows An array of data to be copied into table_name.
+ * @param resource    $connection PostgreSQL database connection resource.
+ * @param string      $table_name Name of the table into which to copy the rows.
+ * @param array       $rows       An array of data to be copied into table_name.
  * Each value in rows becomes a row in table_name.
  * Each value in rows should be a delimited string of the values
  * to insert into each field.  Values should be linefeed terminated.
- * @param string $delimiter The token that separates values for each field in each element of
+ * @param string|null $delimiter  The token that separates values for each field in each element of
  * rows.  Default is TAB.
- * @param string $null_as How SQL NULL values are represented in the
+ * @param string|null $null_as    How SQL NULL values are represented in the
  * rows.  Default is \N ("\\N").
+ *
  * @throws PgsqlException
  *
  */
-function pg_copy_from($connection, string $table_name, array $rows, string $delimiter = null, string $null_as = null): void
+function pg_copy_from($connection, string $table_name, array $rows, ?string $delimiter = null, ?string $null_as = null): void
 {
     error_clear_last();
     if ($null_as !== null) {
@@ -234,18 +236,19 @@ function pg_copy_from($connection, string $table_name, array $rows, string $deli
  * issues COPY TO SQL command internally to
  * retrieve records.
  *
- * @param resource $connection PostgreSQL database connection resource.
- * @param string $table_name Name of the table from which to copy the data into rows.
- * @param string $delimiter The token that separates values for each field in each element of
+ * @param resource    $connection PostgreSQL database connection resource.
+ * @param string      $table_name Name of the table from which to copy the data into rows.
+ * @param string|null $delimiter  The token that separates values for each field in each element of
  * rows.  Default is TAB.
- * @param string $null_as How SQL NULL values are represented in the
+ * @param string|null $null_as    How SQL NULL values are represented in the
  * rows.  Default is \N ("\\N").
+ *
  * @return array An array with one element for each line of COPY data.
  * It returns FALSE on failure.
  * @throws PgsqlException
  *
  */
-function pg_copy_to($connection, string $table_name, string $delimiter = null, string $null_as = null): array
+function pg_copy_to($connection, string $table_name, ?string $delimiter = null, ?string $null_as = null): array
 {
     error_clear_last();
     if ($null_as !== null) {
@@ -385,25 +388,26 @@ function pg_end_copy($connection = null): void
  * The parameters are identical to pg_query_params, except that the name of a
  * prepared statement is given instead of a query string.
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $stmtname The name of the prepared statement to execute.  if
+ * @param string|null $stmtname   The name of the prepared statement to execute.  if
  * "" is specified, then the unnamed statement is executed.  The name must have
  * been previously prepared using pg_prepare,
  * pg_send_prepare or a PREPARE SQL
  * command.
- * @param array $params An array of parameter values to substitute for the $1, $2, etc. placeholders
+ * @param array|null  $params     An array of parameter values to substitute for the $1, $2, etc. placeholders
  * in the original prepared query string.  The number of elements in the array
  * must match the number of placeholders.
  *
  * Elements are converted to strings by calling this function.
+ *
  * @return resource A query result resource on success.
  * @throws PgsqlException
  *
  */
-function pg_execute($connection = null, string $stmtname = null, array $params = null)
+function pg_execute($connection = null, ?string $stmtname = null, ?array $params = null)
 {
     error_clear_last();
     if ($params !== null) {
@@ -769,17 +773,18 @@ function pg_lo_close($large_object): void
  * To use the large object interface, it is necessary to
  * enclose it within a transaction block.
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param int $oid The OID of the large object in the database.
- * @param string $pathname The full path and file name of the file in which to write the
+ * @param int|null    $oid        The OID of the large object in the database.
+ * @param string|null $pathname   The full path and file name of the file in which to write the
  * large object on the client filesystem.
+ *
  * @throws PgsqlException
  *
  */
-function pg_lo_export($connection = null, int $oid = null, string $pathname = null): void
+function pg_lo_export($connection = null, ?int $oid = null, ?string $pathname = null): void
 {
     error_clear_last();
     if ($pathname !== null) {
@@ -805,22 +810,23 @@ function pg_lo_export($connection = null, int $oid = null, string $pathname = nu
  * To use the large object interface, it is necessary to
  * enclose it within a transaction block.
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $pathname The full path and file name of the file on the client
+ * @param string|null $pathname   The full path and file name of the file on the client
  * filesystem from which to read the large object data.
- * @param mixed $object_id If an object_id is given the function
+ * @param mixed       $object_id  If an object_id is given the function
  * will try to create a large object with this id, else a free
  * object id is assigned by the server. The parameter
  * was added in PHP 5.3 and relies on functionality that first
  * appeared in PostgreSQL 8.1.
+ *
  * @return int The OID of the newly created large object.
  * @throws PgsqlException
  *
  */
-function pg_lo_import($connection = null, string $pathname = null, $object_id = null): int
+function pg_lo_import($connection = null, ?string $pathname = null, $object_id = null): int
 {
     error_clear_last();
     if ($object_id !== null) {
@@ -999,17 +1005,18 @@ function pg_lo_unlink($connection, int $oid): void
  * enclose it within a transaction block.
  *
  * @param resource $large_object PostgreSQL large object (LOB) resource, returned by pg_lo_open.
- * @param string $data The data to be written to the large object.  If len is
+ * @param string   $data         The data to be written to the large object.  If len is
  * specified and is less than the length of data, only
  * len bytes will be written.
- * @param int $len An optional maximum number of bytes to write.  Must be greater than zero
+ * @param int|null $len          An optional maximum number of bytes to write.  Must be greater than zero
  * and no greater than the length of data.  Defaults to
  * the length of data.
+ *
  * @return int The number of bytes written to the large object.
  * @throws PgsqlException
  *
  */
-function pg_lo_write($large_object, string $data, int $len = null): int
+function pg_lo_write($large_object, string $data, ?int $len = null): int
 {
     error_clear_last();
     if ($len !== null) {
@@ -1099,21 +1106,22 @@ function pg_options($connection = null): string
  * anyway. Applications are encouraged to use pg_parameter_status rather than ad
  * hoc code to determine these values.
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $param_name Possible param_name values include server_version,
+ * @param string|null $param_name Possible param_name values include server_version,
  * server_encoding, client_encoding,
  * is_superuser, session_authorization,
  * DateStyle, TimeZone, and
  * integer_datetimes.  Note that this value is case-sensitive.
+ *
  * @return string A string containing the value of the parameter, FALSE on failure or invalid
  * param_name.
  * @throws PgsqlException
  *
  */
-function pg_parameter_status($connection = null, string $param_name = null): string
+function pg_parameter_status($connection = null, ?string $param_name = null): string
 {
     error_clear_last();
     if ($param_name !== null) {
@@ -1167,14 +1175,15 @@ function pg_parameter_status($connection = null, string $param_name = null): str
  * requiressl (deprecated in favor of sslmode), and
  * service.  Which of these arguments exist depends
  * on your PostgreSQL version.
- * @param int $connect_type If PGSQL_CONNECT_FORCE_NEW is passed, then a new connection
+ * @param int|null $connect_type If PGSQL_CONNECT_FORCE_NEW is passed, then a new connection
  * is created, even if the connection_string is identical to
  * an existing connection.
+ *
  * @return resource PostgreSQL connection resource on success, FALSE on failure.
  * @throws PgsqlException
  *
  */
-function pg_pconnect(string $connection_string, int $connect_type = null)
+function pg_pconnect(string $connection_string, ?int $connect_type = null)
 {
     error_clear_last();
     if ($connect_type !== null) {
@@ -1264,21 +1273,22 @@ function pg_port($connection = null): int
  * is no PHP function for deleting a prepared statement, the SQL DEALLOCATE
  * statement can be used for that purpose.
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $stmtname The name to give the prepared statement.  Must be unique per-connection.  If
+ * @param string|null $stmtname   The name to give the prepared statement.  Must be unique per-connection.  If
  * "" is specified, then an unnamed statement is created, overwriting any
  * previously defined unnamed statement.
- * @param string $query The parameterized SQL statement.  Must contain only a single statement.
+ * @param string|null $query      The parameterized SQL statement.  Must contain only a single statement.
  * (multiple statements separated by semi-colons are not allowed.)  If any parameters
  * are used, they are referred to as $1, $2, etc.
+ *
  * @return resource A query result resource on success.
  * @throws PgsqlException
  *
  */
-function pg_prepare($connection = null, string $stmtname = null, string $query = null)
+function pg_prepare($connection = null, ?string $stmtname = null, ?string $query = null)
 {
     error_clear_last();
     if ($query !== null) {
@@ -1310,16 +1320,17 @@ function pg_prepare($connection = null, string $stmtname = null, string $query =
  * is to use pg_copy_from.  This is a far simpler
  * interface.
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $data A line of text to be sent directly to the PostgreSQL backend.  A NULL
+ * @param string|null $data       A line of text to be sent directly to the PostgreSQL backend.  A NULL
  * terminator is added automatically.
+ *
  * @throws PgsqlException
  *
  */
-function pg_put_line($connection = null, string $data = null): void
+function pg_put_line($connection = null, ?string $data = null): void
 {
     error_clear_last();
     if ($data !== null) {
@@ -1360,11 +1371,11 @@ function pg_put_line($connection = null, string $data = null): void
  * most one SQL command in the given string. (There can be semicolons in it,
  * but not more than one nonempty command.)
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $query The parameterized SQL statement.  Must contain only a single statement.
+ * @param string|null $query      The parameterized SQL statement.  Must contain only a single statement.
  * (multiple statements separated by semi-colons are not allowed.)  If any parameters
  * are used, they are referred to as $1, $2, etc.
  *
@@ -1374,18 +1385,19 @@ function pg_put_line($connection = null, string $data = null): void
  * attack vectors and introduce bugs when handling data containing quotes.
  * If for some reason you cannot use a parameter, ensure that interpolated
  * values are properly escaped.
- * @param array $params An array of parameter values to substitute for the $1, $2, etc. placeholders
+ * @param array|null  $params     An array of parameter values to substitute for the $1, $2, etc. placeholders
  * in the original prepared query string.  The number of elements in the array
  * must match the number of placeholders.
  *
  * Values intended for bytea fields are not supported as
  * parameters. Use pg_escape_bytea instead, or use the
  * large object functions.
+ *
  * @return resource A query result resource on success.
  * @throws PgsqlException
  *
  */
-function pg_query_params($connection = null, string $query = null, array $params = null)
+function pg_query_params($connection = null, ?string $query = null, ?array $params = null)
 {
     error_clear_last();
     if ($params !== null) {
@@ -1422,11 +1434,11 @@ function pg_query_params($connection = null, string $query = null, array $params
  *
  *
  *
- * @param resource $connection PostgreSQL database connection resource.  When
+ * @param resource    $connection PostgreSQL database connection resource.  When
  * connection is not present, the default connection
  * is used. The default connection is the last connection made by
  * pg_connect or pg_pconnect.
- * @param string $query The SQL statement or statements to be executed. When multiple statements are passed to the function,
+ * @param string|null $query      The SQL statement or statements to be executed. When multiple statements are passed to the function,
  * they are automatically executed as one transaction, unless there are explicit BEGIN/COMMIT commands
  * included in the query string. However, using multiple transactions in one function call is not recommended.
  *
@@ -1439,11 +1451,12 @@ function pg_query_params($connection = null, string $query = null, array $params
  *
  * Any user-supplied data substituted directly into a query string should
  * be properly escaped.
+ *
  * @return resource A query result resource on success.
  * @throws PgsqlException
  *
  */
-function pg_query($connection = null, string $query = null)
+function pg_query($connection = null, ?string $query = null)
 {
     error_clear_last();
     if ($query !== null) {

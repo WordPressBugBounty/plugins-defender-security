@@ -19,6 +19,7 @@ use WP_Defender\Integrations\Smush;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
 use WP_Defender\Helper\Analytics\Scan as Scan_Analytics;
 use WP_Defender\Controller\Scan as Scan_Controller;
+use WP_Defender\Component\Scan as Scan_Component;
 
 /**
  * It is responsible for performing integrity checks on plugins.
@@ -45,29 +46,27 @@ class Plugin_Integrity extends Behavior {
 	 *
 	 * @return bool Returns true if the slug is valid, false otherwise.
 	 */
-	private function is_valid_wporg_slug( $slug ): bool {
-		return ! empty( $slug ) && '.' !== $slug;
+	private function is_valid_wporg_slug( string $slug ): bool {
+		return '' !== $slug && '.' !== $slug;
 	}
 
 	/**
 	 * Plucks a specific field from an array of objects or arrays and returns a new array with the plucked values.
 	 *
 	 * @param  array  $collection  The array to pluck values from.
-	 * @param  string $field  The field to pluck from each element in the array.
 	 * @param  string $prefix  Optional. A prefix to add to each key in the new array. Default is an empty string.
 	 *
 	 * @return array The new array with the plucked values.
 	 */
-	private function pluck( $collection, $field, $prefix = '' ): array {
+	private function pluck( array $collection, $prefix = '' ): array {
 		$new_list = array();
 
 		foreach ( $collection as $key => $value ) {
 			$prefix_key = defender_replace_line( $prefix . $key );
-
-			if ( is_object( $value ) ) {
-				$new_list[ $prefix_key ] = $value->$field;
-			} else {
-				$new_list[ $prefix_key ] = $value[ $field ];
+			if ( is_object( $value ) && property_exists( $value, 'md5' ) ) {
+				$new_list[ $prefix_key ] = $value->md5;
+			} elseif ( is_array( $value ) && isset( $value['md5'] ) ) {
+				$new_list[ $prefix_key ] = $value['md5'];
 			}
 		}
 
@@ -75,19 +74,41 @@ class Plugin_Integrity extends Behavior {
 	}
 
 	/**
+	 * Check if a plugin is a WPMUDEV pro plugin by checking for WDP ID header.
+	 *
+	 * @param  string $plugin_file  Plugin main file path.
+	 *
+	 * @return bool True if it's a WPMUDEV pro plugin, false otherwise.
+	 */
+	private function is_wpmudev_pro_plugin( $plugin_file ): bool {
+		$plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/' . $plugin_file );
+		return array_key_exists( 'WDP ID', $plugin_data ) && '' !== $plugin_data['WDP ID'];
+	}
+
+	/**
 	 * Retrieve hash for a given plugin from wp.org.
+	 * Excludes premium plugins and WPMUDEV pro plugins from hash retrieval.
 	 *
 	 * @param  string $slug  Plugin folder.
 	 * @param  string $version  Plugin version.
+	 * @param  string $plugin_file  Plugin main file path.
 	 *
 	 * @return array
 	 */
-	private function get_plugin_hash( $slug, $version ): array {
+	private function get_plugin_hash( string $slug, $version, $plugin_file = '' ): array {
 		if ( ! $this->is_valid_wporg_slug( $slug ) ) {
 			$this->premium_slugs[] = $slug;
 
 			return array();
 		}
+
+		// Check if this is a WPMUDEV pro plugin that upgraded from free version.
+		if ( '' !== $plugin_file && $this->is_wpmudev_pro_plugin( $plugin_file ) ) {
+			$this->premium_slugs[] = $slug;
+
+			return array();
+		}
+
 		// Get original from wp.org e.g. https://downloads.wordpress.org/plugin-checksums/hello-dolly/1.6.json.
 		$response = wp_remote_get( self::URL_PLUGIN_VCS . $slug . '/' . $version . '.json' );
 
@@ -113,7 +134,7 @@ class Plugin_Integrity extends Behavior {
 
 		$data = json_decode( $body, true );
 
-		if ( ! $data || empty( $data['files'] ) ) {
+		if ( ! isset( $data['files'] ) || ! is_array( $data['files'] ) || array() === $data['files'] ) {
 			return array();
 		}
 
@@ -123,7 +144,7 @@ class Plugin_Integrity extends Behavior {
 			return array();
 		}
 
-		return $this->pluck( $data['files'], 'md5', $slug . DIRECTORY_SEPARATOR );
+		return $this->pluck( $data['files'], $slug . DIRECTORY_SEPARATOR );
 	}
 
 	/**
@@ -133,25 +154,25 @@ class Plugin_Integrity extends Behavior {
 	 */
 	protected function plugin_checksum(): array {
 		$all_plugin_hashes = array();
-		/**
-		 * Exclude plugin slugs.
-		 *
-		 * @param  array  $slugs  Slugs of excluded plugins.
-		 *
-		 * @since 3.1.0
-		 */
-		$excluded_slugs = (array) apply_filters( 'wd_scan_excluded_plugin_slugs', array() );
+		$actioned_plugins  = get_site_option( Scan_Component::PLUGINS_ACTIONED );
 
-		foreach ( $this->get_plugins() as $plugin_file => $plugin ) {
-			$slug = $this->get_plugin_slug_by( $plugin_file );
-			if ( in_array( $slug, $excluded_slugs, true ) ) {
-				continue;
+		if ( Scan_Component::are_actioned_plugins( $actioned_plugins ) ) {
+			foreach ( $actioned_plugins as $slug => $plugin_data ) {
+				$plugin_hashes = $this->get_plugin_hash( $slug, $plugin_data['Version'], $plugin_data['Slug'] );
+
+				if ( array() !== $plugin_hashes ) {
+					$all_plugin_hashes = array_merge( $all_plugin_hashes, $plugin_hashes );
+				}
 			}
+		} else {
+			// An emergency option if for some reason the plugin's quick data is not saved in the first step.
+			foreach ( $this->get_plugins() as $plugin_file => $plugin ) {
+				$slug          = $this->get_plugin_slug_by( $plugin_file );
+				$plugin_hashes = $this->get_plugin_hash( $slug, $plugin['Version'], $plugin_file );
 
-			$plugin_hashes = $this->get_plugin_hash( $slug, $plugin['Version'] );
-
-			if ( ! empty( $plugin_hashes ) ) {
-				$all_plugin_hashes = array_merge( $all_plugin_hashes, $plugin_hashes );
+				if ( array() !== $plugin_hashes ) {
+					$all_plugin_hashes = array_merge( $all_plugin_hashes, $plugin_hashes );
+				}
 			}
 		}
 
@@ -178,7 +199,12 @@ class Plugin_Integrity extends Behavior {
 		);
 
 		$plugin_files = $plugins->get_dir_tree();
-		$plugin_files = array_filter( $plugin_files );
+		$plugin_files = array_filter(
+			$plugin_files,
+			function ( $value ) {
+				return is_string( $value ) && '' !== trim( $value );
+			}
+		);
 
 		$plugin_files = new ArrayIterator( $plugin_files );
 		$checksums    = $this->plugin_checksum();
@@ -292,10 +318,10 @@ class Plugin_Integrity extends Behavior {
 		 * @since 2.4.10
 		 */
 		if ( ( new Scan_Settings() )->scan_malware ) {
-			if ( ! empty( $slugs_of_edited_plugins ) ) {
+			if ( array() !== $slugs_of_edited_plugins ) {
 				update_site_option( self::PLUGIN_SLUGS, array_unique( $slugs_of_edited_plugins ) );
 			}
-			if ( ! empty( $this->premium_slugs ) ) {
+			if ( array() !== $this->premium_slugs ) {
 				update_site_option( self::PLUGIN_PREMIUM_SLUGS, $this->premium_slugs );
 			}
 		}

@@ -39,7 +39,7 @@ function mysql_close($link_identifier = null): void
 /**
  * Opens or reuses a connection to a MySQL server.
  *
- * @param string $server The MySQL server. It can also include a port number. e.g.
+ * @param string|null $server   The MySQL server. It can also include a port number. e.g.
  * "hostname:port" or a path to a local socket e.g. ":/path/to/socket" for
  * the localhost.
  *
@@ -47,12 +47,12 @@ function mysql_close($link_identifier = null): void
  * mysql.default_host is undefined (default), then the default
  * value is 'localhost:3306'. In SQL safe mode, this parameter is ignored
  * and value 'localhost:3306' is always used.
- * @param string $username The username. Default value is defined by mysql.default_user. In
+ * @param string|null $username The username. Default value is defined by mysql.default_user. In
  * SQL safe mode, this parameter is ignored and the name of the user that
  * owns the server process is used.
- * @param string $password The password. Default value is defined by mysql.default_password. In
+ * @param string|null $password The password. Default value is defined by mysql.default_password. In
  * SQL safe mode, this parameter is ignored and empty password is used.
- * @param bool $new_link If a second call is made to mysql_connect
+ * @param bool        $new_link If a second call is made to mysql_connect
  * with the same arguments, no new link will be established, but
  * instead, the link identifier of the already opened link will be
  * returned. The new_link parameter modifies this
@@ -60,7 +60,7 @@ function mysql_close($link_identifier = null): void
  * a new link, even if mysql_connect was called
  * before with the same parameters.
  * In SQL safe mode, this parameter is ignored.
- * @param int $client_flags The client_flags parameter can be a combination
+ * @param int         $client_flags The client_flags parameter can be a combination
  * of the following constants:
  * 128 (enable LOAD DATA LOCAL handling),
  * MYSQL_CLIENT_SSL,
@@ -69,11 +69,12 @@ function mysql_close($link_identifier = null): void
  * MYSQL_CLIENT_INTERACTIVE.
  * Read the section about  for further information.
  * In SQL safe mode, this parameter is ignored.
+ *
  * @return resource Returns a MySQL link identifier on success.
  * @throws MysqlException
  *
  */
-function mysql_connect(string $server = null, string $username = null, string $password = null, bool $new_link = false, int $client_flags = 0)
+function mysql_connect( ?string $server = null, ?string $username = null, ?string $password = null, bool $new_link = false, int $client_flags = 0)
 {
     error_clear_last();
     if ($client_flags !== 0) {

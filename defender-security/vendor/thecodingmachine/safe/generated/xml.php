@@ -9,20 +9,21 @@ use Safe\Exceptions\XmlException;
  * with XML namespace support and returns a resource handle referencing
  * it to be used by the other XML functions.
  *
- * @param string $encoding The input encoding is automatically detected, so that the
+ * @param string|null $encoding  The input encoding is automatically detected, so that the
  * encoding parameter specifies only the output
  * encoding. In PHP 5.0.0 and 5.0.1, the default output charset is
  * ISO-8859-1, while in PHP 5.0.2 and upper is UTF-8. The supported
  * encodings are ISO-8859-1, UTF-8 and
  * US-ASCII.
- * @param string $separator With a namespace aware parser tag parameters passed to the various
+ * @param string      $separator With a namespace aware parser tag parameters passed to the various
  * handler functions will consist of namespace and tag name separated by
  * the string specified in separator.
+ *
  * @return resource Returns a resource handle for the new XML parser.
  * @throws XmlException
  *
  */
-function xml_parser_create_ns(string $encoding = null, string $separator = ":")
+function xml_parser_create_ns(?string $encoding = null, string $separator = ":")
 {
     error_clear_last();
     if ($separator !== ":") {
@@ -44,7 +45,7 @@ function xml_parser_create_ns(string $encoding = null, string $separator = ":")
  * and returns a resource handle referencing it to be used by the
  * other XML functions.
  *
- * @param string $encoding The optional encoding specifies the character
+ * @param string|null $encoding The optional encoding specifies the character
  * encoding for the input/output in PHP 4. Starting from PHP 5, the input
  * encoding is automatically detected, so that the
  * encoding parameter specifies only the output
@@ -55,11 +56,12 @@ function xml_parser_create_ns(string $encoding = null, string $separator = ":")
  * ISO-8859-1, while in PHP 5.0.2 and upper is UTF-8. The supported
  * encodings are ISO-8859-1, UTF-8 and
  * US-ASCII.
+ *
  * @return resource Returns a resource handle for the new XML parser.
  * @throws XmlException
  *
  */
-function xml_parser_create(string $encoding = null)
+function xml_parser_create(?string $encoding = null)
 {
     error_clear_last();
     if ($encoding !== null) {

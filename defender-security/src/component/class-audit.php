@@ -53,7 +53,7 @@ class Audit extends Component {
 			$checkpoint = time();
 		}
 		$checkpoint = (int) $checkpoint;
-		$date_from  = (int) $date_from;
+		$date_from  = ! is_int( $date_from ) ? (int) $date_from : $date_from;
 		if ( 0 === count( $internal ) && $checkpoint > $date_from ) {
 			// Have to fetch from API.
 			$this->log( 'fetch from cloud', self::AUDIT_LOG );
@@ -164,13 +164,13 @@ class Audit extends Component {
 			$item['msg'] = addslashes( $item['msg'] );
 			$data[]      = $item;
 		}
-
 		if ( count( $data ) ) {
 			$ret = $this->curl_to_api( $data );
 			if ( ! is_wp_error( $ret ) ) {
-				foreach ( $logs as $log ) {
-					$log->synced = 1;
-					$log->save();
+				$this->log( sprintf( 'API sync successful, marking %s logs as synced', count( $data ) ), self::AUDIT_LOG );
+				foreach ( $logs as $log_item ) {
+					$log_item->synced = 1;
+					$log_item->save();
 				}
 			}
 		}
@@ -184,22 +184,34 @@ class Audit extends Component {
 	public function audit_clean_up_logs() {
 		$audit_settings = wd_di()->get( Audit_Logging::class );
 		$interval       = $this->calculate_date_interval( $audit_settings->storage_days );
-		$date_from      = ( new DateTime() )->setTimezone( wp_timezone() )
-											->sub( new DateInterval( 'P1Y' ) )
-											->setTime( 0, 0, 0 );
-		$date_to        = ( new DateTime() )->setTimezone( wp_timezone() )
-											->sub( new DateInterval( $interval ) );
+		// Since v5.7.0.
+		$interval = apply_filters( 'wpdef_audit_logs_store_backward', $interval );
+		$interval = is_string( $interval ) ? $interval : (string) $interval;
+
+		try {
+			$interval_obj = new DateInterval( $interval );
+		} catch ( Exception ) {
+			// Fallback if the filter supplied an incorrect value.
+			$interval_obj = new DateInterval( 'P6M' );
+		}
+
+		$date_from = ( new DateTime() )->setTimezone( wp_timezone() )
+					->sub( new DateInterval( 'P1Y' ) )
+					->setTime( 0, 0, 0 );
+		$date_to   = ( new DateTime() )->setTimezone( wp_timezone() )
+					->sub( $interval_obj );
 
 		if ( $date_from < $date_to ) {
 			// Count the logs that should be deleted.
 			$logs_count = Audit_Log::count( $date_from->getTimestamp(), $date_to->getTimestamp() );
 			if ( $logs_count > 0 ) {
 				$this->log( 'Cleaning up old logs from ' . $date_from->format( 'Y-m-d H:i:s' ) . ' to ' . $date_to->format( 'Y-m-d H:i:s' ), self::AUDIT_LOG );
+				// Since v5.0.0.
+				$delete_count = apply_filters( 'wpdef_audit_limit_deleted_logs', 50 );
 				Audit_Log::delete_old_logs(
 					$date_from->getTimestamp(),
 					$date_to->getTimestamp(),
-					// Since v5.0.0.
-					(int) apply_filters( 'wpdef_audit_limit_deleted_logs', 50 )
+					is_int( $delete_count ) ? $delete_count : (int) $delete_count,
 				);
 			}
 		}
@@ -292,7 +304,7 @@ class Audit extends Component {
 	public function open_socket() {
 		$sockets  = Array_Cache::get( 'sockets', 'audit', array() );
 		$endpoint = $this->strip_protocol( $this->get_endpoint() );
-		if ( empty( $sockets ) ) {
+		if ( array() === $sockets ) {
 			$fp = stream_socket_client(
 				'ssl://' . $endpoint . ':443',
 				$errno,
@@ -341,9 +353,13 @@ class Audit extends Component {
 				new Component\Audit\Core_Audit(),
 				new Component\Audit\Media_Audit(),
 				new Component\Audit\Post_Audit(),
-				new Component\Audit\Users_Audit(),
+				new Component\Audit\User_Audit(),
 				new Component\Audit\Options_Audit(),
 				new Component\Audit\Menu_Audit(),
+				new Component\Audit\Theme_Audit(),
+				new Component\Audit\Feature_Audit(),
+				new Component\Audit\Password_Audit(),
+				new Component\Audit\Application_Password_Audit(),
 			);
 
 			foreach ( $events_class as $class ) {

@@ -84,9 +84,8 @@ class Mask_Login extends Component {
 		$request_uri = Request::get_request_uri();
 
 		// If parsed URL is null. PHP v8.1 displays it as deprecated.
-		$path = empty( wp_parse_url( $site_url, PHP_URL_PATH ) )
-			? ''
-			: wp_parse_url( $site_url, PHP_URL_PATH );
+		$parsed_url = wp_parse_url( $site_url, PHP_URL_PATH );
+		$path       = false === $parsed_url || null === $parsed_url ? '' : $parsed_url;
 
 		if ( strlen( $path ) && 0 === strpos( $request_uri, $path ) ) {
 			$request_uri = substr( $request_uri, strlen( $path ) );
@@ -106,7 +105,7 @@ class Mask_Login extends Component {
 	 * @return string The unfiltered site URL.
 	 */
 	private function get_site_url( $blog_id = null, $path = '', $scheme = null ) {
-		if ( empty( $blog_id ) || ! is_multisite() ) {
+		if ( is_null( $blog_id ) || ! is_multisite() ) {
 			$url = get_option( 'siteurl' );
 		} else {
 			switch_to_blog( $blog_id );
@@ -161,7 +160,8 @@ class Mask_Login extends Component {
 	 * @since 3.12.0
 	 */
 	public function is_set_locale( string $mask_url ): bool {
-		return $this->is_land_on_masked_url( $mask_url ) && ! empty( defender_get_data_from_request( 'wp_lang', 'g' ) );
+		$lang = defender_get_data_from_request( 'wp_lang', 'g' );
+		return $this->is_land_on_masked_url( $mask_url ) && ! is_null( $lang ) && '' !== $lang;
 	}
 
 	/**
@@ -173,7 +173,7 @@ class Mask_Login extends Component {
 	public function set_locale(): void {
 		$wp_lang = defender_get_data_from_request( 'wp_lang', 'g' );
 
-		if ( ! empty( $wp_lang ) ) {
+		if ( ! is_null( $wp_lang ) && '' !== $wp_lang ) {
 			switch_to_locale( $wp_lang );
 		}
 	}

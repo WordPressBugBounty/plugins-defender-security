@@ -159,7 +159,7 @@ class File {
 								| FilesystemIterator::UNIX_PATHS | FilesystemIterator::SKIP_DOTS;
 			$directory      = new RecursiveDirectoryIterator( $path, $directory_flag );
 
-			if ( ! empty( $this->include ) || ! empty( $this->exclude ) ) {
+			if ( array() !== $this->include || array() !== $this->exclude ) {
 				$directory = new RecursiveCallbackFilterIterator(
 					$directory,
 					array(
@@ -185,7 +185,7 @@ class File {
 			}
 			if ( false === $this->is_recursive ) {
 				// Have to filter this, for un recursive.
-				if ( ! empty( $this->include ) || ! empty( $this->exclude ) ) {
+				if ( array() !== $this->include || array() !== $this->exclude ) {
 					if ( false === $this->filter_directory( $real_path ) ) {
 						continue;
 					}
@@ -247,7 +247,7 @@ class File {
 				$real_path .= DIRECTORY_SEPARATOR;
 			}
 
-			if ( ( ! empty( $this->include ) || ! empty( $this->exclude ) ) && ( false === $this->filter_directory(
+			if ( ( array() !== $this->include || array() !== $this->exclude ) && ( false === $this->filter_directory(
 				$real_path,
 				$type
 			) ) ) {
@@ -308,7 +308,7 @@ class File {
 					continue;
 				}
 
-				if ( ( ! empty( $this->include ) || ! empty( $this->exclude ) ) && ( false === $this->filter_directory( $real_path ) ) ) {
+				if ( ( array() !== $this->include || array() !== $this->exclude ) && ( false === $this->filter_directory( $real_path ) ) ) {
 					continue;
 				}
 
@@ -353,9 +353,9 @@ class File {
 	 * @return bool|void
 	 */
 	public function filter_directory( $current, $filetype = null ) {
-		if ( ! empty( $this->include ) ) {
+		if ( array() !== $this->include ) {
 			return $this->filter_include( $current, $filetype );
-		} elseif ( ! empty( $this->exclude ) ) {
+		} elseif ( array() !== $this->exclude ) {
 			return $this->filter_exclude( $current, $filetype );
 		}
 	}

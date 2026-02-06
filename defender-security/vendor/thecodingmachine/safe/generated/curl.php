@@ -53,9 +53,9 @@ function curl_exec($ch)
 /**
  * Gets information about the last transfer.
  *
- * @param resource $ch A cURL handle returned by
+ * @param resource $ch  A cURL handle returned by
  * curl_init.
- * @param int $opt This may be one of the following constants:
+ * @param int|null $opt This may be one of the following constants:
  *
  *
  *
@@ -512,7 +512,7 @@ function curl_exec($ch)
  * @throws CurlException
  *
  */
-function curl_getinfo($ch, int $opt = null)
+function curl_getinfo($ch, ?int $opt = null)
 {
     error_clear_last();
     if ($opt !== null) {
@@ -532,17 +532,18 @@ function curl_getinfo($ch, int $opt = null)
  * curl_setopt, curl_exec,
  * and curl_close functions.
  *
- * @param string $url If provided, the CURLOPT_URL option will be set
+ * @param string|null $url If provided, the CURLOPT_URL option will be set
  * to its value. You can manually set this using the
  * curl_setopt function.
  *
  * The file protocol is disabled by cURL if
  * open_basedir is set.
+ *
  * @return resource Returns a cURL handle on success, FALSE on errors.
  * @throws CurlException
  *
  */
-function curl_init(string $url = null)
+function curl_init(?string $url = null)
 {
     error_clear_last();
     $result = \curl_init($url);

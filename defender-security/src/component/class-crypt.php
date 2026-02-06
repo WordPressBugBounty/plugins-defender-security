@@ -14,6 +14,7 @@ use SodiumException;
 use RuntimeException;
 use WP_Defender\Traits\IO;
 use Calotes\Base\Component;
+use WP_Filesystem_Base;
 
 /**
  * Methods for generating cryptographically secure pseudo-random bytes and integers, comparing strings securely,
@@ -129,7 +130,7 @@ class Crypt extends Component {
 	 */
 	private static function encrypt( $value, $key ) {
 		// This is not obfuscation. Just decode a base64-encoded string.
-		$key = base64_decode( $key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$key = base64_decode( $key, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		if ( SODIUM_CRYPTO_SECRETBOX_KEYBYTES !== mb_strlen( $key, '8bit' ) ) {
 			return new WP_Error(
 				Error_Code::ENCRYPT_ERROR,
@@ -159,8 +160,8 @@ class Crypt extends Component {
 			);
 		}
 		// No obfuscation. Just decode base64-encoded $key and $encoded_value strings.
-		$key        = base64_decode( $key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-		$decoded    = base64_decode( $encoded_value ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$key        = base64_decode( $key, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$decoded    = base64_decode( $encoded_value, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$nonce      = mb_substr( $decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit' );
 		$ciphertext = mb_substr( $decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit' );
 
@@ -267,7 +268,7 @@ class Crypt extends Component {
 	public function create_key_file(): bool {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}

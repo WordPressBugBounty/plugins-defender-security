@@ -93,7 +93,7 @@ class Change_Admin extends Abstract_Security_Tweaks {
 	 * @return bool|WP_Error on failure
 	 */
 	private function validate( $username ) {
-		if ( empty( $username ) ) {
+		if ( ! is_string( $username ) || '' === $username ) {
 			return new WP_Error( 'defender_invalid_username', esc_html__( 'The username can\'t be empty!', 'defender-security' ) );
 		}
 

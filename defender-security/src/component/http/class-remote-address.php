@@ -60,7 +60,8 @@ class Remote_Address {
 		 *
 		 * @since 4.5.1
 		 */
-		$http_ip_header = (string) apply_filters( 'wpdef_firewall_ip_detection', $this->http_ip_header );
+		$http_ip_header = apply_filters( 'wpdef_firewall_ip_detection', $this->http_ip_header );
+		$http_ip_header = is_string( $http_ip_header ) ? $http_ip_header : (string) $http_ip_header;
 		switch ( $http_ip_header ) {
 			case 'HTTP_X_FORWARDED_FOR':
 			case 'HTTP_X_REAL_IP':
@@ -104,13 +105,13 @@ class Remote_Address {
 	public function get_http_ip_header_value( string $http_ip_header_key ): string {
 		$ip_array = array();
 		$server   = defender_get_data_from_request( null, 's' );
-		if ( empty( $http_ip_header_key ) ) {
+		if ( '' === $http_ip_header_key ) {
 			$ip_array = wd_di()->get( Classic_Remote_Address::class )->get_ip_header();
 		} elseif ( isset( $server[ $http_ip_header_key ] ) ) {
 			$ip_array[] = $server[ $http_ip_header_key ];
 		}
 
-		return ! empty( $ip_array ) ?
+		return array() !== $ip_array ?
 			implode( ', ', $ip_array ) :
 			sprintf( /* translators: %s - HTTP IP header */
 				esc_html__( '%s header missing in $_SERVER global variable.', 'defender-security' ),

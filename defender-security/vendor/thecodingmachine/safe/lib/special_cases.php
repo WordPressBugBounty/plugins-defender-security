@@ -136,11 +136,12 @@ function apcu_fetch($key)
  * If subject is an array, then the search and
  * replace is performed on every entry of subject,
  * and the return value is an array as well.
- * @param int $limit The maximum possible replacements for each pattern in each
+ * @param int                   $limit The maximum possible replacements for each pattern in each
  * subject string. Defaults to
  * -1 (no limit).
- * @param int $count If specified, this variable will be filled with the number of
+ * @param int|null              $count If specified, this variable will be filled with the number of
  * replacements done.
+ *
  * @return string|array|string[] preg_replace returns an array if the
  * subject parameter is an array, or a string
  * otherwise.
@@ -152,7 +153,7 @@ function apcu_fetch($key)
  * @throws PcreException
  *
  */
-function preg_replace($pattern, $replacement, $subject, int $limit = -1, int &$count = null)
+function preg_replace($pattern, $replacement, $subject, int $limit = -1, ?int &$count = null)
 {
     error_clear_last();
     $result = \preg_replace($pattern, $replacement, $subject, $limit, $count);

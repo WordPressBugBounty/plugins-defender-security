@@ -58,10 +58,12 @@ class Antibot extends Event {
 
 	/**
 	 * Exports strings.
+	 *
+	 * @return array
 	 */
 	public function export_strings() {
+		return array();
 	}
-	// End.
 
 	/**
 	 * Track feature.

@@ -25,16 +25,17 @@ function fbird_blob_cancel($blob_handle): void
 /**
  *
  *
- * @param resource $service_handle The handle on the database server service.
- * @param string $user_name The login name of the new database user.
- * @param string $password The password of the new user.
- * @param string $first_name The first name of the new database user.
- * @param string $middle_name The middle name of the new database user.
- * @param string $last_name The last name of the new database user.
+ * @param resource    $service_handle The handle on the database server service.
+ * @param string      $user_name      The login name of the new database user.
+ * @param string      $password       The password of the new user.
+ * @param string|null $first_name     The first name of the new database user.
+ * @param string|null $middle_name    The middle name of the new database user.
+ * @param string|null $last_name      The last name of the new database user.
+ *
  * @throws IbaseException
  *
  */
-function ibase_add_user($service_handle, string $user_name, string $password, string $first_name = null, string $middle_name = null, string $last_name = null): void
+function ibase_add_user($service_handle, string $user_name, string $password, ?string $first_name = null, ?string $middle_name = null, ?string $last_name = null): void
 {
     error_clear_last();
     if ($last_name !== null) {
@@ -226,31 +227,32 @@ function ibase_commit($link_or_trans_identifier = null): void
  * server will be closed as soon as the execution of the script ends, unless
  * it's closed earlier by explicitly calling ibase_close.
  *
- * @param string $database The database argument has to be a valid path to
+ * @param string|null $database The database argument has to be a valid path to
  * database file on the server it resides on. If the server is not local,
  * it must be prefixed with either 'hostname:' (TCP/IP), 'hostname/port:'
  * (TCP/IP with interbase server on custom TCP port), '//hostname/'
  * (NetBEUI), depending on the connection
  * protocol used.
- * @param string $username The user name. Can be set with the
+ * @param string|null $username The user name. Can be set with the
  * ibase.default_user php.ini directive.
- * @param string $password The password for username. Can be set with the
+ * @param string|null $password The password for username. Can be set with the
  * ibase.default_password php.ini directive.
- * @param string $charset charset is the default character set for a
+ * @param string|null $charset  charset is the default character set for a
  * database.
- * @param int $buffers buffers is the number of database buffers to
+ * @param int|null    $buffers  buffers is the number of database buffers to
  * allocate for the server-side cache. If 0 or omitted, server chooses
  * its own default.
- * @param int $dialect dialect selects the default SQL dialect for any
+ * @param int|null    $dialect  dialect selects the default SQL dialect for any
  * statement executed within a connection, and it defaults to the highest
  * one supported by client libraries.
- * @param string $role Functional only with InterBase 5 and up.
- * @param int $sync
+ * @param string|null $role     Functional only with InterBase 5 and up.
+ * @param int|null    $sync
+ *
  * @return resource Returns an Firebird/InterBase link identifier on success.
  * @throws IbaseException
  *
  */
-function ibase_connect(string $database = null, string $username = null, string $password = null, string $charset = null, int $buffers = null, int $dialect = null, string $role = null, int $sync = null)
+function ibase_connect( ?string $database = null, ?string $username = null, ?string $password = null, ?string $charset = null, ?int $buffers = null, ?int $dialect = null, ?string $role = null, ?int $sync = null)
 {
     error_clear_last();
     if ($sync !== null) {
@@ -394,16 +396,17 @@ function ibase_maintain_db($service_handle, string $db, int $action, int $argume
 /**
  *
  *
- * @param resource $service_handle The handle on the database server service.
- * @param string $user_name The login name of the database user to modify.
- * @param string $password The user's new password.
- * @param string $first_name The user's new first name.
- * @param string $middle_name The user's new middle name.
- * @param string $last_name The user's new last name.
+ * @param resource    $service_handle The handle on the database server service.
+ * @param string      $user_name      The login name of the database user to modify.
+ * @param string      $password       The user's new password.
+ * @param string|null $first_name     The user's new first name.
+ * @param string|null $middle_name    The user's new middle name.
+ * @param string|null $last_name      The user's new last name.
+ *
  * @throws IbaseException
  *
  */
-function ibase_modify_user($service_handle, string $user_name, string $password, string $first_name = null, string $middle_name = null, string $last_name = null): void
+function ibase_modify_user($service_handle, string $user_name, string $password, ?string $first_name = null, ?string $middle_name = null, ?string $last_name = null): void
 {
     error_clear_last();
     if ($last_name !== null) {
@@ -456,31 +459,32 @@ function ibase_name_result($result, string $name): void
  * established by ibase_pconnect). This type of link is
  * therefore called 'persistent'.
  *
- * @param string $database The database argument has to be a valid path to
+ * @param string|null $database The database argument has to be a valid path to
  * database file on the server it resides on. If the server is not local,
  * it must be prefixed with either 'hostname:' (TCP/IP), '//hostname/'
  * (NetBEUI) or 'hostname@' (IPX/SPX), depending on the connection
  * protocol used.
- * @param string $username The user name. Can be set with the
+ * @param string|null $username The user name. Can be set with the
  * ibase.default_user php.ini directive.
- * @param string $password The password for username. Can be set with the
+ * @param string|null $password The password for username. Can be set with the
  * ibase.default_password php.ini directive.
- * @param string $charset charset is the default character set for a
+ * @param string|null $charset  charset is the default character set for a
  * database.
- * @param int $buffers buffers is the number of database buffers to
+ * @param int|null    $buffers  buffers is the number of database buffers to
  * allocate for the server-side cache. If 0 or omitted, server chooses
  * its own default.
- * @param int $dialect dialect selects the default SQL dialect for any
+ * @param int|null    $dialect  dialect selects the default SQL dialect for any
  * statement executed within a connection, and it defaults to the highest
  * one supported by client libraries. Functional only with InterBase 6
  * and up.
- * @param string $role Functional only with InterBase 5 and up.
- * @param int $sync
+ * @param string|null $role     Functional only with InterBase 5 and up.
+ * @param int|null    $sync
+ *
  * @return resource Returns an InterBase link identifier on success.
  * @throws IbaseException
  *
  */
-function ibase_pconnect(string $database = null, string $username = null, string $password = null, string $charset = null, int $buffers = null, int $dialect = null, string $role = null, int $sync = null)
+function ibase_pconnect( ?string $database = null, ?string $username = null, ?string $password = null, ?string $charset = null, ?int $buffers = null, ?int $dialect = null, ?string $role = null, ?int $sync = null)
 {
     error_clear_last();
     if ($sync !== null) {

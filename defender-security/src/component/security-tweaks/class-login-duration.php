@@ -92,7 +92,7 @@ class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Co
 	 */
 	public function shield_up() {
 		$duration = $this->get_duration_in_days();
-		if ( empty( $duration ) || $this->is_incorect_duration( $duration ) ) {
+		if ( $this->is_incorect_duration( $duration ) ) {
 			$this->resolved = false;
 
 			return $this->revert();
@@ -136,10 +136,11 @@ class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Co
 	 * @return int
 	 */
 	private function get_duration_in_days(): int {
-		return (int) apply_filters(
+		$duration = apply_filters(
 			"defender_security_tweaks_{$this->slug}_get_duration",
 			get_site_option( self::OPTION_NAME )
 		);
+		return is_int( $duration ) ? $duration : (int) $duration;
 	}
 
 	/**
@@ -162,7 +163,7 @@ class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Co
 	 * @param int $duration The duration.
 	 */
 	public function update_tweak_duration( int $duration ) {
-		if ( empty( $duration ) || $this->is_incorect_duration( $duration ) ) {
+		if ( $this->is_incorect_duration( $duration ) ) {
 			return;
 		}
 

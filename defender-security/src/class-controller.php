@@ -56,14 +56,14 @@ abstract class Controller extends \Calotes\Base\Controller {
 	/**
 	 * Remove all settings, configs generated in this container runtime.
 	 *
-	 * @return mixed
+	 * @return void
 	 */
 	abstract public function remove_settings();
 
 	/**
 	 * Remove all data.
 	 *
-	 * @return mixed
+	 * @return void
 	 */
 	abstract public function remove_data();
 

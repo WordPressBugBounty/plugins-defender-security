@@ -55,7 +55,7 @@ abstract class Security_Header extends Component {
 	/**
 	 * Adds necessary hooks related to the security header.
 	 *
-	 * @return mixed
+	 * @return void
 	 */
 	abstract public function add_hooks();
 

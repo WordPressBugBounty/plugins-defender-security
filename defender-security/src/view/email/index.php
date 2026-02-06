@@ -427,7 +427,7 @@ $can_whitelabel       = $dashboard_whitelabel->can_whitelabel();
 									</div>
 								<?php endif; ?>
 								<!-- Unsubscribe section -->
-								<?php if ( ! empty( $unsubscribe_link ) ) : ?>
+								<?php if ( is_string( $unsubscribe_link ) && '' !== trim( $unsubscribe_link ) ) : ?>
 									<div style="font-family:Roboto, Arial, sans-serif;font-size:10px;letter-spacing:-.25px;line-height:30px;text-align:center;color:#505050;">
 										<a href="<?php echo esc_url( $unsubscribe_link ); ?>"
 											style="color: #000!important;text-decoration-line:underline!important;font-weight: 400!important;">

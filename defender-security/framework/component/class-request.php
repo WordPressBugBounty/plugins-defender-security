@@ -42,7 +42,7 @@ class Request {
 	 * @return array
 	 */
 	public function get_data( $filters = array() ) {
-		if ( empty( $filters ) ) {
+		if ( ! is_array( $filters ) || array() === $filters ) {
 			return $this->data;
 		}
 		$data = array();

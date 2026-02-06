@@ -50,23 +50,24 @@ class Main_Wp {
 		 *
 		 * @since 5.0.2
 		 */
-		return (bool) apply_filters( 'wpdef_firewall_whitelist_mainwp_dashboard_public_ip_enabled', true );
+		$enabled = apply_filters( 'wpdef_firewall_whitelist_mainwp_dashboard_public_ip_enabled', true );
+		return is_bool( $enabled ) ? $enabled : (bool) $enabled;
 	}
 
 	/**
 	 * Whitelist MainWP dashboard site's public IP.
 	 *
-	 * @return bool
+	 * @return void
 	 */
-	public function set_whitelist_dashboard_public_ip(): bool {
+	public function set_whitelist_dashboard_public_ip(): void {
 		if ( ! $this->is_whitelist_dashboard_public_ip_enabled() ) {
-			return false;
+			return;
 		}
 
 		$ips = $this->get_user_ip();
 
-		if ( empty( $ips ) ) {
-			return false;
+		if ( array() === $ips ) {
+			return;
 		}
 
 		$stored_ips = $this->get_whitelist_dashboard_public_ip();
@@ -79,8 +80,6 @@ class Main_Wp {
 		if ( $stored_ips !== $ips ) {
 			update_site_option( self::WHITELIST_DASHBOARD_PUBLIC_IP_OPTION, $ips );
 		}
-
-		return true;
 	}
 
 	/**

@@ -77,10 +77,10 @@ class Hub_Connector extends Component {
 		$result = $this->maybe_summary_box_trigger( $view );
 		// Get advanced params.
 		$res = $this->get_utm_tags( $page, $result['view'], $result['is_summary'] );
-		if ( ! empty( $res['utm_campaign'] ) ) {
+		if ( '' !== $res['utm_campaign'] ) {
 			$options['extra_args']['register']['utm_campaign'] = $res['utm_campaign'];
 		}
-		if ( ! empty( $res['utm_content'] ) ) {
+		if ( '' !== $res['utm_content'] ) {
 			$options['extra_args']['register']['utm_content'] = $res['utm_content'];
 		}
 
@@ -137,7 +137,7 @@ class Hub_Connector extends Component {
 	 */
 	public static function get_feature_name(): string {
 		$feature_name = defender_get_data_from_request( 'module_name', 'g' );
-		if ( ! empty( $feature_name ) ) {
+		if ( ! is_null( $feature_name ) && '' !== $feature_name ) {
 			return $feature_name;
 		}
 
@@ -162,7 +162,7 @@ class Hub_Connector extends Component {
 	private function get_utm_tags( string $page = '', string $view = '', bool $is_summary = false ): array {
 		$utm_campaign = '';
 		$utm_content  = '';
-		if ( ! empty( $page ) ) {
+		if ( '' !== $page ) {
 			switch ( $page ) {
 				// There are buttons on notice or widget on the Dashboard page.
 				case 'wp-defender':
@@ -211,10 +211,12 @@ class Hub_Connector extends Component {
 	 *
 	 * @param string $page Optional. The page to load. Default is empty string.
 	 * @param string $view Optional. The view to load. Default is empty string.
+	 * @param string $utm_campaign Optional. The UTM campaign parameter. Default is empty string.
+	 * @param string $utm_content Optional. The UTM content parameter. Default is empty string.
 	 *
 	 * @return string
 	 */
-	public function get_url( string $page = '', string $view = '' ): string {
+	public function get_url( string $page = '', string $view = '', string $utm_campaign = '', string $utm_content = '' ): string {
 		if ( $this->is_dash_activated() ) {
 			$args = array(
 				'page'       => 'wpmudev',
@@ -225,10 +227,17 @@ class Hub_Connector extends Component {
 			$result = $this->maybe_summary_box_trigger( $view );
 			// Get advanced params.
 			$res = $this->get_utm_tags( $page, $result['view'], $result['is_summary'] );
-			if ( ! empty( $res['utm_campaign'] ) ) {
+
+			if ( '' !== $utm_campaign ) {
+				$args['utm_campaign'] = $utm_campaign;
+
+			} elseif ( '' !== $res['utm_campaign'] ) {
 				$args['utm_campaign'] = $res['utm_campaign'];
 			}
-			if ( ! empty( $res['utm_content'] ) ) {
+
+			if ( '' !== $utm_content ) {
+				$args['utm_content'] = $utm_content;
+			} elseif ( '' !== $res['utm_content'] ) {
 				$args['utm_content'] = $res['utm_content'];
 			}
 
@@ -238,10 +247,10 @@ class Hub_Connector extends Component {
 		$query = array(
 			'_def_nonce' => wp_create_nonce( self::CONNECTION_ACTION ),
 		);
-		if ( ! empty( $page ) ) {
+		if ( '' !== $page ) {
 			$query['page'] = $page;
 		}
-		if ( ! empty( $view ) ) {
+		if ( '' !== $view ) {
 			$query['view'] = $view;
 		}
 

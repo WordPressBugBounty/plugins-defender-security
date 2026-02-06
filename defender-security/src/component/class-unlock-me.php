@@ -42,7 +42,8 @@ class Unlock_Me extends Component {
 	 * @return string Time string relative to current time.
 	 */
 	public static function get_expired_time(): string {
-		return (string) apply_filters( 'wpdef_firewall_unlockout_expired_time', '-30 minutes' );
+		$expired_time = apply_filters( 'wpdef_firewall_unlockout_expired_time', '-30 minutes' );
+		return is_string( $expired_time ) ? $expired_time : (string) $expired_time;
 	}
 
 	/**
@@ -57,7 +58,7 @@ class Unlock_Me extends Component {
 		$login = HTTP::get( 'login', '' );
 		// Get Unlock ID(-s).
 		$string_uid = HTTP::get( 'uid', '' );
-		if ( empty( $hash ) || empty( $login ) || empty( $string_uid ) ) {
+		if ( '' === $hash || '' === $login || '' === $string_uid ) {
 			return false;
 		}
 
@@ -100,7 +101,7 @@ class Unlock_Me extends Component {
 		}
 
 		// All is good. IP's were unblocked.
-		if ( empty( $ips ) ) {
+		if ( array() === $ips ) {
 			return true;
 		}
 		// Work with IP's.
@@ -130,7 +131,7 @@ class Unlock_Me extends Component {
 			}
 		} else {
 			$ip = Lockout_Ip::get_unlocked_ip_by( $first_ip );
-			if ( ! empty( $ip ) ) {
+			if ( '' !== $ip ) {
 				$this->log(
 					'Unlock Me. Success. IP ' . $ip . ' have been unblocked from Active lockouts.',
 					Firewall::FIREWALL_LOG
@@ -186,16 +187,18 @@ class Unlock_Me extends Component {
 	 * @return bool
 	 */
 	public static function is_displayed( string $reason, array $ips ): bool {
-		$excluded_reasons = (array) apply_filters(
+		$excluded_reasons = apply_filters(
 			'wpdef_firewall_unlockout_excluded_reasons',
 			array(
 				'country',
 				'demo',
 			)
 		);
-		$is_displayed     = ! in_array( $reason, $excluded_reasons, true ) && ! empty( $ips );
+		$excluded_reasons = is_array( $excluded_reasons ) ? $excluded_reasons : (array) $excluded_reasons;
+		$is_displayed     = ! in_array( $reason, $excluded_reasons, true ) && array() !== $ips;
+		$is_displayed     = apply_filters( 'wpdef_firewall_unlockout_is_displayed', $is_displayed );
 
-		return (bool) apply_filters( 'wpdef_firewall_unlockout_is_displayed', $is_displayed );
+		return is_bool( $is_displayed ) ? $is_displayed : (bool) $is_displayed;
 	}
 
 	/**
@@ -204,7 +207,8 @@ class Unlock_Me extends Component {
 	 * @return int
 	 */
 	public static function get_attempt_limit(): int {
-		return (int) apply_filters( 'wpdef_firewall_unlockout_attempt_limit', 5 );
+		$limit = apply_filters( 'wpdef_firewall_unlockout_attempt_limit', 5 );
+		return is_int( $limit ) ? $limit : (int) $limit;
 	}
 
 	/**

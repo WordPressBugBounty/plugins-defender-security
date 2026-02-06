@@ -13,6 +13,7 @@ use WP_Defender\Model\Lockout_Ip;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Model\Notification\Firewall_Notification;
+use WP_Filesystem_Base;
 
 /**
  * Handles User-Agent based operations including lockouts and logging for security purposes.
@@ -126,7 +127,7 @@ class User_Agent extends Component {
 		$allowlist_regex_pattern = '#' . implode( '|', $allowlist ) . '#i';
 		$allowlist_match         = preg_match( $allowlist_regex_pattern, $user_agent );
 
-		if ( count( $allowlist ) > 0 && ! empty( $allowlist_match ) ) {
+		if ( count( $allowlist ) > 0 && $allowlist_match > 0 ) {
 			return false;
 		}
 
@@ -134,7 +135,7 @@ class User_Agent extends Component {
 		$blocklist_regex_pattern = '#' . implode( '|', $blocklist ) . '#i';
 		$blocklist_match         = preg_match( $blocklist_regex_pattern, $user_agent );
 
-		if ( count( $blocklist ) > 0 && ! empty( $blocklist_match ) ) {
+		if ( count( $blocklist ) > 0 && $blocklist_match > 0 ) {
 			return true;
 		}
 
@@ -147,7 +148,7 @@ class User_Agent extends Component {
 	 * @return string The block message.
 	 */
 	public function get_message(): string {
-		return ! empty( $this->model->message )
+		return '' !== $this->model->message
 			? $this->model->message
 			: esc_html__( 'You have been blocked from accessing this website.', 'defender-security' );
 	}
@@ -165,6 +166,9 @@ class User_Agent extends Component {
 		$this->log_event( $ip, $user_agent, $reason );
 		do_action( 'wd_user_agent_lockout', $this->model, self::SCENARIO_USER_AGENT_LOCKOUT );
 		// Shouldn't block IP via hook 'wd_blacklist_this_ip', block only when the button 'Ban IP' is clicked.
+		if ( defender_is_wp_org_version() ) {
+			Rate::run_counter_of_ua_lockouts();
+		}
 	}
 
 	/**
@@ -185,7 +189,7 @@ class User_Agent extends Component {
 	 */
 	public function sanitize_user_agent(): string {
 		$user_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-		if ( empty( $user_agent ) ) {
+		if ( '' === $user_agent ) {
 			return '';
 		}
 
@@ -203,13 +207,13 @@ class User_Agent extends Component {
 	 *
 	 * @return bool Returns true if the headers are considered bad, false otherwise.
 	 */
-	public function is_bad_post( $user_agent ): bool {
+	public function is_bad_post( string $user_agent ): bool {
 		$server = defender_get_data_from_request( null, 's' );
 
 		return true === $this->model->empty_headers
 				&& 'POST' === $server['REQUEST_METHOD']
-				&& empty( $user_agent )
-				&& empty( $server['HTTP_REFERER'] );
+				&& '' === $user_agent
+				&& ( ! isset( $server['HTTP_REFERER'] ) || '' === $server['HTTP_REFERER'] );
 	}
 
 	/**
@@ -222,7 +226,7 @@ class User_Agent extends Component {
 	public function verify_import_file( $file ) {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -275,7 +279,7 @@ class User_Agent extends Component {
 
 		$user_agent_key = $this->model->get_access_status( $user_agent );
 
-		if ( ! empty( $user_agent_key[0] ) ) {
+		if ( isset( $user_agent_key[0] ) && '' !== $user_agent_key[0] ) {
 			$status_text = $this->lockout_ip_model->get_access_status_text( $user_agent_key[0] );
 		}
 
@@ -302,6 +306,7 @@ class User_Agent extends Component {
 				'mj12bot'    => 'MJ12Bot (Majestic)',
 				'ahrefsbot'  => 'AhrefsBot',
 				'semrushbot' => 'SEMrushBot',
+				'thinkbot'   => 'Thinkbot',
 			),
 		);
 	}
@@ -379,6 +384,6 @@ class User_Agent extends Component {
 			}
 		}
 
-		return ! empty( $arr_source ) ? array_values( $arr_source ) : array();
+		return is_array( $arr_source ) && array() !== $arr_source ? array_values( $arr_source ) : array();
 	}
 }

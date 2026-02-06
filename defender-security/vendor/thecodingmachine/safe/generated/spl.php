@@ -87,19 +87,20 @@ function class_uses($class, bool $autoload = true): array
  * runs through each of them in the order they are defined. By contrast,
  * __autoload may only be defined once.
  *
- * @param callable(string):void $autoload_function The autoload function being registered.
+ * @param callable(string):void|null $autoload_function The autoload function being registered.
  * If no parameter is provided, then the default implementation of
  * spl_autoload will be registered.
- * @param bool $throw This parameter specifies whether
+ * @param bool                       $throw             This parameter specifies whether
  * spl_autoload_register should throw
  * exceptions when the autoload_function
  * cannot be registered.
- * @param bool $prepend If true, spl_autoload_register will prepend
+ * @param bool                       $prepend           If true, spl_autoload_register will prepend
  * the autoloader on the autoload queue instead of appending it.
+ *
  * @throws SplException
  *
  */
-function spl_autoload_register(callable $autoload_function = null, bool $throw = true, bool $prepend = false): void
+function spl_autoload_register(?callable $autoload_function = null, bool $throw = true, bool $prepend = false): void
 {
     error_clear_last();
     if ($prepend !== false) {

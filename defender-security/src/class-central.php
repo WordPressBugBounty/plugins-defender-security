@@ -47,7 +47,7 @@ class Central extends Component {
 		// This is the intention, we will use it to find the data stored in DI.
 		$route = HTTP::get( 'route', false );
 		$nonce = HTTP::get( '_def_nonce', false );
-		if ( empty( $route ) || empty( $nonce ) ) {
+		if ( ! is_string( $route ) || '' === trim( $route ) || ! is_string( $nonce ) || '' === trim( $nonce ) ) {
 			exit;
 		}
 
@@ -86,7 +86,7 @@ class Central extends Component {
 		try {
 			$package                         = wd_di()->get( $key );
 			[ $class, $method, $is_private ] = $package;
-			if ( $is_private && ! $this->check_permission() ) {
+			if ( true === $is_private && ! $this->check_permission() ) {
 				wp_send_json_error(
 					array(
 						'message'     => esc_html__( 'You shall not pass.', 'defender-security' ),
@@ -94,7 +94,7 @@ class Central extends Component {
 					)
 				);
 			}
-			if ( $is_private ) {
+			if ( true === $is_private ) {
 				if ( ! wp_next_scheduled( 'defender_hub_sync' ) ) {
 					// Sync with HUB on every request it made, but not on public call.
 					wp_schedule_single_event( time(), 'defender_hub_sync' );
@@ -123,6 +123,7 @@ class Central extends Component {
 			// Manipulate the POST as raw data.
 			$_POST = $request->get_data();
 
+			// @phpstan-ignore-next-line
 			return $object->$method( $request );
 		} else {
 			$this->log( sprintf( 'class not found when executing: %s %s', $class_name, $method ), self::INTERNAL_LOG );
@@ -163,7 +164,7 @@ class Central extends Component {
 	 *
 	 * @return mixed The route associated with the intention, or null if not found.
 	 */
-	public function get_route( $method, $class_name ) {
+	public function get_route( $method, $class_name ): mixed {
 		$intention = $this->get_intention( $class_name, $method );
 
 		try {
@@ -171,6 +172,8 @@ class Central extends Component {
 		} catch ( Exception $e ) {
 			$this->log( $e->getMessage(), self::INTERNAL_LOG );
 		}
+
+		return null;
 	}
 
 	/**
@@ -181,7 +184,7 @@ class Central extends Component {
 	 *
 	 * @return mixed The nonce associated with the intention, or null if not found.
 	 */
-	public function get_nonce( $method, $class_name ) {
+	public function get_nonce( $method, $class_name ): mixed {
 		$intention = $this->get_intention( $class_name, $method );
 
 		try {
@@ -189,6 +192,8 @@ class Central extends Component {
 		} catch ( Exception $e ) {
 			$this->log( $e->getMessage(), self::INTERNAL_LOG );
 		}
+
+		return null;
 	}
 
 	/**
@@ -260,7 +265,7 @@ class Central extends Component {
 		try {
 			$package = wd_di()->get( $key );
 
-			return isset( $package[2] ) && $package[2];
+			return isset( $package[2] ) && true === (bool) $package[2];
 		} catch ( Exception $e ) {
 			$this->log( $e->getMessage(), self::INTERNAL_LOG );
 		}
@@ -301,7 +306,7 @@ class Central extends Component {
 		try {
 			$package = wd_di()->get( $key );
 
-			return isset( $package[3] ) && $package[3];
+			return isset( $package[3] ) && true === (bool) $package[3];
 		} catch ( Exception $e ) {
 			$this->log( $e->getMessage(), self::INTERNAL_LOG );
 		}

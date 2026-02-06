@@ -72,29 +72,20 @@ class Expert_Services extends Controller {
 	 * Import the data of other source into this, it can be when HUB trigger the import, or user apply a preset.
 	 *
 	 * @param array $data Data from other source.
-	 *
-	 * @return null|void
 	 */
 	public function import_data( array $data ) {
-		// TODO: Implement import_data() method.
 	}
 
 	/**
 	 * Remove all settings, configs generated in this container runtime.
-	 *
-	 * @return mixed
 	 */
 	public function remove_settings() {
-		// TODO: Implement remove_settings() method.
 	}
 
 	/**
 	 * Remove all data.
-	 *
-	 * @return mixed
 	 */
 	public function remove_data() {
-		// TODO: Implement remove_data() method.
 	}
 
 	/**

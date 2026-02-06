@@ -9,7 +9,7 @@ use Safe\Exceptions\IbmDb2Exception;
  *
  * @param resource $connection A valid database connection resource variable as returned from
  * db2_connect or db2_pconnect.
- * @param int $value One of the following constants:
+ * @param int|null $value      One of the following constants:
  *
  *
  * DB2_AUTOCOMMIT_OFF
@@ -32,6 +32,7 @@ use Safe\Exceptions\IbmDb2Exception;
  * Turns AUTOCOMMIT off.
  *
  * Turns AUTOCOMMIT on.
+ *
  * @return mixed When db2_autocommit receives only the
  * connection parameter, it returns the current state
  * of AUTOCOMMIT for the requested connection as an integer value. A value of
@@ -46,7 +47,7 @@ use Safe\Exceptions\IbmDb2Exception;
  * @throws IbmDb2Exception
  *
  */
-function db2_autocommit($connection, int $value = null)
+function db2_autocommit($connection, ?int $value = null)
 {
     error_clear_last();
     if ($value !== null) {
@@ -68,12 +69,12 @@ function db2_autocommit($connection, int $value = null)
  * parameter than simply passing the variable as part of the optional input
  * array to db2_execute.
  *
- * @param resource $stmt A prepared statement returned from db2_prepare.
- * @param int $parameter_number Specifies the 1-indexed position of the parameter in the prepared
+ * @param resource $stmt             A prepared statement returned from db2_prepare.
+ * @param int      $parameter_number Specifies the 1-indexed position of the parameter in the prepared
  * statement.
- * @param string $variable_name A string specifying the name of the PHP variable to bind to the
+ * @param string   $variable_name    A string specifying the name of the PHP variable to bind to the
  * parameter specified by parameter_number.
- * @param int $parameter_type A constant specifying whether the PHP variable should be bound to the
+ * @param int|null $parameter_type   A constant specifying whether the PHP variable should be bound to the
  * SQL parameter as an input parameter (DB2_PARAM_IN),
  * an output parameter (DB2_PARAM_OUT), or as a
  * parameter that accepts input and returns output
@@ -81,7 +82,7 @@ function db2_autocommit($connection, int $value = null)
  * also specify DB2_PARAM_FILE to bind the PHP variable
  * to the name of a file that contains large object (BLOB, CLOB, or DBCLOB)
  * data.
- * @param int $data_type A constant specifying the SQL data type that the PHP variable should be
+ * @param int      $data_type        A constant specifying the SQL data type that the PHP variable should be
  * bound as: one of DB2_BINARY,
  * DB2_CHAR, DB2_DOUBLE, or
  * DB2_LONG .
@@ -93,10 +94,11 @@ function db2_autocommit($connection, int $value = null)
  * output value from the stored procedure.
  * @param int $scale Specifies the scale with which the variable should be bound to the
  * database.
+ *
  * @throws IbmDb2Exception
  *
  */
-function db2_bind_param($stmt, int $parameter_number, string $variable_name, int $parameter_type = null, int $data_type = 0, int $precision = -1, int $scale = 0): void
+function db2_bind_param($stmt, int $parameter_number, string $variable_name, ?int $parameter_type = null, int $data_type = 0, int $precision = -1, int $scale = 0): void
 {
     error_clear_last();
     if ($scale !== 0) {
@@ -298,13 +300,14 @@ function db2_commit($connection): void
  * advantages of using db2_prepare and
  * db2_execute rather than db2_exec.
  *
- * @param resource $stmt A prepared statement returned from db2_prepare.
- * @param array $parameters An array of input parameters matching any parameter markers contained
+ * @param resource   $stmt       A prepared statement returned from db2_prepare.
+ * @param array|null $parameters An array of input parameters matching any parameter markers contained
  * in the prepared statement.
+ *
  * @throws IbmDb2Exception
  *
  */
-function db2_execute($stmt, array $parameters = null): void
+function db2_execute($stmt, ?array $parameters = null): void
 {
     error_clear_last();
     if ($parameters !== null) {

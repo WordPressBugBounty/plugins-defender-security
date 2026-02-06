@@ -24,7 +24,7 @@ abstract class Audit_Event extends Component {
 	use User;
 	use IP;
 
-	public const ACTION_DELETED = 'deleted', ACTION_TRASHED = 'trashed', ACTION_RESTORED = 'restored', ACTION_UPDATED = 'updated';
+	public const ACTION_CREATED = 'created', ACTION_DELETED = 'deleted', ACTION_TRASHED = 'trashed', ACTION_RESTORED = 'restored', ACTION_UPDATED = 'updated';
 
 	/**
 	 * Return an array of hooks.
@@ -114,6 +114,7 @@ abstract class Audit_Event extends Component {
 			if ( is_array( $obj ) && array_key_exists( $link, $obj ) ) {
 				$obj = $obj[ $link ];
 			} elseif ( is_object( $obj ) && isset( $obj->$link ) ) {
+				// @phpstan-ignore-next-line
 				$obj = $obj->$link;
 			} else {
 				return false;
@@ -135,7 +136,7 @@ abstract class Audit_Event extends Component {
 		$links_array = explode( '->', $links );
 
 		// Check if the first link exists and is valid.
-		if ( empty( $links_array ) || ! isset( $data[ $links_array[0] ] ) ) {
+		if ( ! isset( $data[ $links_array[0] ] ) ) {
 			return false;
 		}
 
@@ -278,7 +279,7 @@ abstract class Audit_Event extends Component {
 	/**
 	 * Build log data based on the provided hook data and parameters.
 	 *
-	 * @return mixed Returns false if the log data cannot be built, otherwise an array of log data.
+	 * @return bool Returns false if the log data cannot be built, otherwise true.
 	 * @throws ReflectionException If the class or method does not exist.
 	 */
 	public function build_log_data() {
@@ -290,22 +291,40 @@ abstract class Audit_Event extends Component {
 		// Have to build iup params first.
 		if ( ( is_array( $hook_data['args'] ) || $hook_data['args'] instanceof Countable ? count( $hook_data['args'] ) : 0 ) !== ( is_array( $params ) || $params instanceof Countable ? count( $params ) : 0 ) ) {
 			return false;
-		} elseif ( empty( $hook_data['args'] ) && empty( $params ) ) {
+		} elseif (
+			( ! isset( $hook_data['args'] ) || ! is_array( $hook_data['args'] ) || array() === $hook_data['args'] )
+			&& ( ! is_array( $params ) || array() === $params )
+		) {
 			$params = array();
 		} else {
 			$params = array_combine( $hook_data['args'], $params );
 		}
 
-		if ( isset( $hook_data['callback'] ) && ! empty( $hook_data['callback'] ) ) {
+		if ( isset( $hook_data['callback'] ) && is_array( $hook_data['callback'] ) && count( $hook_data['callback'] ) > 1 ) {
 			// Custom callback provided, call it.
 			$reflection_method = new ReflectionMethod( $hook_data['callback'][0], $hook_data['callback'][1] );
-			$ret               = $reflection_method->invokeArgs(
-				new $hook_data['callback'][0](),
-				array(
-					$hook_name,
-					$params,
-				)
+			$new_hooks         = array(
+				'add_user_to_blog',
+				'user_profile_update_errors',
+				'profile_update',
+				'password_reset',
+				'user_register',
+				'wpmu_new_user',
 			);
+			if ( in_array( $hook_name, $new_hooks, true ) ) {
+				$ret = $reflection_method->invokeArgs(
+					new $hook_data['callback'][0](),
+					$params
+				);
+			} else {
+				$ret = $reflection_method->invokeArgs(
+					new $hook_data['callback'][0](),
+					array(
+						$hook_name,
+						$params,
+					)
+				);
+			}
 
 			if ( is_array( $ret ) && 2 === count( $ret ) ) {
 				[ $text, $context ] = $ret;
@@ -340,7 +359,7 @@ abstract class Audit_Event extends Component {
 			// Now we got all params as key=>value, just build the text.
 			$text = self::get_text( $hook_data['text'], $params );
 
-			if ( empty( $text ) ) {
+			if ( ! is_string( $text ) || '' === $text ) {
 				return false;
 			}
 
@@ -401,7 +420,7 @@ abstract class Audit_Event extends Component {
 		}
 
 		// We don't get text. Return.
-		if ( ! $text ) {
+		if ( ! is_string( $text ) || '' === trim( $text ) ) {
 			return false;
 		}
 
@@ -429,6 +448,8 @@ abstract class Audit_Event extends Component {
 			);
 			Array_Cache::append( 'logs', $post, 'audit' );
 		}
+
+		return true;
 	}
 
 	/**

@@ -395,7 +395,7 @@ function yaz_search($id, string $type, string $query): void
  * yaz_wait returns when all servers have either
  * completed all requests or aborted (in case of errors).
  *
- * @param array $options An associative array of options:
+ * @param array|null $options An associative array of options:
  *
  *
  * timeout
@@ -422,12 +422,13 @@ function yaz_search($id, string $type, string $query): void
  * returns. The default value for timeout is 15 seconds.
  *
  * A boolean.
+ *
  * @return mixed Returns TRUE on success.
  * In event mode, returns resource.
  * @throws YazException
  *
  */
-function yaz_wait(array &$options = null)
+function yaz_wait(?array &$options = null)
 {
     error_clear_last();
     $result = \yaz_wait($options);

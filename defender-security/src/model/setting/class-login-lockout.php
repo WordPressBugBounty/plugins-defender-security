@@ -27,7 +27,7 @@ class Login_Lockout extends Setting {
 	 * @var bool
 	 * @defender_property
 	 */
-	public $enabled = false;
+	public bool $enabled = false;
 	/**
 	 * Maximum attempt before get locked.
 	 *
@@ -135,7 +135,7 @@ class Login_Lockout extends Setting {
 		 * @since  2.4.7
 		 */
 		$usernames = apply_filters( 'wp_defender_banned_usernames', $this->username_blacklist );
-		if ( empty( $usernames ) ) {
+		if ( '' === trim( $usernames ) ) {
 			return array();
 		}
 		$usernames = str_replace( array( "\r\n", "\r", "\n" ), ' ', $this->username_blacklist );

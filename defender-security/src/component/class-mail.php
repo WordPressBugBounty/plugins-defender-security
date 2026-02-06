@@ -34,7 +34,7 @@ class Mail extends Component {
 		$whitelabel = new Dashboard_Whitelabel();
 		if ( $whitelabel->can_whitelabel() ) {
 			$plugin_label = $whitelabel->get_plugin_name( Config_Hub_Helper::WDP_ID );
-			if ( empty( $plugin_label ) ) {
+			if ( false === $plugin_label || '' === $plugin_label ) {
 				$plugin_label = $this->find_feature_name_by_slug( $notification_slug );
 			}
 		} else {

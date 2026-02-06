@@ -105,18 +105,32 @@ class Security_Tweaks extends Setting {
 	 */
 	public function mark( $status, $slug ) {
 		foreach ( array( 'issues', 'fixed', 'ignore' ) as $collection ) {
+			if ( ! property_exists( $this, $collection ) ) {
+				continue;
+			}
+
+			// @phpstan-ignore-next-line
 			$arr   = $this->$collection;
 			$index = array_search( $slug, $arr, true );
 			if ( false !== $index ) {
 				unset( $arr[ $index ] );
 			}
+			// @phpstan-ignore-next-line
 			$this->$collection = $arr;
 		}
+
 		if ( \WP_Defender\Controller\Security_Tweaks::STATUS_RESTORE === $status ) {
 			$status = \WP_Defender\Controller\Security_Tweaks::STATUS_ISSUES;
 		}
-		$collection      = $this->{$status};
-		$collection[]    = $slug;
+
+		if ( ! property_exists( $this, $status ) ) {
+			return;
+		}
+
+		// @phpstan-ignore-next-line
+		$collection   = $this->{$status};
+		$collection[] = $slug;
+		// @phpstan-ignore-next-line
 		$this->{$status} = $collection;
 		$this->save();
 	}

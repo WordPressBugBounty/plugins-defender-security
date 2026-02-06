@@ -141,9 +141,9 @@ trait Webauthn {
 	 * @param  int    $user_id  User ID.
 	 * @param  string $name  Metadata key.
 	 *
-	 * @return mixed
+	 * @return array
 	 */
-	public function get_user_meta( int $user_id, string $name ) {
+	public function get_user_meta( int $user_id, string $name ): array {
 		$value = get_user_meta( $user_id, $this->option_prefix . $name, true );
 
 		if ( null === $value ) {

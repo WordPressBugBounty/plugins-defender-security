@@ -170,7 +170,7 @@ class Session_Protection extends Component {
 	public function logout( $user_id = null ) {
 		if ( is_user_logged_in() ) {
 			// Case without $user_id may be from Ajax.
-			if ( empty( $user_id ) ) {
+			if ( is_null( $user_id ) ) {
 				$user_id = get_current_user_id();
 				$this->log(
 					sprintf( 'User session timed out due to inactivity during %s hours', $this->settings->idle_timeout ),
@@ -211,10 +211,8 @@ class Session_Protection extends Component {
 	 * @return \WP_Error
 	 */
 	public function login_modal_message( $errors ) {
-		if (
-			empty( defender_get_data_from_request( 'interim-login', 'g' ) ) ||
-			! get_site_transient( self::LOGOUT_MSG_TRANSIENT_KEY )
-		) {
+		$interim_login = defender_get_data_from_request( 'interim-login', 'g' );
+		if ( is_null( $interim_login ) || '' === $interim_login || 1 !== get_site_transient( self::LOGOUT_MSG_TRANSIENT_KEY ) ) {
 			return $errors;
 		}
 
@@ -247,7 +245,7 @@ class Session_Protection extends Component {
 	 * @return void
 	 */
 	public function login_modal_message_styles(): void {
-		if ( get_site_transient( self::LOGOUT_MSG_TRANSIENT_KEY ) ) {
+		if ( 1 === get_site_transient( self::LOGOUT_MSG_TRANSIENT_KEY ) ) {
 			// Don't delete the transient here, it will be deleted in the login_modal_message() method.
 
 			echo '<style>
@@ -293,7 +291,8 @@ class Session_Protection extends Component {
 		 *
 		 * @return int The idle timeout duration in seconds.
 		 */
-		return (int) apply_filters( 'wpdef_idle_timeout', $this->settings->idle_timeout * HOUR_IN_SECONDS );
+		$idle_timeout = apply_filters( 'wpdef_idle_timeout', $this->settings->idle_timeout * HOUR_IN_SECONDS );
+		return ! is_int( $idle_timeout ) ? (int) $idle_timeout : $idle_timeout;
 	}
 
 	/**
@@ -306,7 +305,7 @@ class Session_Protection extends Component {
 		$last_activity = $this->get_last_activity();
 
 		// Only update the cookie if minutes have passed since the last update.
-		if ( ! empty( $last_activity ) || ( $current_time - $last_activity > MINUTE_IN_SECONDS ) ) {
+		if ( ! is_null( $last_activity ) || ( $current_time - $last_activity > MINUTE_IN_SECONDS ) ) {
 			setcookie( 'wpdef_last_activity', $current_time, time() + HOUR_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 		}
 	}
@@ -351,7 +350,8 @@ class Session_Protection extends Component {
 		}
 		$user_ips = $this->get_user_ip();
 		// Exclude Loopback case. If condition returns true, then there is no Loopback intersection.
-		if ( ! empty( array_intersect( $user_ips, $this->get_localhost_ips() ) ) ) {
+		$common_ips = array_intersect( $user_ips, $this->get_localhost_ips() );
+		if ( array() !== $common_ips ) {
 			return;
 		}
 		// Work with the Session Lock options.
@@ -381,7 +381,7 @@ class Session_Protection extends Component {
 	 * @return void
 	 */
 	private function is_ip_allowed( $ip, $session_ip, $user_id ) {
-		if ( empty( $ip ) || empty( $session_ip ) || $ip !== $session_ip ) {
+		if ( '' === $ip || '' === $session_ip || $ip !== $session_ip ) {
 			$this->log(
 				sprintf(
 					'IP address mismatch detected. Detected: %s, Expected: %s.',
@@ -411,7 +411,7 @@ class Session_Protection extends Component {
 	 * @return void
 	 */
 	private function is_hostname_allowed( $hostname, $session_hostname, $user_id ) {
-		if ( empty( $hostname ) || empty( $session_hostname ) || strcasecmp( $hostname, $session_hostname ) !== 0 ) {
+		if ( '' === $hostname || '' === $session_hostname || strcasecmp( $hostname, $session_hostname ) !== 0 ) {
 			$this->log(
 				sprintf(
 					'Hostname mismatch detected. Detected: %s, Expected: %s.',
@@ -435,7 +435,7 @@ class Session_Protection extends Component {
 	 * @return void
 	 */
 	private function is_browser_allowed( $browser, $session_browser, $user_id ) {
-		if ( empty( $browser ) || empty( $session_browser ) || strcasecmp( $browser, $session_browser ) !== 0 ) {
+		if ( '' === $browser || '' === $session_browser || strcasecmp( $browser, $session_browser ) !== 0 ) {
 			$this->log(
 				sprintf(
 					'Browser mismatch detected. Detected: %s, Expected: %s.',
@@ -465,6 +465,8 @@ class Session_Protection extends Component {
 		 *
 		 * @return bool
 		 */
-		return (bool) apply_filters( 'wpdef_toggle_session_protection', $this->should_enforce_for_user( $current_user ), $current_user );
+		$protection = apply_filters( 'wpdef_toggle_session_protection', $this->should_enforce_for_user( $current_user, $this->settings ), $current_user );
+
+		return is_bool( $protection ) ? $protection : (bool) $protection;
 	}
 }

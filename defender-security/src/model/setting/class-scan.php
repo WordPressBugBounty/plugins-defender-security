@@ -105,7 +105,7 @@ class Scan extends Setting {
 	 * @sanitize_text_field
 	 * @defender_property
 	 */
-	public $day_n;
+	public int $day_n = 1;
 
 	/**
 	 * Same as $day.
@@ -216,13 +216,12 @@ class Scan extends Setting {
 			$mins = '00';
 		} else {
 			++$current_hours;
-			$current_hours >= 24 ? '00' : $current_hours;
 			$mins = '00';
 		}
 
 		$this->frequency = 'weekly';
 		$this->day       = $day;
-		$this->day_n     = '1';
+		$this->day_n     = 1;
 		$this->time      = $current_hours . ':' . $mins;
 	}
 

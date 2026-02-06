@@ -7,8 +7,16 @@
 
 foreach ( $notices as $notice ) {
 	$class   = array( 'wpdef-notice', $notice['type'], $notice['extra_class'] );
-	$class[] = ! empty( $notice['is_dismissible'] ) ? 'is-dismissible' : '';
-	$class   = implode( ' ', array_filter( $class ) );
+	$class[] = isset( $notice['is_dismissible'] ) && true === $notice['is_dismissible'] ? 'is-dismissible' : '';
+	$class   = implode(
+		' ',
+		array_filter(
+			$class,
+			function ( $value ) {
+				return is_string( $value ) && '' !== trim( $value );
+			}
+		)
+	);
 	?>
 	<div class="<?php echo esc_attr( $class ); ?>" <?php echo $notice['style'] ? 'style="' . esc_attr( $notice['style'] ) . '"' : ''; ?>>
 		<p>
@@ -16,7 +24,7 @@ foreach ( $notices as $notice ) {
 			<span class="wpdef-notice-message"><?php echo wp_kses_post( $notice['message'] ); ?></span>
 		</p>
 		<?php
-		if ( ! empty( $notice['is_dismissible'] ) ) {
+		if ( isset( $notice['is_dismissible'] ) && true === $notice['is_dismissible'] ) {
 			?>
 			<button type="button" class="notice-dismiss">
 				<span class="screen-reader-text"><?php esc_attr_e( 'Dismiss', 'defender-security' ); ?></span>

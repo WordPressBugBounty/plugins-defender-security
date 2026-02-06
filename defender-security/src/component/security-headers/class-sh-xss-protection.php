@@ -32,7 +32,7 @@ class Sh_XSS_Protection extends Security_Header {
 		if ( ! $model->sh_xss_protection ) {
 			return false;
 		}
-		if ( isset( $model->sh_xss_protection_mode ) && ! empty( $model->sh_xss_protection_mode ) ) {
+		if ( isset( $model->sh_xss_protection_mode ) && '' !== $model->sh_xss_protection_mode ) {
 			return true;
 		}
 		$headers = $this->head_request( network_site_url(), self::$rule_slug );

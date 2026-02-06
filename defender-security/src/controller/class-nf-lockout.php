@@ -81,7 +81,7 @@ class Nf_Lockout extends Event {
 	 */
 	public function save_settings( Request $request ) {
 		$data        = $request->get_data( $this->request_filter_rules() );
-		$old_enabled = (bool) $this->model->enabled;
+		$old_enabled = $this->model->enabled;
 		$prev_data   = $this->model->export();
 
 		$this->model->import( $data );
@@ -194,7 +194,7 @@ class Nf_Lockout extends Event {
 	 * @param  array $data  Data to be imported into the model.
 	 */
 	public function import_data( array $data ) {
-		if ( ! empty( $data ) ) {
+		if ( array() !== $data ) {
 			$data  = $this->adapt_data( $data );
 			$model = $this->model;
 			$model->import( $data );

@@ -30,6 +30,10 @@ use WP_Defender\Controller\Scan as Scan_Controller;
  * The Scan class handles the scanning process, managing tasks, and coordinating different types of scans.
  */
 class Scan extends Component {
+	use \WP_Defender\Traits\Plugin;
+
+	// For all Scan types where plugins are used.
+	public const PLUGINS_ACTIONED = 'wp-defender-actioned-plugins';
 
 	/**
 	 * The current scan model.
@@ -71,7 +75,7 @@ class Scan extends Component {
 	 *
 	 * @var Gather_Fact|null
 	 */
-	private ?Gather_Fact $gather_fact;
+	private ?Gather_Fact $gather_fact = null;
 
 	/**
 	 * Instance of Abandoned_Plugin to handle abandoned plugin checks.
@@ -88,18 +92,27 @@ class Scan extends Component {
 	protected string $lock_filename = 'scan.lock';
 
 	/**
+	 * Indicate whether the current installation is a pro version.
+	 *
+	 * @var bool
+	 */
+	private $is_pro;
+
+	/**
 	 * Constructs the Scan object and initializes behaviors.
 	 */
 	public function __construct() {
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 		$this->attach_behavior( Core_Integrity::class, Core_Integrity::class );
 		$this->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
+		$this->is_pro   = wd_di()->get( WPMUDEV::class )->is_pro();
+		$this->settings = wd_di()->get( Scan_Settings::class );
 	}
 
 	/**
 	 * Performs additional actions after an advanced scan.
 	 *
-	 * @param object $model  The scan model.
+	 * @param Scan_Model $model  The scan model.
 	 */
 	public function advanced_scan_actions( $model ) {
 		$this->reindex_ignored_issues( $model );
@@ -213,8 +226,7 @@ class Scan extends Component {
 	 * @return array
 	 */
 	public function get_tasks(): array {
-		$this->settings = new Scan_Settings();
-		$tasks          = array( Scan_Model::STEP_GATHER_INFO => 'gather_info' );
+		$tasks = array( Scan_Model::STEP_GATHER_INFO => 'gather_info' );
 		if ( $this->settings->integrity_check ) {
 			// Nested options.
 			if ( $this->settings->check_core ) {
@@ -228,16 +240,14 @@ class Scan extends Component {
 		if ( $this->settings->check_abandoned_plugin ) {
 			$tasks[ Scan_Model::STEP_ABANDONED_PLUGIN_CHECK ] = 'abandoned_plugin_check';
 		}
-		if ( $this->is_pro() ) {
-			if ( $this->settings->check_known_vuln ) {
-				if ( $this->has_method( Scan_Model::STEP_VULN_CHECK ) ) {
-					$tasks[ Scan_Model::STEP_VULN_CHECK ] = 'vuln_check';
-				}
+		if ( $this->is_pro ) {
+			if ( $this->settings->check_known_vuln && $this->has_method( Scan_Model::STEP_VULN_CHECK ) ) {
+				$tasks[ Scan_Model::STEP_VULN_CHECK ] = 'vuln_check';
 			}
-			if ( $this->settings->scan_malware ) {
-				if ( $this->has_method( Scan_Model::STEP_SUSPICIOUS_CHECK ) ) {
-					$tasks[ Scan_Model::STEP_SUSPICIOUS_CHECK ] = 'suspicious_check';
-				}
+			// The division between PHP and JS files occurs when collecting files.
+			if ( $this->settings->scan_malware && $this->has_method( Scan_Model::STEP_SUSPICIOUS_CHECK )
+			) {
+				$tasks[ Scan_Model::STEP_SUSPICIOUS_CHECK ] = 'suspicious_check';
 			}
 		}
 
@@ -254,7 +264,7 @@ class Scan extends Component {
 	private function task_handler( $task ) {
 		switch ( $task ) {
 			case 'gather_info':
-				if ( empty( $this->gather_fact ) && class_exists( Gather_Fact::class ) ) {
+				if ( ! ( $this->gather_fact instanceof Gather_Fact ) && class_exists( Gather_Fact::class ) ) {
 					$this->set_gather_fact(
 						wd_di()->make( Gather_Fact::class, array( 'scan' => $this->scan ) )
 					);
@@ -262,7 +272,7 @@ class Scan extends Component {
 
 				return $this->gather_info( $this->gather_fact );
 			case 'vuln_check':
-				if ( empty( $this->known_vulnerability ) && class_exists( Known_Vulnerability::class ) ) {
+				if ( ! ( $this->known_vulnerability instanceof Known_Vulnerability ) && class_exists( Known_Vulnerability::class ) ) {
 					$this->set_known_vulnerability(
 						wd_di()->make( Known_Vulnerability::class, array( 'scan' => $this->scan ) )
 					);
@@ -278,7 +288,7 @@ class Scan extends Component {
 
 				return $this->suspicious_check( $this->malware_scan );
 			case 'abandoned_plugin_check':
-				if ( empty( $this->abandoned_plugin ) && class_exists( Abandoned_Plugin::class ) ) {
+				if ( ! ( $this->abandoned_plugin instanceof Abandoned_Plugin ) && class_exists( Abandoned_Plugin::class ) ) {
 					$this->set_abandoned_plugin(
 						wd_di()->make( Abandoned_Plugin::class, array( 'scan' => $this->scan ) )
 					);
@@ -286,7 +296,8 @@ class Scan extends Component {
 
 				return $this->abandoned_plugin_check( $this->abandoned_plugin );
 			default:
-				return $this->$task();
+				// @phpstan-ignore-next-line
+				return is_callable( array( $this, $task ) ) ? $this->$task() : false;
 		}
 	}
 
@@ -317,7 +328,7 @@ class Scan extends Component {
 	}
 
 	/**
-	 * A wrapper method for Malware_Scan class method vuln_check.
+	 * A wrapper method for Malware_Scan class method suspicious_check.
 	 *
 	 * @param  Malware_Scan $malware_scan  An instance of Malware_Scan.
 	 *
@@ -380,7 +391,7 @@ class Scan extends Component {
 			$scan->delete();
 		}
 		$this->clean_up();
-		$this->remove_lock();
+		$this->remove_lock( $this->lock_filename );
 
 		$scan_analytics = wd_di()->get( Scan_Analytics::class );
 
@@ -421,7 +432,7 @@ class Scan extends Component {
 		$this->delete_interim_data();
 
 		$models = Scan_Model::get_last_all();
-		if ( ! empty( $models ) ) {
+		if ( is_array( $models ) && array() !== $models ) {
 			// Remove the latest. Don't remove code to find the first value.
 			$current = array_shift( $models );
 			foreach ( $models as $model ) {
@@ -450,18 +461,17 @@ class Scan extends Component {
 	 * Checks if any scan type is active based on the scan settings and the user's membership status.
 	 *
 	 * @param  array $scan_settings  The scan settings.
-	 * @param  bool  $is_pro  Whether the user has a pro membership.
 	 *
 	 * @return bool Returns true if any scan type is active, false otherwise.
 	 */
-	public function is_any_scan_active( $scan_settings, $is_pro ): bool {
-		if ( empty( $scan_settings['integrity_check'] ) ) {
+	public function is_any_scan_active( $scan_settings ): bool {
+		if ( ! isset( $scan_settings['integrity_check'] ) || ! $scan_settings['integrity_check'] ) {
 			// Check the parent type.
 			$file_change_check = false;
 		} elseif (
-			! empty( $scan_settings['integrity_check'] )
-			&& empty( $scan_settings['check_core'] )
-			&& empty( $scan_settings['check_plugins'] )
+			$scan_settings['integrity_check']
+			&& ( ! isset( $scan_settings['check_core'] ) || ! $scan_settings['check_core'] )
+			&& ( ! isset( $scan_settings['check_plugins'] ) || ! $scan_settings['check_plugins'] )
 		) {
 			// Check the parent and child types.
 			$file_change_check = false;
@@ -469,13 +479,13 @@ class Scan extends Component {
 			$file_change_check = true;
 		}
 		// Similar to is_any_active(...) method from the controller.
-		if ( $is_pro ) {
+		if ( $this->is_pro ) {
 			// Pro version. Check all parent types.
-			return $file_change_check || ! empty( $scan_settings['check_known_vuln'] )
-				|| ! empty( $scan_settings['scan_malware'] );
+			return $file_change_check || ( isset( $scan_settings['check_known_vuln'] ) && $scan_settings['check_known_vuln'] )
+				|| ( isset( $scan_settings['scan_malware'] ) && $scan_settings['scan_malware'] );
 		} else {
 			// Free version.
-			return $file_change_check || ! empty( $scan_settings['check_abandoned_plugin'] );
+			return $file_change_check || ( isset( $scan_settings['check_abandoned_plugin'] ) && $scan_settings['check_abandoned_plugin'] );
 		}
 	}
 
@@ -494,13 +504,15 @@ class Scan extends Component {
 			}
 			$this->delete_interim_data();
 
-			as_unschedule_all_actions( 'defender/async_scan' );
+			if ( function_exists( 'as_unschedule_all_actions' ) ) {
+				as_unschedule_all_actions( 'defender/async_scan' );
+			}
 
 			$idle_scan->status          = Scan_Model::STATUS_IDLE;
 			$idle_scan->task_checkpoint = 'time_limit';
 			$idle_scan->save();
 
-			$this->remove_lock();
+			$this->remove_lock( $this->lock_filename );
 			if ( $ready_to_send ) {
 				do_action( 'defender_notify', 'malware-notification', $idle_scan );
 			}
@@ -521,13 +533,15 @@ class Scan extends Component {
 		}
 		$this->delete_interim_data();
 
-		as_unschedule_all_actions( 'defender/async_scan' );
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( 'defender/async_scan' );
+		}
 
 		$scan->status          = Scan_Model::STATUS_IDLE;
 		$scan->task_checkpoint = 'checksum_issue';
 		$scan->save();
 
-		$this->remove_lock();
+		$this->remove_lock( $this->lock_filename );
 		if ( $ready_to_send ) {
 			do_action( 'defender_notify', 'malware-notification', $scan );
 		}
@@ -545,6 +559,7 @@ class Scan extends Component {
 		delete_site_option( Core_Integrity::CACHE_CHECKSUMS );
 		delete_site_option( Plugin_Integrity::PLUGIN_SLUGS );
 		delete_site_option( Plugin_Integrity::PLUGIN_PREMIUM_SLUGS );
+		delete_site_option( self::PLUGINS_ACTIONED );
 		$this->maybe_track_failed_checksum();
 	}
 
@@ -577,18 +592,18 @@ class Scan extends Component {
 			array( 'screen' => get_current_screen() )
 		);
 		$bugs          = $this->vulnerability_details[ $file ]['bugs'];
-		if ( empty( $bugs ) ) {
+		if ( ! is_array( $bugs ) || array() === $bugs ) {
 			return;
 		}
 		$last_fixed_in = '0';
 		// Check if there have been updates since the last scan.
 		$exist_update = true;
-		if ( isset( $plugin_data['Version'] ) && ! empty( $plugin_data['Version'] ) ) {
+		if ( isset( $plugin_data['Version'] ) && '' !== $plugin_data['Version'] ) {
 			// The current plugin version.
 			$current_version = $plugin_data['Version'];
 			foreach ( $bugs as $bug_details ) {
 				// If the fixed version is existed then get the latest one.
-				if ( isset( $bug_details['fixed_in'] ) && ! empty( $bug_details['fixed_in'] )
+				if ( isset( $bug_details['fixed_in'] ) && '' !== $bug_details['fixed_in']
 					&& version_compare( $bug_details['fixed_in'], $last_fixed_in, '>' )
 				) {
 					$last_fixed_in = $bug_details['fixed_in'];
@@ -602,7 +617,7 @@ class Scan extends Component {
 		if ( $exist_update ) {
 			return;
 		}
-		if ( empty( $plugin_data['slug'] ) && isset( $this->vulnerability_details[ $file ]['base_slug'] ) ) {
+		if ( ( ! isset( $plugin_data['slug'] ) || '' === $plugin_data['slug'] ) && isset( $this->vulnerability_details[ $file ]['base_slug'] ) ) {
 			$plugin_data['slug'] = $this->vulnerability_details[ $file ]['base_slug'];
 		}
 
@@ -656,7 +671,7 @@ class Scan extends Component {
 				}
 			} else {
 				$notice .= '<br/><span class="vulnerability-indent"></span>' . $bugs[0]['title'] . '<br/><span class="vulnerability-indent"></span>';
-				$notice .= empty( $last_fixed_in )
+				$notice .= '0' === $last_fixed_in
 					? esc_html__(
 						'We recommend that you deactivate this plugin until the vulnerability has been fixed.',
 						'defender-security'
@@ -688,7 +703,7 @@ class Scan extends Component {
 		$last = Scan_Model::get_last();
 		if ( is_object( $last ) && ! is_wp_error( $last ) ) {
 			$vulnerability_issues = $last->get_issues( Scan_Item::TYPE_VULNERABILITY );
-			if ( empty( $vulnerability_issues ) ) {
+			if ( ! is_array( $vulnerability_issues ) || array() === $vulnerability_issues ) {
 				return;
 			}
 
@@ -719,10 +734,10 @@ class Scan extends Component {
 	public static function clear_logs() {
 		global $wpdb;
 
-		$table_actions = ! empty( $wpdb->actionscheduler_actions ) ?
+		$table_actions = isset( $wpdb->actionscheduler_actions ) && '' !== $wpdb->actionscheduler_actions ?
 			$wpdb->actionscheduler_actions :
 			$wpdb->prefix . 'actionscheduler_actions';
-		$table_logs    = ! empty( $wpdb->actionscheduler_logs ) ?
+		$table_logs    = isset( $wpdb->actionscheduler_logs ) && '' !== $wpdb->actionscheduler_logs ?
 			$wpdb->actionscheduler_logs :
 			$wpdb->prefix . 'actionscheduler_logs';
 
@@ -753,7 +768,7 @@ class Scan extends Component {
 			)
 		);
 		while ( $action_ids ) {
-			if ( empty( $action_ids ) ) {
+			if ( ! is_array( $action_ids ) || array() === $action_ids ) {
 				break;
 			}
 
@@ -828,5 +843,80 @@ class Scan extends Component {
 			'unignore',
 			'quarantine',
 		);
+	}
+
+	/**
+	 * Get the list of actioned plugins taking into account the Ignored and Excluded.
+	 *
+	 * @return array
+	 */
+	public function gather_actioned_plugin_details(): array {
+		$cache = get_site_option( self::PLUGINS_ACTIONED );
+		if ( self::are_actioned_plugins( $cache ) ) {
+			return $cache;
+		}
+
+		$items          = array();
+		$is_plugin_used = false;
+		if ( $this->settings->integrity_check && $this->settings->check_plugins ) {
+			$is_plugin_used = true;
+		} elseif ( $this->settings->check_abandoned_plugin ) {
+			$is_plugin_used = true;
+		} elseif ( $this->is_pro && ( $this->settings->check_known_vuln || $this->settings->scan_malware ) ) {
+			$is_plugin_used = true;
+		}
+
+		if ( $is_plugin_used ) {
+			$model = Scan_Model::get_last();
+			/**
+			 * Exclude plugin slugs.
+			 *
+			 * @param  array  $slugs  Slugs of excluded plugins.
+			 *
+			 * @since 3.1.0
+			 */
+			$excluded_slugs = apply_filters( 'wd_scan_excluded_plugin_slugs', array() );
+			$excluded_slugs = ! is_array( $excluded_slugs ) ? (array) $excluded_slugs : $excluded_slugs;
+
+			foreach ( $this->get_plugins() as $slug => $item ) {
+				if ( is_object( $model ) && $model->is_issue_ignored( $slug ) ) {
+					continue;
+				}
+				$base_slug = $this->get_plugin_slug_by( $slug );
+				if ( in_array( $base_slug, $excluded_slugs, true ) ) {
+					continue;
+				}
+				// Use keys with the first capital letter to match default plugin header keys.
+				$items[ $base_slug ] = array(
+					'Name'    => $item['Name'],
+					'Version' => $item['Version'],
+					'Slug'    => $slug,
+				);
+			}
+
+			update_site_option( self::PLUGINS_ACTIONED, $items );
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Does the list of actioned plugins exist and no empty?
+	 *
+	 * @param array|false $actioned_plugins The actioned plugins.
+	 *
+	 * @return bool
+	 */
+	public static function are_actioned_plugins( $actioned_plugins ): bool {
+		return is_array( $actioned_plugins ) && array() !== $actioned_plugins;
+	}
+
+	/**
+	 * Get the lock filename.
+	 *
+	 * @return string
+	 */
+	public function get_lock_filename(): string {
+		return $this->lock_filename;
 	}
 }

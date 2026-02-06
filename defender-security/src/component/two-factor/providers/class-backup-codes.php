@@ -90,7 +90,7 @@ class Backup_Codes extends Two_Factor_Provider {
 	 */
 	public function init_provider( WP_User $user ): void {
 		$this->is_activated = get_user_meta( $user->ID, self::BACKUP_CODE_START, true );
-		$this->description  = empty( $this->is_activated )
+		$this->description  = 1 !== $this->is_activated
 			? esc_html__( 'Generate non-expirable backup codes that can be used to log in once.', 'defender-security' )
 			: esc_html__( 'Each backup code can only be used to log in once.', 'defender-security' );
 	}
@@ -171,7 +171,7 @@ class Backup_Codes extends Two_Factor_Provider {
 	 */
 	public static function get_unused_codes_for_user( WP_User $user ): int {
 		$backup_codes = get_user_meta( $user->ID, self::BACKUP_CODE_VALUES, true );
-		if ( is_array( $backup_codes ) && ! empty( $backup_codes ) ) {
+		if ( is_array( $backup_codes ) && array() !== $backup_codes ) {
 			return count( $backup_codes );
 		}
 
@@ -204,7 +204,7 @@ class Backup_Codes extends Two_Factor_Provider {
 			return;
 		}
 		// Is User role from common list checked?
-		if ( empty( array_intersect( $user->roles, $this->get_model()->user_roles ) ) ) {
+		if ( array() === array_intersect( $user->roles, $this->get_model()->user_roles ) ) {
 			return;
 		}
 		// Return if the provider is not enabled.
@@ -247,7 +247,7 @@ class Backup_Codes extends Two_Factor_Provider {
 				&& $this->is_available_for_user( $user );
 		$attr = $cond ? '' : ' disabled';
 		// Check whether codes were generated before or not.
-		if ( empty( $this->is_activated ) ) {
+		if ( 1 !== $this->is_activated ) {
 			$button_text = esc_html__( 'Generate Backup Codes', 'defender-security' );
 			$class       = 'hidden';
 			$count       = 0;
@@ -305,7 +305,8 @@ class Backup_Codes extends Two_Factor_Provider {
 			$num_codes = self::BACKUP_CODE_COUNT;
 		}
 		// Add a flag if it haven't existed yet.
-		if ( empty( get_user_meta( $user->ID, self::BACKUP_CODE_START, true ) ) ) {
+		$backup_code_start = get_user_meta( $user->ID, self::BACKUP_CODE_START, true );
+		if ( in_array( $backup_code_start, array( false, '', array() ), true ) ) {
 			update_user_meta( $user->ID, self::BACKUP_CODE_START, 1 );
 		}
 		if ( isset( $args['method'] ) && 'append' === $args['method'] ) {
@@ -369,7 +370,7 @@ class Backup_Codes extends Two_Factor_Provider {
 	protected function validate_code( WP_User $user, string $code ) {
 		$backup_codes = get_user_meta( $user->ID, self::BACKUP_CODE_VALUES, true );
 
-		if ( is_array( $backup_codes ) && ! empty( $backup_codes ) ) {
+		if ( is_array( $backup_codes ) && array() !== $backup_codes ) {
 			foreach ( $backup_codes as $code_hashed ) {
 				if ( wp_check_password( $code, $code_hashed, $user->ID ) ) {
 					$this->delete_code( $user, $code_hashed );
@@ -383,7 +384,7 @@ class Backup_Codes extends Two_Factor_Provider {
 
 		return new WP_Error(
 			'opt_fail',
-			empty( $lockout_message ) ? esc_html__( 'ERROR: Invalid verification code.', 'defender-security' ) : $lockout_message
+			'' === $lockout_message ? esc_html__( 'ERROR: Invalid verification code.', 'defender-security' ) : $lockout_message
 		);
 	}
 

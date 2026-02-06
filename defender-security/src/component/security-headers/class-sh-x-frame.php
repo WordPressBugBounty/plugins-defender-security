@@ -32,7 +32,7 @@ class Sh_X_Frame extends Security_Header {
 		if ( ! $model->sh_xframe ) {
 			return false;
 		}
-		if ( isset( $model->sh_xframe_mode ) && ! empty( $model->sh_xframe_mode ) ) {
+		if ( isset( $model->sh_xframe_mode ) && '' !== $model->sh_xframe_mode ) {
 			return true;
 		}
 		$headers = $this->head_request( network_site_url(), self::$rule_slug );

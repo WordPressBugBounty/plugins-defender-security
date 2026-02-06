@@ -162,7 +162,7 @@ class Login_Lockout extends Component {
 	 * @param  string $username  The username used in the failed login attempt.
 	 */
 	public function process_fail_attempt_compatibility( $username ) {
-		if ( empty( $username ) ) {
+		if ( ! is_string( $username ) || '' === $username ) {
 			return;
 		}
 
@@ -205,7 +205,7 @@ class Login_Lockout extends Component {
 	 * @param  WP_Error $error  The error object associated with the login failure.
 	 */
 	public function process_fail_attempt( $username, $error ) {
-		if ( empty( $username ) ) {
+		if ( ! is_string( $username ) || '' === $username ) {
 			return;
 		}
 

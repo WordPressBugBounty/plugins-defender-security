@@ -166,11 +166,11 @@ class Config_Hub_Helper {
 			return false;
 		}
 
-		if ( empty( $sc_value['configs'] ) ) {
+		if ( ! isset( $sc_value['configs'] ) || ! is_array( $sc_value['configs'] ) || array() === $sc_value['configs'] ) {
 			return false;
 		}
 
-		if ( empty( $sc_value['labels'] ) ) {
+		if ( ! isset( $sc_value['labels'] ) || ! is_array( $sc_value['labels'] ) || array() === $sc_value['labels'] ) {
 			$config_component   = wd_di()->get( Backup_Settings::class );
 			$sc_value['labels'] = $config_component->prepare_config_labels( $sc_value['configs'] );
 		}
@@ -360,7 +360,7 @@ class Config_Hub_Helper {
 					if ( $sc_value['hub_id'] === $api_config['id'] ) {
 						// Sanitize data.
 						$sc_value['name']         = sanitize_text_field( $api_config['name'] );
-						$sc_value['description']  = empty( $api_config['description'] )
+						$sc_value['description']  = ! isset( $api_config['description'] ) || ! is_string( $api_config['description'] )
 							? ''
 							: sanitize_textarea_field( $api_config['description'] );
 						$sc_value['immortal']     = $api_config_array['immortal'] ?? $sc_value['immortal'];
@@ -416,7 +416,7 @@ class Config_Hub_Helper {
 		$api_config_array['hub_id'] = $api_config['id'];
 		// Sanitize data.
 		$api_config_array['name']         = sanitize_text_field( $api_config['name'] );
-		$api_config_array['description']  = empty( $api_config['description'] )
+		$api_config_array['description']  = ! isset( $api_config['description'] ) || ! is_string( $api_config['description'] )
 			? ''
 			: sanitize_textarea_field( $api_config['description'] );
 		$api_config_array['immortal']     = $api_config_array['immortal'] ?? false;

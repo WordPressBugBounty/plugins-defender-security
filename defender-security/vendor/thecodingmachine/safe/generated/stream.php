@@ -56,9 +56,9 @@ function stream_copy_to_stream($source, $dest, int $maxlength = -1, int $offset 
  * Adds filtername to the list of filters
  * attached to stream.
  *
- * @param resource $stream The target stream.
- * @param string $filtername The filter name.
- * @param int $read_write By default, stream_filter_append will
+ * @param resource $stream     The target stream.
+ * @param string   $filtername The filter name.
+ * @param int|null $read_write By default, stream_filter_append will
  * attach the filter to the read filter chain
  * if the file was opened for reading (i.e. File Mode:
  * r, and/or +).  The filter
@@ -74,6 +74,7 @@ function stream_copy_to_stream($source, $dest, int $maxlength = -1, int $offset 
  * the list and will therefore be called last during stream operations.
  * To add a filter to the beginning of the list, use
  * stream_filter_prepend.
+ *
  * @return resource Returns a resource on success. The resource can be
  * used to refer to this filter instance during a call to
  * stream_filter_remove.
@@ -83,7 +84,7 @@ function stream_copy_to_stream($source, $dest, int $maxlength = -1, int $offset 
  * @throws StreamException
  *
  */
-function stream_filter_append($stream, string $filtername, int $read_write = null, $params = null)
+function stream_filter_append($stream, string $filtername, ?int $read_write = null, $params = null)
 {
     error_clear_last();
     if ($params !== null) {
@@ -104,9 +105,9 @@ function stream_filter_append($stream, string $filtername, int $read_write = nul
  * Adds filtername to the list of filters
  * attached to stream.
  *
- * @param resource $stream The target stream.
- * @param string $filtername The filter name.
- * @param int $read_write By default, stream_filter_prepend will
+ * @param resource $stream     The target stream.
+ * @param string   $filtername The filter name.
+ * @param int|null $read_write By default, stream_filter_prepend will
  * attach the filter to the read filter chain
  * if the file was opened for reading (i.e. File Mode:
  * r, and/or +).  The filter
@@ -123,6 +124,7 @@ function stream_filter_append($stream, string $filtername, int $read_write = nul
  * to the beginning of the list and will therefore be
  * called first during stream operations.  To add a filter to the end of the
  * list, use stream_filter_append.
+ *
  * @return resource Returns a resource on success. The resource can be
  * used to refer to this filter instance during a call to
  * stream_filter_remove.
@@ -132,7 +134,7 @@ function stream_filter_append($stream, string $filtername, int $read_write = nul
  * @throws StreamException
  *
  */
-function stream_filter_prepend($stream, string $filtername, int $read_write = null, $params = null)
+function stream_filter_prepend($stream, string $filtername, ?int $read_write = null, $params = null)
 {
     error_clear_last();
     if ($params !== null) {
@@ -319,19 +321,20 @@ function stream_set_timeout($stream, int $seconds, int $microseconds = 0): void
  * Accept a connection on a socket previously created by
  * stream_socket_server.
  *
- * @param resource $server_socket The server socket to accept a connection from.
- * @param float $timeout Override the default socket accept timeout. Time should be given in
+ * @param resource    $server_socket The server socket to accept a connection from.
+ * @param float|null  $timeout       Override the default socket accept timeout. Time should be given in
  * seconds.
- * @param string|null $peername Will be set to the name (address) of the client which connected, if
+ * @param string|null $peername      Will be set to the name (address) of the client which connected, if
  * included and available from the selected transport.
  *
  * Can also be determined later using
  * stream_socket_get_name.
+ *
  * @return resource Returns a stream to the accepted socket connection.
  * @throws StreamException
  *
  */
-function stream_socket_accept($server_socket, float $timeout = null, ?string &$peername = null)
+function stream_socket_accept($server_socket, ?float $timeout = null, ?string &$peername = null)
 {
     error_clear_last();
     if ($peername !== null) {
@@ -359,10 +362,10 @@ function stream_socket_accept($server_socket, float $timeout = null, ?string &$p
  * domain sockets, the target portion should point
  * to the socket file on the filesystem.
  *
- * @param string $remote_socket Address to the socket to connect to.
- * @param int $errno Will be set to the system level error number if connection fails.
- * @param string $errstr Will be set to the system level error message if the connection fails.
- * @param float $timeout Number of seconds until the connect() system call
+ * @param string      $remote_socket Address to the socket to connect to.
+ * @param int|null    $errno         Will be set to the system level error number if connection fails.
+ * @param string|null $errstr        Will be set to the system level error message if the connection fails.
+ * @param float|null  $timeout       Number of seconds until the connect() system call
  * should timeout.
  *
  *
@@ -389,6 +392,7 @@ function stream_socket_accept($server_socket, float $timeout = null, ?string &$p
  * STREAM_CLIENT_ASYNC_CONNECT and
  * STREAM_CLIENT_PERSISTENT.
  * @param resource $context A valid context resource created with stream_context_create.
+ *
  * @return resource On success a stream resource is returned which may
  * be used together with the other file functions (such as
  * fgets, fgetss,
@@ -397,7 +401,7 @@ function stream_socket_accept($server_socket, float $timeout = null, ?string &$p
  * @throws StreamException
  *
  */
-function stream_socket_client(string $remote_socket, int &$errno = null, string &$errstr = null, float $timeout = null, int $flags = STREAM_CLIENT_CONNECT, $context = null)
+function stream_socket_client(string $remote_socket, ?int &$errno = null, ?string &$errstr = null, ?float $timeout = null, int $flags = STREAM_CLIENT_CONNECT, $context = null)
 {
     error_clear_last();
     if ($context !== null) {
@@ -471,7 +475,7 @@ function stream_socket_pair(int $domain, int $type, int $protocol): iterable
  * A list of available transports can be retrieved using
  * stream_get_transports. See
  * for a list of bulitin transports.
- * @param int $errno If the optional errno and errstr
+ * @param int|null    $errno If the optional errno and errstr
  * arguments are present they will be set to indicate the actual system
  * level error that occurred in the system-level socket(),
  * bind(), and listen() calls. If
@@ -481,18 +485,19 @@ function stream_socket_pair(int $domain, int $type, int $protocol): iterable
  * call. This is most likely due to a problem initializing the socket.
  * Note that the errno and
  * errstr arguments will always be passed by reference.
- * @param string $errstr See errno description.
- * @param int $flags A bitmask field which may be set to any combination of socket creation
+ * @param string|null $errstr See errno description.
+ * @param int         $flags A bitmask field which may be set to any combination of socket creation
  * flags.
  *
  * For UDP sockets, you must use STREAM_SERVER_BIND as
  * the flags parameter.
- * @param resource $context
+ * @param resource    $context
+ *
  * @return resource Returns the created stream.
  * @throws StreamException
  *
  */
-function stream_socket_server(string $local_socket, int &$errno = null, string &$errstr = null, int $flags = STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context = null)
+function stream_socket_server(string $local_socket, ?int &$errno = null, ?string &$errstr = null, int $flags = STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context = null)
 {
     error_clear_last();
     if ($context !== null) {

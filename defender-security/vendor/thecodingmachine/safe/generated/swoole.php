@@ -7,14 +7,15 @@ use Safe\Exceptions\SwooleException;
 /**
  *
  *
- * @param string $filename The filename being written.
- * @param string $content The content writing to the file.
- * @param int $offset The offset.
- * @param callable $callback
+ * @param string        $filename The filename being written.
+ * @param string        $content  The content writing to the file.
+ * @param int|null      $offset   The offset.
+ * @param callable|null $callback
+ *
  * @throws SwooleException
  *
  */
-function swoole_async_write(string $filename, string $content, int $offset = null, callable $callback = null): void
+function swoole_async_write(string $filename, string $content, ?int $offset = null, ?callable $callback = null): void
 {
     error_clear_last();
     if ($callback !== null) {
@@ -33,14 +34,15 @@ function swoole_async_write(string $filename, string $content, int $offset = nul
 /**
  *
  *
- * @param string $filename The filename being written.
- * @param string $content The content writing to the file.
- * @param callable $callback
- * @param int $flags
+ * @param string        $filename The filename being written.
+ * @param string        $content The content writing to the file.
+ * @param callable|null $callback
+ * @param int           $flags
+ *
  * @throws SwooleException
  *
  */
-function swoole_async_writefile(string $filename, string $content, callable $callback = null, int $flags = 0): void
+function swoole_async_writefile(string $filename, string $content, ?callable $callback = null, int $flags = 0): void
 {
     error_clear_last();
     if ($flags !== 0) {

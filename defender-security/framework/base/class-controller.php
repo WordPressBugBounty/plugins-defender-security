@@ -117,7 +117,7 @@ class Controller extends Component {
 			$content = $view->render( $view_file, $params );
 		}
 
-		if ( ! empty( $this->layout ) ) {
+		if ( null !== $this->layout && '' !== $this->layout ) {
 			$template = new View( $base_path . 'view' . DIRECTORY_SEPARATOR . 'layouts' );
 			$content  = $template->render(
 				$this->layout,

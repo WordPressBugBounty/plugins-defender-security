@@ -495,11 +495,11 @@ class Mapper extends Component {
 	 * @return string
 	 * @throws \ReflectionException If class is not defined.
 	 */
-	private function query_build( $select = '*' ) {
+	private function query_build( string $select = '*' ) {
 		$table = $this->table();
 		$where = implode( ' AND ', $this->where );
 
-		$select   = ! empty( $this->select ) ? $this->select : $select;
+		$select   = '' !== $this->select ? $this->select : $select;
 		$group_by = $this->group;
 		$order_by = $this->order;
 		$limit    = $this->limit;

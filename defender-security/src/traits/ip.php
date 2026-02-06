@@ -331,7 +331,8 @@ trait IP {
 		}
 
 		// @since 2.6.3
-		return (array) apply_filters( 'wd_display_ip_validations', $errors );
+		$errors = apply_filters( 'wd_display_ip_validations', $errors );
+		return is_array( $errors ) ? $errors : (array) $errors;
 	}
 
 	/**
@@ -526,7 +527,8 @@ trait IP {
 		 *
 		 * @param array $trusted_ips An array of trusted server IP addresses.
 		 */
-		$trusted_ips = (array) apply_filters( 'wp_defender_server_ips', array_unique( $trusted_ips ) );
+		$trusted_ips = apply_filters( 'wp_defender_server_ips', array_unique( $trusted_ips ) );
+		$trusted_ips = ! is_array( $trusted_ips ) ? (array) $trusted_ips : $trusted_ips;
 		// Only return true if the request IP is in the trusted list.
 		if ( array() !== array_intersect( $user_ips, $trusted_ips ) ) {
 			return true;

@@ -95,12 +95,12 @@ function ingres_commit($link): void
  * The connection is closed when the script ends or when
  * ingres_close is called on this link.
  *
- * @param string $database The database name. Must follow the syntax:
+ * @param string|null $database The database name. Must follow the syntax:
  *
  * [vnode::]dbname[/svr_class]
- * @param string $username The Ingres user name
- * @param string $password The password associated with username
- * @param array $options ingres_connect options
+ * @param string|null $username The Ingres user name
+ * @param string|null $password The password associated with username
+ * @param array|null  $options  ingres_connect options
  *
  *
  *
@@ -332,7 +332,7 @@ function ingres_commit($link): void
  * @throws IngresiiException
  *
  */
-function ingres_connect(string $database = null, string $username = null, string $password = null, array $options = null)
+function ingres_connect( ?string $database = null, ?string $username = null, ?string $password = null, ?array $options = null)
 {
     error_clear_last();
     if ($options !== null) {
@@ -356,15 +356,16 @@ function ingres_connect(string $database = null, string $username = null, string
 /**
  * Execute a query prepared using ingres_prepare.
  *
- * @param resource $result The result query identifier
- * @param array $params An array of parameter values to be used with the query
- * @param string $types A string containing a sequence of types for the parameter values
+ * @param resource    $result The result query identifier
+ * @param array|null  $params An array of parameter values to be used with the query
+ * @param string|null $types  A string containing a sequence of types for the parameter values
  * passed. See the types parameter in
  * ingres_query for the list of type codes.
+ *
  * @throws IngresiiException
  *
  */
-function ingres_execute($result, array $params = null, string $types = null): void
+function ingres_execute($result, ?array $params = null, ?string $types = null): void
 {
     error_clear_last();
     if ($types !== null) {
@@ -492,18 +493,19 @@ function ingres_free_result($result): void
  * established by ingres_pconnect). This type
  * of link is therefore called "persistent".
  *
- * @param string $database The database name. Must follow the syntax:
+ * @param string|null $database The database name. Must follow the syntax:
  *
  * [vnode::]dbname[/svr_class]
- * @param string $username The Ingres user name
- * @param string $password The password associated with username
- * @param array $options See ingres_connect for the list of options that
+ * @param string|null $username The Ingres user name
+ * @param string|null $password The password associated with username
+ * @param array|null  $options  See ingres_connect for the list of options that
  * can be passed
+ *
  * @return resource Returns an Ingres link resource on success
  * @throws IngresiiException
  *
  */
-function ingres_pconnect(string $database = null, string $username = null, string $password = null, array $options = null)
+function ingres_pconnect( ?string $database = null, ?string $username = null, ?string $password = null, ?array $options = null)
 {
     error_clear_last();
     if ($options !== null) {

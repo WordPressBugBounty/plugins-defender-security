@@ -151,7 +151,8 @@ trait IO {
 	 * @return bool
 	 */
 	protected function compare_hashes_on_different_os( $file_path, $file_hash ) {
-		if ( hash_equals( md5_file( $file_path ), $file_hash ) ) {
+		$hashed_file = md5_file( $file_path );
+		if ( false !== $hashed_file && hash_equals( $hashed_file, $file_hash ) ) {
 			return true;
 		}
 		if ( hash_equals( $this->hash_file( $file_path, 'linux' ), $file_hash ) ) {
@@ -178,7 +179,7 @@ trait IO {
 		} elseif ( is_array( $file_hash ) ) {
 			// Sometimes file has some hashes.
 			foreach ( $file_hash as $hash_value ) {
-				if ( $this->compare_hashes_on_different_os( $file_path, $hash_value ) ) {
+				if ( is_string( $hash_value ) && $this->compare_hashes_on_different_os( $file_path, $hash_value ) ) {
 					return true;
 				}
 			}
@@ -226,51 +227,62 @@ trait IO {
 	/**
 	 * Retrieves the lock file path used in scanning.
 	 *
+	 * @param  string $lock_filename  The lock file name.
+	 *
 	 * @return string The lock file path.
 	 *
 	 * @throws \RuntimeException If the lock file name is not defined.
 	 */
-	protected function get_lock_path(): string {
-		if ( '' === $this->lock_filename ) {
+	protected function get_lock_path( string $lock_filename ): string {
+		if ( '' === $lock_filename ) {
 			throw new \RuntimeException( 'Lock file name must be defined in the class using IO trait.' );
 		}
 
-		return $this->get_tmp_path() . DIRECTORY_SEPARATOR . $this->lock_filename;
+		return $this->get_tmp_path() . DIRECTORY_SEPARATOR . $lock_filename;
 	}
 
 	/**
 	 * Create a file lock, so we can check if a process already running.
+	 *
+	 * @param  string $lock_filename  The lock file name.
 	 */
-	public function create_lock() {
-		$this->remove_lock();
-		file_put_contents( $this->get_lock_path(), time(), LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	public function create_lock( string $lock_filename ) {
+		$this->remove_lock( $lock_filename );
+		file_put_contents( $this->get_lock_path( $lock_filename ), time(), LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 	}
 
 	/**
 	 * Delete file lock.
+	 *
+	 * @param  string $lock_filename  The lock file name.
 	 */
-	public function remove_lock() {
-		if ( file_exists( $this->get_lock_path() ) ) {
-			wp_delete_file( $this->get_lock_path() );
+	public function remove_lock( string $lock_filename ) {
+		$lock_path = $this->get_lock_path( $lock_filename );
+		if ( file_exists( $lock_path ) ) {
+			wp_delete_file( $lock_path );
 		}
 	}
 
 	/**
 	 * Check if a lock is valid.
 	 *
+	 * @param  string $lock_filename  The lock file name.
+	 *
 	 * @return bool
 	 */
-	public function has_lock(): bool {
+	public function has_lock( string $lock_filename ): bool {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
 		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
-		if ( ! file_exists( $this->get_lock_path() ) ) {
+
+		$lock_path = $this->get_lock_path( $lock_filename );
+		if ( ! file_exists( $lock_path ) ) {
 			return false;
 		}
-		$time = $wp_filesystem->get_contents( $this->get_lock_path() );
+		$time = $wp_filesystem->get_contents( $lock_path );
 		if ( strtotime( '+90 seconds', $time ) < time() ) {
 			// Usually a timeout window is 30 seconds, so we should allow lock at 1.30min for safe.
 			return false;

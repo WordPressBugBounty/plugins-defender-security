@@ -185,14 +185,15 @@ function getmyuid(): int
 /**
  * Parses options passed to the script.
  *
- * @param string $options
- * @param array $longopts
- * @param int|null $optind
+ * @param string     $options
+ * @param array|null $longopts
+ * @param int|null   $optind
+ *
  * @return array|array|array This function will return an array of option / argument pairs.
  * @throws InfoException
  *
  */
-function getopt(string $options, array $longopts = null, ?int &$optind = null): array
+function getopt(string $options, ?array $longopts = null, ?int &$optind = null): array
 {
     error_clear_last();
     if ($optind !== null) {

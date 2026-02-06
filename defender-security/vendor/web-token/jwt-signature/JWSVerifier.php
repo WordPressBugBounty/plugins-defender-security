@@ -66,15 +66,15 @@ class JWSVerifier
      *
      * @param JWS         $jws             A JWS object
      * @param JWKSet      $jwkset          The signature will be verified using keys in the key set
-     * @param JWK         $jwk             The key used to verify the signature in case of success
+     * @param JWK|null    $jwk             The key used to verify the signature in case of success
      * @param null|string $detachedPayload If not null, the value must be the detached payload encoded in Base64 URL safe. If the input contains a payload, throws an exception.
      *
-     * @throws InvalidArgumentException if there is no key in the keyset
-     * @throws InvalidArgumentException if the token does not contain any signature
-     *
      * @return bool true if the verification of the signature succeeded, else false
+     *@throws InvalidArgumentException if the token does not contain any signature
+     *
+     * @throws InvalidArgumentException if there is no key in the keyset
      */
-    public function verifyWithKeySet(JWS $jws, JWKSet $jwkset, int $signatureIndex, ?string $detachedPayload = null, JWK &$jwk = null): bool
+    public function verifyWithKeySet(JWS $jws, JWKSet $jwkset, int $signatureIndex, ?string $detachedPayload = null, ?JWK &$jwk = null): bool
     {
         if (0 === $jwkset->count()) {
             throw new InvalidArgumentException('There is no key in the key set.');
@@ -88,7 +88,7 @@ class JWSVerifier
         return $this->verifySignature($jws, $jwkset, $signature, $detachedPayload, $jwk);
     }
 
-    private function verifySignature(JWS $jws, JWKSet $jwkset, Signature $signature, ?string $detachedPayload = null, JWK &$successJwk = null): bool
+    private function verifySignature(JWS $jws, JWKSet $jwkset, Signature $signature, ?string $detachedPayload = null, ?JWK &$successJwk = null): bool
     {
         $input = $this->getInputToVerify($jws, $signature, $detachedPayload);
         $algorithm = $this->getAlgorithm($signature);

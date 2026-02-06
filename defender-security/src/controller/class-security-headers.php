@@ -85,7 +85,7 @@ class Security_Headers extends Event {
 
 				$is_active_prev_data = false;
 
-				if ( ! empty( $prev_data ) ) {
+				if ( array() !== $prev_data ) {
 					$is_active_prev_data = true === $prev_data['sh_xframe'] || true === $prev_data['sh_xss_protection']
 						|| true === $prev_data['sh_content_type_options'] || true === $prev_data['sh_feature_policy']
 						|| true === $prev_data['sh_strict_transport'] || true === $prev_data['sh_referrer_policy'];

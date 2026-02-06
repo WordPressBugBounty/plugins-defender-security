@@ -20,6 +20,7 @@ use WP_Defender\Traits\Formats;
 use WP_Defender\Component\Audit;
 use WP_Defender\Model\Audit_Log;
 use WP_Defender\Behavior\WPMUDEV;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Notification\Audit_Report;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Setting\Audit_Logging as Model_Audit_Logging;
@@ -70,40 +71,25 @@ class Audit_Logging extends Event {
 		if ( $this->model->is_active() ) {
 			$this->service->enqueue_event_listener();
 			add_action( 'shutdown', array( $this, 'cache_audit_logs' ) );
-			/**
-			 * We will schedule the time for flush data into cloud.
-			 */
-			if ( ! wp_next_scheduled( 'audit_sync_events' ) ) {
-				wp_schedule_event( time() + 15, 'hourly', 'audit_sync_events' );
-			}
-			add_action( 'audit_sync_events', array( $this, 'sync_events' ) );
 
 			/**
-			 * We will schedule the time to clean up old logs.
+			 * Network Cron Manager
+			 *
+			 * @var Network_Cron_Manager $network_cron_manager
 			 */
-			if ( is_multisite() ) {
-				$network_cron_manager = wd_di()->get( \WP_Defender\Component\Network_Cron_Manager::class );
-				$network_cron_manager->register_callback(
-					'audit_clean_up_logs',
-					array( $this->service, 'audit_clean_up_logs' ),
-					HOUR_IN_SECONDS
-				);
-			} else {
-				if ( ! wp_next_scheduled( 'audit_clean_up_logs' ) ) {
-					wp_schedule_event( time(), 'hourly', 'audit_clean_up_logs' );
-				}
-				add_action( 'audit_clean_up_logs', array( $this->service, 'audit_clean_up_logs' ) );
-			}
+			$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+			$network_cron_manager->register_callback(
+				'audit_clean_up_logs',
+				array( $this->service, 'audit_clean_up_logs' ),
+				HOUR_IN_SECONDS
+			);
+			$network_cron_manager->register_callback(
+				'audit_sync_events',
+				array( $this->service, 'flush' ),
+				HOUR_IN_SECONDS,
+				time() + 15
+			);
 		}
-	}
-
-	/**
-	 * Sync all the events into cloud, this will happen per hourly basis.
-	 *
-	 * @return void
-	 */
-	public function sync_events(): void {
-		$this->service->flush();
 	}
 
 	/**
@@ -126,7 +112,8 @@ class Audit_Logging extends Event {
 		$username  = HTTP::get( 'term', '' );
 		$user_id   = '';
 		$user      = get_user_by( 'login', $username );
-		$events    = HTTP::get( 'event_type', array() );
+		$data      = defender_get_data_from_request( null, 'g' );
+		$events    = isset( $data['event_type'] ) && is_array( $data['event_type'] ) ? $data['event_type'] : array();
 		if ( is_object( $user ) ) {
 			$user_id = $user->ID;
 		}
@@ -220,7 +207,7 @@ class Audit_Logging extends Event {
 				),
 			)
 		);
-		if ( empty( $data['date_from'] ) || empty( $data['date_to'] ) ) {
+		if ( ! isset( $data['date_from'] ) || '' === $data['date_from'] || ! isset( $data['date_to'] ) || '' === $data['date_to'] ) {
 			return new Response( false, array( 'message' => esc_html__( 'Invalid data.', 'defender-security' ) ) );
 		}
 		// Convert date using timezone.
@@ -237,7 +224,7 @@ class Audit_Logging extends Event {
 		$paged      = $data['paged'] ?? 1;
 		$username   = $data['username'] ?? '';
 		$user_id    = '';
-		if ( ! empty( $username ) ) {
+		if ( '' !== $username ) {
 			$user = get_user_by( 'login', $username );
 			if ( is_object( $user ) ) {
 				$user_id = $user->ID;
@@ -256,13 +243,15 @@ class Audit_Logging extends Event {
 			return new Response( false, array( 'message' => $result->get_error_message() ) );
 		}
 		$logs = array();
-		if ( ! empty( $result ) ) {
+		if ( is_array( $result ) && array() !== $result ) {
 			foreach ( $result as $item ) {
-				$logs[] = array_merge(
+				$item_user_id = isset( $item->user_id ) ? $item->user_id : 0;
+				$item_user_id = ! is_int( $item_user_id ) ? (int) $item_user_id : $item_user_id;
+				$logs[]       = array_merge(
 					$item->export(),
 					array(
 						'user'        => $this->get_user_display( $item->user_id ),
-						'user_url'    => (int) $item->user_id > 0 ? get_edit_user_link( $item->user_id ) : '',
+						'user_url'    => $item_user_id > 0 ? get_edit_user_link( $item_user_id ) : '',
 						'log_date'    => $this->get_date( $item->timestamp ),
 						'format_date' => $this->format_date_time( $item->timestamp ),
 					)
@@ -270,7 +259,7 @@ class Audit_Logging extends Event {
 			}
 		}
 		// @since 3.0.0 If no logs then $count = 0.
-		if ( empty( $logs ) ) {
+		if ( array() === $logs ) {
 			$count = 0;
 		} else {
 			$count = Audit_Log::count( $date_from, $date_to, $events, $user_id, $ip_address );
@@ -474,7 +463,7 @@ class Audit_Logging extends Event {
 		$count      = 0;
 		$per_page   = 20;
 		$total_page = 1;
-		if ( $this->model->is_active() ) {
+		if ( $this->model->is_active() && ( new WPMUDEV() )->is_pro() ) {
 			$timezone  = wp_timezone();
 			$date_from = ( new DateTime() )->setTimezone( $timezone )
 											->sub( new DateInterval( 'P7D' ) )->setTime( 0, 0, 0 );
@@ -489,11 +478,13 @@ class Audit_Logging extends Event {
 			);
 			if ( ! is_wp_error( $result ) ) {
 				foreach ( $result as $item ) {
-					$logs[] = array_merge(
+					$item_user_id = isset( $item->user_id ) ? $item->user_id : 0;
+					$item_user_id = ! is_int( $item_user_id ) ? (int) $item_user_id : $item_user_id;
+					$logs[]       = array_merge(
 						$item->export(),
 						array(
 							'user'        => $this->get_user_display( $item->user_id ),
-							'user_url'    => (int) $item->user_id > 0 ? get_edit_user_link( $item->user_id ) : '',
+							'user_url'    => $item_user_id > 0 ? get_edit_user_link( $item_user_id ) : '',
 							'log_date'    => $this->get_date( $item->timestamp ),
 							'format_date' => $this->format_date_time( $item->timestamp ),
 						)
@@ -506,18 +497,20 @@ class Audit_Logging extends Event {
 
 		return array_merge(
 			array(
-				'model'       => $this->model->export(),
-				'logs'        => $logs,
-				'events_type' => Audit_Log::allowed_events(),
-				'summary'     => array(
+				'model'         => $this->model->export(),
+				'logs'          => $logs,
+				'events_type'   => Audit_Log::allowed_events(),
+				'summary'       => array(
 					'count_7_days' => $count,
 					'report'       => wd_di()->get( Audit_Report::class )->to_string(),
 				),
-				'paging'      => array(
+				'paging'        => array(
 					'paged'       => 1,
 					'total_pages' => $total_page,
 					'count'       => $count,
 				),
+				'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
+				'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
 			$this->dump_routes_and_nonces()
 		);
@@ -532,7 +525,7 @@ class Audit_Logging extends Event {
 	 */
 	public function import_data( array $data ) {
 		$model = $this->model;
-		if ( empty( $data ) ) {
+		if ( array() === $data ) {
 			$model->enabled      = false;
 			$model->storage_days = '6 months';
 			$model->save();

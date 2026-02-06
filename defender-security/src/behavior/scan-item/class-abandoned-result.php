@@ -59,10 +59,23 @@ class Abandoned_Result extends Behavior {
 	 * @return array An array with a message indicating successful ignore.
 	 */
 	public function ignore(): array {
-		$scan = Scan::get_last();
-		$scan->ignore_issue( $this->owner->id );
+		$scan       = Scan::get_last();
+		$issue_name = '<b>' . $this->get_issue_name( $this->owner->raw_data ) . '</b>';
+		$res        = $scan->ignore_issue( $this->owner->id );
+		if ( ! $res ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => $this->get_failed_ignore_result( $issue_name ),
+			);
+		}
 
-		return array( 'message' => esc_html__( 'The plugin has been successfully ignored.', 'defender-security' ) );
+		return array(
+			'message' => sprintf(
+				/* translators: %s: Scan issue name. */
+				esc_html__( 'You’ve successfully ignored the security issue related to %s.', 'defender-security' ),
+				$issue_name
+			),
+		);
 	}
 
 	/**
@@ -71,10 +84,23 @@ class Abandoned_Result extends Behavior {
 	 * @return array An array with a message indicating successful restoration.
 	 */
 	public function unignore(): array {
-		$scan = Scan::get_last();
-		$scan->unignore_issue( $this->owner->id );
+		$scan       = Scan::get_last();
+		$issue_name = '<b>' . $this->get_issue_name( $this->owner->raw_data ) . '</b>';
+		$res        = $scan->unignore_issue( $this->owner->id );
+		if ( ! $res ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => $this->get_failed_restore_result( $issue_name ),
+			);
+		}
 
-		return array( 'message' => esc_html__( 'The plugin has been successfully restored.', 'defender-security' ) );
+		return array(
+			'message' => sprintf(
+			/* translators: %s: Scan issue name. */
+				esc_html__( 'You’ve successfully restored the security issue related to %s.', 'defender-security' ),
+				$issue_name
+			),
+		);
 	}
 
 	/**
@@ -110,7 +136,7 @@ class Abandoned_Result extends Behavior {
 			);
 		}
 
-		$abs_path = wp_normalize_path( WP_PLUGIN_DIR ) . DIRECTORY_SEPARATOR . $data['slug'];
+		$abs_path = $this->get_abs_plugin_path_by_slug( $data['slug'] );
 		if ( file_exists( $abs_path ) && ! $this->maybe_remove( $abs_path ) ) {
 			return array(
 				'type_notice' => 'error',

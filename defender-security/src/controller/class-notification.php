@@ -14,6 +14,7 @@ use WP_Defender\Traits\User;
 use Calotes\Component\Request;
 use WP_Defender\Traits\Formats;
 use Calotes\Component\Response;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Notification\Malware_Report;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Notification as Model_Notification;
@@ -72,31 +73,38 @@ class Notification extends Event {
 		add_action( 'wp_ajax_' . self::SLUG_UNSUBSCRIBE, array( $this, 'unsubscribe_and_send_email' ) );
 		add_action( 'wp_ajax_nopriv_' . self::SLUG_UNSUBSCRIBE, array( $this, 'unsubscribe_and_send_email' ) );
 		add_action( 'defender_notify', array( $this, 'send_notify' ), 10, 2 );
-		// We will schedule the time to send reports.
-		if ( ! wp_next_scheduled( 'wdf_maybe_send_report' ) ) {
-			$timestamp = gmmktime( wp_date( 'H' ), 0, 0 );
-			wp_schedule_event( $timestamp, 'thirty_minutes', 'wdf_maybe_send_report' );
-		}
-		add_action( 'wdf_maybe_send_report', array( $this, 'report_sender' ) );
+		/**
+		 * Network Cron Manager
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
+		 */
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$timestamp            = gmmktime( wp_date( 'H' ), 0, 0 );
+		$network_cron_manager->register_callback(
+			'wdf_maybe_send_report',
+			array( $this->service, 'maybe_dispatch_report' ),
+			30 * MINUTE_IN_SECONDS,
+			$timestamp
+		);
 		add_action( 'admin_notices', array( $this, 'show_actions_with_subscription' ) );
 	}
 
 	/**
 	 * For users who have subscribed or unsubscribed confirmation.
 	 *
-	 * @return null|void
+	 * @return void
 	 */
 	public function show_actions_with_subscription() {
 		if ( ! defined( 'IS_PROFILE_PAGE' ) || false === constant( 'IS_PROFILE_PAGE' ) ) {
-			return null;
+			return;
 		}
 		$slug = defender_get_data_from_request( 'slug', 'g' );
-		if ( empty( $slug ) ) {
-			return null;
+		if ( ! is_string( $slug ) || '' === trim( $slug ) ) {
+			return;
 		}
 		$m = $this->service->find_module_by_slug( $slug );
 		if ( ! is_object( $m ) ) {
-			return null;
+			return;
 		}
 		$context = defender_get_data_from_request( 'context', 'g' );
 		if ( 'subscribed' === $context ) {
@@ -117,7 +125,7 @@ class Notification extends Event {
 				'<strong>' . $m->title . '</strong>'
 			);
 		} else {
-			return null;
+			return;
 		}
 		?>
 		<div class="notice notice-success" style="position:relative;">
@@ -128,13 +136,6 @@ class Notification extends Event {
 			</a>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Trigger report check signals.
-	 */
-	public function report_sender() {
-		$this->service->maybe_dispatch_report();
 	}
 
 	/**
@@ -192,7 +193,7 @@ class Notification extends Event {
 		$slug = HTTP::get( 'slug', '' );
 		$hash = HTTP::get( 'hash', '' );
 		$slug = sanitize_text_field( $slug );
-		if ( empty( $slug ) || empty( $hash ) ) {
+		if ( ! is_string( $slug ) || '' === trim( $slug ) || ! is_string( $hash ) || '' === trim( $hash ) ) {
 			wp_die( esc_html__( 'You shall not pass.', 'defender-security' ) );
 		}
 		$m = $this->service->find_module_by_slug( $slug );
@@ -256,7 +257,7 @@ class Notification extends Event {
 	 */
 	public function save( Request $request ): Response {
 		$raw_data = $request->get_data();
-		if ( empty( $raw_data['slug'] ) ) {
+		if ( ! isset( $raw_data['slug'] ) || ! is_string( $raw_data['slug'] ) || '' === trim( $raw_data['slug'] ) ) {
 			return new Response( false, array( 'message' => esc_html__( 'Invalid data.', 'defender-security' ) ) );
 		}
 		$slug  = sanitize_textarea_field( $raw_data['slug'] );
@@ -372,7 +373,7 @@ class Notification extends Event {
 			// since 2.7.0.
 			if ( Malware_Report::SLUG !== $slug ) {
 				$import['frequency'] = $data['frequency'];
-				$import['day_n']     = $data['day_n'];
+				$import['day_n']     = (int) $data['day_n'];
 				$import['day']       = $data['day'];
 				$import['time']      = $data['time'];
 			}
@@ -463,7 +464,7 @@ class Notification extends Event {
 			)
 		);
 		$slugs = $data['slugs'];
-		if ( empty( $slugs ) ) {
+		if ( ! is_array( $slugs ) || array() === $slugs ) {
 			return new Response( false, array() );
 		}
 
@@ -508,7 +509,7 @@ class Notification extends Event {
 			)
 		);
 		$slugs = $data['slugs'];
-		if ( empty( $slugs ) ) {
+		if ( ! is_array( $slugs ) || array() === $slugs ) {
 			return new Response( false, array() );
 		}
 
@@ -573,19 +574,20 @@ class Notification extends Event {
 	public function verify_subscriber() {
 		$hash    = HTTP::get( 'hash', '' );
 		$slug    = HTTP::get( 'uid', '' );
-		$inhouse = HTTP::get( 'inhouse', 0 );
-		if ( $inhouse && ! is_user_logged_in() ) {
+		$inhouse = HTTP::get( 'inhouse', '0' );
+
+		if ( '1' === $inhouse && ! is_user_logged_in() ) {
 			// This is in-house, so we need to redirect.
 			auth_redirect();
 		}
-		if ( empty( $hash ) || empty( $slug ) ) {
+		if ( ! is_string( $hash ) || '' === trim( $hash ) || ! is_string( $slug ) || '' === trim( $slug ) ) {
 			wp_die( esc_html__( 'You shall not pass.', 'defender-security' ) );
 		}
 		$m = $this->service->find_module_by_slug( $slug );
 		if ( ! is_object( $m ) ) {
 			wp_die( esc_html__( 'You shall not pass.', 'defender-security' ) );
 		}
-		if ( $inhouse ) {
+		if ( '1' === $inhouse ) {
 			$processed = false;
 			foreach ( $m->in_house_recipients as &$recipient ) {
 				if ( Model_Notification::USER_SUBSCRIBED === $recipient['status'] ) {
@@ -616,7 +618,7 @@ class Notification extends Event {
 			}
 		}
 		$m->save();
-		if ( $inhouse ) {
+		if ( '1' === $inhouse ) {
 			if ( $processed ) {
 				wp_safe_redirect(
 					add_query_arg(
@@ -807,6 +809,8 @@ class Notification extends Event {
 				),
 				'default_recipient' => $this->get_default_recipient(),
 			),
+			'hub_connector'          => wd_di()->get( Hub_Connector::class )->data_frontend(),
+			'antibot'                => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 		);
 	}
 
@@ -894,7 +898,7 @@ class Notification extends Event {
 			'name'  => $data['name'],
 		);
 
-		if ( ! empty( $data['id'] ) ) {
+		if ( isset( $data['id'] ) && is_int( $data['id'] ) && 0 < $data['id'] ) {
 			$subscriber['id'] = $data['id'];
 		}
 		// Resend invite email now.

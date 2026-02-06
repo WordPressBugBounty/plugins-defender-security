@@ -118,11 +118,12 @@ function readline_completion_function(callable $function): void
 /**
  * This function reads a command history from a file.
  *
- * @param string $filename Path to the filename containing the command history.
+ * @param string|null $filename Path to the filename containing the command history.
+ *
  * @throws ReadlineException
  *
  */
-function readline_read_history(string $filename = null): void
+function readline_read_history(?string $filename = null): void
 {
     error_clear_last();
     if ($filename !== null) {
@@ -139,11 +140,12 @@ function readline_read_history(string $filename = null): void
 /**
  * This function writes the command history to a file.
  *
- * @param string $filename Path to the saved file.
+ * @param string|null $filename Path to the saved file.
+ *
  * @throws ReadlineException
  *
  */
-function readline_write_history(string $filename = null): void
+function readline_write_history(?string $filename = null): void
 {
     error_clear_last();
     if ($filename !== null) {

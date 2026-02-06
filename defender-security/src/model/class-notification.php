@@ -97,7 +97,7 @@ abstract class Notification extends Setting {
 	 * @sanitize_text_field
 	 * @defender_property
 	 */
-	public $day_n;
+	public int $day_n = 1;
 
 	/**
 	 * Same as $day.
@@ -237,7 +237,7 @@ abstract class Notification extends Setting {
 
 		// Create estimate object.
 		$est = new DateTime( 'now', wp_timezone() );
-		if ( ! empty( $this->last_sent ) ) {
+		if ( $this->last_sent > 0 ) {
 			// set the timestamp of previous.
 			$est->setTimestamp( $this->last_sent );
 		}
@@ -271,7 +271,7 @@ abstract class Notification extends Setting {
 			case 'monthly':
 				// We will need to check if the date is passed today, if not, use this, if yes, then queue for next month.
 				$est->setDate( (int) $est->format( 'Y' ), (int) $est->format( 'm' ), 1 );
-				if ( 31 === (int) $this->day_n ) {
+				if ( 31 === $this->day_n ) {
 					$this->day_n = (int) $est->format( 't' );
 				}
 				$est->add( new DateInterval( 'P' . ( $this->day_n - 1 ) . 'D' ) );
@@ -371,14 +371,15 @@ abstract class Notification extends Setting {
 			return $for_hub ? false : esc_html__( 'Never', 'defender-security' );
 		}
 
+		$est_timestamp = ! is_int( $this->est_timestamp ) ? (int) $this->est_timestamp : $this->est_timestamp;
 		if ( $for_hub ) {
 			return $this->check_active_status()
-				? $this->persistent_hub_datetime_format( $this->est_timestamp )
+				? $this->persistent_hub_datetime_format( $est_timestamp )
 				: false;
 		} elseif ( $this->check_active_status() ) {
 			$format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 			$date   = new DateTime( 'now', wp_timezone() );
-			$date->setTimestamp( (int) $this->est_timestamp );
+			$date->setTimestamp( $est_timestamp );
 
 			return $date->format( $format );
 		} else {
@@ -392,7 +393,7 @@ abstract class Notification extends Setting {
 	protected function after_validate(): void {
 		foreach ( $this->out_house_recipients as $recipient ) {
 			$recipient['email'] = trim( $recipient['email'] );
-			if ( empty( $recipient['email'] ) ) {
+			if ( '' === $recipient['email'] ) {
 				continue;
 			}
 			if ( ! filter_var( $recipient['email'], FILTER_VALIDATE_EMAIL ) ) {
@@ -408,7 +409,7 @@ abstract class Notification extends Setting {
 	 * @return void
 	 */
 	public function save(): void {
-		if ( empty( $this->last_sent ) ) {
+		if ( $this->last_sent <= 0 ) {
 			$this->last_sent = time();
 		}
 		$next_run = $this->get_next_run();

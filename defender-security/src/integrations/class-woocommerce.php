@@ -36,13 +36,6 @@ class Woocommerce {
 	/**
 	 * Detects if the request is coming from a WooCommerce login context.
 	 *
-	 * Checks in the following order of reliability:
-	 * 1. Direct WooCommerce page detection (most reliable).
-	 * 2. WooCommerce endpoint detection.
-	 * 3. Form submission detection (more reliable than referer).
-	 * 4. AJAX detection.
-	 * 5. Fallback: Referer check (least reliable).
-	 *
 	 * @return bool
 	 */
 	public function is_wc_login_context(): bool {
@@ -50,41 +43,36 @@ class Woocommerce {
 			return false;
 		}
 
-		// 1. Direct WooCommerce page detection (most reliable).
-		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+		// Problem: REST_REQUEST constant is false during Store API requests, so we check the rest_route parameter instead.
+		$request_uri = defender_get_data_from_request( 'REQUEST_URI', 's' );
+		if ( '' !== $request_uri && str_contains( $request_uri, 'rest_route=/wc/store/v1/checkout' ) ) {
 			return true;
 		}
 
-		// 2. WooCommerce endpoint detection.
-		if ( function_exists( 'is_wc_endpoint_url' ) &&
-			( is_wc_endpoint_url( 'lost-password' ) || is_wc_endpoint_url( 'customer-logout' )
-		) ) {
-			return true;
-		}
-
-		// 3. Form submission detection (more reliable than referer).
 		$post_data = defender_get_data_from_request( null, 'p' );
-		if ( isset( $post_data['woocommerce-login-nonce'] ) ||
-			isset( $post_data ['woocommerce_checkout_login'] ) ||
-			( isset( $post_data ['login'] ) && is_checkout() ) ||
-			isset( $post_data['wc_reset_password'] ) ) {
+
+		if ( 0 === count( $post_data ) ) {
+			return false;
+		}
+
+		if (
+			isset( $post_data['woocommerce-login-nonce'] ) ||
+			isset( $post_data['woocommerce-register-nonce'] ) ||
+			isset( $post_data['woocommerce_checkout_login'] ) ||
+			( isset( $post_data['login'] ) && is_checkout() ) ||
+			( isset( $post_data['register'] ) && isset( $post_data['email'] ) ) ||
+			isset( $post_data['wc_reset_password'] )
+		) {
 			return true;
 		}
 
-		// 4. AJAX detection.
-		if ( wp_doing_ajax() && isset( $post_data['wc-ajax'] ) ) {
-			return true;
-		}
-
-		// 5. Fallback: Referer check (least reliable).
 		$referer = wp_get_referer();
-		if ( false !== $referer && function_exists( 'wc_get_page_id' ) ) {
+		if ( $referer && function_exists( 'wc_get_page_id' ) ) {
 			$my_account_page_id = wc_get_page_id( 'myaccount' );
 			if ( $my_account_page_id > 0 ) {
 				$my_account_url = get_permalink( $my_account_page_id );
-				if ( $my_account_url && strpos( $referer, $my_account_url ) === 0 ) {
-					return true;
-				}
+
+				return str_starts_with( $referer, $my_account_url );
 			}
 		}
 
@@ -104,5 +92,25 @@ class Woocommerce {
 			self::WOO_LOST_PASSWORD_FORM => esc_html__( 'Lost Password', 'defender-security' ),
 			self::WOO_CHECKOUT_FORM      => esc_html__( 'Checkout', 'defender-security' ),
 		);
+	}
+
+	/**
+	 * Detects if current request originates from WooCommerce code path.
+	 *
+	 * @return bool
+	 */
+	public function is_woocommerce_page(): bool {
+		if ( ! $this->is_activated() ) {
+			return false;
+		}
+
+		$traces = debug_backtrace(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
+		foreach ( $traces as $trace ) {
+			if ( isset( $trace['file'] ) && str_contains( $trace['file'], 'woocommerce' ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

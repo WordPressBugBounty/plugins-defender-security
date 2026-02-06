@@ -506,7 +506,7 @@ function sprintf(string $format, ...$params): string
  * ]]>
  *
  *
- * @param int $length If length is given and is positive, the string
+ * @param int|null $length If length is given and is positive, the string
  * returned will contain at most length characters
  * beginning from start (depending on the length of
  * string).
@@ -524,12 +524,13 @@ function sprintf(string $format, ...$params): string
  * If length is omitted, the substring starting from
  * start until the end of the string will be
  * returned.
+ *
  * @return string Returns the extracted part of string;, or
  * an empty string.
  * @throws StringsException
  *
  */
-function substr(string $string, int $start, int $length = null): string
+function substr(string $string, int $start, ?int $length = null): string
 {
     error_clear_last();
     if ($length !== null) {

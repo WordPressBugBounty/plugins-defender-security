@@ -195,21 +195,22 @@ function odbc_columnprivileges($connection_id, string $catalog, string $schema, 
 /**
  * Lists all columns in the requested range.
  *
- * @param resource $connection_id The ODBC connection identifier,
+ * @param resource    $connection_id The ODBC connection identifier,
  * see odbc_connect for details.
- * @param string $catalog The catalog ('qualifier' in ODBC 2 parlance).
- * @param string $schema The schema ('owner' in ODBC 2 parlance).
+ * @param string|null $catalog       The catalog ('qualifier' in ODBC 2 parlance).
+ * @param string|null $schema        The schema ('owner' in ODBC 2 parlance).
  * This parameter accepts the following search patterns:
  * % to match zero or more characters,
  * and _ to match a single character.
- * @param string $table_name The table name.
+ * @param string|null $table_name    The table name.
  * This parameter accepts the following search patterns:
  * % to match zero or more characters,
  * and _ to match a single character.
- * @param string $column_name The column name.
+ * @param string|null $column_name   The column name.
  * This parameter accepts the following search patterns:
  * % to match zero or more characters,
  * and _ to match a single character.
+ *
  * @return resource Returns an ODBC result identifier.
  *
  * The result set has the following columns:
@@ -237,7 +238,7 @@ function odbc_columnprivileges($connection_id, string $catalog, string $schema, 
  * @throws UodbcException
  *
  */
-function odbc_columns($connection_id, string $catalog = null, string $schema = null, string $table_name = null, string $column_name = null)
+function odbc_columns($connection_id, ?string $catalog = null, ?string $schema = null, ?string $table_name = null, ?string $column_name = null)
 {
     error_clear_last();
     if ($column_name !== null) {
@@ -307,14 +308,15 @@ function odbc_data_source($connection_id, int $fetch_type): array
  *
  * @param resource $connection_id The ODBC connection identifier,
  * see odbc_connect for details.
- * @param string $query_string The SQL statement.
- * @param int $flags This parameter is currently not used.
+ * @param string   $query_string  The SQL statement.
+ * @param int|null $flags         This parameter is currently not used.
+ *
  * @return resource Returns an ODBC result identifier if the SQL command was executed
  * successfully.
  * @throws UodbcException
  *
  */
-function odbc_exec($connection_id, string $query_string, int $flags = null)
+function odbc_exec($connection_id, string $query_string, ?int $flags = null)
 {
     error_clear_last();
     if ($flags !== null) {
@@ -332,8 +334,8 @@ function odbc_exec($connection_id, string $query_string, int $flags = null)
 /**
  * Executes a statement prepared with odbc_prepare.
  *
- * @param resource $result_id The result id resource, from odbc_prepare.
- * @param array $parameters_array Parameters in parameter_array will be
+ * @param resource   $result_id        The result id resource, from odbc_prepare.
+ * @param array|null $parameters_array Parameters in parameter_array will be
  * substituted for placeholders in the prepared statement in order.
  * Elements of this array will be converted to strings by calling this
  * function.
@@ -342,10 +344,11 @@ function odbc_exec($connection_id, string $query_string, int $flags = null)
  * start and end with single quotes will be taken as the name of a
  * file to read and send to the database server as the data for the
  * appropriate placeholder.
+ *
  * @throws UodbcException
  *
  */
-function odbc_execute($result_id, array $parameters_array = null): void
+function odbc_execute($result_id, ?array $parameters_array = null): void
 {
     error_clear_last();
     if ($parameters_array !== null) {
@@ -362,18 +365,19 @@ function odbc_execute($result_id, array $parameters_array = null): void
 /**
  * Fetch one result row into array.
  *
- * @param resource $result_id The result resource.
+ * @param resource   $result_id    The result resource.
  * @param array|null $result_array The result array
  * that can be of any type since it will be converted to type
  * array. The array will contain the column values starting at array
  * index 0.
- * @param int $rownumber The row number.
+ * @param int|null   $rownumber    The row number.
+ *
  * @return int Returns the number of columns in the result;
  * FALSE on error.
  * @throws UodbcException
  *
  */
-function odbc_fetch_into($result_id, ?array &$result_array, int $rownumber = null): int
+function odbc_fetch_into($result_id, ?array &$result_array, ?int $rownumber = null): int
 {
     error_clear_last();
     if ($rownumber !== null) {
@@ -546,8 +550,9 @@ function odbc_foreignkeys($connection_id, string $pk_catalog, string $pk_schema,
  *
  * @param resource $connection_id The ODBC connection identifier,
  * see odbc_connect for details.
- * @param int $data_type The data type, which can be used to restrict the information to a
+ * @param int|null $data_type     The data type, which can be used to restrict the information to a
  * single data type.
+ *
  * @return resource Returns an ODBC result identifier.
  *
  * The result set has the following columns:
@@ -573,7 +578,7 @@ function odbc_foreignkeys($connection_id, string $pk_catalog, string $pk_schema,
  * @throws UodbcException
  *
  */
-function odbc_gettypeinfo($connection_id, int $data_type = null)
+function odbc_gettypeinfo($connection_id, ?int $data_type = null)
 {
     error_clear_last();
     if ($data_type !== null) {
@@ -681,13 +686,14 @@ function odbc_primarykeys($connection_id, string $catalog, string $schema, strin
  * This function is not supposed to be used in production environments; it is
  * merely meant for development purposes, to get a result set quickly rendered.
  *
- * @param resource $result_id The result identifier.
- * @param string $format Additional overall table formatting.
+ * @param resource    $result_id The result identifier.
+ * @param string|null $format    Additional overall table formatting.
+ *
  * @return int Returns the number of rows in the result.
  * @throws UodbcException
  *
  */
-function odbc_result_all($result_id, string $format = null): int
+function odbc_result_all($result_id, ?string $format = null): int
 {
     error_clear_last();
     if ($format !== null) {
@@ -956,24 +962,25 @@ function odbc_tableprivileges($connection_id, string $catalog, string $schema, s
  *
  *
  *
- * @param resource $connection_id The ODBC connection identifier,
+ * @param resource    $connection_id The ODBC connection identifier,
  * see odbc_connect for details.
- * @param string $catalog The catalog ('qualifier' in ODBC 2 parlance).
- * @param string $schema The schema ('owner' in ODBC 2 parlance).
+ * @param string|null $catalog       The catalog ('qualifier' in ODBC 2 parlance).
+ * @param string|null $schema        The schema ('owner' in ODBC 2 parlance).
  * This parameter accepts the following search patterns:
  * % to match zero or more characters,
  * and _ to match a single character.
- * @param string $name The name.
+ * @param string|null $name          The name.
  * This parameter accepts the following search patterns:
  * % to match zero or more characters,
  * and _ to match a single character.
- * @param string $types If table_type is not an empty string, it
+ * @param string|null $types         If table_type is not an empty string, it
  * must contain a list of comma-separated values for the types of
  * interest; each value may be enclosed in single quotes (') or
  * unquoted. For example, 'TABLE','VIEW' or TABLE, VIEW.  If the
  * data source does not support a specified table type,
  * odbc_tables does not return any results for
  * that type.
+ *
  * @return resource Returns an ODBC result identifier containing the information.
  *
  * The result set has the following columns:
@@ -988,7 +995,7 @@ function odbc_tableprivileges($connection_id, string $catalog, string $schema, s
  * @throws UodbcException
  *
  */
-function odbc_tables($connection_id, string $catalog = null, string $schema = null, string $name = null, string $types = null)
+function odbc_tables($connection_id, ?string $catalog = null, ?string $schema = null, ?string $name = null, ?string $types = null)
 {
     error_clear_last();
     if ($types !== null) {

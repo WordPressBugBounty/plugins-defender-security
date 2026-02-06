@@ -42,7 +42,7 @@ class Classic_Remote_Address {
 		$ip_list = array();
 		$server  = defender_get_data_from_request( null, 's' );
 		foreach ( $this->accepted_header as $key ) {
-			if ( array_key_exists( $key, $server ) && ! empty( $server[ $key ] ) ) {
+			if ( array_key_exists( $key, $server ) && is_string( $server[ $key ] ) && '' !== $server[ $key ] ) {
 				$ip_array = explode( ',', $server[ $key ] );
 				foreach ( $ip_array as $ip ) {
 					$ip = trim( $ip );
@@ -65,7 +65,7 @@ class Classic_Remote_Address {
 		$header_array = array();
 		$server       = defender_get_data_from_request( null, 's' );
 		foreach ( $this->accepted_header as $key ) {
-			if ( array_key_exists( $key, $server ) && ! empty( $server[ $key ] ) ) {
+			if ( array_key_exists( $key, $server ) && is_string( $server[ $key ] ) && '' !== $server[ $key ] ) {
 				$ip_array = explode( ',', $server[ $key ] );
 				foreach ( $ip_array as $ip ) {
 					$ip = trim( $ip );

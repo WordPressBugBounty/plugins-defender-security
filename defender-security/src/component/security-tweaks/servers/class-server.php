@@ -62,7 +62,7 @@ class Server {
 	 */
 	public static function get_software() {
 		$software = defender_get_data_from_request( 'SERVER_SOFTWARE', 's' );
-		if ( empty( $software ) ) {
+		if ( ! is_string( $software ) || '' === $software ) {
 			return self::get_software_by_self_ping();
 		}
 
@@ -87,7 +87,7 @@ class Server {
 			$server_type = array();
 		}
 
-		if ( isset( $server_type[ $url ] ) && ! empty( $server_type[ $url ] ) ) {
+		if ( isset( $server_type[ $url ] ) && is_string( $server_type[ $url ] ) && '' !== $server_type[ $url ] ) {
 			return strtolower( $server_type[ $url ] );
 		}
 

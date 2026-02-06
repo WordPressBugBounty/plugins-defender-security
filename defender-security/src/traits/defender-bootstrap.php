@@ -20,7 +20,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Controller\Onboard;
 use WP_Defender\Controller\Webauthn;
 use WP_Defender\Controller\Dashboard;
-use WP_Defender\Controller\Recaptcha;
+use WP_Defender\Controller\Captcha;
 use WP_Defender\Controller\Mask_Login;
 use WP_Defender\Controller\Quarantine;
 use WP_Defender\Controller\Two_Factor;
@@ -44,6 +44,9 @@ use WP_Defender\Component\Firewall as Firewall_Component;
 use WP_Defender\Controller\Firewall as Firewall_Controller;
 use WP_Defender\Controller\Hub_Connector as Hub_Connector_Controller;
 use WP_Defender\Model\Onboard as Onboard_Model;
+use WP_Defender\Controller\Rate as Rate_Controller;
+use WP_Defender\Component\Rate as Rate_Component;
+use WP_Defender\Upgrader;
 
 trait Defender_Bootstrap {
 	/**
@@ -95,7 +98,7 @@ trait Defender_Bootstrap {
 		$charset_collate  = $wpdb->get_charset_collate();
 		$unique_id        = uniqid( $wpdb->prefix );
 
-		$common_columns = <<<SQL
+		$common_columns = <<<'SQL'
 		`id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
 		`defender_scan_item_id` int UNSIGNED DEFAULT NULL,
 		`file_hash` char(53) NOT NULL,
@@ -150,11 +153,12 @@ trait Defender_Bootstrap {
 	 * Activation.
 	 */
 	private function activation_hook_common(): void {
+		Upgrader::date_activated();
 		$this->create_database_tables();
 		$this->on_activation();
 		// Create a file with a random key if it doesn't exist.
 		( new Crypt() )->create_key_file();
-		// If this is a plugin reactivatin, then track it. No need the check by 'wd_nofresh_install' key because the option is disabled by default.
+		// If this is a plugin reactivating, then track it. No need the check by 'wd_nofresh_install' key because the option is disabled by default.
 		$settings = wd_di()->get( Main_Setting::class );
 		$settings->set_intention( 'Reactivation' );
 		$settings->track_opt( true );
@@ -189,7 +193,7 @@ trait Defender_Bootstrap {
 		wp_clear_scheduled_hook( 'wpdef_smart_ip_detection_ping' );
 		wp_clear_scheduled_hook( 'wpdef_confirm_antibot_toggle_on_hosting' );
 		wp_clear_scheduled_hook( 'wpdef_firewall_whitelist_server_public_ip' );
-		wp_clear_scheduled_hook( 'wpdef_rotate_bot_trap_secret_hash' );
+		wp_clear_scheduled_hook( 'wpdef_rotate_malicious_bot_secret_hash' );
 
 		// Remove old legacy cron jobs if they exist.
 		wp_clear_scheduled_hook( 'lockoutReportCron' );
@@ -372,13 +376,11 @@ SQL;
 	}
 
 	/**
-	 * Initializes the common modules of the application.
+	 * Check if this is onboarding.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	private function init_modules_common(): void {
-		// Init main ORM.
-		Array_Cache::set( 'orm', new Mapper() );
+	private function is_onboarding(): bool {
 		/**
 		 * Display Onboarding if:
 		 * it's a fresh install and there were no requests from the Hub before,
@@ -388,7 +390,20 @@ SQL;
 		 */
 		$hub_class = wd_di()->get( HUB::class );
 		$hub_class->set_onboarding_status( Onboard_Model::maybe_show_onboarding() );
-		if ( $hub_class->get_onboarding_status() && ! defender_is_wp_cli() ) {
+
+		return $hub_class->get_onboarding_status() && ! defender_is_wp_cli();
+	}
+
+	/**
+	 * Initialize the common modules of the application.
+	 *
+	 * @return void
+	 */
+	private function init_modules_common(): void {
+		// Init main ORM.
+		Array_Cache::set( 'orm', new Mapper() );
+
+		if ( $this->is_onboarding() ) {
 			// If it's cli we should start this normally.
 			Array_Cache::set( 'onboard', wd_di()->get( Onboard::class ) );
 		} else {
@@ -404,7 +419,7 @@ SQL;
 		wd_di()->get( Advanced_Tools::class );
 		wd_di()->get( Mask_Login::class );
 		wd_di()->get( Security_Headers::class );
-		wd_di()->get( Recaptcha::class );
+		wd_di()->get( Captcha::class );
 		wd_di()->get( Notification::class );
 		wd_di()->get( Main_Setting::class );
 		wd_di()->get( Blocklist_Monitor::class );
@@ -420,6 +435,9 @@ SQL;
 			wd_di()->get( Quarantine::class );
 		}
 		wd_di()->get( Data_Tracking::class );
+		if ( defender_is_wp_org_version() ) {
+			wd_di()->get( Rate_Controller::class );
+		}
 
 		if ( is_multisite() ) {
 			wd_di()->get( Network_Cron_Manager::class );
@@ -451,7 +469,9 @@ SQL;
 		wp_enqueue_style( 'defender-menu', WP_DEFENDER_BASE_URL . 'assets/css/defender-icon.css', array(), DEFENDER_VERSION );
 
 		$css_files = array(
-			'defender' => WP_DEFENDER_BASE_URL . 'assets/css/styles.css',
+			'defender'  => WP_DEFENDER_BASE_URL . 'assets/css/styles.css',
+			'def-sui'   => WP_DEFENDER_BASE_URL . 'assets/css/shared-ui.css',
+			'def-admin' => WP_DEFENDER_BASE_URL . 'assets/css/admin.css',
 		);
 
 		foreach ( $css_files as $slug => $file ) {
@@ -468,63 +488,71 @@ SQL;
 		$base_url     = WP_DEFENDER_BASE_URL;
 		$dependencies = array( 'def-vue', 'def-manifest', 'defender', 'wp-i18n' );
 		$js_files     = array(
-			'wpmudev-sui'         => array(
+			'wpmudev-sui'             => array(
 				$base_url . 'assets/js/shared-ui.js',
 			),
-			'defender'            => array(
+			'defender'                => array(
 				$base_url . 'assets/js/scripts.js',
 			),
-			'def-vue'             => array(
+			'def-deactivation-survey' => array(
+				$base_url . 'assets/js/deactivation-survey.js',
+				array( 'clipboard', 'wpmudev-sui' ),
+			),
+			'def-admin'               => array(
+				$base_url . 'assets/js/admin.js',
+				array( 'def-deactivation-survey' ),
+			),
+			'def-vue'                 => array(
 				$base_url . 'assets/js/vendor.js',
 			),
-			'def-manifest'        => array(
+			'def-manifest'            => array(
 				$base_url . 'assets/js/manifest.js',
 			),
-			'def-dashboard'       => array(
+			'def-dashboard'           => array(
 				$base_url . 'assets/app/dashboard.js',
 				$dependencies,
 			),
-			'def-securitytweaks'  => array(
+			'def-securitytweaks'      => array(
 				$base_url . 'assets/app/security-tweak.js',
 				array_merge( $dependencies, array( 'clipboard', 'wpmudev-sui' ) ),
 			),
-			'def-scan'            => array(
+			'def-scan'                => array(
 				$base_url . 'assets/app/scan.js',
 				array_merge( $dependencies, array( 'clipboard', 'wpmudev-sui' ) ),
 			),
-			'def-audit'           => array(
+			'def-audit'               => array(
 				$base_url . 'assets/app/audit.js',
 				$dependencies,
 			),
-			'def-iplockout'       => array(
+			'def-iplockout'           => array(
 				$base_url . 'assets/app/ip-lockout.js',
 				array_merge( $dependencies, array( 'wpmudev-sui' ) ),
 			),
-			'def-advancedtools'   => array(
+			'def-advancedtools'       => array(
 				$base_url . 'assets/app/advanced-tools.js',
 				$dependencies,
 			),
-			'def-settings'        => array(
+			'def-settings'            => array(
 				$base_url . 'assets/app/settings.js',
 				$dependencies,
 			),
-			'def-2fa'             => array(
+			'def-2fa'                 => array(
 				$base_url . 'assets/app/two-fa.js',
 				$dependencies,
 			),
-			'def-notification'    => array(
+			'def-notification'        => array(
 				$base_url . 'assets/app/notification.js',
 				$dependencies,
 			),
-			'def-waf'             => array(
+			'def-waf'                 => array(
 				$base_url . 'assets/app/waf.js',
 				$dependencies,
 			),
-			'def-onboard'         => array(
+			'def-onboard'             => array(
 				$base_url . 'assets/app/onboard.js',
 				$dependencies,
 			),
-			'def-expert-services' => array(
+			'def-expert-services'     => array(
 				$base_url . '/assets/app/expert-services.js',
 				$dependencies,
 			),
@@ -532,7 +560,12 @@ SQL;
 
 		foreach ( $js_files as $slug => $file ) {
 			if ( isset( $file[1] ) ) {
-				wp_register_script( $slug, $file[0], $file[1], DEFENDER_VERSION, true );
+				// This ensures that when JavaScript file changes,
+				// browsers will load the new version instead of
+				// serving a cached old version.
+				$file_path    = str_replace( $base_url, WP_DEFENDER_DIR, $file[0] );
+				$file_version = file_exists( $file_path ) ? filemtime( $file_path ) : DEFENDER_VERSION;
+				wp_register_script( $slug, $file[0], $file[1], $file_version, true );
 				wp_set_script_translations( $slug, 'defender-security' );
 			} else {
 				wp_register_script( $slug, $file[0], array( 'jquery' ), DEFENDER_VERSION, true );
@@ -556,6 +589,20 @@ SQL;
 			$misc = $data_tracking->get_tracking_modal();
 		}
 		$misc['high_contrast'] = defender_high_contrast();
+		$is_wp_org             = defender_is_wp_org_version();
+		if ( $is_wp_org ) {
+			$misc['rating'] = array();
+			$rate_service   = Rate_Component::is_achievement_displayed();
+			if ( $rate_service['is_displayed'] ) {
+				$misc['rating']         = wd_di()->get( Rate_Controller::class )->data_frontend();
+				$misc['rating']['text'] = Rate_Component::get_notice_by_slug( $rate_service['slug'] );
+			}
+
+			$misc['rating']['is_displayed'] = $rate_service['is_displayed'];
+			$misc['rating']['type']         = $rate_service['slug'];
+		} else {
+			$misc['rating']['is_displayed'] = false;
+		}
 
 		wp_localize_script(
 			'def-vue',
@@ -567,7 +614,10 @@ SQL;
 				'site_url'                    => network_site_url(),
 				'admin_url'                   => network_admin_url(),
 				'defender_url'                => WP_DEFENDER_BASE_URL,
+				// There might be Pro version but without pro features, for example when the membership expires.
 				'is_free'                     => $wpmu_dev->is_pro() ? 0 : 1,
+				// Strictly Free version.
+				'is_wp_org'                   => $is_wp_org ? 1 : 0,
 				'is_membership'               => true,
 				'is_whitelabel'               => $wpmu_dev->is_whitelabel_enabled() ? 'enabled' : 'disabled',
 				'wpmu_dev_url_action'         => $wpmu_dev->hide_wpmu_dev_urls() ? 'hide' : 'show',
@@ -585,6 +635,16 @@ SQL;
 		);
 
 		wp_localize_script( 'defender', 'defenderGetText', defender_gettext_translations() );
+
+		wp_localize_script(
+			'def-deactivation-survey',
+			'defender',
+			array(
+				'usage_tracking' => wd_di()->get( \WP_Defender\Model\Setting\Main_Setting::class )->usage_tracking,
+				'admin_url'      => admin_url( 'admin-ajax.php' ),
+				'nonce'          => wp_create_nonce( 'defender_deactivation_survey_modal' ),
+			)
+		);
 	}
 
 	/**
@@ -633,7 +693,9 @@ SQL;
 			'after_setup_theme',
 			function () {
 				add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
-				$this->init_modules();
+				if ( method_exists( $this, 'init_modules' ) ) {
+					$this->init_modules();
+				}
 			}
 		);
 		// Register routes.
@@ -650,6 +712,8 @@ SQL;
 		add_action( 'init', array( wd_di()->get( \WP_Defender\Component\Cross_Sell::class ), 'init' ), 9 );
 		// Include admin class. Don't use is_admin().
 		add_action( 'admin_init', array( ( new Admin() ), 'init' ) );
+		// Initialize deactivation survey.
+		add_action( 'admin_enqueue_scripts', array( ( new Admin() ), 'init_deactivation_survey' ) );
 		// Add WP-CLI commands.
 		if ( defender_is_wp_cli() ) {
 			WP_CLI::add_command( 'defender', Cli::class );

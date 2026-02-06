@@ -53,7 +53,7 @@ class Dashboard_Whitelabel {
 	 * @return string URL of whitelabel logo or default logo.
 	 */
 	public function get_branding_logo(): string {
-		if ( $this->is_hide_branding() && ! empty( trim( $this->wpmudev_branding['hero_image'] ) ) ) {
+		if ( $this->is_hide_branding() && '' !== trim( $this->wpmudev_branding['hero_image'] ) ) {
 			return $this->wpmudev_branding['hero_image'];
 		}
 
@@ -124,15 +124,18 @@ class Dashboard_Whitelabel {
 	private function plugin_enabled( $plugin_id ) {
 		if (
 			! class_exists( '\WPMUDEV_Dashboard' ) ||
-			empty( WPMUDEV_Dashboard::$whitelabel ) ||
+			null === WPMUDEV_Dashboard::$whitelabel ||
 			! method_exists( WPMUDEV_Dashboard::$whitelabel, 'get_settings' )
 		) {
 			return false;
 		}
 		$whitelabel_settings = WPMUDEV_Dashboard::$whitelabel->get_settings();
 
-		return ! empty( $whitelabel_settings['labels_enabled'] )
-				&& ! empty( $whitelabel_settings['labels_config'][ $plugin_id ] );
+		return isset( $whitelabel_settings['labels_enabled'] )
+			&& false !== (bool) $whitelabel_settings['labels_enabled']
+			&& isset( $whitelabel_settings['labels_config'][ $plugin_id ] )
+			&& is_array( $whitelabel_settings['labels_config'][ $plugin_id ] )
+			&& array() !== $whitelabel_settings['labels_config'][ $plugin_id ];
 	}
 
 	/**
@@ -148,7 +151,11 @@ class Dashboard_Whitelabel {
 			return false;
 		}
 		$whitelabel_settings = WPMUDEV_Dashboard::$whitelabel->get_settings();
-		if ( empty( $whitelabel_settings['labels_config'][ $plugin_id ]['name'] ) ) {
+		if (
+			! isset( $whitelabel_settings['labels_config'][ $plugin_id ]['name'] )
+			|| ! is_string( $whitelabel_settings['labels_config'][ $plugin_id ]['name'] )
+			|| '' === trim( $whitelabel_settings['labels_config'][ $plugin_id ]['name'] )
+		) {
 			return false;
 		}
 

@@ -60,7 +60,7 @@ class Password_Protection extends Event {
 			) {
 				add_filter( 'network_site_url', array( $this, 'filter_site_url' ), 100, 2 );
 			}
-			add_action( 'wp_authenticate_user', array( $this, 'handle_login_password' ), 100, 2 );
+			add_filter( 'wp_authenticate_user', array( $this, 'handle_login_password' ), 100, 2 );
 			add_action( 'validate_password_reset', array( $this, 'handle_reset_check_password' ), 100, 2 );
 			add_action( 'user_profile_update_errors', array( $this, 'handle_profile_update_password' ), 1, 3 );
 			if ( wd_di()->get( Woocommerce::class )->is_wc_login_context() ) {
@@ -102,7 +102,7 @@ class Password_Protection extends Event {
 		if ( is_wp_error( $user ) || ! $user instanceof WP_User ) {
 			return $user;
 		}
-		if ( empty( $password ) ) {
+		if ( ! is_string( $password ) || '' === trim( $password ) ) {
 			return new WP_Error(
 				'defender_invalid_password',
 				esc_html__( 'Invalid user data.', 'defender-security' )
@@ -119,9 +119,9 @@ class Password_Protection extends Event {
 	 * @param  WP_Error         $errors  Error object.
 	 * @param  WP_User|WP_Error $user  WP_User object or WP_Error.
 	 *
-	 * @return void|WP_Error
+	 * @return void
 	 */
-	public function handle_reset_check_password( WP_Error $errors, $user ) {
+	public function handle_reset_check_password( WP_Error $errors, $user ): void {
 		if ( is_wp_error( $user ) ) {
 			return;
 		}
@@ -132,7 +132,9 @@ class Password_Protection extends Event {
 
 		// Check if display_pwned_password_warning cookie enabled then show warning message on reset password page.
 		if ( ! defender_get_data_from_request( 'wc_reset_password', 'p' ) && isset( $_COOKIE['display_pwned_password_warning'] ) ) {
-			$message = empty( $this->model->pwned_actions['force_change_message'] )
+			$message = ! isset( $this->model->pwned_actions['force_change_message'] )
+			|| ! is_string( $this->model->pwned_actions['force_change_message'] )
+			|| '' === trim( $this->model->pwned_actions['force_change_message'] )
 				? $this->default_msg
 				: $this->model->pwned_actions['force_change_message'];
 			$errors->add( 'defender_password_protection', $message );
@@ -144,18 +146,18 @@ class Password_Protection extends Event {
 		if ( $login_password ) {
 			$is_pwned = $this->service->check_pwned_password( $login_password );
 			if ( is_wp_error( $is_pwned ) ) {
-				return $errors;
+				return;
 			}
 
 			if ( $is_pwned ) {
-				$message = empty( $this->model->pwned_actions['force_change_message'] )
+				$message = ! isset( $this->model->pwned_actions['force_change_message'] )
+				|| ! is_string( $this->model->pwned_actions['force_change_message'] )
+				|| '' === trim( $this->model->pwned_actions['force_change_message'] )
 					? $this->default_msg
 					: $this->model->pwned_actions['force_change_message'];
 				$errors->add( 'defender_password_protection', $message );
 			}
 		}
-
-		return $errors;
 	}
 
 	/**
@@ -165,9 +167,9 @@ class Password_Protection extends Event {
 	 * @param  bool     $update  Whether the profile is being updated.
 	 * @param  stdClass $user  The user object being updated.
 	 *
-	 * @return WP_Error The updated errors object.
+	 * @return void
 	 */
-	public function handle_profile_update_password( WP_Error $errors, bool $update, stdClass $user ) {
+	public function handle_profile_update_password( WP_Error $errors, bool $update, stdClass $user ): void {
 		if ( $errors->get_error_message( 'pass' ) ||
 			is_wp_error( $user ) ||
 			! isset( $user->user_pass )
@@ -184,18 +186,18 @@ class Password_Protection extends Event {
 		if ( $login_password ) {
 			$is_pwned = $this->service->check_pwned_password( $login_password );
 			if ( is_wp_error( $is_pwned ) ) {
-				return $errors;
+				return;
 			}
 
 			if ( $is_pwned ) {
-				$message = empty( $this->model->pwned_actions['force_change_message'] )
+				$message = ! isset( $this->model->pwned_actions['force_change_message'] )
+				|| ! is_string( $this->model->pwned_actions['force_change_message'] )
+				|| '' === trim( $this->model->pwned_actions['force_change_message'] )
 					? $this->default_msg
 					: $this->model->pwned_actions['force_change_message'];
 				$errors->add( 'defender_password_protection', $message );
 			}
 		}
-
-		return $errors;
 	}
 
 	/**
@@ -246,7 +248,9 @@ class Password_Protection extends Event {
 			$response = array(
 				'auto_close' => true,
 			);
-			if ( $this->model->enabled && empty( $this->model->user_roles ) ) {
+			if ( $this->model->enabled && (
+				! isset( $this->model->user_roles ) || ! is_array( $this->model->user_roles ) || array() === $this->model->user_roles
+			) ) {
 				// we need to control this message in front.
 				$response['warning'] = sprintf(
 					/* translators: 1. Open tag. 2. Close tag. */
@@ -261,7 +265,7 @@ class Password_Protection extends Event {
 			if ( $this->maybe_track() ) {
 				$prev_data = $this->get_model()->get_old_settings();
 
-				if ( ! empty( $prev_data ) ) {
+				if ( array() !== $prev_data ) {
 					if ( $this->model->enabled && ! $prev_data['enabled'] ) {
 						$need_track = true;
 						$event      = 'def_feature_activated';
@@ -355,7 +359,7 @@ class Password_Protection extends Event {
 	 * @param  array $data  Data to be imported into the model.
 	 */
 	public function import_data( array $data ) {
-		if ( ! empty( $data ) ) {
+		if ( array() !== $data ) {
 			// Upgrade for old versions.
 			$data  = $this->adapt_data( $data );
 			$model = $this->get_model();
@@ -395,12 +399,18 @@ class Password_Protection extends Event {
 	 * @return array Returns an array of configuration strings.
 	 */
 	public function config_strings( $config, bool $is_pro ): array {
-		if ( empty( $config['enabled'] ) || empty( $config['user_roles'] ) ) {
+		$is_enabled = isset( $config['enabled'] ) ? (bool) $config['enabled'] : false;
+		if (
+			! $is_enabled ||
+			! isset( $config['user_roles'] ) ||
+			! is_array( $config['user_roles'] ) ||
+			array() === $config['user_roles']
+		) {
 			return array( esc_html__( 'Inactive', 'defender-security' ) );
 		}
 
 		return array(
-			$config['enabled'] && ( is_array( $config['user_roles'] ) || $config['user_roles'] instanceof Countable ? count( $config['user_roles'] ) : 0 ) > 0
+			$is_enabled && ( is_array( $config['user_roles'] ) || $config['user_roles'] instanceof Countable ? count( $config['user_roles'] ) : 0 ) > 0
 				? esc_html__( 'Active', 'defender-security' )
 				: esc_html__( 'Inactive', 'defender-security' ),
 		);

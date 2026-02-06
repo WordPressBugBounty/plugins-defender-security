@@ -16,6 +16,7 @@ use WP_Defender\Component\Security_Tweaks\WP_Version;
  * installation, and theme activation, deactivation, and installation.
  */
 class Core_Audit extends Audit_Event {
+	use \WP_Defender\Traits\Plugin;
 
 	public const ACTION_ACTIVATED = 'activated', ACTION_DEACTIVATED = 'deactivated', ACTION_INSTALLED = 'installed', ACTION_UPGRADED = 'upgraded';
 	public const FILE_ADDED       = 'file_added', FILE_MODIFIED = 'file_modified';
@@ -174,7 +175,7 @@ class Core_Audit extends Audit_Event {
 			if ( is_object( $updates ) && property_exists( $updates, 'version' ) ) {
 				return $this->get_upgraded_core_data_for_record( $updates->version );
 			}
-		} elseif ( empty( $update_core ) && $this->is_hub_request() ) {
+		} elseif ( $this->is_hub_request() ) {
 			// Hub has already updated WP core to the latest version.
 			$wp_version = ( new WP_Version() )->get_latest_version();
 
@@ -237,8 +238,8 @@ class Core_Audit extends Audit_Event {
 		} elseif ( 'plugin' === $options['type'] ) {
 			$texts = array();
 			foreach ( $options['plugins'] as $slug ) {
-				$plugin = get_plugin_data( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $slug );
-				if ( is_array( $plugin ) && isset( $plugin['Name'] ) && ! empty( $plugin['Name'] ) ) {
+				$plugin = get_plugin_data( $this->get_abs_plugin_path_by_slug( $slug ) );
+				if ( is_array( $plugin ) && isset( $plugin['Name'] ) && '' !== $plugin['Name'] ) {
 					$texts[] = sprintf(
 					/* translators: 1: Plugin name, 2: Plugin version. */
 						$failed_result ? esc_html( '%1$s version %2$s' ) : esc_html( '%1$s to %2$s' ),
@@ -265,17 +266,17 @@ class Core_Audit extends Audit_Event {
 				return false;
 			}
 		}
+		return false;
 	}
 
 	/**
 	 * Handles single item upgrade for themes or plugins and prepares the audit log entry.
 	 *
-	 * @param  WP_Upgrader $upgrader  The upgrade instance.
-	 * @param  array       $options  Options containing type and the item being upgraded.
+	 * @param  array $options  Options containing type and the item being upgraded.
 	 *
 	 * @return array|bool Returns the log entry data or false if unable to generate log data.
 	 */
-	public function single_upgrade( WP_Upgrader $upgrader, array $options ) {
+	public function single_upgrade( array $options ) {
 		$blog_name = is_multisite() ? '[' . get_bloginfo( 'name' ) . ']' : '';
 
 		if ( 'theme' === $options['type'] ) {
@@ -300,7 +301,7 @@ class Core_Audit extends Audit_Event {
 			}
 		} elseif ( 'plugin' === $options['type'] ) {
 			$slug = $options['plugin'];
-			$data = get_plugin_data( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $slug );
+			$data = get_plugin_data( $this->get_abs_plugin_path_by_slug( $slug ) );
 			if ( is_array( $data ) ) {
 				$name    = $data['Name'];
 				$version = $data['Version'];
@@ -320,6 +321,7 @@ class Core_Audit extends Audit_Event {
 				return false;
 			}
 		}
+		return false;
 	}
 
 	/**
@@ -341,16 +343,16 @@ class Core_Audit extends Audit_Event {
 		}
 
 		$name = '';
-		if ( ! empty( $upgrade->skin->api ) ) {
+		if ( isset( $upgrade->skin->api->name ) && '' !== $upgrade->skin->api->name ) {
 			$name = $upgrade->skin->api->name;
-		} elseif ( ! empty( $upgrade->skin->upgrader ) ) {
+		} elseif ( isset( $upgrade->skin->upgrader ) && $upgrade->skin->upgrader instanceof \WP_Upgrader ) {
 			$type_data = ( 'theme' === $options['type'] && isset( $upgrade->skin->upgrader->new_theme_data ) )
 				? $upgrade->skin->upgrader->new_theme_data
 				: $upgrade->skin->upgrader->new_plugin_data;
-			if ( ! empty( $type_data['Name'] ) && ! empty( $type_data['Version'] ) ) {
+			if ( isset( $type_data['Name'] ) && '' !== $type_data['Name'] && isset( $type_data['Version'] ) && '' !== $type_data['Version'] ) {
 				$name = $type_data['Name'] . ', version ' . $type_data['Version'];
 			}
-		} elseif ( ! empty( $upgrade->skin->result ) ) {
+		} elseif ( isset( $upgrade->skin->result ) ) {
 			if ( is_array( $upgrade->skin->result ) && isset( $upgrade->skin->result['destination_name'] ) ) {
 				$name = $upgrade->skin->result['destination_name'];
 			} elseif ( is_object( $upgrade->skin->result ) && property_exists(
@@ -361,7 +363,7 @@ class Core_Audit extends Audit_Event {
 			}
 		}
 
-		if ( empty( $name ) ) {
+		if ( '' === $name ) {
 			return false;
 		}
 
@@ -405,7 +407,7 @@ class Core_Audit extends Audit_Event {
 	 * 'themes' (array) The theme slugs.
 	 * 'translations' (array) Array of translations update data: 'language', 'type', 'slug', 'version'.
 	 *
-	 * @return mixed
+	 * @return array|bool
 	 */
 	public function process_installer() {
 		$args     = func_get_args();
@@ -422,8 +424,9 @@ class Core_Audit extends Audit_Event {
 			return $this->single_install( $upgrader, $options );
 		} elseif ( 'update' === $options['action'] ) {
 			// Case: actions from Hub.
-			return $this->single_upgrade( $upgrader, $options );
+			return $this->single_upgrade( $options );
 		}
+		return true;
 	}
 
 	/**
@@ -464,7 +467,7 @@ class Core_Audit extends Audit_Event {
 		$args = func_get_args();
 
 		// If 'deleted'-arg is false then the plugin deletion wasn't successful.
-		if ( empty( $args[1]['deleted'] ) ) {
+		if ( ! isset( $args[1]['deleted'] ) || false === $args[1]['deleted'] ) {
 			// Todo: extend Audit table with a new column for the result of the process and divide it into success and failure.
 			$failed_result = true;
 		} else {
@@ -516,7 +519,7 @@ class Core_Audit extends Audit_Event {
 	 */
 	public function get_plugin_abs_path( string $slug ): string {
 		if ( ! is_file( $slug ) ) {
-			$slug = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $slug;
+			$slug = $this->get_abs_plugin_path_by_slug( $slug );
 		}
 
 		return $slug;

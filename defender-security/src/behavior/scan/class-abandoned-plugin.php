@@ -8,6 +8,7 @@
 namespace WP_Defender\Behavior\Scan;
 
 use Calotes\Component\Behavior;
+use WP_Defender\Component\Scan as Scan_Component;
 use WP_Defender\Controller\Scan as Scan_Controller;
 use WP_Defender\Model\Scan;
 use WP_Defender\Model\Scan_Item;
@@ -50,9 +51,10 @@ class Abandoned_Plugin extends Behavior {
 	 *
 	 * @return string
 	 */
-	public static function get_outdated_period() {
+	public static function get_outdated_period(): string {
 		// Filter to override outdated threshold period.
-		$period = (string) apply_filters( 'wpdef_scan_outdated_period', self::OUTDATED_PERIOD );
+		$period = apply_filters( 'wpdef_scan_outdated_period', self::OUTDATED_PERIOD );
+		$period = is_string( $period ) ? $period : (string) $period;
 		// If time period is invalid, use the default one.
 		return strtotime( '- ' . $period ) ? $period : self::OUTDATED_PERIOD;
 	}
@@ -64,12 +66,13 @@ class Abandoned_Plugin extends Behavior {
 	 */
 	public function abandoned_plugin_check(): bool {
 		$ignored_issues = $this->get_ignored_issues();
-		$model          = $this->scan;
 
-		foreach ( $this->get_plugin_slugs() as $slug ) {
-			if ( is_object( $model ) && $model->is_issue_ignored( $slug ) ) {
-				continue;
-			}
+		$actioned_plugins = get_site_option( Scan_Component::PLUGINS_ACTIONED );
+		$plugin_list      = Scan_Component::are_actioned_plugins( $actioned_plugins )
+			? $actioned_plugins
+			: $this->get_plugin_slugs();
+
+		foreach ( $plugin_list as $slug => $plugin_data ) {
 			$this->check_abandoned_plugin_by( $slug );
 		}
 
@@ -101,7 +104,7 @@ class Abandoned_Plugin extends Behavior {
 	 * @param  array $ignored_issues  The array of ignored issues to add.
 	 */
 	private function add_ignored_issues( array $ignored_issues ) {
-		if ( ! empty( $ignored_issues ) ) {
+		if ( array() !== $ignored_issues ) {
 			foreach ( $ignored_issues as $issue ) {
 				$this->scan->add_item( $issue->type, $issue->raw_data, Scan_Item::STATUS_IGNORE );
 			}
@@ -196,11 +199,13 @@ class Abandoned_Plugin extends Behavior {
 	}
 
 	/**
-	 * Get list of plugin slugs whose names do not match the specified names.
+	 * Get list of plugin slugs whose names do not match the specified names on wp.org.
 	 */
 	private function get_plugin_slugs_with_mismatched_names(): array {
 		return array(
 			'miniorange-malware-protection',
+			'admin-bar-user-switching',
+			'custom-post-template',
 		);
 	}
 
@@ -212,10 +217,15 @@ class Abandoned_Plugin extends Behavior {
 	 * @return bool
 	 */
 	public function check_abandoned_plugin_by( string $slug ): bool {
-		$premium_plugin_slugs = get_site_option( Plugin_Integrity::PLUGIN_PREMIUM_SLUGS, false );
-		if ( is_array( $premium_plugin_slugs ) && in_array( $slug, $premium_plugin_slugs, true ) ) {
+		// Check if the plugin is not from wp.org.
+		$premium_plugin_slugs = get_site_option( Plugin_Integrity::PLUGIN_PREMIUM_SLUGS, array() );
+		if ( ( is_array( $premium_plugin_slugs ) && in_array( $slug, $premium_plugin_slugs, true ) )
+			|| ! $this->is_likely_wporg_slug( $slug )
+		) {
 			return true;
-		} elseif ( ! $this->is_likely_wporg_slug( $slug ) ) {
+		}
+		if ( $this->scan->is_issue_ignored( $slug ) ) {
+			$this->log( sprintf( 'skip %s because it is already ignored.', $slug ), Scan_Controller::SCAN_LOG );
 			return true;
 		}
 
@@ -232,7 +242,7 @@ class Abandoned_Plugin extends Behavior {
 				&& $plugin_details['Name'] !== $body_json['name']
 				&& ! in_array( $slug, $this->get_plugin_slugs_with_mismatched_names(), true )
 			) {
-				// This is premium plugin with the same slug as on wp.org but with another name value.
+				// This is a premium plugin with the same slug as on wp.org but with another name OR the plugin developer named the plugin differently on wp.org and inside the main file.
 				return false;
 			}
 

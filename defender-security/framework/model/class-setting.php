@@ -77,7 +77,7 @@ class Setting extends Model {
 	 * @throws Exception Table must be defined before using.
 	 */
 	public function load() {
-		if ( empty( $this->table ) ) {
+		if ( '' === $this->table ) {
 			throw new Exception( 'Table must be defined before using.' );
 		}
 

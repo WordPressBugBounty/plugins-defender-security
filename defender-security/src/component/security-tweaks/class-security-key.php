@@ -8,12 +8,13 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
-use Exception;
 use Throwable;
 use Calotes\Component\Response;
+use WP_Defender\Traits\File_Operations;
 use WP_Defender\Model\Setting\Mask_Login;
 use WP_Defender\Model\Setting\Security_Tweaks;
 use WP_Defender\Traits\Security_Tweaks_Option;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Component\Security_Tweak;
 
 /**
@@ -21,6 +22,7 @@ use WP_Defender\Component\Security_Tweak;
  */
 class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Const_Interface {
 
+	use File_Operations;
 	use Security_Tweaks_Option;
 
 	public const REGENERATE_SALT_NEXT_RUN_OPTION = 'wpdef_regereate_salt_next_run';
@@ -36,45 +38,44 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 *
 	 * @var string
 	 */
-	public $default_days = '60 days';
+	public string $default_days = '60 days';
 	/**
 	 * Duration after which a reminder for regeneration is triggered.
 	 *
-	 * @var null
+	 * @var string
 	 */
-	public $reminder_duration = null;
+	public string $reminder_duration = '60 days';
 	/**
 	 * Date of the last reminder.
 	 *
-	 * @var null
+	 * @var int
 	 */
-	public $reminder_date = null;
+	public int $reminder_date = 0;
 	/**
 	 * Timestamp of the last modification of security keys.
 	 *
-	 * @var null
+	 * @var int
 	 */
-	public $last_modified = null;
+	public int $last_modified = 0;
 	/**
 	 * Path to the wp-config.php file.
 	 *
 	 * @var string
 	 */
-	public $file;
+	public string $file;
 
 	/**
 	 * Flag to automate the security key/salt generation.
 	 *
 	 * @var bool
 	 */
-	private $is_autogenerate_keys = true;
+	private bool $is_autogenerate_keys = true;
 
 	/**
 	 * Constructor for Security_Key.
 	 */
 	public function __construct() {
 		$this->file = defender_wp_config_path();
-		$this->add_hooks();
 		$this->get_options();
 		$this->cron_schedule();
 	}
@@ -92,7 +93,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 		if ( $this->last_modified ) {
 			$reminder_date = strtotime( '+' . $this->reminder_duration, $this->last_modified );
 
-			return $reminder_date > time();
+			return $reminder_date > defender_get_current_time();
 		}
 	}
 
@@ -103,20 +104,18 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 */
 	private function get_options(): void {
 		$options                 = get_site_option( 'defender_security_tweaks_' . $this->slug );
-		$this->reminder_date     = ! empty( $options['reminder_date'] ) ? $options['reminder_date'] : null;
-		$this->reminder_duration = ! empty( $options['reminder_duration'] ) ? $options['reminder_duration'] : $this->default_days;
+		$this->reminder_date     = $options['reminder_date'] ?? 0;
+		$this->reminder_duration = isset( $options['reminder_duration'] ) && '' !== $options['reminder_duration'] ? $options['reminder_duration'] : $this->default_days;
 
 		$last_modified = $this->get_wp_config_last_modified_time();
 		if ( false === $last_modified ) {
 			$last_modified = $options['last_modified'] ?? null;
-		} elseif ( ! empty( $options['last_modified'] ) && $options['last_modified'] < $last_modified ) {
+		} elseif ( isset( $options['last_modified'] ) && is_int( $options['last_modified'] ) && 0 < $options['last_modified'] && $options['last_modified'] < $last_modified ) {
 			$last_modified = $options['last_modified'];
 		}
 		$this->last_modified = $last_modified;
 
-		$this->is_autogenerate_keys = ! empty( $options['is_autogenerate_keys'] )
-			? (bool) $options['is_autogenerate_keys']
-			: true;
+		$this->is_autogenerate_keys = isset( $options['is_autogenerate_keys'] );
 	}
 
 	/**
@@ -125,75 +124,19 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return bool|WP_Error|Response
 	 */
 	public function process() {
-		global $wp_filesystem;
-		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			WP_Filesystem();
+		$is_done = $this->update_keys();
+
+		if ( is_wp_error( $is_done ) ) {
+			return $is_done;
 		}
-		if ( ! $wp_filesystem->is_writable( $this->file ) ) {
-			return new WP_Error(
-				'defender_file_not_writable',
-				/* translators: %s: file path */
-				sprintf( esc_html__( 'The file %s is not writable', 'defender-security' ), $this->file )
-			);
-		}
-
-		$constants = $this->get_constants();
-		$salts     = $this->get_salts();
-
-		if ( is_wp_error( $salts ) ) {
-			return $salts;
-		}
-
-		$contents  = $wp_filesystem->get_contents( $this->file );
-		$new_salts = '';
-
-		foreach ( $constants as $key => $const ) {
-			if ( defined( $const ) ) {
-				$pattern     = "/^define\(\s*['|\"]{$const}['|\"],(.*)\)\s*;/m";
-				$replacement = $salts[ $key ];
-				$contents    = preg_replace_callback(
-					$pattern,
-					function () use ( $replacement ) {
-						return $replacement;
-					},
-					$contents
-				);
-			} else {
-				$new_salts .= $salts[ $key ] . PHP_EOL;
-			}
-		}
-
-		if ( ! empty( $new_salts ) ) {
-			$new_salts = PHP_EOL .
-						'/* DEFENDER GENERATED SALTS */' .
-						PHP_EOL .
-						$new_salts .
-						PHP_EOL;
-
-			$contents = $this->append_salts( $contents, $new_salts );
-		}
-
-		$is_done = (bool) file_put_contents( $this->file, $contents, LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 
 		if ( $is_done ) {
-			$values                  = get_site_option( 'defender_security_tweaks_' . $this->slug, array() );
-			$this->last_modified     = time();
-			$values['last_modified'] = time();
-			update_site_option( 'defender_security_tweaks_' . $this->slug, $values );
-			$this->log( 'Security keys are updated.', Security_Tweak::LOG_FILE_NAME );
-
 			$mask_login = wd_di()->get( Mask_Login::class );
 			$url        = $mask_login->is_active()
 				? $mask_login->get_new_login_url()
 				: wp_login_url( network_admin_url( 'admin.php?page=wdf-hardener' ) );
 
 			$interval = 3;
-			if ( is_multisite() ) {
-				// Delete cookies forced.
-				wp_clear_auth_cookie();
-			}
 
 			return new Response(
 				true,
@@ -240,7 +183,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 *
 	 * @return array|WP_Error
 	 */
-	private function get_salts() {
+	private function get_salts(): WP_Error|array {
 		$response = wp_safe_remote_get( 'https://api.wordpress.org/secret-key/1.1/salt/' );
 
 		if ( is_wp_error( $response ) ) {
@@ -250,7 +193,18 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 			);
 		}
 
-		return array_filter( explode( "\n", wp_remote_retrieve_body( $response ) ) );
+		$raw_salts = explode( "\n", wp_remote_retrieve_body( $response ) );
+		$salts     = array();
+
+		foreach ( $raw_salts as $salt ) {
+			$salt = trim( $salt );
+			if ( '' === $salt ) {
+				continue;
+			}
+			$salts[] = stripslashes( $salt );
+		}
+
+		return $salts;
 	}
 
 	/**
@@ -258,12 +212,10 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 *
 	 * @return int|string
 	 */
-	private function get_last_modified_days() {
-		$current_time = time();
+	private function get_last_modified_days(): int|string {
+		$current_time = defender_get_current_time();
 		$days_ago     = ( $current_time - $this->last_modified ) / DAY_IN_SECONDS;
-		$days_ago     = $days_ago ? (int) round( $days_ago ) : 'unknown';
-
-		return $days_ago ?? 1;
+		return $days_ago ? (int) round( $days_ago ) : 'unknown';
 	}
 
 	/**
@@ -357,9 +309,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	public function get_is_autogenerate_keys(): bool {
 		$is_autogenerate_keys = $this->get_option( 'is_autogenerate_keys' );
 
-		$this->is_autogenerate_keys = is_null( $is_autogenerate_keys )
-			? true
-			: (bool) $is_autogenerate_keys;
+		$this->is_autogenerate_keys = is_null( $is_autogenerate_keys ) || (bool) $is_autogenerate_keys;
 
 		return $this->is_autogenerate_keys;
 	}
@@ -372,46 +322,11 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return bool Return true if value updated, otherwise false.
 	 */
 	public function set_is_autogenrate_keys( bool $value ): bool {
-		$this->is_autogenerate_keys = (bool) $value;
+		$this->is_autogenerate_keys = $value;
 
 		return $this->update_option(
 			'is_autogenerate_keys',
 			$this->is_autogenerate_keys
-		);
-	}
-
-	/**
-	 * Method to initialize component hooks.
-	 *
-	 * @return void
-	 */
-	public function add_hooks(): void {
-		add_action( 'wpdef_sec_key_gen', array( $this, 'cron_process' ) );
-	}
-
-	/**
-	 * Get cron schedule details.
-	 *
-	 * @return array
-	 */
-	private function get_cron_schedule_details(): array {
-		$display_name = $this->get_option( 'reminder_duration' );
-
-		if ( empty( $display_name ) ) {
-			$display_name = $this->default_days;
-		}
-		$schedule_detail = $this->get_schedule_detail( $display_name );
-
-		$schedule_key      = key( $schedule_detail );
-		$schedule_interval = time();
-
-		if ( null !== $schedule_key && isset( $schedule_detail[ $schedule_key ]['interval'] ) ) {
-			$schedule_interval = $schedule_interval + $schedule_detail[ $schedule_key ]['interval'];
-		}
-
-		return array(
-			'key'      => $schedule_key,
-			'interval' => $schedule_interval,
 		);
 	}
 
@@ -422,16 +337,31 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 */
 	public function cron_schedule(): void {
 		if (
-			true === $this->get_is_autogenerate_keys() &&
-			! wp_next_scheduled( 'wpdef_sec_key_gen' )
+			true === $this->get_is_autogenerate_keys()
 		) {
-			$schedule_details = $this->get_cron_schedule_details();
+			$display_name = $this->get_option( 'reminder_duration' );
 
-			wp_schedule_event(
-				$schedule_details['interval'],
-				$schedule_details['key'],
-				'wpdef_sec_key_gen'
+			if ( ! is_string( $display_name ) || '' === $display_name ) {
+				$display_name = $this->default_days;
+			}
+
+			/**
+			 * Network Cron Manager instance.
+			 *
+			 * @var Network_Cron_Manager $network_cron_manager
+			 */
+			$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+
+			$interval_seconds = strtotime( $display_name, 0 );
+			$start_time       = defender_get_current_time() + $interval_seconds;
+
+			$network_cron_manager->register_callback(
+				'wpdef_sec_key_gen',
+				array( $this, 'cron_process' ),
+				$interval_seconds,
+				$start_time,
 			);
+
 		}
 	}
 
@@ -441,11 +371,13 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return void
 	 */
 	public function cron_unschedule(): void {
-		$timestamp = wp_next_scheduled( 'wpdef_sec_key_gen' );
-
-		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'wpdef_sec_key_gen' );
-		}
+		/**
+		 * Network Cron Manager instance.
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
+		 */
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->remove_callback( 'wpdef_sec_key_gen' );
 	}
 
 	/**
@@ -455,57 +387,15 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 */
 	public function cron_process(): void {
 		try {
-			if ( is_multisite() ) {
-				$next_run = get_site_option( self::REGENERATE_SALT_NEXT_RUN_OPTION, 0 );
-				if ( ! empty( $next_run ) && $next_run > time() ) {
-					return;
-				}
-
-				$schedule_details = $this->get_cron_schedule_details();
-				update_site_option( self::REGENERATE_SALT_NEXT_RUN_OPTION, $schedule_details['interval'] );
-			}
-
-			$is_switch_to_main_site = is_multisite() && ! is_main_site();
-			if ( $is_switch_to_main_site ) {
-				switch_to_blog( get_main_site_id() );
-			}
-
 			$security_tweak_model = new Security_Tweaks();
 			if ( ! $security_tweak_model->is_tweak_ignore( $this->slug ) &&
 				true === $this->get_is_autogenerate_keys()
 			) {
-				$this->process();
-			}
-
-			if ( $is_switch_to_main_site ) {
-				restore_current_blog();
+				$this->update_keys();
 			}
 		} catch ( Throwable $th ) {
-			// PHP 7+ catch.
 			$this->log( 'Security Key. Cron Throwable: ' . get_class( $th ) . ': ' . $th->getMessage(), Security_Tweak::LOG_FILE_NAME );
-		} catch ( Exception $e ) {
-			$this->log( 'Security Key. Cron Exception: ' . get_class( $e ) . ': ' . $e->getMessage(), Security_Tweak::LOG_FILE_NAME );
 		}
-	}
-
-	/**
-	 * Get scheduler detail.
-	 *
-	 * @param  string $display_name  The name to filter the schedules list.
-	 *
-	 * @return array Return filtered schedule detail.
-	 */
-	private function get_schedule_detail( $display_name ) {
-		$all_schedules = wp_get_schedules();
-
-		$schedule_detail = array_filter(
-			$all_schedules,
-			function ( $arr ) use ( $display_name ) {
-				return $display_name === $arr['display'];
-			}
-		);
-
-		return $schedule_detail;
 	}
 
 	/**
@@ -526,12 +416,12 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	/**
 	 * Append salt to wp-config.php file content string.
 	 *
-	 * @param  string|false $contents  Text content of wp-config.php.
-	 * @param  string       $new_salts  Salts need to be appended.
+	 * @param bool|string $contents  Text content of wp-config.php.
+	 * @param  string      $new_salts  Salts need to be appended.
 	 *
 	 * @return string Text content after salts appended.
 	 */
-	private function append_salts( $contents, string $new_salts ): string {
+	private function append_salts( bool|string $contents, string $new_salts ): string {
 		$pattern = '/(define\(\s*\'AUTH_KEY\'.*?\);)\s*' .
 					'(define\(\s*\'SECURE_AUTH_KEY\'.*?\);)\s*' .
 					'(define\(\s*\'LOGGED_IN_KEY\'.*?\);)\s*' .
@@ -569,12 +459,83 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return int|false
 	 * @since 3.10.0
 	 */
-	private function get_wp_config_last_modified_time() {
+	private function get_wp_config_last_modified_time(): bool|int {
 		$file = $this->file;
 		if ( ! file_exists( $file ) ) {
 			$file = ABSPATH . WPINC . '/general-template.php';
 		}
 
 		return filemtime( $file );
+	}
+
+	/**
+	 * Update keys.
+	 *
+	 * @return WP_Error|bool|array True if success. WP_Error if any error.
+	 */
+	private function update_keys(): WP_Error|bool|array {
+		$wp_filesystem = $this->get_wp_filesystem();
+
+		if ( ! $wp_filesystem->is_writable( $this->file ) ) {
+			return new WP_Error(
+				'defender_file_not_writable',
+				/* translators: %s: file path */
+				sprintf( esc_html__( 'The file %s is not writable', 'defender-security' ), $this->file )
+			);
+		}
+
+		$constants = $this->get_constants();
+		$salts     = $this->get_salts();
+
+		if ( is_wp_error( $salts ) ) {
+			return $salts;
+		}
+
+		$contents = $wp_filesystem->get_contents( $this->file );
+
+		$new_salts = '';
+
+		foreach ( $constants as $key => $const ) {
+			if ( defined( $const ) ) {
+				$pattern     = "/^define\(\s*['|\"]{$const}['|\"],(.*)\)\s*;/m";
+				$replacement = $salts[ $key ];
+				$contents    = preg_replace_callback(
+					$pattern,
+					function () use ( $replacement ) {
+						return $replacement;
+					},
+					$contents
+				);
+			} else {
+				$new_salts .= $salts[ $key ] . PHP_EOL;
+			}
+		}
+
+		if ( '' !== $new_salts ) {
+			$new_salts = PHP_EOL .
+						'/* DEFENDER GENERATED SALTS */' .
+						PHP_EOL .
+						$new_salts .
+						PHP_EOL;
+
+			$contents = $this->append_salts( $contents, $new_salts );
+		}
+
+		$is_done = $wp_filesystem->put_contents( $this->file, $contents, FS_CHMOD_FILE );
+
+		if ( ! $is_done ) {
+			return false;
+		}
+		$values                  = get_site_option( 'defender_security_tweaks_' . $this->slug, array() );
+		$this->last_modified     = defender_get_current_time();
+		$values['last_modified'] = defender_get_current_time();
+		update_site_option( 'defender_security_tweaks_' . $this->slug, $values );
+		$this->log( 'Security keys are updated.', Security_Tweak::LOG_FILE_NAME );
+		if ( is_multisite() && ! headers_sent() ) {
+			// Delete cookies forced.
+			wp_clear_auth_cookie();
+		}
+
+		return true;
 	}
 }

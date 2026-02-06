@@ -39,7 +39,7 @@ class HTTP {
 	 */
 	public static function get( $key, $default_name = null, bool $strict = false ) {
 		$value = defender_get_data_from_request( $key, 'g' ) ?? $default_name;
-		if ( true === $strict && empty( $value ) ) {
+		if ( true === $strict && in_array( $value, array( null, '', array() ), true ) ) {
 			$value = $default_name;
 		}
 		if ( is_array( $value ) ) {

@@ -93,7 +93,6 @@ if ( $uninstall_settings || $uninstall_data ) {
 		delete_site_transient( 'def_waf_status' );
 		delete_site_option( 'wp_defender_is_activated' );
 		delete_site_transient( \WP_Defender\Component\Blacklist_Lockout::IP_LIST_KEY );
-		delete_site_transient( 'defender_run_background' );
 	}
 	// Only Data.
 	if ( $uninstall_data ) {
@@ -101,19 +100,16 @@ if ( $uninstall_settings || $uninstall_data ) {
 		wd_di()->get( \WP_Defender\Controller\Dashboard::class )->remove_data();
 		wd_di()->get( \WP_Defender\Controller\Security_Tweaks::class )->remove_data();
 		wd_di()->get( \WP_Defender\Controller\Scan::class )->remove_data();
-		// Start of Firewall parent and submodules.
+		// Remove all data of Firewall.
 		wd_di()->get( \WP_Defender\Controller\Firewall::class )->remove_data();
-		// End.
 		wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_data();
 		wd_di()->get( \WP_Defender\Controller\Two_Factor::class )->remove_data();
 		wd_di()->get( \WP_Defender\Component\Backup_Settings::class )->clear_configs();
 		// Remove all data of Advanced Tools.
 		$advanced_tools->remove_data();
 		defender_drop_custom_tables();
-		delete_site_transient( \WP_Defender\Behavior\Scan\Plugin_Integrity::$org_slugs );
-		delete_site_transient( \WP_Defender\Behavior\Scan\Plugin_Integrity::$org_responses );
-		delete_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );
 		wd_di()->get( \WP_Defender\Component\Network_Cron_Manager::class )->remove_data();
+		wd_di()->get( \WP_Defender\Component\Breadcrumbs::class )->delete_meta_key();
 	}
 }
 
@@ -128,8 +124,9 @@ if ( $uninstall_settings && $uninstall_data ) {
 	delete_site_option( 'wd_nofresh_install' );
 	\WP_Defender\Component\Feature_Modal::delete_modal_key();
 	\WP_Defender\Controller\Data_Tracking::delete_modal_key();
-	\WP_Defender\Component\Rate::clean_up();
+	wd_di()->get( \WP_Defender\Controller\Rate::class )->remove_data();
 	\WP_Defender\Component\Firewall::delete_slugs();
+	delete_site_option( \WP_Defender\Helper\Analytics\Deactivation_Survey::EVENT_DATA_OPTION );
 }
 // Remains from old versions.
 delete_site_option( 'wd_audit_cached' );

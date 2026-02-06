@@ -12,6 +12,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Firewall;
 use WP_Defender\Integrations\Dashboard_Whitelabel;
 use WP_Defender\Component\Config\Config_Hub_Helper;
+use WP_Defender\Helper\Analytics\Deactivation_Survey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die();
@@ -38,7 +39,11 @@ class Admin {
 		$this->is_wp_org_version = defender_is_wp_org_version();
 		add_action( 'wp_ajax_defender_ip_detection_notice_dismiss', array( $this, 'dismiss_notice' ) );
 		add_action( 'wp_ajax_defender_ip_detection_switch_to_xff', array( $this, 'switch_to_xff' ) );
+		add_action( 'wp_ajax_defender_track_deactivate', array( $this, 'track_deactivate' ) );
 		add_action( 'admin_head', array( $this, 'add_global_styles' ) );
+
+		// Deactivation survey.
+		add_action( 'admin_footer-plugins.php', array( $this, 'load_deactivation_survey_modal' ) );
 	}
 
 	/**
@@ -60,8 +65,6 @@ class Admin {
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 3 );
 		// Only for plugin pages and actions are only for wp.org members.
 		if ( $this->is_wp_org_version ) {
-			wd_di()->get( Rate::class )->init();
-			add_action( 'admin_init', array( $this, 'register_free_modules' ), 20 );
 			/**
 			 * Action hook that fires after a scan issue is fixed.
 			 *
@@ -77,8 +80,8 @@ class Admin {
 			if ( ! wd_di()->get( WPMUDEV::class )->is_wpmu_hosting() ) {
 				add_submenu_page(
 					'wp-defender',
-					esc_html__( 'Limited-time offer!', 'defender-security' ),
-					esc_html__( 'Limited-time offer!', 'defender-security' ),
+					esc_html__( 'Get Defender Pro', 'defender-security' ),
+					esc_html__( 'Get Defender Pro', 'defender-security' ),
 					is_multisite() ? 'manage_network_options' : 'manage_options',
 					$this->get_link( 'upsell', 'defender_submenu_upsell' )
 				);
@@ -91,6 +94,28 @@ class Admin {
 		} else {
 			add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		}
+	}
+
+	/**
+	 * Initialize the deactivation survey modal.
+	 */
+	public function init_deactivation_survey() {
+		global $pagenow;
+
+		if ( 'plugins.php' !== $pagenow ) {
+			return;
+		}
+
+		wp_enqueue_style( 'def-sui' );
+		wp_enqueue_style( 'def-admin' );
+
+		if ( ! wp_script_is( 'clipboard', 'enqueued' ) ) {
+			wp_enqueue_script( 'clipboard' );
+		}
+
+		wp_enqueue_script( 'wpmudev-sui' );
+		wp_enqueue_script( 'def-deactivation-survey' );
+		wp_enqueue_script( 'def-admin' );
 	}
 
 	/**
@@ -110,7 +135,7 @@ class Admin {
 		// If whitelabeling is enabled and a custom name is provided, use it.
 		if ( $whitelabel->can_whitelabel() ) {
 			$custom_label = $whitelabel->get_plugin_name( Config_Hub_Helper::WDP_ID );
-			if ( ! empty( $custom_label ) ) {
+			if ( is_string( $custom_label ) && '' !== trim( $custom_label ) ) {
 				$plugin_label = $custom_label;
 			}
 		}
@@ -172,13 +197,14 @@ class Admin {
 	 * @param  string $link_for  Accepts: 'docs', 'plugin', 'rate' and etc.
 	 * @param  string $campaign  Utm campaign tag to be used in link. Default: ''.
 	 * @param  string $adv_path  Advanced path. Default: ''.
+	 * @param  string $source    UTM source. Default: 'defender'.
 	 *
 	 * @return string
 	 */
-	public function get_link( $link_for, $campaign = '', $adv_path = '' ): string {
+	public function get_link( $link_for, $campaign = '', $adv_path = '', $source = 'defender' ): string {
 		$domain   = 'https://wpmudev.com';
 		$wp_org   = 'https://wordpress.org';
-		$utm_tags = "?utm_source=defender&utm_medium=plugin&utm_campaign={$campaign}";
+		$utm_tags = "?utm_source={$source}&utm_medium=plugin&utm_campaign={$campaign}";
 		switch ( $link_for ) {
 			case 'docs':
 				$link = "{$domain}/docs/wpmu-dev-plugins/defender/{$utm_tags}";
@@ -194,6 +220,9 @@ class Admin {
 				$link = $this->is_wp_org_version
 					? "{$wp_org}/support/plugin/defender-security/"
 					: "{$domain}/get-support/";
+				break;
+			case 'support_with_utm':
+				$link = "{$domain}/hub2/support/{$utm_tags}";
 				break;
 			case 'roadmap':
 				$link = "{$domain}/roadmap/";
@@ -247,7 +276,7 @@ class Admin {
 							'Upgrade to Defender Pro',
 							'defender-security'
 						)
-					) . '">' . esc_html__( 'Limited-time offer!', 'defender-security' ) . '</a>';
+					) . '">' . esc_html__( 'Get Defender Pro', 'defender-security' ) . '</a>';
 				}
 			} elseif ( ! $wpmu_dev->is_hosted_site_connected_to_tfh() ) {
 				$action_links['renew'] = '<a style="color: #8D00B1;" target="_blank" href="' . $this->get_link(
@@ -318,7 +347,7 @@ class Admin {
 			$row_meta['rate']    = '<a href="' . esc_url( $this->get_link( 'rate' ) ) . '" aria-label="' . esc_attr__(
 				'Rate Defender',
 				'defender-security'
-			) . '" target="_blank">' . esc_html__( 'Rate Defender', 'defender-security' ) . '</a>';
+			) . '" target="_blank">' . Rate::get_rate_button_title() . '</a>';
 			$row_meta['support'] = '<a href="' . esc_url( $this->get_link( 'support' ) ) . '" aria-label="' . esc_attr__(
 				'Support',
 				'defender-security'
@@ -346,32 +375,14 @@ class Admin {
 	}
 
 	/**
-	 * Register sub-modules.
-	 */
-	public function register_free_modules() {
-		$module_path = defender_path( 'extra/free-dashboard/module.php' );
-		if ( ! file_exists( $module_path ) ) {
-			return;
-		}
-		/* @noinspection PhpIncludeInspection */
-		require_once $module_path;
-		// Register the current plugin.
-		do_action(
-			'wdev_register_plugin',
-			/* 1             Plugin ID */ DEFENDER_PLUGIN_BASENAME,
-			/* 2          Plugin Title */ 'Defender',
-			/* 3 https://wordpress.org */ '/plugins/defender-security/',
-			/* 4      Email Button CTA */ esc_html__( 'Get Fast!', 'defender-security' )
-		);
-	}
-
-	/**
-	 * Display IP detection notices for if user site is behind proxy, e.g. Cloudflare or something else, and only for admins.
+	 * Display IP detection notices:
+	 * - if user site is behind proxy, e.g. Cloudflare or something else, and only for admins,
+	 * - only on the plugin's pages.
 	 *
 	 * @return void
 	 */
 	public function admin_notices(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! is_defender_page() ) {
 			return;
 		}
 		$header = $this->get_plugin_display_name();
@@ -502,7 +513,7 @@ class Admin {
 		}
 
 		$prop        = defender_get_data_from_request( 'prop', 'p' );
-		$notice_type = ! empty( $prop ) ? $prop : false;
+		$notice_type = '' !== trim( $prop ) ? $prop : false;
 		if ( 'notice-for-cf' === $notice_type ) {
 			update_site_option( Firewall::IP_DETECTION_CF_DISMISS_SLUG, true );
 			wp_send_json_success();
@@ -534,7 +545,7 @@ class Admin {
 		$model_firewall                 = wd_di()->get( Model\Setting\Firewall::class );
 		$model_firewall->http_ip_header = 'HTTP_X_FORWARDED_FOR';
 		$xff_ip                         = defender_get_data_from_request( 'HTTP_X_FORWARDED_FOR', 's' );
-		if ( empty( $model_firewall->trusted_proxies_ip ) ) {
+		if ( '' === $model_firewall->trusted_proxies_ip ) {
 			$model_firewall->trusted_proxies_ip = $xff_ip;
 		} else {
 			// Todo: improve the code using a separate method. This will be useful when the user switches between different proxy headeres (IP detection options).
@@ -546,6 +557,68 @@ class Admin {
 		$model_firewall->save();
 		// Save Dismiss slug.
 		update_site_option( Firewall::IP_DETECTION_XFF_DISMISS_SLUG, true );
+		wp_send_json_success();
+	}
+
+	/**
+	 * Load deactivation survey modal.
+	 */
+	public function load_deactivation_survey_modal() {
+		$deactivation_survey_template_file = WP_DEFENDER_DIR .
+			'src' . DIRECTORY_SEPARATOR .
+			'view' . DIRECTORY_SEPARATOR .
+			'modal' . DIRECTORY_SEPARATOR .
+			'deactivation-survey.php';
+
+		if ( ! file_exists( $deactivation_survey_template_file ) ) {
+			return;
+		}
+
+		// Data to be passed to the template file.
+		$is_pro    = wd_di()->get( WPMUDEV::class )->is_pro();
+		$docs_link = $this->get_link( 'support_with_utm', 'defender_deactivation_survey_help', '', $is_pro ? 'defender-pro' : 'defender' );
+
+		ob_start();
+		require_once $deactivation_survey_template_file;
+		// Everything escaped in all template files.
+		echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Track deactivation.
+	 */
+	public function track_deactivate() {
+		if (
+			! current_user_can( 'manage_options' ) ||
+			! check_ajax_referer( 'defender_deactivation_survey_modal' )
+		) {
+			wp_send_json_error(
+				array( 'message' => esc_html__( 'Invalid request, you are not allowed to do that action.', 'defender-security' ) )
+			);
+		}
+		$posted_data = defender_get_data_from_request( null, 'p' );
+		if ( ! is_array( $posted_data['properties'] ) ) {
+			wp_send_json_error(
+				array( 'message' => esc_html__( 'Invalid request, allowed data not provided.', 'defender-security' ) )
+			);
+		}
+		$properties = $posted_data['properties'];
+		if (
+			! isset(
+				$properties['Reason'],
+				$properties['Message'],
+				$properties['Modal Action'],
+				$properties['Requested Assistance'],
+				$properties['Tracking Status']
+			)
+		) {
+			wp_send_json_error(
+				array( 'message' => esc_html__( 'Missing field(s).', 'defender-security' ) )
+			);
+		}
+
+		wd_di()->get( Deactivation_Survey::class )->track_deactivation_survey( $properties );
+
 		wp_send_json_success();
 	}
 }

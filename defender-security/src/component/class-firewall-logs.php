@@ -80,7 +80,7 @@ class Firewall_Logs extends Component {
 		}
 
 		$spam_comments_ip = Spam_Comment::get_spam_comments_ip();
-		if ( ! empty( $spam_comments_ip ) ) {
+		if ( array() !== $spam_comments_ip ) {
 			// Add spam comments IP to the compact log.
 			$this->log( $spam_comments_ip, 'spam-comment.log' );
 
@@ -106,7 +106,7 @@ class Firewall_Logs extends Component {
 		// Retrieve the current list of blocked IPs from the site transient.
 		$ips = get_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );
 		// Ensure the retrieved data is an array; if not, initialize it as an empty array.
-		if ( is_array( $ips ) && ! empty( $ips ) ) {
+		if ( is_array( $ips ) && array() !== $ips ) {
 			$this->log( $ips, 'spam-comment.log' );
 
 			foreach ( $ips as $ip => $count ) {
@@ -119,6 +119,62 @@ class Firewall_Logs extends Component {
 		}
 
 		delete_site_transient( \WP_Defender\Controller\Firewall_Logs::AKISMET_BLOCKED_IPS );
+
+		return array_values( $logs );
+	}
+
+	/**
+	 * Fetch 404 Intelligence Firewall logs.
+	 *
+	 * @param  int $from  Fetch Logs from this time to current time.
+	 *
+	 * @return array
+	 */
+	public function get_404_intelligence_logs( int $from ): array {
+		global $wpdb;
+
+		$table   = $wpdb->base_prefix . ( new Lockout_Log() )->get_table();
+		$results = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				"SELECT IP, type, COUNT(*) AS frequency FROM {$table}" . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				' WHERE `date` >= %s AND type IN (%s, %s, %s)' .
+				' GROUP BY IP, `type`',
+				$from,
+				\WP_Defender\Model\Lockout_Log::ERROR_404_XSS,
+				\WP_Defender\Model\Lockout_Log::ERROR_404_NON_EXISTENT_PLUGIN,
+				\WP_Defender\Model\Lockout_Log::ERROR_404_NON_EXISTENT_THEME
+			),
+			ARRAY_A
+		);
+
+		$logs = array();
+		if ( is_array( $results ) ) {
+			foreach ( $results as $row ) {
+				$frequency = (int) $row['frequency'];
+
+				$type = '';
+				switch ( $row['type'] ) {
+					case \WP_Defender\Model\Lockout_Log::ERROR_404_XSS:
+						$type = 'not_found_xss';
+						break;
+					case \WP_Defender\Model\Lockout_Log::ERROR_404_NON_EXISTENT_PLUGIN:
+						$type = 'not_found_plugin';
+						break;
+					case \WP_Defender\Model\Lockout_Log::ERROR_404_NON_EXISTENT_THEME:
+						$type = 'not_found_theme';
+						break;
+					default:
+						continue 2;
+				}
+
+				$ip = $row['IP'];
+				if ( ! isset( $logs[ $ip ] ) ) {
+					$logs[ $ip ] = array( 'ip' => $ip );
+				}
+
+				$logs[ $ip ]['reason'][ $type ] = $frequency;
+			}
+		}
 
 		return array_values( $logs );
 	}

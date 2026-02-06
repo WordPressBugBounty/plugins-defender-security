@@ -107,10 +107,10 @@ class Session_Protection extends Event {
 			\WP_Defender\Component\Config\Config_Hub_Helper::set_clear_active_flag();
 
 			// Maybe track if any settings have changed except user roles.
-			if ( $this->maybe_track() && ! empty( $prev_data ) &&
+			if ( $this->maybe_track() && array() !== $prev_data &&
 				(
 					( $this->model->enabled !== $prev_data['enabled'] )
-					|| ! empty( array_diff( $this->model->lock_properties, $prev_data['lock_properties'] ) )
+					|| array() !== array_diff( $this->model->lock_properties, $prev_data['lock_properties'] )
 					|| $this->model->idle_timeout !== $prev_data['idle_timeout']
 				)
 			) {
@@ -161,22 +161,17 @@ class Session_Protection extends Event {
 	 * Import the data of other source into this, it can be when HUB trigger the import, or user apply a preset.
 	 *
 	 * @param array $data Data from other source.
-	 *
-	 * @return null|void
 	 */
 	public function import_data( array $data ) {
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
 			$this->model->save();
 			$this->service->update_last_activity();
-			return;
 		}
 	}
 
 	/**
 	 * Remove all settings, configs generated in this container runtime.
-	 *
-	 * @return mixed
 	 */
 	public function remove_settings() {
 	}

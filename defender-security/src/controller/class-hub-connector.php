@@ -46,7 +46,7 @@ class Hub_Connector extends Controller {
 		$module_slug = defender_get_data_from_request( 'module_slug', 'g' );
 		$is_callback = defender_get_data_from_request( 'hub_connector_callback', 'g' );
 
-		if ( ! empty( $module_slug ) && ! empty( $is_callback ) ) {
+		if ( is_string( $module_slug ) && '' !== $module_slug && is_string( $is_callback ) && '' !== $is_callback ) {
 			set_site_transient(
 				self::TRANSIENT_KEY,
 				array(
@@ -97,13 +97,16 @@ class Hub_Connector extends Controller {
 				'is_dash_activated' => $this->is_dash_activated(),
 				'is_hub_connected'  => $this->is_site_connected_to_hub_via_hcm_or_dash(),
 				'hub_connector_url' => array(
-					'default'     => $this->service->get_url(),
-					'global-ip'   => $this->service->get_url( 'wdf-ip-lockout', 'global-ip' ),
-					'blocklist'   => $this->service->get_url( 'wdf-ip-lockout', 'blocklist' ),
-					'onboard'     => $this->service->get_url( 'wp-defender', 'onboard' ),
-					'dashboard'   => $this->service->get_url( 'wp-defender', 'dashboard' ),
+					'default'        => $this->service->get_url(),
+					'global-ip'      => $this->service->get_url( 'wdf-ip-lockout', 'global-ip' ),
+					'blocklist'      => $this->service->get_url( 'wdf-ip-lockout', 'blocklist' ),
+					'onboard'        => $this->service->get_url( 'wp-defender', 'onboard' ),
+					'dashboard'      => $this->service->get_url( 'wp-defender', 'dashboard' ),
+					'setting'        => $this->service->get_url( 'wdf-setting', 'general' ),
 					// Custom one if a trigger is the Summary section.
-					'summary-box' => $this->service->get_url( 'wdf-ip-lockout', 'summary-box' ),
+					'summary-box'    => $this->service->get_url( 'wdf-ip-lockout', 'summary-box' ),
+					// Custom one for Antibot notice shown on all Defender pages.
+					'antibot-notice' => $this->service->get_url( 'wdf-ip-lockout', '', 'def_antibot_survey_notice', 'hub_connector' ),
 				),
 			),
 			$this->dump_routes_and_nonces()
@@ -112,8 +115,12 @@ class Hub_Connector extends Controller {
 
 	/**
 	 * Export to array
+	 *
+	 * @return array
 	 */
-	public function to_array() {}
+	public function to_array() {
+		return array();
+	}
 
 	/**
 	 * Import data

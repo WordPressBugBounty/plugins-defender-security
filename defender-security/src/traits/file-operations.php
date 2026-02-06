@@ -8,9 +8,9 @@
 namespace WP_Defender\Traits;
 
 use WP_Error;
+use WP_Filesystem_Base;
 use WP_Defender\Model\Scan;
 use WP_Defender\Component\Error_Code;
-use WP_Filesystem_Base;
 
 trait File_Operations {
 
@@ -22,13 +22,25 @@ trait File_Operations {
 	 * @return bool Returns true if the file was successfully deleted, false otherwise.
 	 */
 	public function delete_infected_file( string $file ): bool {
+		$wp_filesystem = $this->get_wp_filesystem();
+
+		return file_exists( $file ) && $wp_filesystem->is_writable( $file ) && $wp_filesystem->delete( $file );
+	}
+
+	/**
+	 * Get the WordPress filesystem instance.
+	 *
+	 * @return WP_Filesystem_Base The WordPress filesystem instance.
+	 */
+	public function get_wp_filesystem(): WP_Filesystem_Base {
 		global $wp_filesystem;
-		// Initialize the WP filesystem, no more using 'file-put-contents' function.
+
 		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
-		return file_exists( $file ) && $wp_filesystem->is_writable( $file ) && $wp_filesystem->delete( $file );
+
+		return $wp_filesystem;
 	}
 
 	/**
@@ -58,6 +70,7 @@ trait File_Operations {
 	 */
 	public function get_permission_error( string $file ): WP_Error {
 		$this->log( sprintf( 'ISSUE: %s is not writeable', $file ), \WP_Defender\Controller\Scan::SCAN_LOG );
+
 		return new WP_Error( Error_Code::NOT_WRITEABLE, wp_basename( $file ) );
 	}
 
@@ -65,6 +78,7 @@ trait File_Operations {
 	 * Get file meta details: created_at, size, and deleted flag.
 	 *
 	 * @param string $file The path to the file.
+	 *
 	 * @return array An array containing the file's created_at date, size, and a deleted flag.
 	 */
 	private function get_file_meta( string $file ): array {

@@ -43,10 +43,7 @@ class WAF extends Controller {
 		$this->register_page(
 			esc_html__( 'WAF', 'defender-security' ),
 			$this->slug,
-			array(
-				&$this,
-				'main_view',
-			),
+			array( $this, 'main_view' ),
 			$this->parent_slug
 		);
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
@@ -79,7 +76,8 @@ class WAF extends Controller {
 	 * @return bool Returns false on failure, true if WAF is enabled.
 	 */
 	public function get_waf_status(): bool {
-		return ! empty( defender_get_hosting_feature_state( 'waf' ) );
+		$status = defender_get_hosting_feature_state( 'waf' );
+		return '' !== $status && true === (bool) $status;
 	}
 
 	/**
@@ -150,11 +148,13 @@ class WAF extends Controller {
 
 		return array_merge(
 			array(
-				'site_id' => $site_id,
-				'waf'     => array(
+				'site_id'       => $site_id,
+				'waf'           => array(
 					'hosted' => $this->wpmudev->is_wpmu_hosting(),
 					'status' => $this->get_waf_status(),
 				),
+				'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
+				'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
 			$this->dump_routes_and_nonces()
 		);

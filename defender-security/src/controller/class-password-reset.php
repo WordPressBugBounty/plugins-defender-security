@@ -65,7 +65,7 @@ class Password_Reset extends Event {
 			add_action( 'validate_password_reset', array( $this, 'handle_reset_check_password' ), 10, 2 );
 			add_action( 'profile_update', array( $this, 'handle_update_user' ), 10, 2 );
 			add_action( 'password_reset', array( $this, 'handle_password_reset' ), 10 );
-			add_action( 'wp_authenticate_user', array( $this, 'handle_login_password' ), 999, 2 );
+			add_filter( 'wp_authenticate_user', array( $this, 'handle_login_password' ), 999, 2 );
 			// No use 'user_profile_update_errors' because there aren't checks for password resetting for logged user in.
 		}
 	}
@@ -115,7 +115,7 @@ class Password_Reset extends Event {
 		if ( is_wp_error( $user ) || ! $user instanceof WP_User ) {
 			return $user;
 		}
-		if ( empty( $password ) ) {
+		if ( ! is_string( $password ) || '' === trim( $password ) ) {
 			return new WP_Error(
 				'defender_invalid_password',
 				esc_html__( 'Invalid user data.', 'defender-security' )
@@ -132,9 +132,9 @@ class Password_Reset extends Event {
 	 * @param  WP_Error         $errors  Error object.
 	 * @param  WP_Error|WP_User $user  WP_User object or WP_Error.
 	 *
-	 * @return null|WP_Error
+	 * @return void
 	 */
-	public function handle_reset_check_password( WP_Error $errors, $user ) {
+	public function handle_reset_check_password( WP_Error $errors, $user ): void {
 		if ( is_wp_error( $user ) ) {
 			return;
 		}
@@ -145,30 +145,30 @@ class Password_Reset extends Event {
 
 		// Check if display_reset_password_warning cookie enabled then show warning message on reset password page.
 		if ( isset( $_COOKIE['display_reset_password_warning'] ) ) {
-			$message = empty( $this->model->message ) ? $this->default_msg : $this->model->message;
+			$message = ! isset( $this->model->message ) || ! is_string( $this->model->message ) || '' === trim( $this->model->message )
+				? $this->default_msg
+				: $this->model->message;
 			$errors->add( 'defender_password_reset', $message );
 			// Remove the one time cookie notice once it's displayed.
 			$this->service->remove_cookie_notice( 'display_reset_password_warning' );
 
-			return $errors;
+			return;
 		}
 
 		$login_password = $this->service->get_submitted_password();
+		$user_id        = isset( $user->ID ) ? $user->ID : 0;
+		$user_id        = is_int( $user_id ) ? $user_id : (int) $user_id;
 		if (
-			! empty( $user->ID )
-			&& ! empty( $login_password )
-			&& wp_check_password( $login_password, get_userdata( $user->ID )->user_pass, $user->ID )
+			0 < $user_id
+			&& is_string( $login_password ) && '' !== trim( $login_password )
+			&& wp_check_password( $login_password, get_userdata( $user_id )->user_pass, $user_id )
 		) {
 			$message = wp_kses(
 				esc_html__( 'This password has been used already. Please choose a different one.', 'defender-security' ),
 				array( 'strong' => array() )
 			);
 			$errors->add( 'defender_password_reset', $message );
-
-			return $errors;
 		}
-
-		return $errors;
 	}
 
 	/**
@@ -307,7 +307,9 @@ class Password_Reset extends Event {
 			array(
 				'model'           => $model->export(),
 				'all_roles'       => wp_list_pluck( get_editable_roles(), 'name' ),
-				'reset_last'      => empty( $model->force_time ) ? '' : $this->format_date_time( $model->force_time ),
+				'reset_last'      => ! isset( $model->force_time ) || ! is_int( $model->force_time ) || 0 >= $model->force_time
+					? ''
+					: $this->format_date_time( $model->force_time ),
 				'default_message' => $this->default_msg,
 			),
 			$this->dump_routes_and_nonces()

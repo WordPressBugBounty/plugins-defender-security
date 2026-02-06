@@ -51,7 +51,7 @@ class Cloudflare_Proxy extends Component implements Trusted_Proxy_Preset_Strateg
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 
-		if ( ! $data || ! ( isset( $data['result']['ipv4_cidrs'] ) || isset( $data['result']['ipv6_cidrs'] ) ) ) {
+		if ( ! ( isset( $data['result']['ipv4_cidrs'] ) || isset( $data['result']['ipv6_cidrs'] ) ) ) {
 			$this->log( 'Invalid response from Cloudflare API', Firewall::FIREWALL_LOG );
 
 			return false;

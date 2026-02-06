@@ -71,17 +71,18 @@ function bzread($bz, int $length = 1024): string
  * bzwrite writes a string into the given bzip2 file
  * stream.
  *
- * @param resource $bz The file pointer. It must be valid and must point to a file
+ * @param resource $bz     The file pointer. It must be valid and must point to a file
  * successfully opened by bzopen.
- * @param string $data The written data.
- * @param int $length If supplied, writing will stop after length
+ * @param string   $data   The written data.
+ * @param int|null $length If supplied, writing will stop after length
  * (uncompressed) bytes have been written or the end of
  * data is reached, whichever comes first.
+ *
  * @return int Returns the number of bytes written.
  * @throws Bzip2Exception
  *
  */
-function bzwrite($bz, string $data, int $length = null): int
+function bzwrite($bz, string $data, ?int $length = null): int
 {
     error_clear_last();
     if ($length !== null) {

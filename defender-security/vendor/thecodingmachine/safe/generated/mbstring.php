@@ -7,13 +7,14 @@ use Safe\Exceptions\MbstringException;
 /**
  *
  *
- * @param int $cp
- * @param string $encoding
+ * @param int         $cp
+ * @param string|null $encoding
+ *
  * @return string Returns a specific character.
  * @throws MbstringException
  *
  */
-function mb_chr(int $cp, string $encoding = null): string
+function mb_chr(int $cp, ?string $encoding = null): string
 {
     error_clear_last();
     if ($encoding !== null) {
@@ -184,13 +185,14 @@ function mb_ereg_search_getregs(): array
  * mb_ereg_search_pos, and
  * mb_ereg_search_regs.
  *
- * @param string $string The search string.
- * @param string $pattern The search pattern.
- * @param string $option The search option. See mb_regex_set_options for explanation.
+ * @param string      $string  The search string.
+ * @param string|null $pattern The search pattern.
+ * @param string      $option  The search option. See mb_regex_set_options for explanation.
+ *
  * @throws MbstringException
  *
  */
-function mb_ereg_search_init(string $string, string $pattern = null, string $option = "msr"): void
+function mb_ereg_search_init(string $string, ?string $pattern = null, string $option = "msr"): void
 {
     error_clear_last();
     if ($option !== "msr") {
@@ -209,13 +211,14 @@ function mb_ereg_search_init(string $string, string $pattern = null, string $opt
 /**
  * Returns the matched part of a multibyte regular expression.
  *
- * @param string $pattern The search pattern.
- * @param string $option The search option. See mb_regex_set_options for explanation.
+ * @param string|null $pattern The search pattern.
+ * @param string      $option  The search option. See mb_regex_set_options for explanation.
+ *
  * @return array
  * @throws MbstringException
  *
  */
-function mb_ereg_search_regs(string $pattern = null, string $option = "ms"): array
+function mb_ereg_search_regs(?string $pattern = null, string $option = "ms"): array
 {
     error_clear_last();
     if ($option !== "ms") {
@@ -275,13 +278,14 @@ function mb_eregi_replace(string $pattern, string $replace, string $string, stri
  * Set/Get the HTTP output character encoding.
  * Output after this function is called will be converted from the set internal encoding to encoding.
  *
- * @param string $encoding If encoding is set,
+ * @param string|null $encoding If encoding is set,
  * mb_http_output sets the HTTP output character
  * encoding to encoding.
  *
  * If encoding is omitted,
  * mb_http_output returns the current HTTP output
  * character encoding.
+ *
  * @return string|bool If encoding is omitted,
  * mb_http_output returns the current HTTP output
  * character encoding. Otherwise,
@@ -289,7 +293,7 @@ function mb_eregi_replace(string $pattern, string $replace, string $string, stri
  * @throws MbstringException
  *
  */
-function mb_http_output(string $encoding = null)
+function mb_http_output(?string $encoding = null)
 {
     error_clear_last();
     if ($encoding !== null) {
@@ -307,11 +311,12 @@ function mb_http_output(string $encoding = null)
 /**
  * Set/Get the internal character encoding
  *
- * @param string $encoding encoding is the character encoding name
+ * @param string|null $encoding encoding is the character encoding name
  * used for the HTTP input character encoding conversion, HTTP output
  * character encoding conversion, and the default character encoding
  * for string functions defined by the mbstring module.
  * You should notice that the internal encoding is totally different from the one for multibyte regex.
+ *
  * @return string|bool If encoding is set, then
  * Returns TRUE on success.
  * In this case, the character encoding for multibyte regex is NOT changed.
@@ -320,7 +325,7 @@ function mb_http_output(string $encoding = null)
  * @throws MbstringException
  *
  */
-function mb_internal_encoding(string $encoding = null)
+function mb_internal_encoding(?string $encoding = null)
 {
     error_clear_last();
     if ($encoding !== null) {
@@ -338,13 +343,14 @@ function mb_internal_encoding(string $encoding = null)
 /**
  *
  *
- * @param string $str
- * @param string $encoding
+ * @param string      $str
+ * @param string|null $encoding
+ *
  * @return int Returns a code point of character.
  * @throws MbstringException
  *
  */
-function mb_ord(string $str, string $encoding = null): int
+function mb_ord(string $str, ?string $encoding = null): int
 {
     error_clear_last();
     if ($encoding !== null) {
@@ -385,14 +391,15 @@ function mb_parse_str(string $encoded_string, ?array &$result): void
 /**
  * Set/Get character encoding for a multibyte regex.
  *
- * @param string $encoding The encoding
+ * @param string|null $encoding The encoding
  * parameter is the character encoding. If it is omitted, the internal character
  * encoding value will be used.
+ *
  * @return string|bool
  * @throws MbstringException
  *
  */
-function mb_regex_encoding(string $encoding = null)
+function mb_regex_encoding(?string $encoding = null)
 {
     error_clear_last();
     if ($encoding !== null) {
@@ -444,7 +451,7 @@ function mb_regex_encoding(string $encoding = null)
  * automatically (which leads to doubling CR if CRLF is used).
  * This should be a last resort, as it does not comply with
  * RFC 2822.
- * @param string $additional_parameter additional_parameter is a MTA command line
+ * @param string|null $additional_parameter additional_parameter is a MTA command line
  * parameter. It is useful when setting the correct Return-Path
  * header when using sendmail.
  *
@@ -461,10 +468,11 @@ function mb_regex_encoding(string $encoding = null)
  * sendmail configuration to prevent a 'X-Warning' header from being added
  * to the message when the envelope sender (-f) is set using this method.
  * For sendmail users, this file is /etc/mail/trusted-users.
+ *
  * @throws MbstringException
  *
  */
-function mb_send_mail(string $to, string $subject, string $message, $additional_headers = null, string $additional_parameter = null): void
+function mb_send_mail(string $to, string $subject, string $message, $additional_headers = null, ?string $additional_parameter = null): void
 {
     error_clear_last();
     $result = \mb_send_mail($to, $subject, $message, $additional_headers, $additional_parameter);
@@ -500,18 +508,19 @@ function mb_split(string $pattern, string $string, int $limit = -1): array
  * If the split_length parameter is specified, the string is broken down into chunks of the specified length in characters (not bytes).
  * The encoding parameter can be optionally specified and it is good practice to do so.
  *
- * @param string $string The string to split into characters or chunks.
- * @param int $split_length If specified, each element of the returned array will be composed of multiple characters instead of a single character.
- * @param string $encoding The encoding
+ * @param string      $string       The string to split into characters or chunks.
+ * @param int         $split_length If specified, each element of the returned array will be composed of multiple characters instead of a single character.
+ * @param string|null $encoding     The encoding
  * parameter is the character encoding. If it is omitted, the internal character
  * encoding value will be used.
  *
  * A string specifying one of the supported encodings.
+ *
  * @return array mb_str_split returns an array of strings.
  * @throws MbstringException
  *
  */
-function mb_str_split(string $string, int $split_length = 1, string $encoding = null): array
+function mb_str_split(string $string, int $split_length = 1, ?string $encoding = null): array
 {
     error_clear_last();
     if ($encoding !== null) {

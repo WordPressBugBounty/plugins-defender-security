@@ -85,7 +85,7 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 		add_filter( 'rest_authentication_errors', array( $this, 'block_rest_api_user_endpoint' ) );
 
 		$query = defender_get_data_from_request( 'QUERY_STRING', 's' );
-		if ( empty( $query ) ) {
+		if ( ! is_string( $query ) || '' === $query ) {
 			return;
 		}
 
@@ -183,7 +183,7 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 	 * @return bool Return true if value updated, otherwise false.
 	 */
 	public function set_enabled_user_enums( $value ): bool {
-		$this->enabled_user_enums = (array) $value;
+		$this->enabled_user_enums = ! is_array( $value ) ? (array) $value : $value;
 
 		return $this->update_option(
 			'enabled_user_enums',
@@ -217,9 +217,9 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 	 * Blocks user url generation in sitemap.
 	 * Consider the URL: http://example.com/wp-sitemap-users-1.xml will not return user URL XML.
 	 *
-	 * @return bool|void If option sitemap enumeration enabled then return false else null/void will return.
+	 * @return bool|null If option sitemap enumeration enabled then return false else null/void will return.
 	 */
-	public function block_user_url_sitemap() {
+	public function block_user_url_sitemap(): ?bool {
 		if (
 			in_array(
 				'enum-sitemap',
@@ -229,6 +229,8 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 		) {
 			return false;
 		}
+
+		return null;
 	}
 
 	/**

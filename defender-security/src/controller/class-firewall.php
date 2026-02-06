@@ -15,6 +15,7 @@ use Calotes\Component\Request;
 use Calotes\Component\Response;
 use Calotes\Helper\Array_Cache;
 use WP_Defender\Controller\Dashboard;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
 use WP_Defender\Component\Mail;
 use WP_Defender\Traits\Formats;
@@ -85,12 +86,21 @@ class Firewall extends Event {
 	public $service_sid;
 
 	/**
+	 * The WPMUDEV instance used for interacting with WPMUDEV services.
+	 *
+	 * @var WPMUDEV
+	 */
+	private $wpmudev;
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
+		$this->wpmudev = wd_di()->get( WPMUDEV::class );
+
 		$title = esc_html__( 'Firewall', 'defender-security' );
 		$this->register_page(
-			$title,
+			$this->get_title( $title ),
 			$this->slug,
 			array( $this, 'main_view' ),
 			$this->parent_slug,
@@ -111,97 +121,85 @@ class Firewall extends Event {
 		wd_di()->get( UA_Lockout::class );
 		wd_di()->get( Global_Ip::class );
 		wd_di()->get( Antibot_Global_Firewall::class );
-		wd_di()->get( Bot_Trap::class );
+		wd_di()->get( Malicious_Bot::class );
+		wd_di()->get( Fake_Bot_Detection::class );
 
 		// Integrate MainWP plugin.
 		wd_di()->get( Main_Wp::class );
 
-		// We will schedule the time to clean up old firewall logs.
-		if ( ! wp_next_scheduled( 'firewall_clean_up_logs' ) ) {
-			wp_schedule_event( time() + 10, 'hourly', 'firewall_clean_up_logs' );
+		/**
+		 * Network Cron Manager
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
+		 */
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->register_callback(
+			'firewall_clean_up_logs',
+			array( $this->service, 'firewall_clean_up_logs' ),
+			HOUR_IN_SECONDS,
+			time() + 10
+		);
+		$network_cron_manager->register_callback(
+			'wpdef_firewall_clean_up_lockout',
+			array( $this->service, 'firewall_clean_up_lockout' ),
+			WEEK_IN_SECONDS,
+			time() + 10
+		);
+		$network_cron_manager->register_callback(
+			'wpdef_firewall_clean_up_unlockout',
+			array( $this, 'clean_up_unlockout' ),
+			WEEK_IN_SECONDS,
+			time() + 20
+		);
+		$network_cron_manager->register_callback(
+			'wpdef_firewall_fetch_trusted_proxy_preset_ips',
+			array( $this->service, 'update_trusted_proxy_preset_ips' ),
+			DAY_IN_SECONDS
+		);
+		if ( $this->service_sid->is_smart_ip_detection_enabled() ) {
+			$network_cron_manager->register_callback(
+				'wpdef_smart_ip_detection_ping',
+				array( $this->service_sid, 'smart_ip_detection_ping' ),
+				WEEK_IN_SECONDS
+			);
 		}
-
-		// Schedule cleanup blocklist ips event.
-		$this->schedule_cleanup_blocklist_ips_event();
-
-		add_action( 'firewall_clean_up_logs', array( $this, 'clean_up_firewall_logs' ) );
-		add_action( 'firewall_cleanup_temp_blocklist_ips', array( $this, 'clean_up_temporary_ip_blocklist' ) );
-
-		// Clean unwanted records from lockout table.
-		if ( ! wp_next_scheduled( 'wpdef_firewall_clean_up_lockout' ) ) {
-			wp_schedule_event( time() + 10, 'weekly', 'wpdef_firewall_clean_up_lockout' );
-		}
-		add_action( 'wpdef_firewall_clean_up_lockout', array( $this, 'clean_up_firewall_lockout' ) );
-		// Clean old Unlockouts.
-		if ( ! wp_next_scheduled( 'wpdef_firewall_clean_up_unlockout' ) ) {
-			wp_schedule_event( time() + 20, 'weekly', 'wpdef_firewall_clean_up_unlockout' );
-		}
-		add_action( 'wpdef_firewall_clean_up_unlockout', array( $this, 'clean_up_unlockout' ) );
-
+		$network_cron_manager->register_callback(
+			'wpdef_firewall_whitelist_server_public_ip',
+			array( $this->service, 'set_whitelist_server_public_ip' ),
+			12 * HOUR_IN_SECONDS,
+			time() + 15
+		);
 		// Additional hooks.
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ), 11 );
 		add_action( 'admin_print_scripts', array( $this, 'print_emoji_script' ) );
 
 		$this->maybe_extend_mime_types();
-
-		if ( ! wp_next_scheduled( 'wpdef_firewall_fetch_trusted_proxy_preset_ips' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpdef_firewall_fetch_trusted_proxy_preset_ips' );
-		}
-		add_action(
-			'wpdef_firewall_fetch_trusted_proxy_preset_ips',
-			array(
-				&
-				$this,
-				'update_trusted_proxy_preset_ips',
-			)
-		);
-
+		// Schedule cleanup blocklist ips event.
+		$this->schedule_cleanup_blocklist_ips_event();
 		add_action( 'wp_ajax_' . Smart_Ip_Detection::ACTION_PING, array( $this, 'handle_detect_ip_header' ) );
 		add_action( 'wp_ajax_nopriv_' . Smart_Ip_Detection::ACTION_PING, array( $this, 'handle_detect_ip_header' ) );
-		if ( $this->service_sid->is_smart_ip_detection_enabled() ) {
-			if ( ! wp_next_scheduled( 'wpdef_smart_ip_detection_ping' ) ) {
-				wp_schedule_event( time(), 'weekly', 'wpdef_smart_ip_detection_ping' );
-			}
-			add_action( 'wpdef_smart_ip_detection_ping', array( $this, 'smart_ip_detection_ping' ) );
-		}
+	}
 
-		/**
-		 * Whitelist server IP.
-		 */
-		if ( ! wp_next_scheduled( 'wpdef_firewall_whitelist_server_public_ip' ) ) {
-			wp_schedule_event( time() + 15, 'twicedaily', 'wpdef_firewall_whitelist_server_public_ip' );
-		}
-		add_action( 'wpdef_firewall_whitelist_server_public_ip', array( $this, 'whitelist_server_public_ip' ) );
+	/**
+	 * Return the title of the page.
+	 *
+	 * @param string $default_text The original menu title.
+	 *
+	 * @return string
+	 */
+	public function get_title( $default_text ): string {
+		return $default_text;
 	}
 
 	/**
 	 * Get menu title.
 	 *
-	 * @param string $title The original menu title.
+	 * @param string $default_text The original menu title.
 	 *
 	 * @return string
 	 */
-	protected function menu_title( string $title ): string {
-		return $title;
-	}
-
-	/**
-	 * Clean up all the old logs from the local storage, this will happen per hourly basis.
-	 *
-	 * @return void
-	 * @throws Exception On failure.
-	 */
-	public function clean_up_firewall_logs(): void {
-		$this->service->firewall_clean_up_logs();
-	}
-
-	/**
-	 * Clean up temporary IP block list.
-	 *
-	 * @return void
-	 */
-	public function clean_up_temporary_ip_blocklist(): void {
-		$this->service->firewall_clean_up_temporary_ip_blocklist();
+	protected function menu_title( string $default_text ): string {
+		return $default_text;
 	}
 
 	/**
@@ -252,7 +250,9 @@ class Firewall extends Event {
 				Firewall_Service::custom_http_headers(),
 				true
 			)
-			&& ! empty( $data['trusted_proxy_preset'] )
+			&& isset( $data['trusted_proxy_preset'] )
+			&& is_string( $data['trusted_proxy_preset'] )
+			&& '' !== $data['trusted_proxy_preset']
 			&& $data['trusted_proxy_preset'] !== $this->model->trusted_proxy_preset
 		) {
 			$is_preset_update = true;
@@ -393,7 +393,7 @@ class Firewall extends Event {
 					$settings = wd_di()->get( Blacklist_Model::class );
 					$message  = $settings->ip_lockout_message;
 					break;
-				case 'ua-lockout':
+				case User_Agent_Lockout::get_module_slug():
 					$settings       = wd_di()->get( User_Agent_Lockout::class );
 					$message        = $settings->message;
 					$remaining_time = 3600;
@@ -451,7 +451,7 @@ class Firewall extends Event {
 			)
 		);
 		$maybe_email = $data['user_data'];
-		if ( empty( $maybe_email ) ) {
+		if ( ! is_string( $maybe_email ) || '' === trim( $maybe_email ) ) {
 			return new Response( false, array() );
 		}
 		$ips = $this->get_user_ip();
@@ -562,6 +562,7 @@ class Firewall extends Event {
 	 * @param  int    $remaining_time  Remaining countdown time in seconds.
 	 * @param  string $reason  Block's reason.
 	 * @param  array  $ips  Array of blocked IP's.
+	 * @param  bool   $discourage_crawlers  Whether to discourage crawlers with a noindex meta tag.
 	 *
 	 * @return void
 	 */
@@ -569,7 +570,8 @@ class Firewall extends Event {
 		string $message,
 		int $remaining_time = 0,
 		string $reason = '',
-		array $ips = array()
+		array $ips = array(),
+		bool $discourage_crawlers = false
 	): void {
 		$action = HTTP::get( 'action', false );
 
@@ -591,7 +593,7 @@ class Firewall extends Event {
 			$cookie_name = str_replace( '.', '_', $ips[0] );
 			$cookie_name = 'wpdef_lockout_' . $cookie_name;
 			if ( ! isset( $_COOKIE[ $cookie_name ] ) ) {
-				setcookie( $cookie_name, true, time() + HOUR_IN_SECONDS, '/' );
+				setcookie( $cookie_name, true, time() + HOUR_IN_SECONDS, '/', '', is_ssl(), true );
 			}
 		}
 
@@ -618,18 +620,21 @@ class Firewall extends Event {
 			header( 'Expires: ' . wp_date( 'D, d M Y H:i:s', time() - 3600 ) . ' GMT' ); // Proxies.
 			header( 'Clear-Site-Data: "cache"' ); // Clear cache of the current request.
 
-			$global_ip_lockout = wd_di()->get( Global_Ip_Lockout::class );
-			$is_displayed      = Unlock_Me::is_displayed( $reason, $ips );
-			$is_displayed_agf  = $antibot_service->is_displayed( $ips );
-			$allow_self_unlock = $global_ip_lockout->allow_self_unlock;
-			$hide_btn_agf      = $is_displayed_agf && ! $allow_self_unlock;
-			$params            = array(
-				'message'          => ! $hide_btn_agf ? $message : '',
-				'remaining_time'   => $remaining_time,
-				'is_unlock_me'     => $is_displayed,
-				'is_unlock_me_agf' => $is_displayed_agf,
-				'module_name_agf'  => Antibot_Global_Firewall_Setting::get_module_name(),
-				'hide_btn_agf'     => $hide_btn_agf,
+			$global_ip_lockout   = wd_di()->get( Global_Ip_Lockout::class );
+			$is_displayed        = Unlock_Me::is_displayed( $reason, $ips );
+			$is_displayed_agf    = $antibot_service->is_displayed( $ips );
+			$allow_self_unlock   = $global_ip_lockout->allow_self_unlock;
+			$hide_btn_agf        = $is_displayed_agf && ! $allow_self_unlock;
+			$malicious_bot       = wd_di()->get( Malicious_Bot::class );
+			$discourage_crawlers = ! $discourage_crawlers && $malicious_bot->is_hash_request() ? true : $discourage_crawlers;
+			$params              = array(
+				'message'             => ! $hide_btn_agf ? $message : '',
+				'remaining_time'      => $remaining_time,
+				'is_unlock_me'        => $is_displayed,
+				'is_unlock_me_agf'    => $is_displayed_agf,
+				'module_name_agf'     => Antibot_Global_Firewall_Setting::get_module_name(),
+				'hide_btn_agf'        => $hide_btn_agf,
+				'discourage_crawlers' => $discourage_crawlers,
 			);
 
 			// For AntiBot Global Firewall "Unlock me captcha".
@@ -665,7 +670,7 @@ class Firewall extends Event {
 
 				$params['button_title'] = Unlock_Me::get_feature_title();
 				$button_disabled        = false;
-				if ( ! empty( $ips ) ) {
+				if ( array() !== $ips ) {
 					// Get IP's.
 					$request_count   = get_transient( $this->check_ip_by_remote_addr( $ips[0] ) );
 					$button_disabled = false !== $request_count && $request_count >= Unlock_Me::get_attempt_limit();
@@ -726,7 +731,7 @@ class Firewall extends Event {
 
 				return $service_ua->get_message();
 			}
-			if ( ! empty( $user_agent )
+			if ( '' !== trim( $user_agent )
 				/**
 				 * Apply additional checks for user agent before determining if it is a bad user agent.
 				 *
@@ -845,8 +850,12 @@ class Firewall extends Event {
 		( new Global_Ip() )->remove_data();
 		// Remove AntiBot Global Firewall data.
 		wd_di()->get( Antibot_Global_Firewall::class )->remove_data();
-		// Remove Bot Trap data.
-		wd_di()->get( Bot_Trap::class )->remove_data();
+		// Remove Malicious Bot data.
+		wd_di()->get( Malicious_Bot::class )->remove_data();
+		// Remove Fake Bot data.
+		wd_di()->get( Fake_Bot_Detection::class )->remove_data();
+		// Remove Firewall Logs data.
+		wd_di()->get( Firewall_Logs::class )->remove_data();
 		// Clear Trusted Proxy data.
 		$trusted_proxy_preset = wd_di()->get( Trusted_Proxy_Preset::class );
 		foreach ( array_keys( Firewall_Service::trusted_proxy_presets() ) as $preset ) {
@@ -939,20 +948,20 @@ class Firewall extends Event {
 	 */
 	public function export_strings(): array {
 		$strings         = array();
-		$is_pro          = ( new WPMUDEV() )->is_pro();
+		$is_pro          = $this->wpmudev->is_pro();
 		$firewall_report = new Firewall_Report();
 		// Login lockout.
 		$strings[] = Login_Lockout_Model::get_module_name() . ' '
-					. Login_Lockout_Model::get_module_state( (bool) ( new Login_Lockout_Model() )->enabled );
+					. Login_Lockout_Model::get_module_state( ( new Login_Lockout_Model() )->enabled );
 		// Notfound lockout.
 		$strings[] = Notfound_Lockout::get_module_name() . ' '
-					. Notfound_Lockout::get_module_state( (bool) ( new Notfound_Lockout() )->enabled );
+					. Notfound_Lockout::get_module_state( ( new Notfound_Lockout() )->enabled );
 		// Global IP lockout.
 		$strings[] = Global_Ip_Lockout::get_module_name() . ' '
-					. Global_Ip_Lockout::get_module_state( (bool) ( new Global_Ip_Lockout() )->enabled );
+					. Global_Ip_Lockout::get_module_state( ( new Global_Ip_Lockout() )->enabled );
 		// UA lockout.
 		$strings[] = User_Agent_Lockout::get_module_name() . ' '
-					. User_Agent_Lockout::get_module_state( (bool) ( new User_Agent_Lockout() )->enabled );
+					. User_Agent_Lockout::get_module_state( ( new User_Agent_Lockout() )->enabled );
 		// Notifications and reports.
 		if ( 'enabled' === ( new Firewall_Notification() )->status ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
@@ -1038,21 +1047,33 @@ class Firewall extends Event {
 			return;
 		}
 
-		$clear = get_site_option( 'wpdef_clear_schedule_firewall_cleanup_temp_blocklist_ips', false );
-		if ( $clear ) {
-			wp_clear_scheduled_hook( 'firewall_cleanup_temp_blocklist_ips' );
-		}
-
-		if ( wp_next_scheduled( 'firewall_cleanup_temp_blocklist_ips' ) ) {
-			return;
-		}
-
 		$interval = $this->model->ip_blocklist_cleanup_interval;
 		if ( ! $interval || 'never' === $interval ) {
 			return;
 		}
 
-		wp_schedule_event( time() + 15, $interval, 'firewall_cleanup_temp_blocklist_ips' );
+		$interval_map = array(
+			'daily'   => DAY_IN_SECONDS,
+			'weekly'  => WEEK_IN_SECONDS,
+			'monthly' => MONTH_IN_SECONDS,
+		);
+		/**
+		 * Network Cron Manager
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
+		 */
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->register_callback(
+			'firewall_cleanup_temp_blocklist_ips',
+			array( $this->service, 'firewall_clean_up_temporary_ip_blocklist' ),
+			$interval_map[ $interval ],
+			time() + 15
+		);
+
+		$clear = get_site_option( 'wpdef_clear_schedule_firewall_cleanup_temp_blocklist_ips', false );
+		if ( true === $clear ) {
+			wp_clear_scheduled_hook( 'firewall_cleanup_temp_blocklist_ips' );
+		}
 	}
 
 	/**
@@ -1067,7 +1088,7 @@ class Firewall extends Event {
 			$current_url   = set_url_scheme( 'http://' . $server['HTTP_HOST'] . $server['REQUEST_URI'] );
 			$current_query = wp_parse_url( $current_url, PHP_URL_QUERY );
 			$current_query = $current_query ?? '';
-			$referer_url   = ! empty( $server['HTTP_REFERER'] ) ?
+			$referer_url   = isset( $server['HTTP_REFERER'] ) && '' !== trim( $server['HTTP_REFERER'] ) ?
 				filter_var( $server['HTTP_REFERER'], FILTER_SANITIZE_URL ) :
 				'';
 			$referer_query = wp_parse_url( $referer_url, PHP_URL_QUERY );
@@ -1078,10 +1099,10 @@ class Firewall extends Event {
 
 			if (
 				( preg_match( '#^' . network_admin_url() . '#i', $current_url ) &&
-					! empty( $current_queries['page'] ) && $this->slug === $current_queries['page']
+					isset( $current_queries['page'] ) && '' !== trim( $current_queries['page'] ) && $this->slug === $current_queries['page']
 				) ||
 				( preg_match( '#^' . network_admin_url() . '#i', $referer_url ) &&
-					! empty( $referer_queries['page'] ) && $this->slug === $referer_queries['page']
+					isset( $referer_queries['page'] ) && '' !== trim( $referer_queries['page'] ) && $this->slug === $referer_queries['page']
 				)
 			) {
 				// Add action hook here.
@@ -1098,7 +1119,7 @@ class Firewall extends Event {
 	 * @return array
 	 */
 	public function extend_mime_types( array $types ) {
-		if ( empty( $types['csv'] ) ) {
+		if ( ! isset( $types['csv'] ) || ! is_string( $types['csv'] ) || '' === trim( $types['csv'] ) ) {
 			$types['csv'] = 'text/csv';
 		}
 
@@ -1193,16 +1214,6 @@ class Firewall extends Event {
 	}
 
 	/**
-	 * Clean up unwanted records from lockout table.
-	 *
-	 * @return void
-	 * @since 3.8.0
-	 */
-	public function clean_up_firewall_lockout(): void {
-		$this->service->firewall_clean_up_lockout();
-	}
-
-	/**
 	 * Gather IP(s) from various headers and check if any IP is blacklisted, or temporary banned.
 	 *
 	 * @return void
@@ -1212,16 +1223,16 @@ class Firewall extends Event {
 		$msg = '';
 		$ips = $this->service->get_user_ip();
 
-		if ( ! empty( $ips ) && is_array( $ips ) ) {
+		if ( array() !== $ips ) {
 			foreach ( $ips as $ip ) {
 				$result = $this->maybe_lockout( $ip );
-				if ( empty( $msg ) && ! empty( $result ) ) {
+				if ( '' === $msg && is_string( $result ) && '' !== trim( $result ) ) {
 					$msg = $result;
 				}
 			}
 		}
 
-		if ( ! empty( $msg ) ) {
+		if ( '' !== $msg ) {
 			$this->actions_for_blocked( $msg, 0, 'blacklist', $ips );
 		}
 	}
@@ -1238,15 +1249,6 @@ class Firewall extends Event {
 	}
 
 	/**
-	 * Update trusted proxy preset IPs periodically.
-	 *
-	 * @return void
-	 */
-	public function update_trusted_proxy_preset_ips(): void {
-		$this->service->update_trusted_proxy_preset_ips();
-	}
-
-	/**
 	 * Handle the request to detect the IP header.
 	 *
 	 * @return void
@@ -1255,7 +1257,7 @@ class Firewall extends Event {
 		$nonce     = defender_get_data_from_request( 'nonce', 'g' );
 		$nonce_ctx = Smart_Ip_Detection::get_nonce_context();
 
-		if ( empty( $nonce ) || get_transient( $nonce_ctx ) !== $nonce ) {
+		if ( ! is_string( $nonce ) || '' === trim( $nonce ) || get_transient( $nonce_ctx ) !== $nonce ) {
 			wp_send_json_error( __( 'Invalid nonce.', 'defender-security' ) );
 		}
 
@@ -1271,15 +1273,6 @@ class Firewall extends Event {
 					: esc_html__( 'IP detection process completed.', 'defender-security' )
 			);
 		}
-	}
-
-	/**
-	 * Schedule to send request to the API for smart IP detection.
-	 *
-	 * @return void
-	 */
-	public function smart_ip_detection_ping(): void {
-		$this->service_sid->smart_ip_detection_ping();
 	}
 
 	/**
@@ -1317,6 +1310,9 @@ class Firewall extends Event {
 			'number'    => defender_get_data_from_request( 'solution', 'r' ),
 		);
 
+		// 'number' should be an integer.
+		$captcha_payload['number'] = is_numeric( $captcha_payload['number'] ) ? (int) $captcha_payload['number'] : null;
+
 		// Successful verification of captcha.
 		if ( '0' === $captcha_checkbox && wd_di()->get( Altcha_Handler::class )->verify_solution( $captcha_payload ) ) {
 			// Reset attempt data for all IPs in a batch.
@@ -1346,15 +1342,5 @@ class Firewall extends Event {
 		$this->log( 'Captcha verification failed for IP(s): ' . implode( ', ', $user_ips ), Altcha_Handler::LOG_FILE_NAME );
 
 		return new Response( false, array( 'message' => esc_html__( 'Captcha verification failed. Please try again.', 'defender-security' ) ) );
-	}
-
-	/**
-	 * Whitelist server public IP.
-	 *
-	 * @return void
-	 * @since 5.0.2
-	 */
-	public function whitelist_server_public_ip(): void {
-		$this->service->set_whitelist_server_public_ip();
 	}
 }

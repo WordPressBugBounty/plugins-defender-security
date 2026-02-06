@@ -13,7 +13,6 @@ use WP_Defender\Admin;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use Calotes\Helper\Array_Cache;
-use WP_Defender\Component\Rate;
 use WP_Defender\Model\Notification\Tweak_Reminder;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\Security_Tweaks\Hide_Error;
@@ -103,7 +102,8 @@ class Security_Tweaks extends Event {
 	 * Dummy function for testing a check.
 	 */
 	public function should_output_error() {
-		if ( empty( defender_get_data_from_request( 'defender_test_error_reporting', 'g' ) ) ) {
+		$test_err_reporting = defender_get_data_from_request( 'defender_test_error_reporting', 'g' );
+		if ( ! is_string( $test_err_reporting ) || '' === trim( $test_err_reporting ) ) {
 			return;
 		}
 		// It should be only trigger by admin.
@@ -113,6 +113,7 @@ class Security_Tweaks extends Event {
 
 		$var = '$' . uniqid( '', true );
 		// This should output a warning. Ignored phpcs as it's a test.
+		// @phpstan-ignore-next-line.
 		echo ${$var}; // phpcs:ignore
 		exit();
 	}
@@ -270,8 +271,9 @@ class Security_Tweaks extends Event {
 		$this->model->mark( self::STATUS_IGNORE, $slug );
 		// Track.
 		$this->track_tweak( $tweak->get_label(), 'Ignored' );
-
-		$this->security_key->cron_unschedule();
+		if ( 'security-key' === $slug ) {
+			$this->security_key->cron_unschedule();
+		}
 
 		$this->ajax_response( esc_html__( 'Security recommendation successfully ignored.', 'defender-security' ) );
 	}
@@ -306,8 +308,6 @@ class Security_Tweaks extends Event {
 		$this->track_tweak( $tweak->get_label(), 'Restored' );
 
 		if ( $this->security_key->get_is_autogenerate_keys() ) {
-			// Mandatory: cron_schedule method bypass scheduling if already a schedule for this job.
-			$this->security_key->cron_unschedule();
 			$this->security_key->cron_schedule();
 		}
 
@@ -403,9 +403,9 @@ class Security_Tweaks extends Event {
 		if ( update_site_option( 'defender_security_tweaks_' . $this->security_key->slug, $values ) ) {
 
 			if ( true === $is_autogen_flag ) {
-				// Mandatory: cron_schedule method bypass scheduling if already a schedule for this job.
-				$this->security_key->cron_unschedule();
 				$this->security_key->cron_schedule();
+			} else {
+				$this->security_key->cron_unschedule();
 			}
 
 			return new Response(
@@ -511,30 +511,7 @@ class Security_Tweaks extends Event {
 			$not_allowed_bulk[] = 'prevent-php-executed';
 		}
 
-		$tweak_arr    = $this->model->get_tweak_types();
-		$total_tweaks = $tweak_arr['count_fixed'] + $tweak_arr['count_ignored'] + $tweak_arr['count_issues'];
-
-		// Prepare additional data.
-		if ( defender_is_wp_org_version() ) {
-			$misc = array(
-				'rating_is_displayed' => ! Rate::was_rate_request() && $tweak_arr['count_fixed'] === $total_tweaks,
-				'rating_text'         => sprintf(
-				/* translators: %d - Total number. */
-					esc_html__(
-						'You`ve resolved all %d security recommendations - that`s impressive! We are happy to be a part of helping you secure your site, and we would appreciate it if you dropped us a rating on wp.org to help us spread the word and boost our motivation.',
-						'defender-security'
-					),
-					$total_tweaks
-				),
-				'rating_type'         => 'tweak',
-			);
-		} else {
-			$misc = array(
-				'rating_is_displayed' => false,
-				'rating_text'         => '',
-				'rating_type'         => '',
-			);
-		}
+		$tweak_arr = $this->model->get_tweak_types();
 
 		$data = array(
 			'summary'              => array(
@@ -552,7 +529,8 @@ class Security_Tweaks extends Event {
 			'is_autogenerate_keys' => $this->security_key->get_is_autogenerate_keys(),
 			'reminder_frequencies' => $this->security_key->reminder_frequencies(),
 			'enabled_user_enums'   => $this->prevent_enum_users->get_enabled_user_enums(),
-			'misc'                 => $misc,
+			'hub_connector'        => wd_di()->get( Hub_Connector::class )->data_frontend(),
+			'antibot'              => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 		);
 
 		return array_merge( $data, $this->dump_routes_and_nonces() );
@@ -758,11 +736,12 @@ class Security_Tweaks extends Event {
 			Array_Cache::set( 'tweaks', $tweaks, 'tweaks' );
 		}
 		$tmp = array();
-		if ( empty( $type ) ) {
+		if ( ! is_string( $type ) || '' === trim( $type ) ) {
 			$tmp = $tweaks;
 		} else {
 			$settings = new Model_Security_Tweaks();
-			$compare  = $settings->$type;
+			// @phpstan-ignore-next-line
+			$compare = $settings->$type;
 			foreach ( $compare as $slug ) {
 				if ( isset( $tweaks[ $slug ] ) ) {
 					$tmp[ $slug ] = $tweaks[ $slug ];
@@ -833,7 +812,7 @@ class Security_Tweaks extends Event {
 
 		delete_site_transient( Server::CACHE_CURRENT_SERVER );
 		delete_site_transient( \WP_Defender\Component\Security_Tweaks\Servers\Apache::CACHE_APACHE_VERSION );
-		wp_clear_scheduled_hook( 'wpdef_sec_key_gen' );
+		$this->security_key->cron_unschedule();
 	}
 
 	/**
@@ -858,7 +837,7 @@ class Security_Tweaks extends Event {
 		$this->refresh_tweaks_status();
 		$need_reauth = false;
 		// Resolve tweaks.
-		if ( ! empty( $data['fixed'] ) ) {
+		if ( isset( $data['fixed'] ) && is_array( $data['fixed'] ) && array() !== $data['fixed'] ) {
 			// There are some tweak that need manual apply, as files based, or change admin.
 			$manual_done = array(
 				'replace-admin-username',
@@ -872,7 +851,7 @@ class Security_Tweaks extends Event {
 			}
 
 			$diff_keys = array_diff( $data['fixed'], $this->model->fixed, $manual_done );
-			if ( ! empty( $diff_keys ) ) {
+			if ( array() !== $diff_keys ) {
 				foreach ( $diff_keys as $slug ) {
 					$tweak = $this->get_tweak( $slug );
 					if ( $tweak->has_method( 'bulk_process' ) ) {
@@ -905,10 +884,10 @@ class Security_Tweaks extends Event {
 			}
 		}
 		// Revert tweaks.
-		if ( ! empty( $data['issues'] ) ) {
+		if ( isset( $data['issues'] ) && is_array( $data['issues'] ) && array() !== $data['issues'] ) {
 			$diff_keys = array_diff( $data['issues'], $this->model->issues );
 
-			if ( ! empty( $diff_keys ) ) {
+			if ( array() !== $diff_keys ) {
 				// Issues.
 				foreach ( $diff_keys as $slug ) {
 					$tweak = $this->get_tweak( $slug );
@@ -933,9 +912,9 @@ class Security_Tweaks extends Event {
 			}
 		}
 		// Ignore tweaks.
-		if ( ! empty( $data['ignore'] ) ) {
+		if ( isset( $data['ignore'] ) && is_array( $data['ignore'] ) && array() !== $data['ignore'] ) {
 			$diff_keys = array_diff( $data['ignore'], $this->model->ignore );
-			if ( ! empty( $diff_keys ) ) {
+			if ( array() !== $diff_keys ) {
 				foreach ( $diff_keys as $slug ) {
 					$this->model->mark( self::STATUS_IGNORE, $slug );
 				}
@@ -961,7 +940,7 @@ class Security_Tweaks extends Event {
 
 		$this->prevent_enum_users->set_enabled_user_enums( $enabled_user_enums );
 
-		if ( ! empty( $data['security_key'] ) && is_array( $data['security_key'] ) ) {
+		if ( isset( $data['security_key'] ) && is_array( $data['security_key'] ) && array() !== $data['security_key'] ) {
 			$this->security_key->update_all_option( $data['security_key'] );
 		}
 
@@ -984,7 +963,7 @@ class Security_Tweaks extends Event {
 		$strings   = array();
 		$count_all = count( $settings->fixed ) + count( $settings->issues ) + count( $settings->ignore );
 
-		if ( empty( $settings->issues ) ) {
+		if ( ! is_array( $settings->issues ) || array() === $settings->issues ) {
 			$strings[] = esc_html__( 'All available recommendations activated', 'defender-security' );
 		} else {
 			$strings[] = sprintf(
@@ -1013,7 +992,11 @@ class Security_Tweaks extends Event {
 	 */
 	public function config_strings( $config, $is_pro ): array {
 		$strings = array();
-		if ( empty( $config['issues'] ) ) {
+		if (
+			! isset( $config['issues'] )
+			|| ! ( is_array( $config['issues'] ) || $config['issues'] instanceof Countable )
+			|| 0 === count( $config['issues'] )
+		) {
 			$strings[] = esc_html__( 'All available recommendations activated', 'defender-security' );
 		} else {
 			$strings[] = sprintf(
@@ -1085,7 +1068,8 @@ class Security_Tweaks extends Event {
 	 * @defender_route
 	 */
 	public function update_enabled_user_enums( Request $request ): Response {
-		$data               = (array) $request->get_data();
+		$data               = $request->get_data();
+		$data               = ! is_array( $data ) ? (array) $data : $data;
 		$enabled_user_enums = $data['enabled_user_enums'];
 		$is_success         = false;
 		$message            = esc_html__( 'An error occurred, try again.', 'defender-security' );
@@ -1099,30 +1083,6 @@ class Security_Tweaks extends Event {
 			$is_success,
 			array( 'message' => $message )
 		);
-	}
-
-	/**
-	 * Handle tweaks rating notice.
-	 *
-	 * @return Response
-	 * @defender_route
-	 */
-	public function handle_notice(): Response {
-		update_site_option( Rate::SLUG_FOR_BUTTON_RATE, true );
-
-		return new Response( true, array() );
-	}
-
-	/**
-	 * Attention: Tweaks rating notice doesn't have postpone_notice route.
-	 *
-	 * @defender_route
-	 * @return Response
-	 */
-	public function refuse_notice(): Response {
-		update_site_option( Rate::SLUG_FOR_BUTTON_THANKS, true );
-
-		return new Response( true, array() );
 	}
 
 	/**

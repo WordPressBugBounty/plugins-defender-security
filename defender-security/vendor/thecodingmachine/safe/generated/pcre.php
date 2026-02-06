@@ -13,11 +13,11 @@ use Safe\Exceptions\PcreException;
  * After the first match is found, the subsequent searches  are continued
  * on from end of the last match.
  *
- * @param string $pattern The pattern to search for, as a string.
- * @param string $subject The input string.
- * @param array $matches Array of all matches in multi-dimensional array ordered according to
+ * @param string     $pattern The pattern to search for, as a string.
+ * @param string     $subject The input string.
+ * @param array|null $matches Array of all matches in multi-dimensional array ordered according to
  * flags.
- * @param int $flags Can be a combination of the following flags (note that it doesn't make
+ * @param int        $flags   Can be a combination of the following flags (note that it doesn't make
  * sense to use PREG_PATTERN_ORDER together with
  * PREG_SET_ORDER):
  *
@@ -343,11 +343,12 @@ use Safe\Exceptions\PcreException;
  *
  *
  * The above example will output:
+ *
  * @return int Returns the number of full pattern matches (which might be zero).
  * @throws PcreException
  *
  */
-function preg_match_all(string $pattern, string $subject, array &$matches = null, int $flags = PREG_PATTERN_ORDER, int $offset = 0): int
+function preg_match_all(string $pattern, string $subject, ?array &$matches = null, int $flags = PREG_PATTERN_ORDER, int $offset = 0): int
 {
     error_clear_last();
     $result = \preg_match_all($pattern, $subject, $matches, $flags, $offset);
@@ -362,14 +363,14 @@ function preg_match_all(string $pattern, string $subject, array &$matches = null
  * Searches subject for a match to the regular
  * expression given in pattern.
  *
- * @param string $pattern The pattern to search for, as a string.
- * @param string $subject The input string.
- * @param array $matches If matches is provided, then it is filled with
+ * @param string     $pattern The pattern to search for, as a string.
+ * @param string     $subject The input string.
+ * @param array|null $matches If matches is provided, then it is filled with
  * the results of search. $matches[0] will contain the
  * text that matched the full pattern, $matches[1]
  * will have the text that matched the first captured parenthesized
  * subpattern, and so on.
- * @param int $flags flags can be a combination of the following flags:
+ * @param int        $flags   flags can be a combination of the following flags:
  *
  *
  * PREG_OFFSET_CAPTURE
@@ -579,12 +580,13 @@ function preg_match_all(string $pattern, string $subject, array &$matches = null
  *
  *
  * The above example will output:
+ *
  * @return int preg_match returns 1 if the pattern
  * matches given subject, 0 if it does not.
  * @throws PcreException
  *
  */
-function preg_match(string $pattern, string $subject, array &$matches = null, int $flags = 0, int $offset = 0): int
+function preg_match(string $pattern, string $subject, ?array &$matches = null, int $flags = 0, int $offset = 0): int
 {
     error_clear_last();
     $result = \preg_match($pattern, $subject, $matches, $flags, $offset);

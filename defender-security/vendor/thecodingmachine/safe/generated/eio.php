@@ -9,17 +9,18 @@ use Safe\Exceptions\EioException;
  * delay seconds to execute. May be used for debugging,
  * or benchmarking.
  *
- * @param int $delay Delay in seconds
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $delay    Delay in seconds
+ * @param int           $pri      The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback This callback is called when all the group requests are done.
- * @param mixed $data Arbitrary variable passed to callback.
+ * @param callable|null $callback This callback is called when all the group requests are done.
+ * @param mixed|null    $data     Arbitrary variable passed to callback.
+ *
  * @return resource eio_busy returns request resource on success.
  * @throws EioException
  *
  */
-function eio_busy(int $delay, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_busy(int $delay, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, mixed $data = null)
 {
     error_clear_last();
     $result = \eio_busy($delay, $pri, $callback, $data);
@@ -34,14 +35,14 @@ function eio_busy(int $delay, int $pri = EIO_PRI_DEFAULT, callable $callback = n
  * eio_chmod changes file, or directory permissions. The
  * new permissions are specified by mode.
  *
- * @param string $path Path to the target file or directory
+ * @param string        $path Path to the target file or directory
  * Avoid relative
  * paths
- * @param int $mode The new permissions. E.g. 0644.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $mode The new permissions. E.g. 0644.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -67,11 +68,12 @@ function eio_busy(int $delay, int $pri = EIO_PRI_DEFAULT, callable $callback = n
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_chmod returns request resource on success.
  * @throws EioException
  *
  */
-function eio_chmod(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_chmod(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_chmod($path, $mode, $pri, $callback, $data);
@@ -85,15 +87,15 @@ function eio_chmod(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, callable
 /**
  * Changes file, or directory permissions.
  *
- * @param string $path Path to file or directory.
+ * @param string        $path Path to file or directory.
  * Avoid relative
  * paths
- * @param int $uid User ID. Is ignored when equal to -1.
- * @param int $gid Group ID. Is ignored when equal to -1.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $uid User ID. Is ignored when equal to -1.
+ * @param int           $gid Group ID. Is ignored when equal to -1.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -119,11 +121,12 @@ function eio_chmod(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, callable
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_chown returns request resource on success.
  * @throws EioException
  *
  */
-function eio_chown(string $path, int $uid, int $gid = -1, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_chown(string $path, int $uid, int $gid = -1, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_chown($path, $uid, $gid, $pri, $callback, $data);
@@ -138,11 +141,11 @@ function eio_chown(string $path, int $uid, int $gid = -1, int $pri = EIO_PRI_DEF
  * eio_close closes file specified by
  * fd.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -168,11 +171,12 @@ function eio_chown(string $path, int $uid, int $gid = -1, int $pri = EIO_PRI_DEF
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_close returns request resource on success.
  * @throws EioException
  *
  */
-function eio_close($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_close($fd, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_close($fd, $pri, $callback, $data);
@@ -245,12 +249,12 @@ function eio_custom(callable $execute, int $pri, callable $callback, $data = nul
 /**
  * eio_dup2 duplicates file descriptor.
  *
- * @param mixed $fd Source stream, Socket resource, or numeric file descriptor
- * @param mixed $fd2 Target stream, Socket resource, or numeric file descriptor
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Source stream, Socket resource, or numeric file descriptor
+ * @param mixed         $fd2 Target stream, Socket resource, or numeric file descriptor
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -276,11 +280,12 @@ function eio_custom(callable $execute, int $pri, callable $callback, $data = nul
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_dup2 returns request resource on success.
  * @throws EioException
  *
  */
-function eio_dup2($fd, $fd2, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_dup2($fd, $fd2, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_dup2($fd, $fd2, $pri, $callback, $data);
@@ -313,16 +318,16 @@ function eio_event_loop(): void
  * range starting at offset and continuing for
  * length bytes.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open.
- * @param int $mode Currently only one flag is supported for mode:
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open.
+ * @param int           $mode Currently only one flag is supported for mode:
  * EIO_FALLOC_FL_KEEP_SIZE (the same as POSIX constant
  * FALLOC_FL_KEEP_SIZE).
- * @param int $offset Specifies start of the byte range.
- * @param int $length Specifies length the byte range.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $offset Specifies start of the byte range.
+ * @param int           $length Specifies length the byte range.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -348,11 +353,12 @@ function eio_event_loop(): void
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_fallocate returns request resource on success.
  * @throws EioException
  *
  */
-function eio_fallocate($fd, int $mode, int $offset, int $length, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_fallocate($fd, int $mode, int $offset, int $length, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_fallocate($fd, $mode, $offset, $length, $pri, $callback, $data);
@@ -367,12 +373,12 @@ function eio_fallocate($fd, int $mode, int $offset, int $length, int $pri = EIO_
  * eio_fchmod changes permissions for the file specified
  * by fd file descriptor.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open.
- * @param int $mode The new permissions. E.g. 0644.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open.
+ * @param int           $mode The new permissions. E.g. 0644.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -398,11 +404,12 @@ function eio_fallocate($fd, int $mode, int $offset, int $length, int $pri = EIO_
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_fchmod returns request resource on success.
  * @throws EioException
  *
  */
-function eio_fchmod($fd, int $mode, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_fchmod($fd, int $mode, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_fchmod($fd, $mode, $pri, $callback, $data);
@@ -416,11 +423,11 @@ function eio_fchmod($fd, int $mode, int $pri = EIO_PRI_DEFAULT, callable $callba
 /**
  * eio_fdatasync synchronizes a file's in-core state with storage device.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -446,11 +453,12 @@ function eio_fchmod($fd, int $mode, int $pri = EIO_PRI_DEFAULT, callable $callba
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_fdatasync returns request resource on success.
  * @throws EioException
  *
  */
-function eio_fdatasync($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_fdatasync($fd, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_fdatasync($fd, $pri, $callback, $data);
@@ -570,11 +578,11 @@ function eio_fstatvfs($fd, int $pri, callable $callback, $data = null)
 /**
  * Synchronize a file's in-core state with storage device
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -600,11 +608,12 @@ function eio_fstatvfs($fd, int $pri, callable $callback, $data = null)
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_fsync returns request resource on success.
  * @throws EioException
  *
  */
-function eio_fsync($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_fsync($fd, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_fsync($fd, $pri, $callback, $data);
@@ -620,12 +629,12 @@ function eio_fsync($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $
  * fd file descriptor to be truncated to precisely
  * length bytes.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor.
- * @param int $offset Offset from beginning of the file
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor.
+ * @param int           $offset Offset from beginning of the file
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -651,11 +660,12 @@ function eio_fsync($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_ftruncate returns request resource on success.
  * @throws EioException
  *
  */
-function eio_ftruncate($fd, int $offset = 0, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_ftruncate($fd, int $offset = 0, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_ftruncate($fd, $offset, $pri, $callback, $data);
@@ -670,13 +680,13 @@ function eio_ftruncate($fd, int $offset = 0, int $pri = EIO_PRI_DEFAULT, callabl
  * eio_futime changes file last access and modification
  * times.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open
- * @param float $atime Access time
- * @param float $mtime Modification time
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open
+ * @param float         $atime Access time
+ * @param float         $mtime Modification time
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -702,11 +712,12 @@ function eio_ftruncate($fd, int $offset = 0, int $pri = EIO_PRI_DEFAULT, callabl
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_futime returns request resource on success.
  * @throws EioException
  *
  */
-function eio_futime($fd, float $atime, float $mtime, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_futime($fd, float $atime, float $mtime, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_futime($fd, $atime, $mtime, $pri, $callback, $data);
@@ -745,12 +756,13 @@ function eio_futime($fd, float $atime, float $mtime, int $pri = EIO_PRI_DEFAULT,
  * system call.
  *
  * is optional request resource which can be used with functions like eio_get_last_error
- * @param string $data is custom data passed to the request.
+ * @param string|null $data is custom data passed to the request.
+ *
  * @return resource eio_grp returns request group resource on success.
  * @throws EioException
  *
  */
-function eio_grp(callable $callback, string $data = null)
+function eio_grp(callable $callback, ?string $data = null)
 {
     error_clear_last();
     $result = \eio_grp($callback, $data);
@@ -814,12 +826,12 @@ function eio_lstat(string $path, int $pri, callable $callback, $data = null)
  * eio_mkdir creates directory with specified access
  * mode.
  *
- * @param string $path Path for the new directory.
- * @param int $mode Access mode, e.g. 0755
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path Path for the new directory.
+ * @param int           $mode Access mode, e.g. 0755
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -845,11 +857,12 @@ function eio_lstat(string $path, int $pri, callable $callback, $data = null)
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_mkdir returns request resource on success.
  * @throws EioException
  *
  */
-function eio_mkdir(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_mkdir(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_mkdir($path, $mode, $pri, $callback, $data);
@@ -876,15 +889,15 @@ function eio_mkdir(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, callable
  *
  * To specify permissions EIO_S_I* constants could be
  * used.
- * @param int $dev If  the  file type is EIO_S_IFCHR or
+ * @param int           $dev If  the  file type is EIO_S_IFCHR or
  * EIO_S_IFBLK then dev specifies the major and minor
  * numbers of the newly created device special file. Otherwise
  * dev ignored. See mknod(2) man page for
  * details.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -910,11 +923,12 @@ function eio_mkdir(string $path, int $mode, int $pri = EIO_PRI_DEFAULT, callable
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_mknod returns request resource on success.
  * @throws EioException
  *
  */
-function eio_mknod(string $path, int $mode, int $dev, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_mknod(string $path, int $mode, int $dev, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_mknod($path, $mode, $dev, $pri, $callback, $data);
@@ -929,10 +943,10 @@ function eio_mknod(string $path, int $mode, int $dev, int $pri = EIO_PRI_DEFAULT
  * eio_nop does nothing, except go through the whole
  * request cycle. Could be useful in debugging.
  *
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -958,11 +972,12 @@ function eio_mknod(string $path, int $mode, int $dev, int $pri = EIO_PRI_DEFAULT
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_nop returns request resource on success.
  * @throws EioException
  *
  */
-function eio_nop(int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_nop(int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_nop($pri, $callback, $data);
@@ -977,13 +992,13 @@ function eio_nop(int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = 
  * eio_readahead populates the page cache with data from a file so that subsequent reads from
  * that file will not block on disk I/O. See READAHEAD(2) man page for details.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor
- * @param int $offset Starting point from which data is to be read.
- * @param int $length Number of bytes to be read.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor
+ * @param int           $offset Starting point from which data is to be read.
+ * @param int           $length Number of bytes to be read.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1009,11 +1024,12 @@ function eio_nop(int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = 
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_readahead returns request resource on success.
  * @throws EioException
  *
  */
-function eio_readahead($fd, int $offset, int $length, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_readahead($fd, int $offset, int $length, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_readahead($fd, $offset, $length, $pri, $callback, $data);
@@ -1060,7 +1076,8 @@ function eio_readahead($fd, int $offset, int $length, int $pri = EIO_PRI_DEFAULT
  * system call.
  *
  * is optional request resource which can be used with functions like eio_get_last_error
- * @param string $data is custom data passed to the request.
+ * @param string|null $data is custom data passed to the request.
+ *
  * @return resource eio_readdir returns request resource on success. Sets result argument of
  * callback function according to
  * flags:
@@ -1316,7 +1333,7 @@ function eio_readahead($fd, int $offset, int $length, int $pri = EIO_PRI_DEFAULT
  * @throws EioException
  *
  */
-function eio_readdir(string $path, int $flags, int $pri, callable $callback, string $data = null)
+function eio_readdir(string $path, int $flags, int $pri, callable $callback, ?string $data = null)
 {
     error_clear_last();
     $result = \eio_readdir($path, $flags, $pri, $callback, $data);
@@ -1359,12 +1376,13 @@ function eio_readdir(string $path, int $flags, int $pri, callable $callback, str
  * system call.
  *
  * is optional request resource which can be used with functions like eio_get_last_error
- * @param string $data is custom data passed to the request.
+ * @param string|null $data is custom data passed to the request.
+ *
  * @return resource eio_readlink returns request resource on success.
  * @throws EioException
  *
  */
-function eio_readlink(string $path, int $pri, callable $callback, string $data = null)
+function eio_readlink(string $path, int $pri, callable $callback, ?string $data = null)
 {
     error_clear_last();
     $result = \eio_readlink($path, $pri, $callback, $data);
@@ -1378,12 +1396,12 @@ function eio_readlink(string $path, int $pri, callable $callback, string $data =
 /**
  * eio_rename renames or moves a file to new location.
  *
- * @param string $path Source path
- * @param string $new_path Target path
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path Source path
+ * @param string        $new_path Target path
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1409,11 +1427,12 @@ function eio_readlink(string $path, int $pri, callable $callback, string $data =
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_rename returns request resource on success.
  * @throws EioException
  *
  */
-function eio_rename(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_rename(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_rename($path, $new_path, $pri, $callback, $data);
@@ -1427,11 +1446,11 @@ function eio_rename(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT, 
 /**
  * eio_rmdir removes a directory.
  *
- * @param string $path Directory path
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path Directory path
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1457,11 +1476,12 @@ function eio_rename(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT, 
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_rmdir returns request resource on success.
  * @throws EioException
  *
  */
-function eio_rmdir(string $path, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_rmdir(string $path, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_rmdir($path, $pri, $callback, $data);
@@ -1481,13 +1501,13 @@ function eio_rmdir(string $path, int $pri = EIO_PRI_DEFAULT, callable $callback 
  * EIO_SEEK_END - Set position to end-of-file plus offset.
  *
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor
- * @param int $offset Starting point from which data is to be read.
- * @param int $whence Number of bytes to be read.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor
+ * @param int           $offset Starting point from which data is to be read.
+ * @param int           $whence Number of bytes to be read.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1513,11 +1533,12 @@ function eio_rmdir(string $path, int $pri = EIO_PRI_DEFAULT, callable $callback 
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_seek returns request resource on success.
  * @throws EioException
  *
  */
-function eio_seek($fd, int $offset, int $whence, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_seek($fd, int $offset, int $whence, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_seek($fd, $offset, $whence, $pri, $callback, $data);
@@ -1532,14 +1553,14 @@ function eio_seek($fd, int $offset, int $whence, int $pri = EIO_PRI_DEFAULT, cal
  * eio_sendfile copies  data between one file descriptor
  * and another. See SENDFILE(2) man page for details.
  *
- * @param mixed $out_fd Output stream, Socket resource, or file descriptor. Should be opened for writing.
- * @param mixed $in_fd Input stream, Socket resource, or file descriptor. Should be opened for reading.
- * @param int $offset Offset within the source file.
- * @param int $length Number of bytes to copy.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $out_fd Output stream, Socket resource, or file descriptor. Should be opened for writing.
+ * @param mixed         $in_fd  Input stream, Socket resource, or file descriptor. Should be opened for reading.
+ * @param int           $offset Offset within the source file.
+ * @param int           $length Number of bytes to copy.
+ * @param int|null      $pri    The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1564,12 +1585,13 @@ function eio_seek($fd, int $offset, int $whence, int $pri = EIO_PRI_DEFAULT, cal
  * system call.
  *
  * is optional request resource which can be used with functions like eio_get_last_error
- * @param string $data is custom data passed to the request.
+ * @param string|null $data is custom data passed to the request.
+ *
  * @return resource eio_sendfile returns request resource on success.
  * @throws EioException
  *
  */
-function eio_sendfile($out_fd, $in_fd, int $offset, int $length, int $pri = null, callable $callback = null, string $data = null)
+function eio_sendfile($out_fd, $in_fd, int $offset, int $length, ?int $pri = null, ?callable $callback = null, ?string $data = null)
 {
     error_clear_last();
     if ($data !== null) {
@@ -1696,12 +1718,12 @@ function eio_statvfs(string $path, int $pri, callable $callback, $data = null)
  * eio_symlink creates a symbolic link
  * new_path to path.
  *
- * @param string $path Source path
- * @param string $new_path Target path
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path Source path
+ * @param string        $new_path Target path
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1727,11 +1749,12 @@ function eio_statvfs(string $path, int $pri, callable $callback, $data = null)
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_symlink returns request resource on success.
  * @throws EioException
  *
  */
-function eio_symlink(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_symlink(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_symlink($path, $new_path, $pri, $callback, $data);
@@ -1751,16 +1774,16 @@ function eio_symlink(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT,
  * @param int $nbytes Specifies the length of the range to be synchronized, in bytes. If
  * nbytes is zero, then all bytes from offset through
  * to the end of file are synchronized.
- * @param int $flags A bit-mask. Can include any of the following values:
+ * @param int           $flags A bit-mask. Can include any of the following values:
  * EIO_SYNC_FILE_RANGE_WAIT_BEFORE,
  * EIO_SYNC_FILE_RANGE_WRITE,
  * EIO_SYNC_FILE_RANGE_WAIT_AFTER. These flags have
  * the same meaning as their SYNC_FILE_RANGE_*
  * counterparts(see SYNC_FILE_RANGE(2) man page).
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1786,11 +1809,12 @@ function eio_symlink(string $path, string $new_path, int $pri = EIO_PRI_DEFAULT,
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_sync_file_range returns request resource on success.
  * @throws EioException
  *
  */
-function eio_sync_file_range($fd, int $offset, int $nbytes, int $flags, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_sync_file_range($fd, int $offset, int $nbytes, int $flags, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_sync_file_range($fd, $offset, $nbytes, $flags, $pri, $callback, $data);
@@ -1804,14 +1828,15 @@ function eio_sync_file_range($fd, int $offset, int $nbytes, int $flags, int $pri
 /**
  *
  *
- * @param int $pri
- * @param callable $callback
- * @param mixed $data
+ * @param int           $pri
+ * @param callable|null $callback
+ * @param mixed         $data
+ *
  * @return resource eio_sync returns request resource on success.
  * @throws EioException
  *
  */
-function eio_sync(int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_sync(int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_sync($pri, $callback, $data);
@@ -1825,11 +1850,11 @@ function eio_sync(int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data =
 /**
  *
  *
- * @param mixed $fd File descriptor
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd File descriptor
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1855,11 +1880,12 @@ function eio_sync(int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data =
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_syncfs returns request resource on success.
  * @throws EioException
  *
  */
-function eio_syncfs($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_syncfs($fd, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_syncfs($fd, $pri, $callback, $data);
@@ -1874,12 +1900,12 @@ function eio_syncfs($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, 
  * eio_truncate causes the regular file named by path to be truncated to
  * a size of precisely length bytes
  *
- * @param string $path File path
- * @param int $offset Offset from beginning of the file.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path File path
+ * @param int           $offset Offset from beginning of the file.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1905,11 +1931,12 @@ function eio_syncfs($fd, int $pri = EIO_PRI_DEFAULT, callable $callback = null, 
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_busy returns request resource on success.
  * @throws EioException
  *
  */
-function eio_truncate(string $path, int $offset = 0, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_truncate(string $path, int $offset = 0, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_truncate($path, $offset, $pri, $callback, $data);
@@ -1923,11 +1950,11 @@ function eio_truncate(string $path, int $offset = 0, int $pri = EIO_PRI_DEFAULT,
 /**
  * eio_unlink deletes  a  name from the file system.
  *
- * @param string $path Path to file
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path Path to file
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -1953,11 +1980,12 @@ function eio_truncate(string $path, int $offset = 0, int $pri = EIO_PRI_DEFAULT,
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_unlink returns request resource on success.
  * @throws EioException
  *
  */
-function eio_unlink(string $path, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_unlink(string $path, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_unlink($path, $pri, $callback, $data);
@@ -1971,13 +1999,13 @@ function eio_unlink(string $path, int $pri = EIO_PRI_DEFAULT, callable $callback
 /**
  *
  *
- * @param string $path Path to the file.
- * @param float $atime Access time
- * @param float $mtime Modification time
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param string        $path Path to the file.
+ * @param float         $atime Access time
+ * @param float         $mtime Modification time
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -2003,11 +2031,12 @@ function eio_unlink(string $path, int $pri = EIO_PRI_DEFAULT, callable $callback
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_utime returns request resource on success.
  * @throws EioException
  *
  */
-function eio_utime(string $path, float $atime, float $mtime, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_utime(string $path, float $atime, float $mtime, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_utime($path, $atime, $mtime, $pri, $callback, $data);
@@ -2023,14 +2052,14 @@ function eio_utime(string $path, float $atime, float $mtime, int $pri = EIO_PRI_
  * bytes from str at offset
  * offset from the beginning of the file.
  *
- * @param mixed $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open
- * @param string $str Source string
- * @param int $length Maximum number of bytes to write.
- * @param int $offset Offset from the beginning of file.
- * @param int $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
+ * @param mixed         $fd Stream, Socket resource, or numeric file descriptor, e.g. returned by eio_open
+ * @param string        $str Source string
+ * @param int           $length Maximum number of bytes to write.
+ * @param int           $offset Offset from the beginning of file.
+ * @param int           $pri The request priority: EIO_PRI_DEFAULT, EIO_PRI_MIN, EIO_PRI_MAX, or NULL.
  * If NULL passed, pri internally is set to
  * EIO_PRI_DEFAULT.
- * @param callable $callback
+ * @param callable|null $callback
  * callback function is called when the request is done.
  * It should match the following prototype:
  *
@@ -2056,11 +2085,12 @@ function eio_utime(string $path, float $atime, float $mtime, int $pri = EIO_PRI_
  *
  * is optional request resource which can be used with functions like eio_get_last_error
  * @param mixed $data is custom data passed to the request.
+ *
  * @return resource eio_write returns request resource on success.
  * @throws EioException
  *
  */
-function eio_write($fd, string $str, int $length = 0, int $offset = 0, int $pri = EIO_PRI_DEFAULT, callable $callback = null, $data = null)
+function eio_write($fd, string $str, int $length = 0, int $offset = 0, int $pri = EIO_PRI_DEFAULT, ?callable $callback = null, $data = null)
 {
     error_clear_last();
     $result = \eio_write($fd, $str, $length, $offset, $pri, $callback, $data);

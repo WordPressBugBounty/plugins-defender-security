@@ -40,6 +40,10 @@ class Antibot_Global_Firewall extends Component {
 
 	public const IS_SWITCHING_TO_PLUGIN_IN_PROGRESS = 'wpdef_antibot_global_firewall_switching_to_plugin_in_progress';
 
+	public const GLOBAL_NOTICE_TIME_OPTION = 'wpdef_antibot_global_firewall_global_notice_time';
+
+	public const GLOBAL_NOTICE_DELAY_DAYS_OPTION = 60;
+
 	/**
 	 * The AntiBot Global Firewall model for storing IPs.
 	 *
@@ -90,6 +94,7 @@ class Antibot_Global_Firewall extends Component {
 		$this->antibot_client = $antibot_client;
 
 		add_action( 'wpdef_confirm_antibot_toggle_on_hosting', array( $this, 'confirm_toggle_on_hosting' ) );
+		add_action( 'wp_loaded', array( $this, 'clear_antibot_on_disconnection' ) );
 	}
 
 	/**
@@ -98,14 +103,14 @@ class Antibot_Global_Firewall extends Component {
 	 * @return bool True for enabled or false for disabled.
 	 */
 	public function is_enabled(): bool {
-		$is_enabled = $this->model_setting->enabled;
-
 		/**
 		 * Filter to enable or disable the AntiBot Global Firewall.
 		 *
 		 * @param bool $is_enabled True for enabled or false for disabled.
 		 */
-		return (bool) apply_filters( 'wpdef_antibot_enabled', $is_enabled );
+		$is_enabled = apply_filters( 'wpdef_antibot_enabled', $this->model_setting->enabled );
+
+		return is_bool( $is_enabled ) ? $is_enabled : (bool) $is_enabled;
 	}
 
 	/**
@@ -145,6 +150,16 @@ class Antibot_Global_Firewall extends Component {
 	 */
 	public function is_active_via_plugin(): bool {
 		return 'plugin' === $this->get_managed_by() && $this->is_enabled() && $this->is_site_connected_to_hub_via_hcm_or_dash();
+	}
+
+	/**
+	 * Check if the AntiBot Global Firewall is active via hosting.
+	 *
+	 * @since 5.6.0
+	 * @return bool True if the AntiBot Global Firewall is active via hosting, false otherwise.
+	 */
+	public function is_active_via_hosting(): bool {
+		return 'hosting' === $this->get_managed_by() && $this->hosting_is_enabled();
 	}
 
 	/**
@@ -210,18 +225,18 @@ class Antibot_Global_Firewall extends Component {
 			return;
 		}
 
-		if ( $this->has_lock() ) {
+		if ( $this->has_lock( $this->lock_filename ) ) {
 			$this->log( 'Fallback as already a process is running', Firewall::FIREWALL_LOG );
 			return;
 		}
 
-		$this->create_lock();
+		$this->create_lock( $this->lock_filename );
 		$file_path = $this->download_blocklist();
 
-		if ( ! empty( $file_path ) ) {
+		if ( is_string( $file_path ) && '' !== $file_path ) {
 			$this->store_blocklist( $file_path );
 		}
-		$this->remove_lock();
+		$this->remove_lock( $this->lock_filename );
 	}
 
 	/**
@@ -239,7 +254,14 @@ class Antibot_Global_Firewall extends Component {
 		} elseif ( isset( $response['status'] ) && 'error' === $response['status'] ) {
 			$this->log( sprintf( 'AntiBot Global Firewall Error: %s', $response['message'] ), Firewall::FIREWALL_LOG );
 			return;
-		} elseif ( empty( $response['data']['download_url'] ) && empty( $response['data']['hashes']['sha256'] ) ) {
+		} elseif (
+			! isset( $response['data']['download_url'] )
+			|| ! is_string( $response['data']['download_url'] )
+			|| '' === $response['data']['download_url']
+			|| ! isset( $response['data']['hashes']['sha256'] )
+			|| ! is_string( $response['data']['hashes']['sha256'] )
+			|| '' === $response['data']['hashes']['sha256']
+		) {
 			$this->log( 'AntiBot Global Firewall Error: Download link not found in the response.', Firewall::FIREWALL_LOG );
 			return;
 		}
@@ -316,7 +338,7 @@ class Antibot_Global_Firewall extends Component {
 		global $wp_filesystem;
 		$lines = $wp_filesystem->get_contents_array( $file_path );
 
-		if ( empty( $lines ) || ! is_array( $lines ) ) {
+		if ( ! is_array( $lines ) || array() === $lines ) {
 			throw new Exception( 'Could not retrieve the file contents!' );
 		}
 
@@ -583,7 +605,7 @@ class Antibot_Global_Firewall extends Component {
 		}
 
 		$blocklisted_ips_key = Antibot_Global_Firewall_Setting::MODE_BASIC === $mode ? 'blocked_ips' : 'strict_blocked_ips';
-		if ( empty( $blocklist_stats[ $blocklisted_ips_key ] ) ) {
+		if ( ! isset( $blocklist_stats[ $blocklisted_ips_key ] ) || ! is_int( $blocklist_stats[ $blocklisted_ips_key ] ) || 0 >= $blocklist_stats[ $blocklisted_ips_key ] ) {
 			$this->log( 'AntiBot Global Firewall Error: Stats missing for mode: ' . $mode, Firewall::FIREWALL_LOG );
 			return 0;
 		}
@@ -621,8 +643,8 @@ class Antibot_Global_Firewall extends Component {
 		 * @param bool $is_enabled Whether IP logging is enabled. Default true.
 		 * @since 5.1.0
 		 */
-		$is_logging_enabled = (bool) apply_filters( 'wpdef_antibot_global_firewall_ip_log', true );
-
+		$is_logging_enabled = apply_filters( 'wpdef_antibot_global_firewall_ip_log', true );
+		$is_logging_enabled = is_bool( $is_logging_enabled ) ? $is_logging_enabled : (bool) $is_logging_enabled;
 		if ( ! $is_logging_enabled ) {
 			return;
 		}
@@ -706,5 +728,80 @@ class Antibot_Global_Firewall extends Component {
 		}
 
 		return $this->frontend_mode();
+	}
+
+	/**
+	 * Clear antibot table when site is disconnected from HUB.
+	 *
+	 * @return void
+	 */
+	public function clear_antibot_on_disconnection(): void {
+		if ( $this->is_site_connected_to_hub_via_hcm_or_dash() ) {
+			return;
+		}
+		if ( $this->get_cached_blocklisted_ips() <= 0 ) {
+			return;
+		}
+		$this->delete_blocklist();
+		delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_mode() );
+		delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_hosting_mode() );
+		$this->log( 'Antibot table cleared due to site disconnection.', self::LOG_FILE_NAME );
+	}
+
+	/**
+	 * Get the timestamp for when the notice should start showing.
+	 *
+	 * @return false|int The timestamp or false if not set.
+	 */
+	public function get_global_notice_time() {
+		return (int) get_site_option( self::GLOBAL_NOTICE_TIME_OPTION, 0 );
+	}
+
+	/**
+	 * Set a timestamp for when the notice should start showing.
+	 *
+	 * @return void
+	 */
+	public function maybe_set_notice_time(): void {
+		if ( 0 === $this->get_global_notice_time() ) {
+			$future = time() + ( DAY_IN_SECONDS * self::GLOBAL_NOTICE_DELAY_DAYS_OPTION );
+			update_site_option( self::GLOBAL_NOTICE_TIME_OPTION, $future );
+		}
+	}
+
+	/**
+	 * Disable the global notice.
+	 *
+	 * @return void
+	 */
+	public function dismiss_global_notice(): void {
+		update_site_option( self::GLOBAL_NOTICE_TIME_OPTION, -1 );
+	}
+
+	/**
+	 * Determine if the global notice should be shown.
+	 *
+	 * @return bool True if the notice should be shown, false otherwise.
+	 */
+	public function should_show_global_notice(): bool {
+		// Is FREE or PRO plugin?
+		if ( $this->wpmudev->is_pro() ) {
+			return false;
+		}
+
+		// Is AntiBot enabled?
+		if ( $this->frontend_is_enabled() ) {
+			return false;
+		}
+
+		// Has 60 days passed since installation?
+		$notice_time = $this->get_global_notice_time();
+
+		// No notice time or marked as dismissed (-1) or not yet reached the time.
+		if ( false === $notice_time || -1 === $notice_time || time() < $notice_time ) {
+			return false;
+		}
+
+		return true;
 	}
 }

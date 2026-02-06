@@ -1,4 +1,10 @@
 <?php
+/**
+ * Class related to WPMUDEV.
+ *
+ * @package WP_Defender\Behavior
+ * @since 2.2
+ */
 
 namespace WP_Defender\Behavior;
 
@@ -11,10 +17,8 @@ use WP_Defender\Behavior\WPMUDEV_Const_Interface;
 
 /**
  * This class contains everything relate to WPMUDEV.
- * Class WPMUDEV
  *
- * @package WP_Defender\Behavior
- * @since 2.2
+ * Class WPMUDEV
  */
 class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 	use IO;
@@ -46,7 +50,7 @@ class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 		$membership_status = \WPMUDEV_Dashboard::$api->get_membership_data();
 		$key               = \WPMUDEV_Dashboard::$api->get_key();
 
-		if ( ! empty( $membership_status['hub_site_id'] ) && ! empty( $key ) ) {
+		if ( isset( $membership_status['hub_site_id'] ) && $membership_status['hub_site_id'] && '' !== $key ) {
 			return $key;
 		}
 
@@ -54,6 +58,8 @@ class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 	}
 
 	/**
+	 * Check if whitelabel is enabled.
+	 *
 	 * @since 2.5.5 Use Whitelabel filters instead of calling the whitelabel functions directly.
 	 * @return bool
 	 */

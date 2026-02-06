@@ -67,7 +67,7 @@ class Gather_Fact extends Component {
 	public function gather_info(): bool {
 		$timer       = new Timer();
 		$model       = $this->scan;
-		$need_to_run = empty( $model->task_checkpoint ) ? 'get_core_files' : 'get_content_files';
+		$need_to_run = '' === $model->task_checkpoint ? 'get_core_files' : 'get_content_files';
 		if ( 'get_core_files' === $need_to_run ) {
 			if ( $this->settings->integrity_check && $this->settings->check_core ) {
 				$this->get_core_files();
@@ -132,7 +132,12 @@ class Gather_Fact extends Component {
 		);
 
 		$files = array_merge( $core->get_dir_tree(), $outside->get_dir_tree() );
-		$files = array_filter( $files );
+		$files = array_filter(
+			$files,
+			function ( $value ) {
+				return is_string( $value ) && '' !== trim( $value );
+			}
+		);
 		$this->log( sprintf( 'Core: %s', count( $files ) ), Scan_Controller::SCAN_LOG );
 		update_site_option( self::CACHE_CORE, $files );
 
@@ -149,13 +154,19 @@ class Gather_Fact extends Component {
 		if ( is_array( $cache ) ) {
 			return $cache;
 		}
+
+		$arr_extension = array( 'php' );
+		// Since v5.8.0.
+		$enabled = apply_filters( 'wpdef_scan_js_detection_enabled', true );
+		$enabled = is_bool( $enabled ) ? $enabled : (bool) $enabled;
+		if ( $enabled ) {
+			$arr_extension[] = 'js';
+		}
 		$content = new File(
 			defender_replace_line( ABSPATH ),
 			true,
 			false,
-			array(
-				'ext' => array( 'php' ),
-			),
+			array( 'ext' => $arr_extension ),
 			array(),
 			true,
 			true,
@@ -163,7 +174,12 @@ class Gather_Fact extends Component {
 		);
 
 		$files   = $content->get_dir_tree();
-		$files   = array_filter( $files );
+		$files   = array_filter(
+			$files,
+			function ( $value ) {
+				return is_string( $value ) && '' !== trim( $value );
+			}
+		);
 		$files[] = defender_wp_config_path();
 		$this->log( sprintf( 'Number of files: %s', count( $files ) ), Scan_Controller::SCAN_LOG );
 		update_site_option( self::CACHE_CONTENT, $files );

@@ -228,7 +228,7 @@ class Two_Factor extends Event {
 			return;
 		}
 		// Is TOTP saved with a passcode?
-		if ( ! empty( $this->service->get_available_providers_for_user( $user ) ) ) {
+		if ( array() !== $this->service->get_available_providers_for_user( $user ) ) {
 			return;
 		}
 		$screen = get_current_screen();
@@ -283,7 +283,7 @@ class Two_Factor extends Event {
 		}
 
 		$post = defender_get_data_from_request( null, 'p' );
-		if ( empty( $post['_wpnonce'] ) || ! wp_verify_nonce( $post['_wpnonce'], 'verify_otp' ) ) {
+		if ( '' === $post['_wpnonce'] || ! wp_verify_nonce( $post['_wpnonce'], 'verify_otp' ) ) {
 			wp_die( esc_html__( 'Nonce verification failed.', 'defender-security' ) );
 		}
 
@@ -291,7 +291,7 @@ class Two_Factor extends Event {
 		$user_id     = (int) HTTP::post( 'requested_user', 0 );
 		$auth_method = HTTP::post( 'auth_method' );
 		$password    = HTTP::post( 'password' );
-		if ( empty( $token ) || empty( $user_id ) || empty( $auth_method ) || empty( $password ) ) {
+		if ( '' === $token || 0 === $user_id || '' === $auth_method || '' === $password ) {
 			wp_die( esc_html__( 'Missing parameter(s)', 'defender-security' ) );
 		}
 
@@ -350,7 +350,8 @@ class Two_Factor extends Event {
 				 */
 				do_action( 'wpmu_2fa_login', $user_id, $auth_method );
 
-				if ( ! empty( defender_get_data_from_request( 'interim-login', 'r' ) ) ) {
+				$interim_login = defender_get_data_from_request( 'interim-login', 'r' );
+				if ( is_string( $interim_login ) && '' !== trim( $interim_login ) ) {
 					$params['interim_login'] = 'success';
 					$params['message']       = '<p class="message">' . esc_html__( 'You have logged in successfully.', 'defender-security' ) . '</p>';
 					$this->render_otp_screen( $params );
@@ -372,7 +373,7 @@ class Two_Factor extends Event {
 
 		$params['error'] = new WP_Error(
 			'opt_fail',
-			empty( $lockout_message )
+			'' === trim( $lockout_message )
 				? esc_html__( 'Whoops, the passcode you entered was incorrect or expired.', 'defender-security' )
 				: $lockout_message
 		);
@@ -409,10 +410,10 @@ class Two_Factor extends Event {
 	public function maybe_show_otp_form( $user, string $username, string $password ) {
 		if (
 			! is_user_logged_in()
-			&& ! empty( $user ) && ! empty( $password ) && $user instanceof WP_User
+			&& '' !== trim( $password ) && $user instanceof WP_User
 			&& wp_check_password( $password, $user->data->user_pass, $user->ID )
 			&& $this->service->is_auth_enable_for( $user, $this->model->user_roles )
-			&& ! empty( $this->service->get_available_providers_for_user( $user ) )
+			&& array() !== $this->service->get_available_providers_for_user( $user )
 		) {
 			$params = array();
 			$cookie = Array_Cache::get( 'auth_cookie', 'two_fa' );
@@ -430,7 +431,9 @@ class Two_Factor extends Event {
 			// Get default provider.
 			$params['default_slug'] = $this->service->get_default_provider_slug_for_user( $user->ID );
 			if ( Fallback_Email::$slug === $params['default_slug'] ) {
-				$result = $this->service->send_otp_to_email( $params['token'], $user->ID );
+				$user_id = isset( $user->ID ) ? $user->ID : 0;
+				$user_id = is_int( $user_id ) ? $user_id : (int) $user_id;
+				$result  = $this->service->send_otp_to_email( $params['token'], $user_id );
 				if ( is_wp_error( $result ) ) {
 					$params['error'] = $result;
 					$this->render_otp_screen( $params );
@@ -462,12 +465,14 @@ class Two_Factor extends Event {
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 		$custom_graphic      = '';
 		$custom_graphic_type = '';
+		$custom_graphic_url  = trim( $this->model->custom_graphic_url );
+		$custom_graphic_link = trim( $this->model->custom_graphic_link );
 		if ( $this->is_pro() && $this->model->custom_graphic ) {
 			$custom_graphic_type = $this->model->custom_graphic_type;
-			if ( Two_Fa::CUSTOM_GRAPHIC_TYPE_UPLOAD === $custom_graphic_type && ! empty( $this->model->custom_graphic_url ) ) {
-				$custom_graphic = $this->model->custom_graphic_url;
-			} elseif ( Two_Fa::CUSTOM_GRAPHIC_TYPE_LINK === $custom_graphic_type && ! empty( $this->model->custom_graphic_link ) ) {
-				$custom_graphic = $this->model->custom_graphic_link;
+			if ( Two_Fa::CUSTOM_GRAPHIC_TYPE_UPLOAD === $custom_graphic_type && '' !== $custom_graphic_url ) {
+				$custom_graphic = $custom_graphic_url;
+			} elseif ( Two_Fa::CUSTOM_GRAPHIC_TYPE_LINK === $custom_graphic_type && '' !== $custom_graphic_link ) {
+				$custom_graphic = $custom_graphic_link;
 			}
 		}
 
@@ -485,7 +490,7 @@ class Two_Factor extends Event {
 			if ( is_object( $user ) ) {
 				$params['providers'] = $this->service->get_available_providers_for_user( $user );
 				// Get default provider.
-				if ( empty( $params['default_slug'] ) ) {
+				if ( ! isset( $params['default_slug'] ) || ! is_string( $params['default_slug'] ) || '' === trim( $params['default_slug'] ) ) {
 					$params['default_slug'] = $this->service->get_default_provider_slug_for_user( $user->ID );
 				}
 			}
@@ -542,7 +547,7 @@ class Two_Factor extends Event {
 					'admin_url'     => admin_url( 'admin-ajax.php' ),
 					'nonce'         => wp_create_nonce( 'wpdef_webauthn' ),
 					'i18n'          => $webauthn_controller->get_translations(),
-					'username'      => ! empty( $user->user_login ) ? $user->user_login : '',
+					'username'      => isset( $user->user_login ) && is_string( $user->user_login ) && '' !== trim( $user->user_login ) ? $user->user_login : '',
 					'provider_slug' => Webauthn::$slug,
 				)
 			);
@@ -555,7 +560,8 @@ class Two_Factor extends Event {
 			'route'      => $this->check_route( $routes['send_backup_code'] ?? 'test' ),
 		);
 		// If user's session has expired add a new 'interimlogin'-arg.
-		if ( ! empty( defender_get_data_from_request( 'interim-login', 'r' ) ) ) {
+		$interim_login = defender_get_data_from_request( 'interim-login', 'r' );
+		if ( is_string( $interim_login ) && '' !== trim( $interim_login ) ) {
 			$args['interimlogin'] = 'yes';
 		}
 		$params['action_fallback_email'] = add_query_arg( $args, admin_url( 'admin-ajax.php' ) );
@@ -601,7 +607,7 @@ class Two_Factor extends Event {
 		delete_user_meta( $user_id, Totp::TOTP_SODIUM_SECRET_KEY );
 		// Remove TOTP from enabled providers.
 		$enabled_providers = get_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, true );
-		if ( ! empty( $enabled_providers ) ) {
+		if ( is_array( $enabled_providers ) && array() !== $enabled_providers ) {
 			foreach ( $enabled_providers as $key => $slug ) {
 				if ( Totp::$slug === $slug ) {
 					unset( $enabled_providers[ $key ] );
@@ -614,7 +620,7 @@ class Two_Factor extends Event {
 		update_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, $enabled_providers );
 		// Check the default provider. If it's TOTP then clear the value.
 		$default_provider = get_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, true );
-		if ( ! empty( $default_provider ) && Totp::$slug === $default_provider ) {
+		if ( is_string( $default_provider ) && '' !== trim( $default_provider ) && Totp::$slug === $default_provider ) {
 			update_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, '' );
 		}
 
@@ -633,7 +639,7 @@ class Two_Factor extends Event {
 	 * @is_public
 	 * @throws SodiumException Exceptions thrown by the sodium functions.
 	 */
-	public function verify_otp_for_enabling( Request $request ) {
+	public function verify_otp_for_enabling( Request $request ): Response {
 		if ( is_user_logged_in() ) {
 			$data = $request->get_data();
 			$otp  = isset( $data['otp'] ) ? sanitize_text_field( $data['otp'] ) : false;
@@ -674,7 +680,7 @@ class Two_Factor extends Event {
 				$totp_slug = Totp::$slug;
 				// Add TOTP to enabled providers.
 				$enabled_providers = get_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, true );
-				if ( isset( $enabled_providers ) && ! empty( $enabled_providers ) ) {
+				if ( is_array( $enabled_providers ) && array() !== $enabled_providers ) {
 					// Array of enabled providers is not empty now.
 					if ( ! in_array( Totp::$slug, $enabled_providers, true ) ) {
 						$enabled_providers[] = $totp_slug;
@@ -686,7 +692,7 @@ class Two_Factor extends Event {
 				}
 				// If no default provider then add TOTP as it.
 				$default_provider = get_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, true );
-				if ( empty( $default_provider ) ) {
+				if ( ! is_string( $default_provider ) || '' === trim( $default_provider ) ) {
 					update_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, $totp_slug );
 				}
 
@@ -698,6 +704,7 @@ class Two_Factor extends Event {
 				);
 			}
 		}
+		return new Response( true, array() );
 	}
 
 	/**
@@ -731,7 +738,7 @@ class Two_Factor extends Event {
 			// Remove empty elements.
 			$checked_providers = array_diff( $post_data[ Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY ], array( '' ) );
 			// If no option is checked then the values for default provider and enabled providers are cleared.
-			if ( empty( $checked_providers ) ) {
+			if ( array() === $checked_providers ) {
 				$this->clear_providers( $user_id );
 
 				return;
@@ -741,7 +748,7 @@ class Two_Factor extends Event {
 			// For Fallback-Email method: the email value should be not empty and valid.
 			if ( in_array( Fallback_Email::$slug, $checked_providers, true ) ) {
 				$email = HTTP::post( 'def_2fa_backup_email' );
-				if ( ! empty( $email ) && filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
+				if ( is_string( $email ) && '' !== trim( $email ) && filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
 					update_user_meta( $user_id, Fallback_Email::FALLBACK_EMAIL_KEY, $email );
 				} else {
 					unset( $checked_providers[ Fallback_Email::$slug ] );
@@ -757,7 +764,7 @@ class Two_Factor extends Event {
 				}
 			}
 			// Case when WebAuthn is checked but no registered devices OR Fallback_Email has an invalid email value.
-			if ( empty( $checked_providers ) ) {
+			if ( array() === $checked_providers ) {
 				$this->clear_providers( $user_id );
 
 				return;
@@ -782,7 +789,7 @@ class Two_Factor extends Event {
 			// Default provider must be enabled.
 			$default_provider = $post_data[ Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY ] ?? '';
 			// The case#1 when all 2fa providers were deactivated before.
-			if ( empty( $default_provider ) ) {
+			if ( ! is_string( $default_provider ) || '' === trim( $default_provider ) ) {
 				$default_provider = $enabled_providers[0];
 			}
 			// The case#2 when prev default provider is deactivated and another one is activated.
@@ -804,7 +811,7 @@ class Two_Factor extends Event {
 	public function show_user_profile( WP_User $user ): void {
 		$user_roles = $this->get_roles( $user );
 		// This method is better than is_intersected_arrays() because it is flexibly controlled with a nested hook.
-		if ( ! empty( $user_roles ) && $this->service->is_auth_enable_for( $user, $this->model->user_roles ) ) {
+		if ( is_array( $user_roles ) && array() !== $user_roles && $this->service->is_auth_enable_for( $user, $this->model->user_roles ) ) {
 			wp_enqueue_style( 'defender-profile-2fa', defender_asset_url( '/assets/css/two-factor.css' ), array(), DEFENDER_VERSION );
 
 			$webauthn_controller   = wd_di()->get( Webauthn_Controller::class );
@@ -843,7 +850,7 @@ class Two_Factor extends Event {
 					'nonce'                    => wp_create_nonce( 'wpdef_webauthn' ),
 					'i18n'                     => $webauthn_controller->get_translations(),
 					'registered_auths'         => $webauthn_controller->get_current_user_authenticators(),
-					'username'                 => ! empty( $user->user_login ) ? $user->user_login : '',
+					'username'                 => isset( $user->user_login ) && is_string( $user->user_login ) ? $user->user_login : '',
 					'user_handle_match_failed' => $webauthn_user_handle_match_failed,
 				)
 			);
@@ -854,14 +861,14 @@ class Two_Factor extends Event {
 			);
 			$default_values         = $this->model->get_default_values();
 			$enabled_providers      = $this->service->get_available_providers_for_user( $user );
-			$enabled_provider_slugs = ! empty( $enabled_providers ) ? array_keys( $enabled_providers ) : array();
+			$enabled_provider_slugs = array() !== $enabled_providers ? array_keys( $enabled_providers ) : array();
 			$default_provider_slug  = $this->service->get_default_provider_slug_for_user( $user->ID );
 			$webauthn_enabled       = $this->service->is_checked_enabled_provider_by_slug( $user, Webauthn::$slug );
 
 			$this->render_partial(
 				'two-fa/user-options',
 				array(
-					'is_force_auth'             => $forced_auth && $this->model->force_auth && empty( $enabled_providers ),
+					'is_force_auth'             => $forced_auth && $this->model->force_auth && array() === $enabled_providers,
 					'force_auth_message'        => $this->model->force_auth_mess,
 					'default_message'           => $default_values['message'],
 					'user'                      => $user,
@@ -869,7 +876,7 @@ class Two_Factor extends Event {
 					'enabled_providers_key'     => Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY,
 					'default_provider_key'      => Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY,
 					'checked_provider_slugs'    => $enabled_provider_slugs,
-					'checked_def_provider_slug' => ! empty( $default_provider_slug ) ? $default_provider_slug : null,
+					'checked_def_provider_slug' => is_string( $default_provider_slug ) && '' !== trim( $default_provider_slug ) ? $default_provider_slug : null,
 					'webauthn_requirements'     => $webauthn_requirements,
 					'webauthn_enabled'          => $webauthn_enabled,
 					'webauthn_slug'             => Webauthn::$slug,
@@ -977,7 +984,7 @@ class Two_Factor extends Event {
 			}
 		}
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-		if ( ! empty( $sender ) ) {
+		if ( is_string( $sender ) && '' !== trim( $sender ) ) {
 			// Since v5.2.0.
 			$from_email = defender_noreply_email( 'wd_two_fa_totp_noreply_email' );
 			$headers[]  = sprintf( 'From: %s <%s>', $sender, $from_email );
@@ -1135,6 +1142,8 @@ class Two_Factor extends Event {
 				// The multisite check is an isolated case now. If it will be needed for several modules, then a more global scope is needed.
 				'is_multisite'        => is_multisite(),
 				'module_name'         => Two_Fa::get_module_name(),
+				'hub_connector'       => wd_di()->get( Hub_Connector::class )->data_frontend(),
+				'antibot'             => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
 			$this->dump_routes_and_nonces()
 		);
@@ -1214,7 +1223,7 @@ class Two_Factor extends Event {
 			return false;
 		}
 		// Is TOTP saved with a passcode?
-		if ( ! empty( $this->service->get_available_providers_for_user( $user ) ) ) {
+		if ( array() !== $this->service->get_available_providers_for_user( $user ) ) {
 			return $prevent;
 		}
 
@@ -1266,7 +1275,7 @@ class Two_Factor extends Event {
 			return $redirect;
 		}
 		// Is TOTP saved with a passcode?
-		if ( empty( $this->service->get_available_providers_for_user( $user ) ) ) {
+		if ( array() === $this->service->get_available_providers_for_user( $user ) ) {
 			return admin_url( 'profile.php' ) . '#defender-security';
 		}
 
@@ -1376,7 +1385,7 @@ class Two_Factor extends Event {
 	 * @return array The updated array of items with the new endpoint inserted.
 	 */
 	public function wp_defender_2fa_link_my_account( $items ) {
-		$needed_place = is_array( $items ) && ! empty( $items ) ? ( count( $items ) - 1 ) : 0;
+		$needed_place = is_array( $items ) && array() !== $items ? ( count( $items ) - 1 ) : 0;
 
 		return array_slice( $items, 0, $needed_place, true )
 				+ array( $this->slug => esc_html__( '2FA', 'defender-security' ) )
@@ -1399,7 +1408,7 @@ class Two_Factor extends Event {
 	 */
 	public function save_2fa_details() {
 		$action = defender_get_data_from_request( 'action', 'p' );
-		if ( empty( $action ) || 'save_def_2fa_user_settings' !== $action ) {
+		if ( ! is_string( $action ) || '' === trim( $action ) || 'save_def_2fa_user_settings' !== $action ) {
 			return;
 		}
 
@@ -1429,7 +1438,7 @@ class Two_Factor extends Event {
 	 */
 	public function enable_provider_slugs( array $provider_slugs ) {
 		// Track conditions.
-		if ( ! empty( $provider_slugs ) ) {
+		if ( array() !== $provider_slugs ) {
 			$methods = array();
 			foreach ( $this->service->get_providers() as $slug => $object ) {
 				if ( in_array( $slug, $provider_slugs, true ) ) {

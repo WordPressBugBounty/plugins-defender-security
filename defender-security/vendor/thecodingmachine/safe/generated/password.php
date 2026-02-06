@@ -91,17 +91,18 @@ use Safe\Exceptions\PasswordException;
  *
  *
  *
- * @param string $password The user's password.
+ * @param string          $password The user's password.
  *
  * Using the PASSWORD_BCRYPT as the
  * algorithm, will result
  * in the password parameter being truncated to a
  * maximum length of 72 characters.
- * @param int|string|null $algo A password algorithm constant denoting the algorithm to use when hashing the password.
- * @param array $options An associative array containing options. See the password algorithm constants for documentation on the supported options for each algorithm.
+ * @param int|string|null $algo     A password algorithm constant denoting the algorithm to use when hashing the password.
+ * @param array|null      $options  An associative array containing options. See the password algorithm constants for documentation on the supported options for each algorithm.
  *
  * If omitted, a random salt will be created and the default cost will be
  * used.
+ *
  * @return string Returns the hashed password.
  *
  * The used algorithm, cost and salt are returned as part of the hash. Therefore,
@@ -111,7 +112,7 @@ use Safe\Exceptions\PasswordException;
  * @throws PasswordException
  *
  */
-function password_hash(string $password, $algo, array $options = null): string
+function password_hash(string $password, $algo, ?array $options = null): string
 {
     error_clear_last();
     if ($options !== null) {

@@ -78,13 +78,13 @@ class WP_Version extends Abstract_Security_Tweaks {
 
 		$data = get_core_updates();
 
-		if ( empty( $data ) ) {
+		if ( ! is_array( $data ) || array() === $data ) {
 			wp_version_check( array(), true );
 			$data = get_core_updates( array( 'dismissed' => true ) );
 		}
 
 		// For bool value and empty array.
-		if ( empty( $data ) ) {
+		if ( ! is_array( $data ) || array() === $data ) {
 			return false;
 		}
 

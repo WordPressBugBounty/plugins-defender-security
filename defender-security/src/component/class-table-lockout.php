@@ -60,16 +60,24 @@ class Table_Lockout extends Component {
 	 */
 	private function get_types(): array {
 		return array(
-			'all'                          => esc_html__( 'All', 'defender-security' ),
-			Lockout_Log::AUTH_FAIL         => esc_html__( 'Failed login attempts', 'defender-security' ),
-			Lockout_Log::AUTH_LOCK         => esc_html__( 'Login lockout', 'defender-security' ),
-			Lockout_Log::ERROR_404         => esc_html__( '404 error', 'defender-security' ),
-			Lockout_Log::LOCKOUT_404       => esc_html__( '404 lockout', 'defender-security' ),
-			Lockout_Log::LOCKOUT_UA        => esc_html__( 'User Agent Lockout', 'defender-security' ),
-			Lockout_Log::LOCKOUT_BOT_TRAP  => esc_html__( 'Bot Trap Lockout', 'defender-security' ),
-			// New IP Lockout type since 5.3.0.
-			Lockout_Log::LOCKOUT_IP_CUSTOM => esc_html__( 'Custom IP Lockout', 'defender-security' ),
-			Lockout_Log::IP_UNLOCK         => esc_html__( 'IP Unlock', 'defender-security' ),
+			'all'                                        => esc_html__( 'All', 'defender-security' ),
+			Lockout_Log::AUTH_FAIL                       => esc_html__( 'Failed login attempts', 'defender-security' ),
+			Lockout_Log::AUTH_LOCK                       => esc_html__( 'Login lockout', 'defender-security' ),
+			Lockout_Log::ERROR_404                       => esc_html__( '404 error', 'defender-security' ),
+			Lockout_Log::LOCKOUT_404                     => esc_html__( '404 lockout', 'defender-security' ),
+			Lockout_Log::LOCKOUT_UA                      => esc_html__( 'User Agent Lockout', 'defender-security' ),
+			Lockout_Log::LOCKOUT_MALICIOUS_BOT           => esc_html__( 'Malicious Bot Lockout', 'defender-security' ),
+			Lockout_Log::LOCKOUT_FAKE_BOT                => esc_html__( 'Fake Bot Lockout', 'defender-security' ),
+			// New types since 5.3.0.
+			Lockout_Log::LOCKOUT_IP_CUSTOM               => esc_html__( 'Custom IP Lockout', 'defender-security' ),
+			Lockout_Log::IP_UNLOCK                       => esc_html__( 'IP Unlock', 'defender-security' ),
+			// New types since 5.7.0.
+			Lockout_Log::ERROR_404_XSS                   => esc_html__( 'XSS attempt', 'defender-security' ),
+			Lockout_Log::LOCKOUT_404_XSS                 => esc_html__( 'XSS lockout', 'defender-security' ),
+			Lockout_Log::ERROR_404_NON_EXISTENT_THEME    => esc_html__( 'Attempt to access non-installed theme', 'defender-security' ),
+			Lockout_Log::LOCKOUT_404_NON_EXISTENT_THEME  => esc_html__( 'Non-installed theme lockout', 'defender-security' ),
+			Lockout_Log::ERROR_404_NON_EXISTENT_PLUGIN   => esc_html__( 'Attempt to access non-installed plugin', 'defender-security' ),
+			Lockout_Log::LOCKOUT_404_NON_EXISTENT_PLUGIN => esc_html__( 'Non-installed plugin lockout', 'defender-security' ),
 		);
 	}
 

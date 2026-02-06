@@ -27,7 +27,7 @@ class Notfound_Lockout extends Setting {
 	 * @var bool
 	 * @defender_property
 	 */
-	public $enabled = false;
+	public bool $enabled = false;
 
 	/**
 	 * How many 404 error happen before we lock out the IP.
@@ -134,7 +134,7 @@ class Notfound_Lockout extends Setting {
 				'You have been locked out due to too many attempts to access a file that doesn`t exist.',
 				'defender-security'
 			),
-			'whitelist' => ".css\n.js\n.map",
+			'whitelist' => ".css\n.js\n.map\n/cdn-cgi/challenge-platform/",
 		);
 	}
 
@@ -159,7 +159,14 @@ class Notfound_Lockout extends Setting {
 	 */
 	public function get_lockout_list( $type = 'blocklist' ): array {
 		$data = ( 'blocklist' === $type ) ? $this->blacklist : $this->whitelist;
-		$arr  = is_array( $data ) ? $data : array_filter( explode( PHP_EOL, $data ) );
+		$arr  = is_array( $data )
+			? $data
+			: array_filter(
+				explode( PHP_EOL, $data ),
+				function ( $line ) {
+					return strlen( trim( $line ) ) > 0;
+				}
+			);
 		$arr  = array_map( 'trim', $arr );
 		$arr  = array_map( 'strtolower', $arr );
 

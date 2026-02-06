@@ -7,22 +7,23 @@ use Safe\Exceptions\ImapException;
 /**
  * Appends a string message to the specified mailbox.
  *
- * @param resource $imap_stream An IMAP stream returned by
+ * @param resource    $imap_stream   An IMAP stream returned by
  * imap_open.
- * @param string $mailbox The mailbox name, see imap_open for more
+ * @param string      $mailbox       The mailbox name, see imap_open for more
  * information
- * @param string $message The message to be append, as a string
+ * @param string      $message       The message to be append, as a string
  *
  * When talking to the Cyrus IMAP server, you must use "\r\n" as
  * your end-of-line terminator instead of "\n" or the operation will
  * fail
- * @param string $options If provided, the options will also be written
+ * @param string|null $options       If provided, the options will also be written
  * to the mailbox
- * @param string $internal_date If this parameter is set, it will set the INTERNALDATE on the appended message.  The parameter should be a date string that conforms to the rfc2060 specifications for a date_time value.
+ * @param string|null $internal_date If this parameter is set, it will set the INTERNALDATE on the appended message.  The parameter should be a date string that conforms to the rfc2060 specifications for a date_time value.
+ *
  * @throws ImapException
  *
  */
-function imap_append($imap_stream, string $mailbox, string $message, string $options = null, string $internal_date = null): void
+function imap_append($imap_stream, string $mailbox, string $message, ?string $options = null, ?string $internal_date = null): void
 {
     error_clear_last();
     $result = \imap_append($imap_stream, $mailbox, $message, $options, $internal_date);
@@ -354,14 +355,15 @@ function imap_gc($imap_stream, int $caches): void
 /**
  * Gets information about the given message number by reading its headers.
  *
- * @param resource $imap_stream An IMAP stream returned by
+ * @param resource    $imap_stream An IMAP stream returned by
  * imap_open.
- * @param int $msg_number The message number
- * @param int $fromlength Number of characters for the fetchfrom property.
+ * @param int         $msg_number The message number
+ * @param int         $fromlength Number of characters for the fetchfrom property.
  * Must be greater than or equal to zero.
- * @param int $subjectlength Number of characters for the fetchsubject property
+ * @param int         $subjectlength Number of characters for the fetchsubject property
  * Must be greater than or equal to zero.
- * @param string $defaulthost
+ * @param string|null $defaulthost
+ *
  * @return \stdClass Returns FALSE on error or, if successful, the information in an object with following properties:
  *
  *
@@ -567,7 +569,7 @@ function imap_gc($imap_stream, int $caches): void
  * @throws ImapException
  *
  */
-function imap_headerinfo($imap_stream, int $msg_number, int $fromlength = 0, int $subjectlength = 0, string $defaulthost = null): \stdClass
+function imap_headerinfo($imap_stream, int $msg_number, int $fromlength = 0, int $subjectlength = 0, ?string $defaulthost = null): \stdClass
 {
     error_clear_last();
     $result = \imap_headerinfo($imap_stream, $msg_number, $fromlength, $subjectlength, $defaulthost);
@@ -772,19 +774,20 @@ function imap_mail_move($imap_stream, string $msglist, string $mailbox, int $opt
  * and bcc are all strings and are all parsed
  * as RFC822 address lists.
  *
- * @param string $to The receiver
- * @param string $subject The mail subject
- * @param string $message The mail body, see imap_mail_compose
- * @param string $additional_headers As string with additional headers to be set on the mail
- * @param string $cc
- * @param string $bcc The receivers specified in bcc will get the
+ * @param string      $to                 The receiver
+ * @param string      $subject            The mail subject
+ * @param string      $message            The mail body, see imap_mail_compose
+ * @param string|null $additional_headers As string with additional headers to be set on the mail
+ * @param string|null $cc
+ * @param string|null $bcc                The receivers specified in bcc will get the
  * mail, but are excluded from the headers.
- * @param string $rpath Use this parameter to specify return path upon mail delivery failure.
+ * @param string|null $rpath              Use this parameter to specify return path upon mail delivery failure.
  * This is useful when using PHP as a mail client for multiple users.
+ *
  * @throws ImapException
  *
  */
-function imap_mail(string $to, string $subject, string $message, string $additional_headers = null, string $cc = null, string $bcc = null, string $rpath = null): void
+function imap_mail(string $to, string $subject, string $message, ?string $additional_headers = null, ?string $cc = null, ?string $bcc = null, ?string $rpath = null): void
 {
     error_clear_last();
     $result = \imap_mail($to, $subject, $message, $additional_headers, $cc, $bcc, $rpath);
@@ -1317,15 +1320,16 @@ function imap_setflag_full($imap_stream, string $sequence, string $flag, int $op
  *
  *
  *
- * @param string $search_criteria IMAP2-format search criteria string. For details see
+ * @param string|null $search_criteria IMAP2-format search criteria string. For details see
  * imap_search.
- * @param string $charset MIME character set to use when sorting strings.
+ * @param string|null $charset MIME character set to use when sorting strings.
+ *
  * @return array Returns an array of message numbers sorted by the given
  * parameters.
  * @throws ImapException
  *
  */
-function imap_sort($imap_stream, int $criteria, int $reverse, int $options = 0, string $search_criteria = null, string $charset = null): array
+function imap_sort($imap_stream, int $criteria, int $reverse, int $options = 0, ?string $search_criteria = null, ?string $charset = null): array
 {
     error_clear_last();
     $result = \imap_sort($imap_stream, $criteria, $reverse, $options, $search_criteria, $charset);

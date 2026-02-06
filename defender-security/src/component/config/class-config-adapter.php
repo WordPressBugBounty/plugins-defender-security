@@ -42,21 +42,21 @@ class Config_Adapter extends Component {
 
 		return array(
 			'security_tweaks'   => $this->update_security_tweaks( $old_data['security_tweaks'] ),
-			'scan'              => empty( $old_data['scan'] ) ? array() : $this->update_scan( $old_data['scan'] ),
-			'iplockout'         => empty( $old_data['iplockout'] )
+			'scan'              => ! isset( $old_data['scan'] ) || ! is_array( $old_data['scan'] ) ? array() : $this->update_scan( $old_data['scan'] ),
+			'iplockout'         => ! isset( $old_data['iplockout'] ) || ! is_array( $old_data['iplockout'] )
 				? array()
 				: $this->update_ip_lockout( $old_data['iplockout'] ),
 			// Empty data if Audit module is disabled.
-			'audit'             => empty( $old_data['audit'] ) ? array() : $this->update_audit( $old_data['audit'] ),
-			'two_factor'        => empty( $old_data['two_factor'] )
+			'audit'             => ! isset( $old_data['audit'] ) || ! is_array( $old_data['audit'] ) ? array() : $this->update_audit( $old_data['audit'] ),
+			'two_factor'        => ! isset( $old_data['two_factor'] ) || ! is_array( $old_data['two_factor'] )
 				? array()
 				: $this->update_two_factor( $old_data['two_factor'] ),
 			// Checks for empty values Mask Login and Security Headers inside methods.
 			'mask_login'        => $this->update_mask_login( $old_data['mask_login'] ),
 			'security_headers'  => $this->update_security_headers( $old_data['security_headers'] ),
-			'settings'          => empty( $old_data['settings'] ) ? array() : $old_data['settings'],
-			'blocklist_monitor' => empty( $old_data['blocklist_monitor'] ) ? array() : $old_data['blocklist_monitor'],
-			'pwned_passwords'   => empty( $old_data['pwned_passwords'] ) ? array() : $old_data['pwned_passwords'],
+			'settings'          => ! isset( $old_data['settings'] ) || ! is_array( $old_data['settings'] ) ? array() : $old_data['settings'],
+			'blocklist_monitor' => ! isset( $old_data['blocklist_monitor'] ) || ! is_array( $old_data['blocklist_monitor'] ) ? array() : $old_data['blocklist_monitor'],
+			'pwned_passwords'   => ! isset( $old_data['pwned_passwords'] ) || ! is_array( $old_data['pwned_passwords'] ) ? array() : $old_data['pwned_passwords'],
 		);
 	}
 
@@ -109,14 +109,14 @@ class Config_Adapter extends Component {
 	 */
 	private function frequency_day( $frequency_type, $report_day ): array {
 		$days = array(
-			'day_n' => '1',
+			'day_n' => 1,
 			'day'   => 'sunday',
 		);
 		if (
 			( ( is_numeric( $frequency_type ) && 30 === (int) $frequency_type ) )
 			|| 'monthly' === $frequency_type
 		) {
-			if ( empty( $report_day ) ) {
+			if ( '' === $report_day ) {
 				return $days;
 			}
 			if ( is_numeric( $report_day ) ) {
@@ -126,7 +126,7 @@ class Config_Adapter extends Component {
 			}
 			// Otherwise, get a number of the first day of the month by the day of the week.
 			$format        = sprintf( 'first %s of next month', $report_day );
-			$days['day_n'] = wp_date( 'j', strtotime( $format ) );
+			$days['day_n'] = (int) wp_date( 'j', strtotime( $format ) );
 
 			return $days;
 		}
@@ -145,7 +145,7 @@ class Config_Adapter extends Component {
 	 */
 	private function get_subscribers( array $data ): array {
 		$subscribers = array();
-		if ( ! empty( $data ) ) {
+		if ( is_array( $data ) && array() !== $data ) {
 			foreach ( $data as $receipt ) {
 				$subscribers['out_house_recipients'][] = array(
 					'name'   => $receipt['first_name'],
@@ -179,7 +179,7 @@ class Config_Adapter extends Component {
 				? ( $old_tweaks['notification'] ? 'enabled' : 'disabled' )
 				: 'disabled',
 			// Prepare from 'notification_repeat' to configs['reminder'] with default value 'weekly'.
-			'notification_repeat' => empty( $old_tweaks['notification_repeat'] )
+			'notification_repeat' => ! isset( $old_tweaks['notification_repeat'] ) || '' === $old_tweaks['notification_repeat']
 				? 'weekly'
 				: ( $old_tweaks['notification_repeat'] ? 'daily' : 'weekly' ),
 			'data'                => $old_tweaks['data'] ?? array(),
@@ -204,47 +204,49 @@ class Config_Adapter extends Component {
 	 */
 	public function update_scan( array $old_data ): array {
 		$scan = array(
-			'integrity_check'               => empty( $old_data['scan_core'] ) ? true : $old_data['scan_core'],
-			'check_core'                    => empty( $old_data['check_core'] ) ? true : $old_data['check_core'],
-			'check_plugins'                 => empty( $old_data['check_plugins'] ) ? false : $old_data['check_plugins'],
-			'check_known_vuln'              => empty( $old_data['scan_vuln'] ) ? true : $old_data['scan_vuln'],
-			'scan_malware'                  => empty( $old_data['scan_content'] ) ? false : $old_data['scan_content'],
-			'filesize'                      => empty( $old_data['max_filesize'] ) ? 3 : $old_data['max_filesize'],
+			'integrity_check'               => ! isset( $old_data['scan_core'] ) || ! is_bool( $old_data['scan_core'] ) ? true : $old_data['scan_core'],
+			'check_core'                    => ! isset( $old_data['check_core'] ) || ! is_bool( $old_data['check_core'] ) ? true : $old_data['check_core'],
+			'check_plugins'                 => ! isset( $old_data['check_plugins'] ) || ! is_bool( $old_data['check_plugins'] ) ? false : $old_data['check_plugins'],
+			'check_known_vuln'              => ! isset( $old_data['scan_vuln'] ) || ! is_bool( $old_data['scan_vuln'] ) ? true : $old_data['scan_vuln'],
+			'scan_malware'                  => ! isset( $old_data['scan_content'] ) || ! is_bool( $old_data['scan_content'] ) ? false : $old_data['scan_content'],
+			'filesize'                      => ! isset( $old_data['max_filesize'] ) || ! is_int( $old_data['max_filesize'] ) ? 3 : $old_data['max_filesize'],
 			// Should get bool value.
 			'report'                        => isset( $old_data['report'] ) && $old_data['report'] ? 'enabled' : 'disabled',
-			'always_send'                   => empty( $old_data['always_send'] ) ? false : $old_data['always_send'],
-			'time'                          => empty( $old_data['time'] ) ? '4:00' : $old_data['time'],
-			'frequency'                     => empty( $old_data['frequency'] )
+			'always_send'                   => ! isset( $old_data['always_send'] ) || ! is_bool( $old_data['always_send'] ) ? false : $old_data['always_send'],
+			'time'                          => ! isset( $old_data['time'] ) || ! is_string( $old_data['time'] ) || '' === $old_data['time'] ? '4:00' : $old_data['time'],
+			'frequency'                     => ! isset( $old_data['frequency'] ) || ! is_string( $old_data['frequency'] ) || '' === $old_data['frequency']
 				? 'weekly'
 				: $this->frequency_type( $old_data['frequency'] ),
 			// Should get bool value.
 			'notification'                  => isset( $old_data['notification'] ) && $old_data['notification']
 				? 'enabled'
 				: 'disabled',
-			'always_send_notification'      => empty( $old_data['always_send_notification'] )
+			'always_send_notification'      => ! isset( $old_data['always_send_notification'] ) || ! is_bool( $old_data['always_send_notification'] )
 				? false
 				: $old_data['always_send_notification'],
-			'error_send'                    => empty( $old_data['error_send'] ) ? false : $old_data['error_send'],
+			'error_send'                    => ! isset( $old_data['error_send'] ) || ! is_bool( $old_data['error_send'] ) ? false : $old_data['error_send'],
 			'email_subject_issue_found'     => $old_data['email_subject_issue'] ?? '',
 			'email_subject_issue_not_found' => $old_data['email_subject'] ?? '',
 			'email_subject_error'           => $old_data['email_subject_error'] ?? '',
 			'email_content_issue_found'     => $old_data['email_has_issue'] ?? '',
 			'email_content_issue_not_found' => $old_data['email_all_ok'] ?? '',
 			'email_content_error'           => $old_data['email_content_error'] ?? '',
-			// since 2.7.0.
+			// Since 2.7.0.
 			'scheduled_scanning'            => false,
+			// Since 5.9.0.
+			'check_abandoned_plugin'        => true,
 		);
 
-		$scan['report_subscribers']       = empty( $old_data['recipients'] )
+		$scan['report_subscribers']       = ! isset( $old_data['recipients'] ) || ! is_array( $old_data['recipients'] ) || array() === $old_data['recipients']
 			? array()
 			: $this->get_subscribers( $old_data['recipients'] );
-		$scan['notification_subscribers'] = empty( $old_data['recipients_notification'] )
+		$scan['notification_subscribers'] = ! isset( $old_data['recipients_notification'] ) || ! is_array( $old_data['recipients_notification'] ) || array() === $old_data['recipients_notification']
 			? array()
 			: $this->get_subscribers( $old_data['recipients_notification'] );
 		// Todo: need the key 'last_report_sent'? It's no always in the unixtime format.
-		if ( empty( $old_data['frequency'] ) ) {
+		if ( ! isset( $old_data['frequency'] ) || '' === $old_data['frequency'] ) {
 			$scan['day']   = 'sunday';
-			$scan['day_n'] = '1';
+			$scan['day_n'] = 1;
 
 			return $scan;
 		} else {
@@ -277,75 +279,75 @@ class Config_Adapter extends Component {
 		$default_ua_lockout_values    = ( new Model_Ua_Lockout() )->get_default_values();
 
 		$iplockout = array(
-			'login_protection'                       => empty( $old_data['login_protection'] )
+			'login_protection'                       => ! isset( $old_data['login_protection'] ) || ! is_bool( $old_data['login_protection'] )
 				? true : $old_data['login_protection'],
-			'login_protection_login_attempt'         => empty( $old_data['login_protection_login_attempt'] )
+			'login_protection_login_attempt'         => ! isset( $old_data['login_protection_login_attempt'] ) || ! is_numeric( $old_data['login_protection_login_attempt'] )
 				? '5' : $old_data['login_protection_login_attempt'],
-			'login_protection_lockout_timeframe'     => empty( $old_data['login_protection_lockout_timeframe'] )
+			'login_protection_lockout_timeframe'     => ! isset( $old_data['login_protection_lockout_timeframe'] ) || ! is_numeric( $old_data['login_protection_lockout_timeframe'] )
 				? '300' : $old_data['login_protection_lockout_timeframe'],
-			'login_protection_lockout_ban'           => empty( $old_data['login_protection_lockout_ban'] )
+			'login_protection_lockout_ban'           => ! isset( $old_data['login_protection_lockout_ban'] ) || ! is_bool( $old_data['login_protection_lockout_ban'] )
 				? false : $old_data['login_protection_lockout_ban'],
-			'login_protection_lockout_duration'      => empty( $old_data['login_protection_lockout_duration'] )
+			'login_protection_lockout_duration'      => ! isset( $old_data['login_protection_lockout_duration'] ) || ! is_numeric( $old_data['login_protection_lockout_duration'] )
 				? '4' : $old_data['login_protection_lockout_duration'],
-			'login_protection_lockout_duration_unit' => empty( $old_data['login_protection_lockout_duration_unit'] )
+			'login_protection_lockout_duration_unit' => ! isset( $old_data['login_protection_lockout_duration_unit'] ) || ! is_string( $old_data['login_protection_lockout_duration_unit'] )
 				? 'hours' : $old_data['login_protection_lockout_duration_unit'],
-			'login_protection_lockout_message'       => empty( $old_data['login_protection_lockout_message'] )
+			'login_protection_lockout_message'       => ! isset( $old_data['login_protection_lockout_message'] ) || '' === $old_data['login_protection_lockout_message']
 				? $default_login_lockout_values['message']
 				: $old_data['login_protection_lockout_message'],
-			'username_blacklist'                     => empty( $old_data['username_blacklist'] )
+			'username_blacklist'                     => ! isset( $old_data['username_blacklist'] ) || ! is_string( $old_data['username_blacklist'] )
 				? '' : $old_data['username_blacklist'],
-			'detect_404'                             => empty( $old_data['detect_404'] )
+			'detect_404'                             => ! isset( $old_data['detect_404'] ) || ! is_bool( $old_data['detect_404'] )
 				? true : $old_data['detect_404'],
-			'detect_404_threshold'                   => empty( $old_data['detect_404_threshold'] )
+			'detect_404_threshold'                   => ! isset( $old_data['detect_404_threshold'] ) || ! is_numeric( $old_data['detect_404_threshold'] )
 				? '20' : $old_data['detect_404_threshold'],
-			'detect_404_timeframe'                   => empty( $old_data['detect_404_timeframe'] )
+			'detect_404_timeframe'                   => ! isset( $old_data['detect_404_timeframe'] ) || ! is_numeric( $old_data['detect_404_timeframe'] )
 				? '300' : $old_data['detect_404_timeframe'],
-			'detect_404_lockout_ban'                 => empty( $old_data['detect_404_lockout_ban'] )
+			'detect_404_lockout_ban'                 => ! isset( $old_data['detect_404_lockout_ban'] ) || ! is_bool( $old_data['detect_404_lockout_ban'] )
 				? false : $old_data['detect_404_lockout_ban'],
-			'detect_404_lockout_duration'            => empty( $old_data['detect_404_lockout_duration'] )
+			'detect_404_lockout_duration'            => ! isset( $old_data['detect_404_lockout_duration'] ) || ! is_numeric( $old_data['detect_404_lockout_duration'] )
 				? '4' : $old_data['detect_404_lockout_duration'],
-			'detect_404_lockout_duration_unit'       => empty( $old_data['detect_404_lockout_duration_unit'] )
+			'detect_404_lockout_duration_unit'       => ! isset( $old_data['detect_404_lockout_duration_unit'] ) || ! is_string( $old_data['detect_404_lockout_duration_unit'] )
 				? 'hours' : $old_data['detect_404_lockout_duration_unit'],
-			'detect_404_lockout_message'             => empty( $old_data['detect_404_lockout_message'] )
+			'detect_404_lockout_message'             => ! isset( $old_data['detect_404_lockout_message'] ) || '' === $old_data['detect_404_lockout_message']
 				? $default_404_lockout_values['message']
 				: $old_data['detect_404_lockout_message'],
 			'detect_404_blacklist'                   => $merged_bl_file_data,
 			'detect_404_whitelist'                   => $merged_wl_file_data,
-			'detect_404_logged'                      => empty( $old_data['detect_404_logged'] )
+			'detect_404_logged'                      => ! isset( $old_data['detect_404_logged'] ) || ! is_bool( $old_data['detect_404_logged'] )
 				? true : $old_data['detect_404_logged'],
-			'ip_blacklist'                           => empty( $old_data['ip_blacklist'] )
+			'ip_blacklist'                           => ! isset( $old_data['ip_blacklist'] ) || ! is_string( $old_data['ip_blacklist'] )
 				? '' : $old_data['ip_blacklist'],
-			'ip_whitelist'                           => empty( $old_data['ip_whitelist'] )
+			'ip_whitelist'                           => ! isset( $old_data['ip_whitelist'] ) || ! is_string( $old_data['ip_whitelist'] )
 				? '' : $old_data['ip_whitelist'],
-			'country_blacklist'                      => empty( $old_data['country_blacklist'] )
+			'country_blacklist'                      => ! isset( $old_data['country_blacklist'] ) || ! is_string( $old_data['country_blacklist'] )
 				? '' : $old_data['country_blacklist'],
-			'country_whitelist'                      => empty( $old_data['country_whitelist'] )
+			'country_whitelist'                      => ! isset( $old_data['country_whitelist'] ) || ! is_string( $old_data['country_whitelist'] )
 				? '' : $old_data['country_whitelist'],
-			'ip_lockout_message'                     => empty( $old_data['ip_lockout_message'] )
+			'ip_lockout_message'                     => ! isset( $old_data['ip_lockout_message'] ) || '' === $old_data['ip_lockout_message']
 				? $default_ip_lockout_values['message']
 				: $old_data['ip_lockout_message'],
-			'login_lockout_notification'             => empty( $old_data['login_lockout_notification'] )
+			'login_lockout_notification'             => ! isset( $old_data['login_lockout_notification'] ) || ! is_bool( $old_data['login_lockout_notification'] )
 				? true : $old_data['login_lockout_notification'],
-			'ip_lockout_notification'                => empty( $old_data['ip_lockout_notification'] )
+			'ip_lockout_notification'                => ! isset( $old_data['ip_lockout_notification'] ) || ! is_bool( $old_data['ip_lockout_notification'] )
 				? true : $old_data['ip_lockout_notification'],
 			'notification'                           => 'enabled',
-			'cooldown_enabled'                       => empty( $old_data['cooldown_enabled'] )
+			'cooldown_enabled'                       => ! isset( $old_data['cooldown_enabled'] ) || ! is_bool( $old_data['cooldown_enabled'] )
 				? false : $old_data['cooldown_enabled'],
-			'cooldown_number_lockout'                => empty( $old_data['cooldown_number_lockout'] )
+			'cooldown_number_lockout'                => ! isset( $old_data['cooldown_number_lockout'] ) || ! is_numeric( $old_data['cooldown_number_lockout'] )
 				? '3' : $old_data['cooldown_number_lockout'],
-			'cooldown_period'                        => empty( $old_data['cooldown_period'] )
+			'cooldown_period'                        => ! isset( $old_data['cooldown_period'] ) || ! is_numeric( $old_data['cooldown_period'] )
 				? '24' : $old_data['cooldown_period'],
 			'report'                                 => isset( $old_data['report'] ) && $old_data['report'] ? 'enabled' : 'disabled',
-			'report_frequency'                       => empty( $old_data['report_frequency'] )
+			'report_frequency'                       => ! isset( $old_data['report_frequency'] ) || '' === $old_data['report_frequency']
 				? 'weekly'
 				: $this->frequency_type( $old_data['report_frequency'] ),
 			// Data for 'day' below.
-			'report_time'                            => empty( $old_data['report_time'] )
+			'report_time'                            => ! isset( $old_data['report_time'] ) || '' === $old_data['report_time']
 				? '4:00' : $old_data['report_time'],
-			'storage_days'                           => empty( $old_data['storage_days'] )
+			'storage_days'                           => ! isset( $old_data['storage_days'] ) || '' === $old_data['storage_days']
 				? '180' : $old_data['storage_days'],
 			'geoIP_db'                               => $old_data['geoIP_db'] ?? '',
-			'ip_blocklist_cleanup_interval'          => empty( $old_data['ip_blocklist_cleanup_interval'] )
+			'ip_blocklist_cleanup_interval'          => ! isset( $old_data['ip_blocklist_cleanup_interval'] ) || '' === $old_data['ip_blocklist_cleanup_interval']
 				? 'never' : $old_data['ip_blocklist_cleanup_interval'],
 			// For UA Banning.
 			'ua_banning_enabled'                     => $old_data['ua_banning_enabled'] ?? false,
@@ -358,20 +360,20 @@ class Config_Adapter extends Component {
 			'global_ip_list'                         => $old_data['global_ip_list'] ?? false,
 			'global_ip_list_blocklist_autosync'      => $old_data['global_ip_list_blocklist_autosync'] ?? false,
 		);
-		if ( isset( $old_data['lastReportSent'] ) && ! empty( $old_data['lastReportSent'] ) ) {
+		if ( isset( $old_data['lastReportSent'] ) && '' !== $old_data['lastReportSent'] ) {
 			$iplockout['last_sent'] = $old_data['lastReportSent'];
 		}
 
-		$iplockout['report_subscribers']       = empty( $old_data['report_receipts'] )
+		$iplockout['report_subscribers']       = ! isset( $old_data['report_receipts'] ) || ! is_array( $old_data['report_receipts'] ) || array() === $old_data['report_receipts']
 			? array()
 			: $this->get_subscribers( $old_data['report_receipts'] );
-		$iplockout['notification_subscribers'] = empty( $old_data['receipts'] )
+		$iplockout['notification_subscribers'] = ! isset( $old_data['receipts'] ) || ! is_array( $old_data['receipts'] ) || array() === $old_data['receipts']
 			? array()
 			: $this->get_subscribers( $old_data['receipts'] );
 
-		if ( empty( $old_data['report_frequency'] ) ) {
+		if ( ! isset( $old_data['report_frequency'] ) || '' === $old_data['report_frequency'] ) {
 			$iplockout['day']   = 'sunday';
-			$iplockout['day_n'] = '1';
+			$iplockout['day_n'] = 1;
 
 			return $iplockout;
 		} else {
@@ -395,27 +397,27 @@ class Config_Adapter extends Component {
 				? $old_data['enabled']
 				: (bool) $old_data['enabled'],
 			'report'       => isset( $old_data['notification'] ) && $old_data['notification'] ? 'enabled' : 'disabled',
-			'frequency'    => empty( $old_data['frequency'] )
+			'frequency'    => ! isset( $old_data['frequency'] ) || '' === $old_data['frequency']
 				? 'weekly'
 				: $this->frequency_type( $old_data['frequency'] ),
-			'time'         => empty( $old_data['time'] )
+			'time'         => ! isset( $old_data['time'] ) || '' === $old_data['time']
 				? '4:00'
 				: $old_data['time'],
-			'storage_days' => empty( $old_data['storage_days'] )
+			'storage_days' => ! isset( $old_data['storage_days'] ) || '' === $old_data['storage_days']
 				? '6 months'
 				: $old_data['storage_days'],
 		);
-		if ( isset( $old_data['lastReportSent'] ) && ! empty( $old_data['lastReportSent'] ) ) {
+		if ( isset( $old_data['lastReportSent'] ) && '' !== $old_data['lastReportSent'] ) {
 			$audit['last_sent'] = $old_data['lastReportSent'];
 		}
 
-		$audit['subscribers'] = empty( $old_data['receipts'] )
+		$audit['subscribers'] = ! isset( $old_data['receipts'] ) || ! is_array( $old_data['receipts'] ) || array() === $old_data['receipts']
 			? array()
 			: $this->get_subscribers( $old_data['receipts'] );
 
-		if ( empty( $old_data['frequency'] ) ) {
+		if ( ! isset( $old_data['frequency'] ) || '' === $old_data['frequency'] ) {
 			$audit['day']   = 'sunday';
-			$audit['day_n'] = '1';
+			$audit['day_n'] = 1;
 
 			return $audit;
 		} else {
@@ -458,7 +460,7 @@ class Config_Adapter extends Component {
 	 * @return array
 	 */
 	public function update_mask_login( array $old_data ): array {
-		if ( empty( $old_data ) ) {
+		if ( array() === $old_data ) {
 			// Sometimes migrated data is empty.
 			return array(
 				'mask_url'                 => '',
@@ -468,7 +470,6 @@ class Config_Adapter extends Component {
 				'redirect_traffic_page_id' => 0,
 			);
 		} else {
-
 			return array(
 				'enabled'                  => $old_data['enabled'],
 				'mask_url'                 => $old_data['mask_url'] ?? '',
@@ -489,7 +490,7 @@ class Config_Adapter extends Component {
 	 * Leave 'sh_xframe_urls' for config migration.
 	 */
 	public function update_security_headers( array $old_data ): array {
-		if ( empty( $old_data ) ) {
+		if ( array() === $old_data ) {
 			// Sometimes migrated data is empty.
 			$model_sec_headers = new Security_Headers();
 

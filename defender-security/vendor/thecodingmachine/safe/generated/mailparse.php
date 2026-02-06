@@ -10,14 +10,15 @@ use Safe\Exceptions\MailparseException;
  * The contents of the section will be decoded according to their transfer
  * encoding - base64, quoted-printable and uuencoded text are supported.
  *
- * @param resource $mimemail A valid MIME resource, created with
+ * @param resource      $mimemail     A valid MIME resource, created with
  * mailparse_msg_create.
- * @param mixed $filename Can be a file name or a valid stream resource.
- * @param callable $callbackfunc If set, this must be either a valid callback that will be passed the
+ * @param mixed         $filename     Can be a file name or a valid stream resource.
+ * @param callable|null $callbackfunc If set, this must be either a valid callback that will be passed the
  * extracted section, or NULL to make this function return the
  * extracted section.
  *
  * If not specified, the contents will be sent to "stdout".
+ *
  * @return string If callbackfunc is not NULL returns TRUE on
  * success.
  *
@@ -26,7 +27,7 @@ use Safe\Exceptions\MailparseException;
  * @throws MailparseException
  *
  */
-function mailparse_msg_extract_part_file($mimemail, $filename, callable $callbackfunc = null): string
+function mailparse_msg_extract_part_file($mimemail, $filename, ?callable $callbackfunc = null): string
 {
     error_clear_last();
     if ($callbackfunc !== null) {

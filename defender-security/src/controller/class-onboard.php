@@ -20,7 +20,7 @@ use WP_Defender\Controller\Scan as Controller_Scan;
 use WP_Defender\Controller\Hub_Connector;
 use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
 use WP_Defender\Component\IP\Antibot_Global_Firewall;
-use WP_Defender\Component\Feature_Modal;
+use WP_Defender\Component\Scan as Scan_Component;
 
 /**
  * This class is only used once, after the activation on a fresh install.
@@ -68,10 +68,7 @@ class Onboard extends Event {
 		$this->register_page(
 			$this->get_menu_title(),
 			$this->parent_slug,
-			array(
-				&$this,
-				'main_view',
-			),
+			array( $this, 'main_view' ),
 			null,
 			$this->get_menu_icon()
 		);
@@ -186,13 +183,13 @@ class Onboard extends Event {
 			if ( $this->is_tracking_active() ) {
 				wd_di()->get( Model_Main_Setting::class )->toggle_tracking( true );
 			}
-			$scan_controller = wd_di()->get( Controller_Scan::class );
 
 			if ( is_multisite() ) {
+				wd_di()->get( Scan_Component::class )->gather_actioned_plugin_details();
 				// The admin-ajax.php file doesn't trigger the init hook, so we need to call the scan function directly.
-				$scan_controller->process();
+				wd_di()->get( Controller_Scan::class )->process();
 			} else {
-				$scan_controller->do_async_scan( 'install' );
+				wd_di()->get( Controller_Scan::class )->run_scan_mechanisms_from( 'install' );
 			}
 		}
 	}

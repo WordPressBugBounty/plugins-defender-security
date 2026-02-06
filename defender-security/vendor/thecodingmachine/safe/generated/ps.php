@@ -768,17 +768,18 @@ function ps_fill($psdoc): void
  *
  *
  *
- * @param resource $psdoc Resource identifier of the postscript file
+ * @param resource   $psdoc    Resource identifier of the postscript file
  * as returned by ps_new.
- * @param string $name Name of the parameter.
- * @param float $modifier An identifier needed if a parameter of a resource is requested,
+ * @param string     $name     Name of the parameter.
+ * @param float|null $modifier An identifier needed if a parameter of a resource is requested,
  * e.g. the size of an image. In such a case the resource id is
  * passed.
+ *
  * @return string Returns the value of the parameter.
  * @throws PsException
  *
  */
-function ps_get_parameter($psdoc, string $name, float $modifier = null): string
+function ps_get_parameter($psdoc, string $name, ?float $modifier = null): string
 {
     error_clear_last();
     if ($modifier !== null) {
@@ -917,15 +918,16 @@ function ps_new()
  * Creates a new file on disk and writes the PostScript document into it. The
  * file will be closed when ps_close is called.
  *
- * @param resource $psdoc Resource identifier of the postscript file
+ * @param resource    $psdoc    Resource identifier of the postscript file
  * as returned by ps_new.
- * @param string $filename The name of the postscript file.
+ * @param string|null $filename The name of the postscript file.
  * If filename is not passed the document will be
  * created in memory and all output will go straight to the browser.
+ *
  * @throws PsException
  *
  */
-function ps_open_file($psdoc, string $filename = null): void
+function ps_open_file($psdoc, ?string $filename = null): void
 {
     error_clear_last();
     if ($filename !== null) {

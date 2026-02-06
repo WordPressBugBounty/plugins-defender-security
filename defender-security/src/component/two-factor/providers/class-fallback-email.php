@@ -161,7 +161,7 @@ class Fallback_Email extends Two_Factor_Provider {
 			$user_id = get_current_user_id();
 		}
 		$email = get_user_meta( $user_id, self::FALLBACK_EMAIL_KEY, true );
-		if ( empty( $email ) ) {
+		if ( ! is_string( $email ) || '' === $email ) {
 			$user = get_user_by( 'id', $user_id );
 			if ( ! is_object( $user ) ) {
 				return false;
@@ -182,7 +182,7 @@ class Fallback_Email extends Two_Factor_Provider {
 	public function validate_authentication( $user ) {
 		$otp         = HTTP::post( 'otp', '' );
 		$backup_code = get_user_meta( $user->ID, self::FALLBACK_BACKUP_CODE_KEY, true );
-		if ( ! empty( $backup_code ) && Crypt::compare_lines( $backup_code['code'], wp_hash( $otp ) )
+		if ( isset( $backup_code['code'] ) && isset( $backup_code['time'] ) && Crypt::compare_lines( $backup_code['code'], wp_hash( $otp ) )
 			&& strtotime( '+3 minutes', $backup_code['time'] ) > time()
 		) {
 			delete_user_meta( $user->ID, self::FALLBACK_BACKUP_CODE_KEY );
@@ -193,7 +193,7 @@ class Fallback_Email extends Two_Factor_Provider {
 
 			return new WP_Error(
 				'opt_fail',
-				empty( $lockout_message ) ? esc_html__( 'ERROR: Invalid passcode.', 'defender-security' ) : $lockout_message
+				'' === $lockout_message ? esc_html__( 'ERROR: Invalid passcode.', 'defender-security' ) : $lockout_message
 			);
 		}
 	}

@@ -19,7 +19,14 @@ use WP_Defender\Component;
  */
 class Network_Cron_Manager extends Component {
 	/**
-	 * Array of registered callbacks.
+	 * Log file name constant.
+	 *
+	 * @var string
+	 */
+	public const LOG_FILE_NAME = 'network-cron-manager';
+
+	/**
+	 * Array of registered hook configurations.
 	 *
 	 * @var array
 	 */
@@ -52,14 +59,16 @@ class Network_Cron_Manager extends Component {
 	 * Initializes the cron manager and hooks into WordPress.
 	 */
 	public function __construct() {
-		add_action( 'init', array( $this, 'check_and_execute_callbacks' ), 20 );
+		add_action( 'shutdown', array( $this, 'check_and_execute_callbacks' ), PHP_INT_MAX );
 	}
 
 	/**
 	 * Load callbacks from network options.
 	 */
-	private function load_callbacks() {
-		$this->callbacks = get_network_option( get_main_network_id(), $this->callbacks_option, array() );
+	public function load_callbacks() {
+		if ( array() === $this->callbacks ) {
+			$this->callbacks = get_network_option( get_main_network_id(), $this->callbacks_option, array() );
+		}
 	}
 
 	/**
@@ -72,37 +81,136 @@ class Network_Cron_Manager extends Component {
 	/**
 	 * Register a callback for cron execution.
 	 *
-	 * @param string   $hook_name        The hook name.
-	 * @param callable $callback         The callback function.
-	 * @param int      $interval_seconds The interval in seconds.
-	 * @param array    $args             Arguments for the callback.
+	 * Automatically handles both multisite and single-site setups:
+	 * - For multisite: Uses Network Cron Manager execution with start_time support
+	 * - For single-site: Uses WordPress native cron with proper scheduling
+	 *
+	 * @param string          $hook_name The hook name.
+	 * @param callable        $callback The callback function.
+	 * @param int             $interval_seconds The interval in seconds.
+	 * @param int|string|null $start_time When to start: timestamp, 'next Thursday', etc. Defaults to defender_get_current_time().
+	 * @param array           $args Arguments for the callback.
+	 *
 	 * @return bool|void False on validation failure, void on success.
 	 */
-	public function register_callback( $hook_name, $callback, $interval_seconds, $args = array() ) {
+	public function register_callback( string $hook_name, callable $callback, int $interval_seconds, $start_time = null, array $args = array() ) {
 		$hook_name = sanitize_key( $hook_name );
-		if ( empty( $hook_name ) || ! is_string( $hook_name ) ) {
+		if ( '' === $hook_name ) {
+			$this->log( 'Task registration failed: Invalid task name provided', self::LOG_FILE_NAME );
 			return false;
 		}
 		if ( ! is_callable( $callback ) ) {
+			$this->log( "Task registration failed: Task '{$hook_name}' function cannot be called", self::LOG_FILE_NAME );
 			return false;
 		}
 		if ( ! is_numeric( $interval_seconds ) || $interval_seconds < 1 ) {
+			$this->log( "Task registration failed: Task '{$hook_name}' has invalid run interval ({$interval_seconds} seconds)", self::LOG_FILE_NAME );
 			return false;
 		}
-		$this->callbacks[ $hook_name ] = array(
-			'callback' => $callback,
-			'interval' => $interval_seconds,
-			'args'     => $args,
-		);
-		$this->save_callbacks();
+
+		if ( is_multisite() ) {
+			if ( wp_next_scheduled( $hook_name ) ) {
+				wp_clear_scheduled_hook( $hook_name );
+				$this->log( "Cleared existing WordPress cron event for '{$hook_name}' to prevent conflicts", self::LOG_FILE_NAME );
+			}
+
+			// Only save if this is a new callback.
+			if ( ! isset( $this->callbacks[ $hook_name ] ) || $this->callbacks[ $hook_name ]['interval'] !== $interval_seconds ) {
+				$this->callbacks[ $hook_name ] = array(
+					'interval'   => $interval_seconds,
+					'start_time' => $start_time,
+					'args'       => $args,
+				);
+				$this->save_callbacks();
+			}
+		} elseif ( ! wp_next_scheduled( $hook_name ) ) {
+				$start_timestamp = $this->calculate_start_time( $start_time );
+				$schedule        = $this->get_schedule_name( $interval_seconds );
+				wp_schedule_event( $start_timestamp, $schedule, $hook_name );
+		}
+
+		// Add the action to the hook (applies to both multisite and single-site).
+		add_action( $hook_name, $callback );
+	}
+
+	/**
+	 * Calculate the start time for a cron event.
+	 *
+	 * @param int|string|null $start_time The start time specification.
+	 *
+	 * @return int The timestamp when the cron should first run.
+	 */
+	private function calculate_start_time( $start_time = null ) {
+		if ( null === $start_time ) {
+			return defender_get_current_time();
+		}
+
+		if ( is_numeric( $start_time ) ) {
+			return (int) $start_time;
+		}
+
+		if ( is_string( $start_time ) ) {
+			$timestamp = strtotime( $start_time );
+
+			return false !== $timestamp ? $timestamp : defender_get_current_time();
+		}
+
+		return defender_get_current_time();
+	}
+
+	/**
+	 * Get WordPress cron schedule name from interval seconds.
+	 *
+	 * @param int $interval_seconds The interval in seconds.
+	 *
+	 * @return string The schedule name.
+	 */
+	private function get_schedule_name( $interval_seconds ) {
+		$schedules = wp_get_schedules();
+
+		foreach ( $schedules as $schedule_name => $schedule_data ) {
+			if ( isset( $schedule_data['interval'] ) && $schedule_data['interval'] === $interval_seconds ) {
+				return $schedule_name;
+			}
+		}
+
+		switch ( $interval_seconds ) {
+			case 12 * HOUR_IN_SECONDS:
+				return 'twicedaily';
+			case DAY_IN_SECONDS:
+				return 'daily';
+			case WEEK_IN_SECONDS:
+				return 'weekly';
+			case HOUR_IN_SECONDS:
+			default:
+				return 'hourly';
+		}
 	}
 
 	/**
 	 * Check and execute registered callbacks.
 	 */
 	public function check_and_execute_callbacks() {
-		$this->load_callbacks();
-		if ( empty( $this->callbacks ) ) {
+		// Early exit during plugin deletion/uninstall.
+		if ( defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			return;
+		}
+
+		// Skip if page post ID exists, or during AJAX/cron execution to prevent concurrent runs.
+		$post_data = defender_get_data_from_request( null, 'p' );
+		if (
+			( is_array( $post_data ) && array() !== $post_data )
+			|| defined( 'DOING_AJAX' )
+			|| defined( 'DOING_CRON' )
+		) {
+			return;
+		}
+
+		if ( did_action( 'after_setup_theme' ) > 0 ) {
+			$this->load_callbacks();
+		}
+
+		if ( array() === $this->callbacks ) {
 			return;
 		}
 		foreach ( $this->callbacks as $hook_name => $config ) {
@@ -117,33 +225,35 @@ class Network_Cron_Manager extends Component {
 	 * @param array  $config    The callback configuration.
 	 */
 	private function execute_callback( $hook_name, $config ) {
-		if ( ! $this->should_execute( $hook_name, $config['interval'] ) ) {
+		if ( ! $this->should_execute( $hook_name, $config ) ) {
 			return;
 		}
 		if ( ! $this->acquire_lock( $hook_name ) ) {
-			$this->log( "Failed to acquire lock for {$hook_name}", 'cron-manager' );
 			return;
 		}
+
 		try {
-			if ( is_callable( $config['callback'] ) ) {
-				call_user_func_array( $config['callback'], $config['args'] );
-				$this->update_last_run( $hook_name );
-			}
+			// Execute the hook with arguments.
+			do_action( $hook_name, ...$config['args'] );
+			$this->update_last_run( $hook_name );
 		} catch ( \Exception $exception ) {
-			$this->log( "Exception in {$hook_name}: " . $exception->getMessage(), 'cron-manager' );
+			$this->log( "Task '{$hook_name}' failed to run: " . $exception->getMessage(), self::LOG_FILE_NAME );
 		} finally {
 			$this->release_lock( $hook_name );
 		}
 	}
 
 	/**
-	 * Check if a callback should be executed based on interval.
+	 * Check if a callback should be executed based on interval and start_time.
 	 *
 	 * @param string $hook_name The hook name.
-	 * @param int    $interval  The interval in seconds.
+	 * @param array  $config The callback configuration.
+	 *
 	 * @return bool Whether the callback should execute.
 	 */
-	private function should_execute( $hook_name, $interval ) {
+	private function should_execute( $hook_name, $config ) {
+		$interval = $config['interval'];
+
 		/**
 		 * Filter to modify execution intervals for network cron jobs.
 		 *
@@ -151,13 +261,24 @@ class Network_Cron_Manager extends Component {
 		 * @param string $hook_name The hook name being executed.
 		 */
 		$interval     = apply_filters( 'wpdef_network_cron_interval', $interval, $hook_name );
+		$interval     = ! is_int( $interval ) ? (int) $interval : $interval;
 		$last_run     = $this->get_last_run( $hook_name );
-		$current_time = time();
-		$time_diff    = $current_time - $last_run;
-		if ( $last_run && $time_diff < $interval ) {
-			$this->log( "Skipping {$hook_name}: not enough time elapsed ({$time_diff} < {$interval})", 'cron-manager' );
-			return false;
+		$current_time = defender_get_current_time();
+
+		if ( ! $last_run && isset( $config['start_time'] ) && null !== $config['start_time'] ) {
+			$start_timestamp = $this->calculate_start_time( $config['start_time'] );
+			if ( $current_time < $start_timestamp ) {
+				return false;
+			}
 		}
+
+		if ( $last_run ) {
+			$time_diff = $current_time - $last_run;
+			if ( $time_diff < $interval ) {
+				return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -175,12 +296,13 @@ class Network_Cron_Manager extends Component {
 		 * @param string $hook_name The hook name being locked.
 		 */
 		$lock_timeout  = apply_filters( 'wpdef_network_cron_lock_timeout', 300, $hook_name );
+		$lock_timeout  = ! is_int( $lock_timeout ) ? (int) $lock_timeout : $lock_timeout;
 		$lock_key      = $this->lock_prefix . $hook_name;
 		$existing_lock = get_network_option( get_main_network_id(), $lock_key );
-		if ( $existing_lock && ( time() - $existing_lock ) < $lock_timeout ) {
+		if ( 0 < $existing_lock && ( defender_get_current_time() - $existing_lock ) < $lock_timeout ) {
 			return false;
 		}
-		$lock_value = time();
+		$lock_value = defender_get_current_time();
 		return update_network_option( get_main_network_id(), $lock_key, $lock_value );
 	}
 
@@ -212,7 +334,7 @@ class Network_Cron_Manager extends Component {
 	 */
 	private function update_last_run( $hook_name ) {
 		$lastrun_key = $this->lastrun_prefix . $hook_name;
-		$timestamp   = time();
+		$timestamp   = defender_get_current_time();
 		update_network_option( get_main_network_id(), $lastrun_key, $timestamp );
 	}
 
@@ -245,5 +367,50 @@ class Network_Cron_Manager extends Component {
 				$this->lastrun_prefix . '%'
 			)
 		);
+	}
+
+	/**
+	 * Remove a specific callback.
+	 *
+	 * - For multisite: Remove the callback from the network option and release the lock.
+	 * - For single-site: Unschedule the task.
+	 *
+	 * @param string $hook_name The hook name.
+	 * @return bool Whether the callback was removed.
+	 */
+	public function remove_callback( string $hook_name ) {
+		$hook_name = sanitize_key( $hook_name );
+
+		if ( '' === $hook_name ) {
+			return false;
+		}
+
+		if ( is_multisite() ) {
+			// Ensure callbacks are loaded.
+			$this->load_callbacks();
+
+			if ( isset( $this->callbacks[ $hook_name ] ) ) {
+				unset( $this->callbacks[ $hook_name ] );
+				$this->save_callbacks();
+				$this->log( "Task '{$hook_name}' removed.", self::LOG_FILE_NAME );
+			}
+
+			// Cleanup hook history.
+			$last_run_key = $this->lastrun_prefix . $hook_name;
+			delete_network_option( get_main_network_id(), $last_run_key );
+
+			// Release the lock.
+			$this->release_lock( $hook_name );
+		} else {
+			// Unschedule the task.
+			$timestamp = wp_next_scheduled( $hook_name );
+
+			if ( $timestamp ) {
+				wp_unschedule_event( $timestamp, $hook_name );
+				$this->log( "Task '{$hook_name}' unscheduled.", self::LOG_FILE_NAME );
+			}
+		}
+
+		return true;
 	}
 }

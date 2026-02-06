@@ -11,7 +11,7 @@ $post_data = defender_get_data_from_request( null, 'p' );
 if ( isset( $post_data['pass1'], $post_data['pass2'] ) && $post_data['pass1'] !== $post_data['pass2'] ) {
 	$error_object->add( 'password_reset_mismatch', esc_html__( 'The passwords do not match.', 'defender-security' ) );
 }
-if ( ( ! $error_object->has_errors() ) && ! empty( $post_data['pass1'] ) ) {
+if ( ( ! $error_object->has_errors() ) && isset( $post_data['pass1'] ) && is_string( $post_data['pass1'] ) && '' !== trim( $post_data['pass1'] ) ) {
 	reset_password( $user, $post_data['pass1'] );
 	login_header(
 		esc_html__( 'Password Reset', 'defender-security' ),

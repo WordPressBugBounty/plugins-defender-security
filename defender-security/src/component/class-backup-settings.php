@@ -93,15 +93,15 @@ class Backup_Settings extends Component {
 		) {
 			return array();
 		}
-		if ( empty( $notification_object->in_house_recipients ) && empty( $notification_object->out_house_recipients ) ) {
+		if ( array() === $notification_object->in_house_recipients && array() === $notification_object->out_house_recipients ) {
 			return array();
 		}
 
 		$subscribers = array();
-		if ( ! empty( $notification_object->in_house_recipients ) ) {
+		if ( array() !== $notification_object->in_house_recipients ) {
 			$subscribers['in_house_recipients'] = $notification_object->in_house_recipients;
 		}
-		if ( ! empty( $notification_object->out_house_recipients ) ) {
+		if ( array() !== $notification_object->out_house_recipients ) {
 			$subscribers['out_house_recipients'] = $notification_object->out_house_recipients;
 		}
 
@@ -141,6 +141,7 @@ class Backup_Settings extends Component {
 			'check_known_vuln'              => $settings->check_known_vuln,
 			'scan_malware'                  => $settings->scan_malware,
 			'filesize'                      => $settings->filesize,
+			'check_abandoned_plugin'        => $settings->check_abandoned_plugin,
 			// @since 2.7.0 changes for Scheduled options.
 			'scheduled_scanning'            => $settings->scheduled_scanning,
 			'day'                           => $settings->day,
@@ -310,7 +311,7 @@ class Backup_Settings extends Component {
 	public function get_configs(): array {
 		$keys    = get_site_option( self::INDEXER, false );
 		$results = array();
-		if ( empty( $keys ) ) {
+		if ( ! is_array( $keys ) || array() === $keys ) {
 			return $results;
 		}
 
@@ -351,7 +352,7 @@ class Backup_Settings extends Component {
 	 */
 	public function clear_keys(): void {
 		$keys = get_site_option( self::INDEXER, array() );
-		if ( empty( $keys ) ) {
+		if ( array() === $keys ) {
 			delete_site_option( self::INDEXER );
 			delete_site_option( self::KEY );
 		}
@@ -362,7 +363,7 @@ class Backup_Settings extends Component {
 	 */
 	public function clear_configs(): void {
 		$keys = get_site_option( self::INDEXER, false );
-		if ( is_array( $keys ) && ! empty( $keys ) ) {
+		if ( is_array( $keys ) && array() !== $keys ) {
 			foreach ( $keys as $key ) {
 				delete_site_option( $key );
 			}
@@ -385,7 +386,7 @@ class Backup_Settings extends Component {
 			),
 			ARRAY_A
 		);
-		if ( ! empty( $result ) ) {
+		if ( array() !== $result ) {
 			foreach ( $result as $arr ) {
 				delete_site_option( $arr['option_name'] );
 			}
@@ -399,10 +400,11 @@ class Backup_Settings extends Component {
 	 */
 	public function maybe_create_default_config(): void {
 		$keys = get_site_option( self::INDEXER, array() );
-		if ( empty( $keys ) ) {
+		if ( array() === $keys ) {
 			$this->remove_unindexed_configs();
-			$key = 'wp_defender_config_default' . time();
-			if ( ! get_site_option( $key ) ) {
+			$key    = 'wp_defender_config_default' . time();
+			$config = get_site_option( $key );
+			if ( ! is_array( $config ) || array() === $config ) {
 				$this->create_basic_config( $key );
 			}
 		}
@@ -441,12 +443,13 @@ class Backup_Settings extends Component {
 				'check_plugins'                 => true,
 				'check_known_vuln'              => true,
 				'scan_malware'                  => true,
+				'check_abandoned_plugin'        => true,
 				'filesize'                      => 3,
 				'report'                        => 'enabled',
 				'always_send'                   => false,
 				'report_subscribers'            => $default_recipients,
 				'day'                           => 'sunday',
-				'day_n'                         => '1',
+				'day_n'                         => 1,
 				'time'                          => '4:00',
 				'frequency'                     => 'weekly',
 				// @since 2.7.0 We can remove it in the next version.
@@ -503,7 +506,7 @@ class Backup_Settings extends Component {
 				'report_subscribers'                     => $default_recipients,
 				'report_frequency'                       => 'weekly',
 				'day'                                    => 'sunday',
-				'day_n'                                  => '1',
+				'day_n'                                  => 1,
 				'report_time'                            => '4:00',
 				// @since 2.7.0 We can remove it in the next version.
 				'dry_run'                                => false,
@@ -590,7 +593,7 @@ class Backup_Settings extends Component {
 				'subscribers'  => $default_recipients,
 				'frequency'    => 'weekly',
 				'day'          => 'sunday',
-				'day_n'        => '1',
+				'day_n'        => 1,
 				'time'         => '4:00',
 				// @since 2.7.0 We can remove it in the next version.
 				'dry_run'      => false,
@@ -661,7 +664,7 @@ class Backup_Settings extends Component {
 			$keys[ $key ] = $key;
 			$keys         = array_unique( $keys );
 			update_site_option( self::INDEXER, $keys );
-		} elseif ( empty( $keys ) ) {
+		} elseif ( '' === $keys ) {
 			// The first config.
 			update_site_option( self::INDEXER, array( $key => $key ) );
 		}
@@ -719,7 +722,7 @@ class Backup_Settings extends Component {
 			// Return array of objects if the module is IP Lockout.
 			if ( is_object( $controller ) || is_array( $controller ) ) {
 				foreach ( $module_data as &$value ) {
-					if ( ! is_array( $value ) && ! filter_var( $value, FILTER_VALIDATE_BOOLEAN ) ) {
+					if ( isset( $value ) && ! is_array( $value ) && ! filter_var( $value, FILTER_VALIDATE_BOOLEAN ) ) {
 						$value = str_replace( '{nl}', PHP_EOL, $value );
 					}
 				}
@@ -735,7 +738,7 @@ class Backup_Settings extends Component {
 
 					$scan_notification = new Malware_Notification();
 					$scan_report       = new Malware_Report();
-					if ( ! empty( $module_data ) ) {
+					if ( array() !== $module_data ) {
 						$scan_settings = new Model_Scan();
 						// For Scan notification.
 						if ( isset( $module_data['notification'] ) ) {
@@ -748,29 +751,34 @@ class Backup_Settings extends Component {
 							if ( isset( $module_data['error_send'] ) ) {
 								$scan_notification->configs['error_send'] = $module_data['error_send'];
 							}
-							if ( ! empty( $module_data['email_subject_issue_found'] ) ) {
+							if ( isset( $module_data['email_subject_issue_found'] ) && '' !== $module_data['email_subject_issue_found'] ) {
 								$scan_notification->configs['template']['found']['subject'] = $module_data['email_subject_issue_found'];
 							}
-							if ( ! empty( $module_data['email_subject_issue_not_found'] ) ) {
+							if ( isset( $module_data['email_subject_issue_not_found'] ) && '' !== $module_data['email_subject_issue_not_found'] ) {
 								$scan_notification->configs['template']['not_found']['subject'] = $module_data['email_subject_issue_not_found'];
 							}
-							if ( ! empty( $module_data['email_subject_error'] ) ) {
+							if ( isset( $module_data['email_subject_error'] ) && '' !== $module_data['email_subject_error'] ) {
 								$scan_notification->configs['template']['error']['subject'] = $module_data['email_subject_error'];
 							}
-							if ( ! empty( $module_data['email_content_issue_found'] ) ) {
+							if ( isset( $module_data['email_content_issue_found'] ) && '' !== $module_data['email_content_issue_found'] ) {
 								$scan_notification->configs['template']['found']['body'] = $module_data['email_content_issue_found'];
 							}
-							if ( ! empty( $module_data['email_content_issue_not_found'] ) ) {
+							if ( isset( $module_data['email_content_issue_not_found'] ) && '' !== $module_data['email_content_issue_not_found'] ) {
 								$scan_notification->configs['template']['not_found']['body'] = $module_data['email_content_issue_not_found'];
 							}
-							if ( ! empty( $module_data['email_content_error'] ) ) {
+							if ( isset( $module_data['email_content_error'] ) && '' !== $module_data['email_content_error'] ) {
 								$scan_notification->configs['template']['error']['body'] = $module_data['email_content_error'];
 							}
-							if ( ! empty( $module_data['notification_subscribers'] ) ) {
+							if (
+								isset( $module_data['notification_subscribers'] )
+								&& is_array( $module_data['notification_subscribers'] )
+								&& array() !== $module_data['notification_subscribers']
+							) {
 								// Reset all recipients before.
 								$scan_notification->in_house_recipients  = array();
 								$scan_notification->out_house_recipients = array();
 								foreach ( $module_data['notification_subscribers'] as $key => $subscribers ) {
+									// @phpstan-ignore-next-line
 									$scan_notification->$key = $subscribers;
 								}
 							}
@@ -787,11 +795,12 @@ class Backup_Settings extends Component {
 						if ( isset( $module_data['always_send'] ) ) {
 							$scan_report->configs['always_send'] = $module_data['always_send'];
 						}
-						if ( ! empty( $module_data['report_subscribers'] ) ) {
+						if ( isset( $module_data['report_subscribers'] ) && is_array( $module_data['report_subscribers'] ) && array() !== $module_data['report_subscribers'] ) {
 							// Reset all recipients before.
 							$scan_report->in_house_recipients  = array();
 							$scan_report->out_house_recipients = array();
 							foreach ( $module_data['report_subscribers'] as $key => $subscribers ) {
+								// @phpstan-ignore-next-line
 								$scan_report->$key = $subscribers;
 							}
 						}
@@ -814,8 +823,8 @@ class Backup_Settings extends Component {
 							$scan_report->day   = $module_data['day'];
 						}
 						if ( isset( $module_data['day_n'] ) ) {
-							$scan_settings->day_n = $module_data['day_n'];
-							$scan_report->day_n   = $module_data['day_n'];
+							$scan_settings->day_n = (int) $module_data['day_n'];
+							$scan_report->day_n   = (int) $module_data['day_n'];
 						}
 						if ( isset( $module_data['time'] ) ) {
 							$scan_settings->time = $module_data['time'];
@@ -841,7 +850,7 @@ class Backup_Settings extends Component {
 						$lockout_controller->import_data( $module_data );
 					}
 					// For Notification and Report.
-					if ( ! empty( $module_data ) ) {
+					if ( is_array( $module_data ) && array() !== $module_data ) {
 						// Get string values for notification & report.
 						if ( isset( $module_data['notification'] ) ) {
 							$lockout_notification = new Firewall_Notification();
@@ -863,11 +872,12 @@ class Backup_Settings extends Component {
 							if ( isset( $module_data['cooldown_period'] ) ) {
 								$lockout_notification->configs['cool_off'] = $module_data['cooldown_period'];
 							}
-							if ( ! empty( $module_data['notification_subscribers'] ) ) {
+							if ( isset( $module_data['notification_subscribers'] ) && is_array( $module_data['notification_subscribers'] ) && array() !== $module_data['notification_subscribers'] ) {
 								// Reset all recipients before.
 								$lockout_notification->in_house_recipients  = array();
 								$lockout_notification->out_house_recipients = array();
 								foreach ( $module_data['notification_subscribers'] as $key => $subscribers ) {
+									// @phpstan-ignore-next-line
 									$lockout_notification->$key = $subscribers;
 								}
 							}
@@ -886,16 +896,17 @@ class Backup_Settings extends Component {
 								$lockout_report->frequency = $module_data['report_frequency'];
 							}
 							if ( isset( $module_data['day_n'] ) ) {
-								$lockout_report->day_n = $module_data['day_n'];
+								$lockout_report->day_n = (int) $module_data['day_n'];
 							}
 							if ( isset( $module_data['report_time'] ) ) {
 								$lockout_report->time = $module_data['report_time'];
 							}
-							if ( ! empty( $module_data['report_subscribers'] ) ) {
+							if ( isset( $module_data['report_subscribers'] ) && is_array( $module_data['report_subscribers'] ) && array() !== $module_data['report_subscribers'] ) {
 								// Reset all recipients before.
 								$lockout_report->in_house_recipients  = array();
 								$lockout_report->out_house_recipients = array();
 								foreach ( $module_data['report_subscribers'] as $key => $subscribers ) {
+									// @phpstan-ignore-next-line
 									$lockout_report->$key = $subscribers;
 								}
 							}
@@ -925,7 +936,7 @@ class Backup_Settings extends Component {
 						// @since 2.7.0 We can remove it in the next version.
 						$lockout_report->dry_run   = false;
 						$lockout_report->frequency = 'weekly';
-						$lockout_report->day_n     = '1';
+						$lockout_report->day_n     = 1;
 						$lockout_report->day       = 'sunday';
 						$lockout_report->time      = '4:00';
 						$lockout_report->save();
@@ -935,7 +946,7 @@ class Backup_Settings extends Component {
 					$controller->import_data( $module_data );
 					// Report.
 					$audit_report = new Audit_Report();
-					if ( ! empty( $module_data ) ) {
+					if ( is_array( $module_data ) && array() !== $module_data ) {
 						if (
 							$this->is_pro
 							&& isset( $module_data['report'] )
@@ -947,7 +958,7 @@ class Backup_Settings extends Component {
 							$audit_report->frequency = $module_data['frequency'];
 						}
 						if ( isset( $module_data['day_n'] ) ) {
-							$audit_report->day_n = $module_data['day_n'];
+							$audit_report->day_n = (int) $module_data['day_n'];
 						}
 						if ( isset( $module_data['day'] ) ) {
 							$audit_report->day = $module_data['day'];
@@ -955,11 +966,12 @@ class Backup_Settings extends Component {
 						if ( isset( $module_data['time'] ) ) {
 							$audit_report->time = $module_data['time'];
 						}
-						if ( ! empty( $module_data['subscribers'] ) ) {
+						if ( isset( $module_data['subscribers'] ) && is_array( $module_data['subscribers'] ) && array() !== $module_data['subscribers'] ) {
 							// Reset all recipients before.
 							$audit_report->in_house_recipients  = array();
 							$audit_report->out_house_recipients = array();
 							foreach ( $module_data['subscribers'] as $key => $subscribers ) {
+								// @phpstan-ignore-next-line
 								$audit_report->$key = $subscribers;
 							}
 						}
@@ -973,7 +985,7 @@ class Backup_Settings extends Component {
 						// @since 2.7.0 We can remove it in the next version.
 						$audit_report->dry_run   = false;
 						$audit_report->frequency = 'weekly';
-						$audit_report->day_n     = '1';
+						$audit_report->day_n     = 1;
 						$audit_report->day       = 'sunday';
 						$audit_report->time      = '4:00';
 					}
@@ -1018,7 +1030,7 @@ class Backup_Settings extends Component {
 						$need_reauth = $tweak_class->automate( $module_data, $request_reason );
 					}
 					// For Tweak notification.
-					if ( ! empty( $module_data ) && isset( $module_data['notification'] ) ) {
+					if ( is_array( $module_data ) && array() !== $module_data && isset( $module_data['notification'] ) ) {
 						$tweak_notification = new Tweak_Reminder();
 						if ( $tweak_notification->status !== $module_data['notification'] ) {
 							$tweak_notification->status = $module_data['notification'];
@@ -1049,11 +1061,12 @@ class Backup_Settings extends Component {
 						} else {
 							$tweak_notification->configs['reminder'] = 'weekly';
 						}
-						if ( ! empty( $module_data['subscribers'] ) ) {
+						if ( isset( $module_data['subscribers'] ) && is_array( $module_data['subscribers'] ) && array() !== $module_data['subscribers'] ) {
 							// Reset all recipients before.
 							$tweak_notification->in_house_recipients  = array();
 							$tweak_notification->out_house_recipients = array();
 							foreach ( $module_data['subscribers'] as $key => $subscribers ) {
+								// @phpstan-ignore-next-line
 								$tweak_notification->$key = $subscribers;
 							}
 						}
@@ -1079,7 +1092,7 @@ class Backup_Settings extends Component {
 	 * @return array Returns an array containing parsed data for import.
 	 */
 	public function parse_data_for_import( $configs = null ): array {
-		if ( empty( $configs ) ) {
+		if ( ! is_array( $configs ) || array() === $configs ) {
 			$configs = $this->gather_data();
 		}
 		$strings = array();
@@ -1174,8 +1187,9 @@ class Backup_Settings extends Component {
 	 * @return bool Returns true if the data is valid, otherwise false.
 	 */
 	public function verify_config_data( $data ): bool {
-		if ( ! isset( $data['name'], $data['configs'], $data['strings'] )
-			|| empty( $data['name'] ) || empty( $data['strings'] )
+		if (
+			! isset( $data['name'], $data['configs'], $data['strings'] )
+			|| '' === $data['name'] || ! is_array( $data['strings'] ) || array() === $data['strings']
 		) {
 			return false;
 		}
@@ -1191,7 +1205,7 @@ class Backup_Settings extends Component {
 	 * @return array Returns an array of imported module strings.
 	 */
 	public function import_module_strings( array $data ): array {
-		if ( empty( $data['strings'] ) ) {
+		if ( ! isset( $data['strings'] ) || ! is_array( $data['strings'] ) || array() === $data['strings'] ) {
 			return array();
 		}
 
@@ -1292,7 +1306,7 @@ class Backup_Settings extends Component {
 	 */
 	private function get_decoded_settings( string $key ): array {
 		$data = get_site_option( $key );
-		if ( $data && is_string( $data ) ) {
+		if ( is_string( $data ) && '' !== trim( $data ) ) {
 			$decoded_data = json_decode( $data, true );
 			if ( is_array( $decoded_data ) ) {
 				return $decoded_data;

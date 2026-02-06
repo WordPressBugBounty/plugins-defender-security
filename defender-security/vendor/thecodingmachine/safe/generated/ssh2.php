@@ -26,20 +26,21 @@ function ssh2_auth_agent($session, string $username): void
 /**
  * Authenticate using a public hostkey read from a file.
  *
- * @param resource $session An SSH connection link identifier, obtained from a call to
+ * @param resource    $session        An SSH connection link identifier, obtained from a call to
  * ssh2_connect.
- * @param string $username
- * @param string $hostname
- * @param string $pubkeyfile
- * @param string $privkeyfile
- * @param string $passphrase If privkeyfile is encrypted (which it should
+ * @param string      $username
+ * @param string      $hostname
+ * @param string      $pubkeyfile
+ * @param string      $privkeyfile
+ * @param string|null $passphrase     If privkeyfile is encrypted (which it should
  * be), the passphrase must be provided.
- * @param string $local_username If local_username is omitted, then the value
+ * @param string|null $local_username If local_username is omitted, then the value
  * for username will be used for it.
+ *
  * @throws Ssh2Exception
  *
  */
-function ssh2_auth_hostbased_file($session, string $username, string $hostname, string $pubkeyfile, string $privkeyfile, string $passphrase = null, string $local_username = null): void
+function ssh2_auth_hostbased_file($session, string $username, string $hostname, string $pubkeyfile, string $privkeyfile, ?string $passphrase = null, ?string $local_username = null): void
 {
     error_clear_last();
     if ($local_username !== null) {
@@ -79,19 +80,20 @@ function ssh2_auth_password($session, string $username, string $password): void
 /**
  * Authenticate using a public key read from a file.
  *
- * @param resource $session An SSH connection link identifier, obtained from a call to
+ * @param resource    $session    An SSH connection link identifier, obtained from a call to
  * ssh2_connect.
- * @param string $username
- * @param string $pubkeyfile The public key file needs to be in OpenSSH's format. It should look something like:
+ * @param string      $username
+ * @param string      $pubkeyfile The public key file needs to be in OpenSSH's format. It should look something like:
  *
  * ssh-rsa AAAAB3NzaC1yc2EAAA....NX6sqSnHA8= rsa-key-20121110
- * @param string $privkeyfile
- * @param string $passphrase If privkeyfile is encrypted (which it should
+ * @param string      $privkeyfile
+ * @param string|null $passphrase If privkeyfile is encrypted (which it should
  * be), the passphrase must be provided.
+ *
  * @throws Ssh2Exception
  *
  */
-function ssh2_auth_pubkey_file($session, string $username, string $pubkeyfile, string $privkeyfile, string $passphrase = null): void
+function ssh2_auth_pubkey_file($session, string $username, string $pubkeyfile, string $privkeyfile, ?string $passphrase = null): void
 {
     error_clear_last();
     if ($passphrase !== null) {
@@ -112,9 +114,9 @@ function ssh2_auth_pubkey_file($session, string $username, string $pubkeyfile, s
  * ssh2_fingerprint, then authenticate using either
  * password or public key.
  *
- * @param string $host
- * @param int $port
- * @param array $methods methods may be an associative array with up to four parameters
+ * @param string     $host
+ * @param int        $port
+ * @param array|null $methods methods may be an associative array with up to four parameters
  * as described below.
  *
  *
@@ -248,7 +250,7 @@ function ssh2_auth_pubkey_file($session, string $username, string $pubkeyfile, s
  * libssh2 library unless explicitly enabled
  * during build time by using the appropriate ./configure options.  See documentation
  * for the underlying library for more information.
- * @param array $callbacks callbacks may be an associative array with any
+ * @param array|null $callbacks callbacks may be an associative array with any
  * or all of the following parameters.
  *
  *
@@ -304,7 +306,7 @@ function ssh2_auth_pubkey_file($session, string $username, string $pubkeyfile, s
  * @throws Ssh2Exception
  *
  */
-function ssh2_connect(string $host, int $port = 22, array $methods = null, array $callbacks = null)
+function ssh2_connect(string $host, int $port = 22, ?array $methods = null, ?array $callbacks = null)
 {
     error_clear_last();
     if ($callbacks !== null) {
@@ -342,22 +344,23 @@ function ssh2_disconnect($session): void
 /**
  * Execute a command at the remote end and allocate a channel for it.
  *
- * @param resource $session An SSH connection link identifier, obtained from a call to
+ * @param resource    $session           An SSH connection link identifier, obtained from a call to
  * ssh2_connect.
- * @param string $command
- * @param string $pty
- * @param array $env env may be passed as an associative array of
+ * @param string      $command
+ * @param string|null $pty
+ * @param array|null  $env               env may be passed as an associative array of
  * name/value pairs to set in the target environment.
- * @param int $width Width of the virtual terminal.
- * @param int $height Height of the virtual terminal.
- * @param int $width_height_type width_height_type should be one of
+ * @param int         $width             Width of the virtual terminal.
+ * @param int         $height            Height of the virtual terminal.
+ * @param int         $width_height_type width_height_type should be one of
  * SSH2_TERM_UNIT_CHARS or
  * SSH2_TERM_UNIT_PIXELS.
+ *
  * @return resource Returns a stream on success.
  * @throws Ssh2Exception
  *
  */
-function ssh2_exec($session, string $command, string $pty = null, array $env = null, int $width = 80, int $height = 25, int $width_height_type = SSH2_TERM_UNIT_CHARS)
+function ssh2_exec($session, string $command, ?string $pty = null, ?array $env = null, int $width = 80, int $height = 25, int $width_height_type = SSH2_TERM_UNIT_CHARS)
 {
     error_clear_last();
     if ($width_height_type !== SSH2_TERM_UNIT_CHARS) {
@@ -383,19 +386,20 @@ function ssh2_exec($session, string $command, string $pty = null, array $env = n
 /**
  *
  *
- * @param resource $pkey Publickey Subsystem resource created by ssh2_publickey_init.
- * @param string $algoname Publickey algorithm (e.g.): ssh-dss, ssh-rsa
- * @param string $blob Publickey blob as raw binary data
- * @param bool $overwrite If the specified key already exists, should it be overwritten?
- * @param array $attributes Associative array of attributes to assign to this public key.
+ * @param resource   $pkey       Publickey Subsystem resource created by ssh2_publickey_init.
+ * @param string     $algoname   Publickey algorithm (e.g.): ssh-dss, ssh-rsa
+ * @param string     $blob       Publickey blob as raw binary data
+ * @param bool       $overwrite  If the specified key already exists, should it be overwritten?
+ * @param array|null $attributes Associative array of attributes to assign to this public key.
  * Refer to ietf-secsh-publickey-subsystem for a list of supported attributes.
  * To mark an attribute as mandatory, precede its name with an asterisk.
  * If the server is unable to support an attribute marked mandatory,
  * it will abort the add process.
+ *
  * @throws Ssh2Exception
  *
  */
-function ssh2_publickey_add($pkey, string $algoname, string $blob, bool $overwrite = false, array $attributes = null): void
+function ssh2_publickey_add($pkey, string $algoname, string $blob, bool $overwrite = false, ?array $attributes = null): void
 {
     error_clear_last();
     if ($attributes !== null) {

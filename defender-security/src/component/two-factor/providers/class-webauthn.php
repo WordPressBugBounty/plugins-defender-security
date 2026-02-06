@@ -419,7 +419,7 @@ class Webauthn extends Two_Factor_Provider {
 		$service_two_fa    = wd_di()->get( Two_Fa::class );
 		$enabled_providers = $service_two_fa->get_enabled_providers_for_user( $user );
 
-		if ( ! empty( $user->ID ) && true === in_array( self::$slug, $enabled_providers, true ) ) {
+		if ( isset( $user->ID ) && $user->ID > 0 && true === in_array( self::$slug, $enabled_providers, true ) ) {
 			$controller       = wd_di()->get( Webauthn_Controller::class );
 			$service_webauthn = wd_di()->get( Webauthn_Component::class );
 			$user_entity      = $controller->get_user_entity( $user->ID );

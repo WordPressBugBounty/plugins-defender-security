@@ -62,9 +62,9 @@ class Password_Protection extends Component {
 	 */
 	public function get_submitted_password() {
 		$password = '';
-		foreach ( array( 'pwd', 'pass1', 'password', 'edd_user_pass' ) as $key ) {
+		foreach ( array( 'pwd', 'pass1', 'password', 'edd_user_pass', 'password_1', 'account_password' ) as $key ) {
 			$submitted_pass = HTTP::post( $key );
-			if ( ! empty( $submitted_pass ) ) {
+			if ( '' !== $submitted_pass ) {
 				$password = $submitted_pass;
 				break;
 			}
@@ -125,12 +125,12 @@ class Password_Protection extends Component {
 			return false;
 		}
 
-		if ( empty( $user->roles ) ) {
+		if ( ! isset( $user->roles ) || array() === $user->roles ) {
 			// WP_User does have data about roles sometimes, e.g. on the Profile page, so we get it from userdata.
 			$user_id = $user->ID;
 			if ( ! is_multisite() ) {
 				$user_meta = get_userdata( $user_id );
-				if ( empty( $user_meta->roles ) ) {
+				if ( ! isset( $user_meta->roles ) || array() === $user_meta->roles ) {
 					// User should have roles.
 					$this->log( sprintf( "User ID: %d doesn't have roles.", $user_id ), self::PASSWORD_LOG );
 
@@ -139,7 +139,7 @@ class Password_Protection extends Component {
 				$user_roles = $user_meta->roles;
 			} else {
 				$arr_user_blogs = get_blogs_of_user( $user_id );
-				if ( empty( $arr_user_blogs ) ) {
+				if ( ! is_array( $arr_user_blogs ) || array() === $arr_user_blogs ) {
 					// User should be associated with some site.
 					$this->log( sprintf( 'User ID: %d is not associated with any site.', $user_id ), self::PASSWORD_LOG );
 
@@ -147,7 +147,7 @@ class Password_Protection extends Component {
 				}
 				$user_blog_id = array_key_first( $arr_user_blogs );
 				$user         = new WP_User( $user_id, '', $user_blog_id );
-				if ( empty( $user->roles ) ) {
+				if ( ! isset( $user->roles ) || array() === $user->roles ) {
 					$this->log( sprintf( "User ID: %d doesn't have roles on MU.", $user->ID ), self::PASSWORD_LOG );
 
 					return false;
@@ -158,7 +158,8 @@ class Password_Protection extends Component {
 			$user_roles = $user->roles;
 		}
 
-		return ! empty( array_intersect( $selected_user_roles, $user_roles ) );
+		$common_roles = array_intersect( $selected_user_roles, $user_roles );
+		return array() !== $common_roles;
 	}
 
 	/**
@@ -241,7 +242,8 @@ class Password_Protection extends Component {
 		$changed = (int) get_user_meta( $user->ID, 'wd_last_password_change', true );
 
 		if ( ! $changed ) {
-			return (int) strtotime( $user->user_registered );
+			$changed = strtotime( $user->user_registered );
+			$changed = ! is_int( $changed ) ? (int) $changed : $changed;
 		}
 
 		return $changed;

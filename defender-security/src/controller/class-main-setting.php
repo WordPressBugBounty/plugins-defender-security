@@ -14,13 +14,17 @@ use Calotes\Component\Response;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Backup_Settings;
 use WP_Defender\Component\Config\Config_Adapter;
+use WP_Defender\Component\Network_Cron_Manager;
+use WP_Defender\Traits\Defender_Dashboard_Client;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Setting\Main_Setting as Model_Main_Setting;
+use WP_Filesystem_Base;
 
 /**
  * Methods for handling main settings.
  */
 class Main_Setting extends Event {
+	use Defender_Dashboard_Client;
 
 	/**
 	 * The slug identifier for this controller.
@@ -65,10 +69,7 @@ class Main_Setting extends Event {
 		$this->register_page(
 			esc_html__( 'Settings', 'defender-security' ),
 			$this->slug,
-			array(
-				&$this,
-				'main_view',
-			),
+			array( $this, 'main_view' ),
 			$this->parent_slug
 		);
 
@@ -79,9 +80,18 @@ class Main_Setting extends Event {
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->register_routes();
 
-		// Add cron schedule to clean out outdated logs.
-		add_action( 'wp_defender_clear_logs', array( $this, 'clear_logs' ) );
-		add_action( 'admin_init', array( $this, 'check_cron_schedule' ) );
+		/**
+		 * Add cron schedule to clean out outdated logs.
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
+		 */
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->register_callback(
+			'wp_defender_clear_logs',
+			array( $this, 'clear_logs' ),
+			DAY_IN_SECONDS,
+			time() + HOUR_IN_SECONDS
+		);
 		add_action( 'wd_settings_update', array( $this, 'intercept_settings_update' ), 10, 2 );
 	}
 
@@ -233,6 +243,24 @@ class Main_Setting extends Event {
 	}
 
 	/**
+	 * Disconnect site from HUB.
+	 *
+	 * @defender_route
+	 * @return Response
+	 */
+	public function disconnect_site(): Response {
+		$this->logout();
+
+		return new Response(
+			true,
+			array(
+				'message'    => esc_html__( 'Site disconnected successfully!', 'defender-security' ),
+				'auto_close' => true,
+			)
+		);
+	}
+
+	/**
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
@@ -276,6 +304,8 @@ class Main_Setting extends Event {
 					'privacy_link' => Model_Main_Setting::PRIVACY_LINK,
 				),
 				'configs'       => $configs,
+				'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
+				'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
 			$this->dump_routes_and_nonces()
 		);
@@ -346,7 +376,7 @@ class Main_Setting extends Event {
 	public function import_config(): Response {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -364,7 +394,12 @@ class Main_Setting extends Event {
 		}
 
 		// If it's old config structure then we upgrade configs to new format.
-		if ( ! empty( $importer['configs'] ) && ! $this->service->check_for_new_structure( $importer['configs'] ) ) {
+		if (
+			isset( $importer['configs'] ) &&
+			is_array( $importer['configs'] ) &&
+			array() !== $importer['configs'] &&
+			! $this->service->check_for_new_structure( $importer['configs'] )
+		) {
 			$adapter             = wd_di()->get( Config_Adapter::class );
 			$importer['configs'] = $adapter->upgrade( $importer['configs'] );
 		}
@@ -390,7 +425,7 @@ class Main_Setting extends Event {
 		);
 
 		$configs['configs']     = $importer['configs'];
-		$configs['description'] = isset( $importer['description'] ) && ! empty( $importer['description'] )
+		$configs['description'] = isset( $importer['description'] ) && is_string( $importer['description'] ) && '' !== $importer['description']
 		? sanitize_textarea_field( $importer['description'] )
 		: '';
 		$configs['strings']     = $this->service->import_module_strings( $importer );
@@ -425,7 +460,7 @@ class Main_Setting extends Event {
 	public function new_config( Request $request ): Response {
 		$data = $request->get_data();
 		$name = trim( $data['name'] );
-		if ( empty( $name ) ) {
+		if ( '' === $name ) {
 			return new Response(
 				false,
 				array(
@@ -434,7 +469,7 @@ class Main_Setting extends Event {
 			);
 		}
 		$name     = sanitize_text_field( $name );
-		$desc     = isset( $data['desc'] ) && ! empty( $data['desc'] ) ? wp_kses_post( $data['desc'] ) : '';
+		$desc     = isset( $data['desc'] ) && is_string( $data['desc'] ) && '' !== trim( $data['desc'] ) ? wp_kses_post( $data['desc'] ) : '';
 		$key      = 'wp_defender_config_' . time();
 		$settings = $this->service->parse_data_for_import();
 		$data     = array_merge(
@@ -491,7 +526,7 @@ class Main_Setting extends Event {
 	 */
 	public function download_config() {
 		$key = defender_get_data_from_request( 'key', 'g' );
-		if ( empty( $key ) ) {
+		if ( ! is_string( $key ) || '' === trim( $key ) ) {
 			return new Response(
 				false,
 				array(
@@ -511,9 +546,9 @@ class Main_Setting extends Event {
 		}
 		$sample = $this->service->gather_data();
 		foreach ( $sample as $slug => $data ) {
-			foreach ( $data as $key => $val ) {
-				if ( ! isset( $config['configs'][ $slug ][ $key ] ) ) {
-					$config['configs'][ $slug ][ $key ] = null;
+			foreach ( $data as $k => $val ) {
+				if ( ! isset( $config['configs'][ $slug ][ $k ] ) ) {
+					$config['configs'][ $slug ][ $k ] = null;
 				}
 			}
 		}
@@ -534,7 +569,7 @@ class Main_Setting extends Event {
 	public function apply_config( Request $request ) {
 		$data = $request->get_data();
 		$key  = trim( $data['key'] );
-		if ( empty( $key ) ) {
+		if ( '' === $key ) {
 			return new Response(
 				false,
 				array(
@@ -627,7 +662,7 @@ class Main_Setting extends Event {
 		$key         = trim( $data['key'] );
 		$name        = trim( $data['name'] );
 		$description = trim( $data['desc'] );
-		if ( empty( $name ) || empty( $key ) ) {
+		if ( '' === $name || '' === $key ) {
 			return new Response(
 				false,
 				array(
@@ -699,7 +734,7 @@ class Main_Setting extends Event {
 	public function delete_config( Request $request ) {
 		$data = $request->get_data();
 		$key  = trim( $data['key'] );
-		if ( empty( $key ) ) {
+		if ( '' === $key ) {
 			return new Response(
 				false,
 				array(
@@ -709,7 +744,7 @@ class Main_Setting extends Event {
 		}
 
 		$config = get_site_option( $key );
-		if ( isset( $config['is_removable'] ) && ! $config['is_removable'] ) {
+		if ( isset( $config['is_removable'] ) && false === (bool) $config['is_removable'] ) {
 			return new Response(
 				false,
 				array(
@@ -809,17 +844,6 @@ class Main_Setting extends Event {
 	}
 
 	/**
-	 * Check if the logger cron is scheduled to run.
-	 *
-	 * @return void
-	 */
-	public function check_cron_schedule(): void {
-		if ( ! wp_next_scheduled( 'wp_defender_clear_logs' ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'wp_defender_clear_logs' );
-		}
-	}
-
-	/**
 	 * Clear out lines that are older than 30 days.
 	 *
 	 * @return void
@@ -836,7 +860,7 @@ class Main_Setting extends Event {
 				$wpdb->prepare( "SELECT blog_id FROM {$wpdb->blogs} LIMIT %d, %d", $offset, $limit ),
 				ARRAY_A
 			);
-			while ( ! empty( $blogs ) && is_array( $blogs ) ) {
+			while ( is_array( $blogs ) && array() !== $blogs ) {
 				foreach ( $blogs as $blog ) {
 					switch_to_blog( $blog['blog_id'] );
 
@@ -866,7 +890,7 @@ class Main_Setting extends Event {
 	public function clear_logs_from_files( int $time_limit = MONTH_IN_SECONDS ) {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -943,7 +967,7 @@ class Main_Setting extends Event {
 			&& isset( $new_settings['usage_tracking'], $old_settings['usage_tracking'] )
 			&& $new_settings['usage_tracking'] !== $old_settings['usage_tracking']
 		) {
-			$this->track_opt_toggle( ! empty( $new_settings['usage_tracking'] ), $from );
+			$this->track_opt_toggle( (bool) $new_settings['usage_tracking'], $from );
 		}
 	}
 }

@@ -20,6 +20,13 @@ class Notfound_Lockout extends Component {
 	use Country;
 
 	public const SCENARIO_ERROR_404 = 'error_404', SCENARIO_ERROR_404_IGNORE = 'error_404_ignore', SCENARIO_LOCKOUT_404 = '404_lockout';
+	// New log types for 404_INTELLIGENCE.
+	public const SCENARIO_404_INTELLIGENCE_XSS_ATTEMPT                 = '404_xss_attempt';
+	public const SCENARIO_404_INTELLIGENCE_XSS_LOCKOUT                 = '404_xss_lockout';
+	public const SCENARIO_404_INTELLIGENCE_NON_EXISTENT_PLUGIN_ATTEMPT = '404_non_existent_plugin_attempt';
+	public const SCENARIO_404_INTELLIGENCE_NON_EXISTENT_PLUGIN_LOCKOUT = '404_non_existent_plugin_lockout';
+	public const SCENARIO_404_INTELLIGENCE_NON_EXISTENT_THEME_ATTEMPT  = '404_non_existent_theme_attempt';
+	public const SCENARIO_404_INTELLIGENCE_NON_EXISTENT_THEME_LOCKOUT  = '404_non_existent_theme_lockout';
 	/**
 	 * Use for cache.
 	 *
@@ -28,10 +35,113 @@ class Notfound_Lockout extends Component {
 	public $model;
 
 	/**
+	 * Mark to separate standard logs from intelligence ones and avoid duplicate.
+	 *
+	 * @var bool
+	 */
+	private $is_intelligence = false;
+
+	/**
 	 * Constructor for Notfound_Lockout.
 	 */
 	public function __construct() {
 		$this->model = wd_di()->get( \WP_Defender\Model\Setting\Notfound_Lockout::class );
+		add_action( 'init', array( $this, 'maybe_detect_suspicious_request' ), 1 );
+	}
+	/**
+	 * Run 404 intelligence.
+	 */
+	public function maybe_detect_suspicious_request() {
+		// Don't interfere with WP-CLI, Cron, AJAX and legit internal requests.
+		if ( defender_is_wp_cli() ) {
+			return;
+		}
+		if ( wp_doing_cron() ) {
+			return;
+		}
+		if ( wp_doing_ajax() ) {
+			return;
+		}
+		if ( false === $this->model->detect_logged && is_user_logged_in() ) {
+			return;
+		}
+
+		$uri   = defender_get_data_from_request( 'REQUEST_URI', 's' );
+		$uri   = urldecode( $uri );
+		$query = defender_get_data_from_request( 'QUERY_STRING', 's' );
+
+		$service = wd_di()->get( Blacklist_Lockout::class );
+		foreach ( $this->get_user_ip() as $ip ) {
+			if ( ! $service->is_ip_whitelisted( $ip ) ) {
+				$this->detect_suspicious_request( $ip, $uri, $query );
+			}
+		}
+	}
+
+	/**
+	 * Detect if the current request:
+	 * -refers to a non-existent plugin or theme,
+	 * -contains XSS attempts.
+	 *
+	 * @param string $ip    The IP address to process.
+	 * @param string $uri   The URI that was accessed.
+	 * @param string $query The query that was accessed.
+	 *
+	 * @return void
+	 */
+	protected function detect_suspicious_request( $ip, $uri, $query ) {
+		$lockout_type = '';
+
+		$xss_pattern = '#(?i)(<script|javascript:|onerror=|onload=|onmouseover=|onclick=|alert\s*\(|prompt\s*\(|confirm\s*\(|document\.cookie|document\.write|eval\s*\()#';
+		if ( preg_match( $xss_pattern, $uri ) || preg_match( $xss_pattern, $query ) ) {
+			$slug         = $uri;
+			$attempt_type = self::SCENARIO_404_INTELLIGENCE_XSS_ATTEMPT;
+			$lockout_type = self::SCENARIO_404_INTELLIGENCE_XSS_LOCKOUT;
+		} elseif ( preg_match( '#/wp-content/(plugins|themes)/([^/]+)/#i', $uri, $m ) ) {
+			// Looking for requests for plugins/themes.
+			$entity = strtolower( $m[1] );
+			$slug   = sanitize_file_name( $m[2] );
+			$path   = ( 'themes' === $entity ? get_theme_root() : WP_PLUGIN_DIR ) . '/' . $slug;
+
+			// Check for the existence of the specified file path. If it doesn't exist, only then continue working on the request.
+			if ( ! file_exists( $path ) ) {
+				if ( 'themes' === $entity ) {
+					$attempt_type = self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_THEME_ATTEMPT;
+					$lockout_type = self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_THEME_LOCKOUT;
+				} else {
+					$attempt_type = self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_PLUGIN_ATTEMPT;
+					$lockout_type = self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_PLUGIN_LOCKOUT;
+				}
+			}
+		}
+
+		if ( '' !== $lockout_type ) {
+			// Detect it.
+			$model = Lockout_Ip::get( $ip );
+			$this->log_event( $ip, $slug, $attempt_type );
+
+			// Avoid the duplicate with the standard 404 case.
+			$this->is_intelligence = true;
+
+			$model = $this->record_fail_attempt( $ip, $model );
+			// Count the attempt.
+			$window = strtotime( '- ' . $this->model->timeframe . ' seconds' );
+
+			$model = $this->check_meta_data( $model );
+			// We will get the latest till oldest, limit by attempt.
+			$checks = array_slice( $model->meta['nf'], $this->model->attempt * - 1 );
+
+			if ( count( $checks ) < $this->model->attempt ) {
+				return;
+			}
+			// If the last time is larger.
+			$check = min( $checks );
+			if ( $check >= $window ) {
+				// then lock it.
+				$this->lock( $model, 'normal', $uri );
+				$this->log_event( $ip, $uri, $lockout_type );
+			}
+		}
 	}
 
 	/**
@@ -42,16 +152,16 @@ class Notfound_Lockout extends Component {
 	}
 
 	/**
-	 * Check if useragent is looks like from googlebot.
+	 * Check if user-agent is looks like from googlebot.
 	 *
 	 * @param  string $user_agent  The user agent string to check.
 	 *
 	 * @return bool
 	 */
 	private function is_google_ua( $user_agent = '' ): bool {
-		if ( empty( $user_agent ) ) {
+		if ( '' === $user_agent ) {
 			$user_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-			if ( empty( $user_agent ) ) {
+			if ( '' === $user_agent ) {
 				return false;
 			}
 			$user_agent = User_Agent::fast_cleaning( $user_agent );
@@ -106,9 +216,9 @@ class Notfound_Lockout extends Component {
 	 */
 	private function is_bing_ua( $user_agent = '' ): bool {
 
-		if ( empty( $user_agent ) ) {
+		if ( '' === $user_agent ) {
 			$user_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-			if ( empty( $user_agent ) ) {
+			if ( '' === $user_agent ) {
 				return false;
 			}
 			$user_agent = User_Agent::fast_cleaning( $user_agent );
@@ -364,6 +474,45 @@ class Notfound_Lockout extends Component {
 					$uri
 				);
 				break;
+			// New log cases since v5.7.0.
+			case self::SCENARIO_404_INTELLIGENCE_XSS_ATTEMPT:
+				$model->type = Lockout_Log::ERROR_404_XSS;
+				$model->log  = sprintf(
+				/* translators: %s: URI. */
+					esc_html__( 'Possible XSS attempt detected in request: %s', 'defender-security' ),
+					$uri
+				);
+				break;
+			case self::SCENARIO_404_INTELLIGENCE_XSS_LOCKOUT:
+				$model->type = Lockout_Log::LOCKOUT_404_XSS;
+				$model->log  = esc_html__( 'Lockout occurred: Multiple XSS attempt requests detected', 'defender-security' );
+				break;
+			case self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_PLUGIN_ATTEMPT:
+				$model->type = Lockout_Log::ERROR_404_NON_EXISTENT_PLUGIN;
+				$model->log  = sprintf(
+				/* translators: %s: URI. */
+					esc_html__( 'Attempt to access non-installed plugin: %s', 'defender-security' ),
+					$uri
+				);
+				break;
+			case self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_PLUGIN_LOCKOUT:
+				$model->type = Lockout_Log::LOCKOUT_404_NON_EXISTENT_PLUGIN;
+				$model->log  =
+					esc_html__( 'Lockout occurred: Multiple requests for non-installed plugin', 'defender-security' );
+				break;
+			case self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_THEME_ATTEMPT:
+				$model->type = Lockout_Log::ERROR_404_NON_EXISTENT_THEME;
+				$model->log  = sprintf(
+				/* translators: %s: URI. */
+					esc_html__( 'Attempt to access non-installed theme: %s', 'defender-security' ),
+					$uri
+				);
+				break;
+			case self::SCENARIO_404_INTELLIGENCE_NON_EXISTENT_THEME_LOCKOUT:
+				$model->type = Lockout_Log::LOCKOUT_404_NON_EXISTENT_THEME;
+				$model->log  =
+					esc_html__( 'Lockout occurred: Multiple requests for non-installed theme', 'defender-security' );
+				break;
 			case self::SCENARIO_LOCKOUT_404:
 			default:
 				$model->type = Lockout_Log::LOCKOUT_404;
@@ -378,7 +527,7 @@ class Notfound_Lockout extends Component {
 		// @since 5.4.0 Action hook triggered after a failed 404 attempt.
 		do_action( 'wd_404_attempt', $model, $scenario, $uri );
 
-		if ( Lockout_Log::LOCKOUT_404 === $model->type ) {
+		if ( in_array( $model->type, Lockout_Log::get_404_lockout_types(), true ) ) {
 			do_action( 'defender_notify', 'firewall-notification', $model );
 		}
 	}
@@ -390,7 +539,7 @@ class Notfound_Lockout extends Component {
 	 * @since 4.4.2
 	 */
 	public function process_404_detect_multiple(): void {
-		if ( ! is_404() ) {
+		if ( $this->is_intelligence || ! is_404() ) {
 			return;
 		}
 

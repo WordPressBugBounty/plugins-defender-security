@@ -64,7 +64,7 @@ class Firewall extends Component {
 		$action   = defender_get_data_from_request( 'action', 'g' );
 		$wdpunkey = defender_get_data_from_request( 'wdpunkey', 'p' );
 
-		return wp_doing_ajax() && 'wdpunauth' === $action && hash_equals( $wdpunkey, $access['key'] );
+		return wp_doing_ajax() && 'wdpunauth' === $action && isset( $access['key'] ) && hash_equals( $wdpunkey, $access['key'] );
 	}
 
 	/**
@@ -115,7 +115,10 @@ class Firewall extends Component {
 		}
 		$time_string = '-' . $storage_days . ' days';
 		$timestamp   = $this->local_to_utc( $time_string );
-		Lockout_Log::remove_logs( $timestamp, 50 );
+		// Since v5.7.0.
+		$delete_count = apply_filters( 'wpdef_firewall_limit_deleted_logs', 50 );
+		$delete_count = is_int( $delete_count ) ? $delete_count : (int) $delete_count;
+		Lockout_Log::remove_logs( $timestamp, $delete_count );
 	}
 
 	/**
@@ -270,7 +273,8 @@ class Firewall extends Component {
 	 * @since 3.7.0 Get the limit of Lockout records.
 	 */
 	public function get_lockout_record_limit() {
-		return (int) apply_filters( 'wd_lockout_record_limit', 10000 );
+		$limit = apply_filters( 'wd_lockout_record_limit', 10000 );
+		return is_int( $limit ) ? $limit : (int) $limit;
 	}
 
 	/**
@@ -326,7 +330,7 @@ class Firewall extends Component {
 		$gathered_ips = array();
 		$server       = defender_get_data_from_request( null, 's' );
 		foreach ( $ip_headers as $header ) {
-			if ( ! empty( $server[ $header ] ) ) {
+			if ( isset( $server[ $header ] ) && '' !== $server[ $header ] ) {
 				// Handle multiple IP addresses.
 				$ips = array_map( 'trim', explode( ',', $server[ $header ] ) );
 
@@ -346,13 +350,14 @@ class Firewall extends Component {
 		 * @since 4.5.1
 		 * @deprecated 5.1.0 No longer used and will be removed in a future version.
 		 */
-		$gathered_ips = (array) apply_filters_deprecated(
+		$gathered_ips = apply_filters_deprecated(
 			'wpdef_firewall_gathered_ips',
 			array_unique( $gathered_ips ),
 			'5.1.0',
 			'',
 			'This filter will be removed in a future version. If you are using it, update your implementation.'
 		);
+		$gathered_ips = ! is_array( $gathered_ips ) ? (array) $gathered_ips : $gathered_ips;
 
 		return $this->filter_user_ips( $gathered_ips );
 	}
@@ -410,7 +415,7 @@ class Firewall extends Component {
 	 */
 	public function update_trusted_proxy_preset_ips(): void {
 		$model = wd_di()->get( Model_Firewall::class );
-		if ( ! empty( $model->trusted_proxy_preset ) ) {
+		if ( '' !== $model->trusted_proxy_preset ) {
 			/**
 			 * Retrieve Trusted_Proxy_Preset instance.
 			 *
@@ -571,7 +576,8 @@ class Firewall extends Component {
 		 *
 		 * @since 5.0.2
 		 */
-		return (bool) apply_filters( 'wpdef_firewall_whitelist_server_public_ip_enabled', true );
+		$enabled = apply_filters( 'wpdef_firewall_whitelist_server_public_ip_enabled', true );
+		return is_bool( $enabled ) ? $enabled : (bool) $enabled;
 	}
 
 	/**
@@ -586,7 +592,7 @@ class Firewall extends Component {
 		}
 
 		$ip = wd_di()->get( Smart_Ip_Detection::class )->get_server_public_ip();
-		if ( empty( $ip ) ) {
+		if ( '' === $ip ) {
 			$this->log( 'Failed to whitelist server public IP.', Firewall_Controller::FIREWALL_LOG );
 			return false;
 		}

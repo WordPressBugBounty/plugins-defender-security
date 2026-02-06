@@ -19,7 +19,7 @@ use WP_Defender\Controller\Firewall;
 use WP_Defender\Component\Quarantine;
 use WP_Defender\Model\Setting\Two_Fa;
 use WP_Defender\Component\IP\Antibot_Global_Firewall;
-use WP_Defender\Model\Setting\Recaptcha;
+use WP_Defender\Model\Setting\Captcha;
 use WP_Defender\Model\Setting\Mask_Login;
 use WP_Defender\Controller\Security_Tweaks;
 use WP_Defender\Controller\Security_Headers;
@@ -249,7 +249,7 @@ trait Defender_Hub_Client {
 	 * @throws Exception If the WPMU DEV Dashboard plugin is missing.
 	 */
 	public function can_wpmu_free_request() {
-		return in_array( $this->get_membership_type(), array( 'free', 'full' ), true );
+		return in_array( $this->get_membership_type(), array( 'free', 'full', 'unit' ), true );
 	}
 
 	/**
@@ -476,12 +476,12 @@ trait Defender_Hub_Client {
 	}
 
 	/**
-	 * Builds an array of security headers data to be sent to the hub.
+	 * Builds an array of Captcha data to be sent to the hub.
 	 *
 	 * @return array
 	 */
-	public function build_recaptcha_hub_data(): array {
-		$settings = new Recaptcha();
+	public function build_captcha_hub_data(): array {
+		$settings = new Captcha();
 
 		return array(
 			'active' => $settings->is_active(),
@@ -628,7 +628,7 @@ trait Defender_Hub_Client {
 		$two_fa            = $this->build_2fa_hub_data();
 		$mask_login        = $this->build_mask_login_hub_data();
 		$sec_headers       = $this->build_security_headers_hub_data();
-		$recaptcha         = $this->build_recaptcha_hub_data();
+		$captcha           = $this->build_captcha_hub_data();
 		$pwned_password    = $this->build_password_protection_hub_data();
 		$quarantined_files = $this->build_quarantined_files_hub_data();
 
@@ -697,8 +697,9 @@ trait Defender_Hub_Client {
 							'active'   => $sec_headers['active'],
 							'inactive' => $sec_headers['inactive'],
 						),
+						// We'll change 'google_recaptcha'-key to 'captcha' in the future.
 						'google_recaptcha'    => array(
-							'active' => $recaptcha['active'],
+							'active' => $captcha['active'],
 						),
 						'password_protection' => array(
 							'active' => $pwned_password['active'],

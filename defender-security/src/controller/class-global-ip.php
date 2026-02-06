@@ -13,6 +13,7 @@ use Calotes\Component\Response;
 use WP_Defender\Traits\Setting;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Behavior\WPMUDEV;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
@@ -63,12 +64,20 @@ class Global_Ip extends Controller {
 		$this->service = wd_di()->get( Global_IP_Component::class );
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
 
-		if ( ! wp_next_scheduled( 'wpdef_fetch_global_ip_list' ) ) {
-			wp_schedule_event( time(), 'hourly', 'wpdef_fetch_global_ip_list' );
-		}
-		add_action( 'wpdef_fetch_global_ip_list', array( $this, 'fetch_global_ip_list' ) );
+		/**
+		 * Network Cron Manager
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
+		 */
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->register_callback(
+			'wpdef_fetch_global_ip_list',
+			array( $this, 'fetch_global_ip_list' ),
+			HOUR_IN_SECONDS
+		);
 
 		if ( $this->service->can_blocklist_autosync() ) {
+			// No need to run Rate mechanism for IP lockouts because we do it in Blacklist class.
 			add_action( 'wd_blacklist_this_ip', array( $this, 'blacklist_an_ip' ) );
 		}
 		add_action( 'init', array( $this->service, 'handle_expired_membership' ) );
@@ -104,7 +113,7 @@ class Global_Ip extends Controller {
 			unset( $data['module_title'] );
 		}
 
-		$old_enabled     = (bool) $this->model->enabled;
+		$old_enabled     = $this->model->enabled;
 		$old_self_unlock = $this->model->allow_self_unlock;
 
 		$this->model->import( $data );
@@ -115,9 +124,9 @@ class Global_Ip extends Controller {
 				$message = $this->get_update_message( $data, $old_enabled, Global_Ip_Lockout::get_module_name() );
 			} else {
 				$message = '';
-				if ( ! empty( $data['allow_self_unlock'] ) ) {
+				if ( $data['allow_self_unlock'] ?? false ) {
 					$message = esc_html__( 'Temporary self unlock CAPTCHA challenge is enabled successfully.', 'defender-security' );
-				} elseif ( ! empty( $old_self_unlock ) && empty( $data['allow_self_unlock'] ) ) {
+				} elseif ( true === $old_self_unlock && ! ( $data['allow_self_unlock'] ?? false ) ) {
 					$message = esc_html__( 'Temporary self unlock CAPTCHA challenge is disabled successfully.', 'defender-security' );
 				}
 			}

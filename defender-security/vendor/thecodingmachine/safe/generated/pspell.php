@@ -72,25 +72,26 @@ function pspell_clear_session(int $dictionary_link): void
  * For more information and examples, check out inline manual pspell
  * website:http://aspell.net/.
  *
- * @param string $language The language parameter is the language code which consists of the
+ * @param string      $language The language parameter is the language code which consists of the
  * two letter ISO 639 language code and an optional two letter ISO
  * 3166 country code after a dash or underscore.
- * @param string $spelling The spelling parameter is the requested spelling for languages
+ * @param string|null $spelling The spelling parameter is the requested spelling for languages
  * with more than one spelling such as English. Known values are
  * 'american', 'british', and 'canadian'.
- * @param string $jargon The jargon parameter contains extra information to distinguish
+ * @param string|null $jargon   The jargon parameter contains extra information to distinguish
  * two different words lists that have the same language and
  * spelling parameters.
- * @param string $encoding The encoding parameter is the encoding that words are expected to
+ * @param string|null $encoding The encoding parameter is the encoding that words are expected to
  * be in.  Valid values are 'utf-8', 'iso8859-*', 'koi8-r',
  * 'viscii', 'cp1252', 'machine unsigned 16', 'machine unsigned
  * 32'. This parameter is largely untested, so be careful when
  * using.
+ *
  * @return int Returns a pspell config identifier.
  * @throws PspellException
  *
  */
-function pspell_config_create(string $language, string $spelling = null, string $jargon = null, string $encoding = null): int
+function pspell_config_create(string $language, ?string $spelling = null, ?string $jargon = null, ?string $encoding = null): int
 {
     error_clear_last();
     if ($encoding !== null) {
@@ -338,21 +339,21 @@ function pspell_new_config(int $config): int
  * For more information and examples, check out inline manual pspell
  * website:http://aspell.net/.
  *
- * @param string $language The language parameter is the language code which consists of the
+ * @param string      $language The language parameter is the language code which consists of the
  * two letter ISO 639 language code and an optional two letter ISO
  * 3166 country code after a dash or underscore.
- * @param string $spelling The spelling parameter is the requested spelling for languages
+ * @param string|null $spelling The spelling parameter is the requested spelling for languages
  * with more than one spelling such as English. Known values are
  * 'american', 'british', and 'canadian'.
- * @param string $jargon The jargon parameter contains extra information to distinguish
+ * @param string|null $jargon   The jargon parameter contains extra information to distinguish
  * two different words lists that have the same language and
  * spelling parameters.
- * @param string $encoding The encoding parameter is the encoding that words are expected to
+ * @param string|null $encoding The encoding parameter is the encoding that words are expected to
  * be in.  Valid values are 'utf-8', 'iso8859-*', 'koi8-r',
  * 'viscii', 'cp1252', 'machine unsigned 16', 'machine unsigned
  * 32'. This parameter is largely untested, so be careful when
  * using.
- * @param int $mode The mode parameter is the mode in which spellchecker will work.
+ * @param int         $mode     The mode parameter is the mode in which spellchecker will work.
  * There are several modes available:
  *
  *
@@ -388,11 +389,12 @@ function pspell_new_config(int $config): int
  * PSPELL_NORMAL and
  * PSPELL_BAD_SPELLERS are mutually exclusive, so you
  * should select only one of them.
+ *
  * @return int Returns the dictionary link identifier on success.
  * @throws PspellException
  *
  */
-function pspell_new(string $language, string $spelling = null, string $jargon = null, string $encoding = null, int $mode = 0): int
+function pspell_new(string $language, ?string $spelling = null, ?string $jargon = null, ?string $encoding = null, int $mode = 0): int
 {
     error_clear_last();
     if ($mode !== 0) {

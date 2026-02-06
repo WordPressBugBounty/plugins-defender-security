@@ -89,7 +89,10 @@ class Remote_Address {
 		 *
 		 * @since 4.6.0
 		 */
-		return (array) apply_filters( 'wpdef_firewall_trusted_proxies', $this->trusted_proxies );
+		$trusted_proxies = apply_filters( 'wpdef_firewall_trusted_proxies', $this->trusted_proxies );
+		$trusted_proxies = ! is_array( $trusted_proxies ) ? (array) $trusted_proxies : $trusted_proxies;
+
+		return $trusted_proxies;
 	}
 
 	/**
@@ -160,7 +163,7 @@ class Remote_Address {
 		$header = $this->proxy_header;
 
 		$server = defender_get_data_from_request( null, 's' );
-		if ( ! isset( $server[ $header ] ) || empty( $server[ $header ] ) ) {
+		if ( ! isset( $server[ $header ] ) || ! is_string( $server[ $header ] ) || '' === $server[ $header ] ) {
 			return false;
 		}
 
@@ -225,7 +228,7 @@ class Remote_Address {
 	 */
 	public function is_ip_in_trusted_proxy_preset( string $ip ): bool {
 		$trusted_ips = array();
-		if ( ! empty( $this->trusted_proxy_preset ) ) {
+		if ( '' !== $this->trusted_proxy_preset ) {
 			/**
 			 * Retrieve Trusted_Proxy_Preset instance.
 			 *
@@ -236,7 +239,7 @@ class Remote_Address {
 			$trusted_ips = $trusted_proxy_preset->get_ips();
 		}
 
-		if ( empty( $trusted_ips ) ) {
+		if ( ! is_array( $trusted_ips ) || array() === $trusted_ips ) {
 			return false;
 		}
 

@@ -132,7 +132,8 @@ trait Formats {
 	 * @return array
 	 */
 	public function get_times() {
-		$times_interval = (array) apply_filters( 'defender_get_times_interval', array( '00', '30' ) );
+		$times_interval = apply_filters( 'defender_get_times_interval', array( '00', '30' ) );
+		$times_interval = is_array( $times_interval ) ? $times_interval : (array) $times_interval;
 		$data           = array();
 		for ( $i = 0; $i < 24; $i++ ) {
 			foreach ( $times_interval as $min ) {

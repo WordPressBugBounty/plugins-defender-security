@@ -68,18 +68,18 @@ class Upgrader {
 		$model  = wd_di()->get( Security_Headers::class );
 		$option = get_site_option( $model->get_table() );
 
-		if ( empty( $option ) ) {
+		if ( null === $option || false === $option || '' === $option || '0' === $option || array() === $option ) {
 			// Part of Security tweaks data.
 			$old_key      = 'wd_hardener_settings';
 			$old_settings = get_site_option( $old_key );
 			if ( ! is_array( $old_settings ) ) {
 				$old_settings = json_decode( $old_settings, true );
-				if ( is_array( $old_settings ) && isset( $old_settings['data'] ) && ! empty( $old_settings['data'] ) ) {
+				if ( is_array( $old_settings ) && isset( $old_settings['data'] ) && is_array( $old_settings['data'] ) && array() !== $old_settings['data'] ) {
 					// Exist 'X-Frame-Options'.
-					if ( isset( $old_settings['data']['sh_xframe'] ) && ! empty( $old_settings['data']['sh_xframe'] ) ) {
+					if ( isset( $old_settings['data']['sh_xframe'] ) && is_array( $old_settings['data']['sh_xframe'] ) && array() !== $old_settings['data']['sh_xframe'] ) {
 						$header_data = $old_settings['data']['sh_xframe'];
 
-						$mode = ( isset( $header_data['mode'] ) && ! empty( $header_data['mode'] ) )
+						$mode = ( isset( $header_data['mode'] ) && '' !== trim( $header_data['mode'] ) )
 							? strtolower( $header_data['mode'] )
 							: false;
 						/**
@@ -96,11 +96,15 @@ class Upgrader {
 					}
 
 					// Exist 'X-XSS-Protection'.
-					if ( isset( $old_settings['data']['sh_xss_protection'] ) && ! empty( $old_settings['data']['sh_xss_protection'] ) ) {
+					if (
+						isset( $old_settings['data']['sh_xss_protection'] )
+						&& is_array( $old_settings['data']['sh_xss_protection'] )
+						&& array() !== $old_settings['data']['sh_xss_protection']
+					) {
 						$header_data = $old_settings['data']['sh_xss_protection'];
 
 						if ( isset( $header_data['mode'] )
-							&& ! empty( $header_data['mode'] )
+							&& '' !== trim( $header_data['mode'] )
 							&& in_array( $header_data['mode'], array( 'sanitize', 'block' ), true )
 						) {
 							$model->sh_xss_protection_mode = $header_data['mode'];
@@ -109,53 +113,85 @@ class Upgrader {
 					}
 
 					// Exist 'X-Content-Type-Options'.
-					if ( isset( $old_settings['data']['sh_content_type_options'] ) && ! empty( $old_settings['data']['sh_content_type_options'] ) ) {
+					if (
+						isset( $old_settings['data']['sh_content_type_options'] )
+						&& is_array( $old_settings['data']['sh_content_type_options'] )
+						&& array() !== $old_settings['data']['sh_content_type_options']
+					) {
 						$header_data = $old_settings['data']['sh_content_type_options'];
 
-						if ( isset( $header_data['mode'] ) && ! empty( $header_data['mode'] ) ) {
+						if ( isset( $header_data['mode'] ) && '' !== trim( $header_data['mode'] ) ) {
 							$model->sh_content_type_options_mode = $header_data['mode'];
 							$model->sh_content_type_options      = true;
 						}
 					}
 
 					// Exist 'Strict Transport'.
-					if ( isset( $old_settings['data']['sh_strict_transport'] ) && ! empty( $old_settings['data']['sh_strict_transport'] ) ) {
+					if (
+						isset( $old_settings['data']['sh_strict_transport'] )
+						&& is_array( $old_settings['data']['sh_strict_transport'] )
+						&& array() !== $old_settings['data']['sh_strict_transport']
+					) {
 						$header_data = $old_settings['data']['sh_strict_transport'];
 
-						if ( isset( $header_data['hsts_preload'] ) && ! empty( $header_data['hsts_preload'] ) ) {
-							$model->hsts_preload = (int) $header_data['hsts_preload'];
+						$hsts_preload = isset( $header_data['hsts_preload'] ) ? (int) $header_data['hsts_preload'] : 0;
+						if ( 0 < $hsts_preload ) {
+							$model->hsts_preload = $hsts_preload;
 						}
-						if ( isset( $header_data['include_subdomain'] ) && ! empty( $header_data['include_subdomain'] ) ) {
+						if (
+							isset( $header_data['include_subdomain'] )
+							&& ! is_null( $header_data['include_subdomain'] )
+							&& '' !== $header_data['include_subdomain']
+							&& '0' !== $header_data['include_subdomain']
+							&& false !== $header_data['include_subdomain']
+							&& ( ! is_int( $header_data['include_subdomain'] ) || 0 < $header_data['include_subdomain'] )
+						) {
 							$model->include_subdomain = in_array(
 								$header_data['include_subdomain'],
 								array( 'true', '1', 1 ),
 								true
 							) ? 1 : 0;
 						}
-						if ( isset( $header_data['hsts_cache_duration'] ) && ! empty( $header_data['hsts_cache_duration'] ) ) {
-							$model->hsts_cache_duration = $header_data['hsts_cache_duration'];
+						$cache_duration = isset( $header_data['hsts_cache_duration'] ) ? trim( $header_data['hsts_cache_duration'] ) : '';
+						if ( '' !== $cache_duration ) {
+							$model->hsts_cache_duration = $cache_duration;
 						}
 						$model->sh_strict_transport = true;
 					}
 
 					// Exist 'Referrer Policy'.
-					if ( isset( $old_settings['data']['sh_referrer_policy'] ) && ! empty( $old_settings['data']['sh_referrer_policy'] ) ) {
+					if (
+						isset( $old_settings['data']['sh_referrer_policy'] )
+						&& is_array( $old_settings['data']['sh_referrer_policy'] )
+						&& array() !== $old_settings['data']['sh_referrer_policy']
+					) {
 						$header_data = $old_settings['data']['sh_referrer_policy'];
 
-						if ( isset( $header_data['mode'] ) && ! empty( $header_data['mode'] ) ) {
+						if ( isset( $header_data['mode'] ) && '' !== trim( $header_data['mode'] ) ) {
 							$model->sh_referrer_policy_mode = $header_data['mode'];
 							$model->sh_referrer_policy      = true;
 						}
 					}
 
 					// Exist 'Feature-Policy'.
-					if ( isset( $old_settings['data']['sh_feature_policy'] ) && ! empty( $old_settings['data']['sh_feature_policy'] ) ) {
+					if (
+						isset( $old_settings['data']['sh_feature_policy'] )
+						&& is_array( $old_settings['data']['sh_feature_policy'] )
+						&& array() !== $old_settings['data']['sh_feature_policy']
+					) {
 						$header_data = $old_settings['data']['sh_feature_policy'];
 
-						if ( isset( $header_data['mode'] ) && ! empty( $header_data['mode'] ) ) {
+						if ( isset( $header_data['mode'] ) && '' !== trim( $header_data['mode'] ) ) {
 							$mode                          = strtolower( $header_data['mode'] );
 							$model->sh_feature_policy_mode = $mode;
-							if ( 'origins' === $mode && isset( $header_data['values'] ) && ! empty( $header_data['values'] ) ) {
+							if (
+								'origins' === $mode
+								&& isset( $header_data['values'] )
+								&& (
+									( is_array( $header_data['values'] ) && array() !== $header_data['values'] )
+									|| ( is_string( $header_data['values'] ) && '' !== trim( $header_data['values'] ) )
+								)
+							) {
 								// The values differ from the values of the 'X-Frame-Options' key, because they may be an array.
 								if ( is_array( $header_data['values'] ) ) {
 									$model->sh_feature_policy_urls = implode( PHP_EOL, $header_data['values'] );
@@ -210,7 +246,7 @@ class Upgrader {
 		) {
 			$config_component = wd_di()->get( Backup_Settings::class );
 			$prev_data        = $config_component->backup_data();
-			if ( empty( $prev_data ) ) {
+			if ( ! is_array( $prev_data ) || array() === $prev_data ) {
 				return;
 			}
 			$adapter       = wd_di()->get( Config_Adapter::class );
@@ -220,7 +256,7 @@ class Upgrader {
 			update_site_option( 'wp_defender_shown_activator', true );
 
 			$configs = $config_component->get_configs();
-			if ( ! empty( $configs ) ) {
+			if ( array() !== $configs ) {
 				foreach ( $configs as $k => $config ) {
 					if (
 						$config_component->verify_config_data( $config )
@@ -251,7 +287,7 @@ class Upgrader {
 		// Update Scan settings.
 		$model_settings = wd_di()->get( Scan_Settings::class );
 		$option         = get_site_option( $model_settings->get_table() );
-		if ( ! empty( $option ) && ! is_array( $option ) ) {
+		if ( is_string( $option ) && '' !== trim( $option ) ) {
 			$old_settings = json_decode( $option, true );
 			if ( is_array( $old_settings ) && isset( $old_settings['max_filesize'] ) ) {
 				$model_settings->filesize = (int) $old_settings['max_filesize'];
@@ -260,7 +296,7 @@ class Upgrader {
 		}
 		// Update 'reminder_duration' value inside the Security Key tweak.
 		$old_settings = get_site_option( 'wd_hardener_settings' );
-		if ( ! empty( $old_settings ) && ! is_array( $old_settings ) ) {
+		if ( is_string( $old_settings ) && '' !== trim( $old_settings ) ) {
 			$old_settings  = json_decode( $old_settings, true );
 			$tweak_sec_key = wd_di()->get( Security_Key::class );
 
@@ -284,7 +320,7 @@ class Upgrader {
 	 */
 	private function migrate_scan_integrity_check(): void {
 		$model             = new Scan_Settings();
-		$model->check_core = (bool) $model->integrity_check;
+		$model->check_core = $model->integrity_check;
 		$model->save();
 	}
 
@@ -301,7 +337,8 @@ class Upgrader {
 		}
 
 		$db_version = get_site_option( 'wd_db_version' );
-		if ( empty( $db_version ) ) {
+		if ( ! is_string( $db_version ) || '' === $db_version ) {
+			self::cache_event_time( 'plugin_installed' );
 			update_site_option( 'wd_db_version', DEFENDER_DB_VERSION );
 			update_site_option( Feature_Modal::FEATURE_SLUG, true );
 
@@ -311,6 +348,9 @@ class Upgrader {
 		if ( DEFENDER_DB_VERSION === $db_version ) {
 			return;
 		}
+		// Cache last updated time.
+		self::cache_event_time( 'plugin_upgraded' );
+
 		$this->create_database_tables();
 		$this->maybe_show_new_features( $db_version );
 		$this->migrate_configs( $db_version );
@@ -424,10 +464,35 @@ class Upgrader {
 		if ( version_compare( $db_version, '5.5.0', '<' ) ) {
 			$this->upgrade_5_5_0();
 		}
+		if ( version_compare( $db_version, '5.6.0', '<' ) ) {
+			$this->upgrade_5_6_0();
+		}
+		if ( version_compare( $db_version, '5.7.0', '<' ) ) {
+			$this->upgrade_5_7_0();
+		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
 		// Don't run any function below this line.
 		update_site_option( 'wd_db_version', DEFENDER_DB_VERSION );
+	}
+
+	/**
+	 * Cache the event time.
+	 *
+	 * @param string $event Event key.
+	 */
+	private static function cache_event_time( $event ) {
+		$option_key            = \WP_Defender\Helper\Analytics\Deactivation_Survey::EVENT_DATA_OPTION;
+		$event_times           = get_site_option( $option_key, array() );
+		$event_times[ $event ] = time();
+		update_site_option( $option_key, $event_times );
+	}
+
+	/**
+	 * Cache the last activated time.
+	 */
+	public static function date_activated() {
+		self::cache_event_time( 'plugin_activated' );
 	}
 
 	/**
@@ -646,9 +711,9 @@ class Upgrader {
 	private function force_nf_lockout_exclusions(): void {
 		$nf_settings       = new Notfound_Lockout();
 		$allowlist         = $nf_settings->get_lockout_list( 'allowlist' );
-		$default_allowlist = array( '.css', '.js', '.map' );
+		$default_allowlist = array( '/cdn-cgi/challenge-platform/' );
 		$is_save           = false;
-		if ( ! empty( $allowlist ) ) {
+		if ( array() !== $allowlist ) {
 			foreach ( $default_allowlist as $item ) {
 				if ( ! in_array( $item, $allowlist, true ) ) {
 					$allowlist[] = $item;
@@ -657,7 +722,7 @@ class Upgrader {
 			}
 			$nf_settings->whitelist = implode( "\n", $allowlist );
 		} else {
-			$nf_settings->whitelist = ".css\n.js\n.map";
+			$nf_settings->whitelist = ".css\n.js\n.map\n/cdn-cgi/challenge-platform/";
 			$is_save                = true;
 		}
 		// Save it.
@@ -676,7 +741,9 @@ class Upgrader {
 		$adapted_component = wd_di()->get( Legacy_Versions::class );
 		$issue_list        = $adapted_component->get_scan_issue_data();
 		$ignored_list      = $adapted_component->get_scan_ignored_data();
-		if ( ! empty( $issue_list ) || ! empty( $ignored_list ) ) {
+		if (
+			( is_array( $issue_list ) && array() !== $issue_list )
+			|| ( is_array( $ignored_list ) && array() !== $ignored_list ) ) {
 			$adapted_component->migrate_scan_data( $issue_list, $ignored_list );
 			$adapted_component->remove_old_scan_data( $issue_list, $ignored_list );
 			$adapted_component->change_onboarding_status();
@@ -697,16 +764,15 @@ class Upgrader {
 	 * @return void
 	 */
 	private function update_scan_error_send_body( $model ): void {
-		if (
-			isset( $model->configs['template']['error']['body'] )
-			&& ! empty( $model->configs['template']['error']['body'] )
-		) {
+		$body = isset( $model->configs['template']['error']['body'] ) ? trim( $model->configs['template']['error']['body'] ) : '';
+
+		if ( '' !== $body ) {
 			$needle = '{follow this link} and check the logs to see what casued the failure';
-			if ( false !== stripos( $model->configs['template']['error']['body'], $needle ) ) {
+			if ( false !== stripos( $body, $needle ) ) {
 				$model->configs['template']['error']['body'] = str_replace(
 					$needle,
 					'visit your site and run a manual scan',
-					$model->configs['template']['error']['body']
+					$body
 				);
 				$model->save();
 			}
@@ -723,7 +789,7 @@ class Upgrader {
 		// Update the title of the basic config.
 		$config_component = wd_di()->get( Backup_Settings::class );
 		$configs          = $config_component->get_configs();
-		if ( ! empty( $configs ) ) {
+		if ( array() !== $configs ) {
 			foreach ( $configs as $k => $config ) {
 				if ( 0 === strcmp( $config['name'], esc_html__( 'Basic config', 'defender-security' ) ) ) {
 					$config['name'] = esc_html__( 'Basic Config', 'defender-security' );
@@ -770,30 +836,33 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 
 		foreach ( $models as $model ) {
 			$is_updated = false;
-			if ( ! empty( $model->configs['template']['error']['body'] ) ) {
-				$subject = $this->replace_scan_email_content_error( $model->configs['template']['error']['body'] );
+			$body       = isset( $model->configs['template']['error']['body'] ) ? trim( $model->configs['template']['error']['body'] ) : '';
+			if ( '' !== $body ) {
+				$subject = $this->replace_scan_email_content_error( $body );
 
-				if ( $model->configs['template']['error']['body'] !== $subject ) {
+				if ( $body !== $subject ) {
 					$is_updated = true;
 
 					$model->configs['template']['error']['body'] = $subject;
 				}
 			}
 
-			if ( ! empty( $model->configs['template']['found']['body'] ) ) {
-				$subject = $this->replace_scan_email_content_issue_found( $model->configs['template']['found']['body'] );
+			$body = isset( $model->configs['template']['found']['body'] ) ? trim( $model->configs['template']['found']['body'] ) : '';
+			if ( '' !== $body ) {
+				$subject = $this->replace_scan_email_content_issue_found( $body );
 
-				if ( $model->configs['template']['found']['body'] !== $subject ) {
+				if ( $body !== $subject ) {
 					$is_updated = true;
 
 					$model->configs['template']['found']['body'] = $subject;
 				}
 			}
 
-			if ( ! empty( $model->configs['template']['not_found']['body'] ) ) {
-				$subject = $this->replace_scan_email_content_issue_not_found( $model->configs['template']['not_found']['body'] );
+			$body = isset( $model->configs['template']['not_found']['body'] ) ? trim( $model->configs['template']['not_found']['body'] ) : '';
+			if ( '' !== $body ) {
+				$subject = $this->replace_scan_email_content_issue_not_found( $body );
 
-				if ( $model->configs['template']['not_found']['body'] !== $subject ) {
+				if ( $body !== $subject ) {
 					$is_updated = true;
 
 					$model->configs['template']['not_found']['body'] = $subject;
@@ -833,7 +902,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 		$scan_settings->scheduled_scanning = Notification::STATUS_ACTIVE === $malware_report->status;
 		$scan_settings->frequency          = $malware_report->frequency;
 		$scan_settings->day                = $malware_report->day;
-		$scan_settings->day_n              = $malware_report->day_n;
+		$scan_settings->day_n              = (int) $malware_report->day_n;
 		$scan_settings->time               = $malware_report->time;
 		$scan_settings->save();
 
@@ -858,11 +927,11 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 		);
 
 		foreach ( $models as $model ) {
-			if ( ! empty( $model->in_house_recipients ) && is_array( $model->in_house_recipients ) ) {
+			if ( is_array( $model->in_house_recipients ) && array() !== $model->in_house_recipients ) {
 				$is_updated = false;
 
 				foreach ( $model->in_house_recipients as &$recipient ) {
-					if ( empty( $recipient['role'] ) ) {
+					if ( ! isset( $recipient['role'] ) || ! is_string( $recipient['role'] ) || '' === trim( $recipient['role'] ) ) {
 						$is_updated        = true;
 						$recipient['role'] = $this->get_current_user_role( $recipient['id'] );
 					}
@@ -987,7 +1056,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	private function upgrade_3_2_0(): void {
 		$model = wd_di()->get( Two_Fa_Settings::class );
 
-		if ( ! empty( $model->app_title ) ) {
+		if ( is_string( $model->app_title ) && '' !== $model->app_title ) {
 			$model->app_title = wp_specialchars_decode( $model->app_title, ENT_QUOTES );
 		}
 
@@ -1023,7 +1092,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 				$wpdb->prepare( "SELECT blog_id FROM {$wpdb->blogs} LIMIT %d, %d", $offset, $limit ),
 				ARRAY_A
 			);
-			while ( ! empty( $blogs ) && is_array( $blogs ) ) {
+			while ( is_array( $blogs ) && array() !== $blogs ) {
 				foreach ( $blogs as $blog ) {
 					switch_to_blog( $blog['blog_id'] );
 
@@ -1061,7 +1130,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 		$users = get_users( array( 'fields' => array( 'ID', 'user_login', 'display_name' ) ) );
 
 		foreach ( $users as $user ) {
-			if ( empty( $data ) ) {
+			if ( ! is_array( $data ) || array() === $data ) {
 				break;
 			}
 
@@ -1087,7 +1156,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 				}
 			}
 
-			if ( ! empty( $user_credentials ) ) {
+			if ( array() !== $user_credentials ) {
 				$service->setCredentials( (int) $user->ID, $user_credentials );
 			}
 		}
@@ -1149,7 +1218,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 			// Hashed codes.
 			foreach ( $query->get_results() as $user_id ) {
 				$backup_code = get_user_meta( $user_id, Fallback_Email::FALLBACK_BACKUP_CODE_KEY, true );
-				if ( ! empty( $backup_code ) && isset( $backup_code['code'], $backup_code['time'] ) ) {
+				if ( isset( $backup_code['code'], $backup_code['time'] ) ) {
 					update_user_meta(
 						$user_id,
 						Fallback_Email::FALLBACK_BACKUP_CODE_KEY,
@@ -1459,7 +1528,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 					$is_updated = true;
 				}
 				$prev_desc = $config['description'];
-				$new_desc  = empty( $config['description'] ) ? '' : sanitize_textarea_field( $config['description'] );
+				$new_desc  = ! is_string( $config['description'] ) || '' === trim( $config['description'] ) ? '' : sanitize_textarea_field( $config['description'] );
 				if ( $prev_desc !== $new_desc ) {
 					$is_updated = true;
 				}
@@ -1500,7 +1569,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	private function upgrade_3_11_0(): void {
 		// Move Global IP settings.
 		$option = get_site_option( wd_di()->get( Model_Blacklist_Lockout::class )->get_table() );
-		if ( ! empty( $option ) && is_string( $option ) ) {
+		if ( is_string( $option ) && '' !== trim( $option ) ) {
 			$old_settings = json_decode( $option, true );
 			if ( is_array( $old_settings ) && isset( $old_settings['global_ip_list'] ) ) {
 				$model_global_ip          = wd_di()->get( Global_Ip_Lockout::class );
@@ -1585,7 +1654,7 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 				),
 				ARRAY_A
 			);
-			while ( ! empty( $blogs ) && is_array( $blogs ) ) {
+			while ( is_array( $blogs ) && array() !== $blogs ) {
 				foreach ( $blogs as $blog ) {
 					switch_to_blog( $blog['blog_id'] );
 
@@ -1745,7 +1814,7 @@ To complete your login, copy and paste the temporary password into the Password 
 	private function update_ua_blocklist(): void {
 		$settings  = wd_di()->get( User_Agent_Lockout::class );
 		$blacklist = $settings->get_lockout_list( 'blocklist', false );
-		if ( empty( $blacklist ) ) {
+		if ( array() === $blacklist ) {
 			return;
 		}
 		$blacklist           = array_filter(
@@ -1765,8 +1834,6 @@ To complete your login, copy and paste the temporary password into the Password 
 	 */
 	private function upgrade_5_2_0(): void {
 		$this->update_ua_blocklist();
-		// Remove the prev Breadcrumbs.
-		wd_di()->get( \WP_Defender\Controller\Strong_Password::class )->remove_data();
 		// Add the "What's new" modal.
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
@@ -1808,13 +1875,13 @@ To complete your login, copy and paste the temporary password into the Password 
 	private function improve_ua_blocklist(): void {
 		$settings         = wd_di()->get( User_Agent_Lockout::class );
 		$blocklist_custom = $settings->get_lockout_list( 'blocklist' );
-		if ( empty( $blocklist_custom ) ) {
+		if ( array() === $blocklist_custom ) {
 			return;
 		}
 		// Get 'Blocklist Presets', check and remove duplicates on 'Custom User Agents'.
 		$blocklist_presets = User_Agent_Service::get_nested_keys_of_blocklist_presets();
 		$common_result     = array_intersect( $blocklist_custom, $blocklist_presets );
-		if ( ! empty( $common_result ) ) {
+		if ( array() !== $common_result ) {
 			$blocklist_custom = User_Agent_Service::check_and_remove_duplicates(
 				$blocklist_custom,
 				$common_result
@@ -1828,7 +1895,7 @@ To complete your login, copy and paste the temporary password into the Password 
 		// The same, but for 'Script Presets'.
 		$script_presets = array_keys( User_Agent_Service::get_script_presets() );
 		$common_result  = array_intersect( $blocklist_custom, $script_presets );
-		if ( ! empty( $common_result ) ) {
+		if ( array() !== $common_result ) {
 			$blocklist_custom = User_Agent_Service::check_and_remove_duplicates(
 				$blocklist_custom,
 				$common_result
@@ -1860,6 +1927,62 @@ To complete your login, copy and paste the temporary password into the Password 
 	 */
 	private function upgrade_5_5_0(): void {
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+	}
+
+	/**
+	 * Change lockout log mentions from fake_bot to malicious_bot. Also move BotTrap settings.
+	 *
+	 * @return void
+	 */
+	private function change_to_malicious_bot(): void {
+		global $wpdb;
+
+		$table_name = $wpdb->base_prefix . 'defender_lockout_log';
+
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"UPDATE $table_name SET type = %s, log = %s WHERE type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'malicious_bot',
+				'Lockout occurred: Bot ignored robots.txt rules.',
+				'bot_trap'
+			)
+		);
+		// Clear schedule as the name has changed to 'wpdef_rotate_malicious_bot_secret_hash'.
+		wp_clear_scheduled_hook( 'wpdef_rotate_bot_trap_secret_hash' );
+		// Move the BotTrap settings to new Malicious Bot settings.
+		$settings = wd_di()->get( User_Agent_Lockout::class );
+		if ( isset( $settings->bot_trap_enabled ) ) {
+			$settings->malicious_bot_enabled               = $settings->bot_trap_enabled;
+			$settings->malicious_bot_lockout_type          = $settings->bot_trap_lockout_type;
+			$settings->malicious_bot_lockout_duration      = $settings->bot_trap_lockout_duration;
+			$settings->malicious_bot_lockout_duration_unit = $settings->bot_trap_lockout_duration_unit;
+			$settings->save();
+		}
+	}
+
+	/**
+	 * Upgrade to 5.6.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_6_0(): void {
+		$this->change_to_malicious_bot();
+		// Add the "What's new" modal.
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+	}
+
+	/**
+	 * Upgrade to 5.7.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_5_7_0(): void {
+		// Remove old objects from ncm options.
+		wd_di()->get( \WP_Defender\Component\Network_Cron_Manager::class )->remove_data();
+		// Add the "What's new" modal.
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+		// Add Cloudflare challenge-platform to 404 whitelist.
+		$this->force_nf_lockout_exclusions();
 		// Remove the prev Breadcrumbs.
 		wd_di()->get( \WP_Defender\Component\Breadcrumbs::class )->delete_previous_meta();
 	}

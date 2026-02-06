@@ -48,7 +48,7 @@ class Timer extends Component {
 	 * @return void
 	 */
 	public function start(): void {
-		$this->clock = time();
+		$this->clock = defender_get_current_time();
 	}
 
 	/**
@@ -70,6 +70,6 @@ class Timer extends Component {
 	 * @return int The time difference in seconds.
 	 */
 	public function get_difference(): int {
-		return time() - $this->clock;
+		return defender_get_current_time() - $this->clock;
 	}
 }

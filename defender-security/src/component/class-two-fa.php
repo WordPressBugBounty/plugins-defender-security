@@ -75,7 +75,8 @@ class Two_Fa extends Component {
 	 * @since 3.3.0
 	 */
 	public function get_attempt_limit(): int {
-		return (int) apply_filters( 'wd_2fa_attempt_limit', self::ATTEMPT_LIMIT );
+		$limit = apply_filters( 'wd_2fa_attempt_limit', self::ATTEMPT_LIMIT );
+		return is_int( $limit ) ? $limit : (int) $limit;
 	}
 
 	/**
@@ -84,7 +85,8 @@ class Two_Fa extends Component {
 	 * @return int
 	 */
 	public function get_time_limit() {
-		return (int) apply_filters( 'wd_2fa_time_limit', self::TIME_LIMIT );
+		$limit = apply_filters( 'wd_2fa_time_limit', self::TIME_LIMIT );
+		return is_int( $limit ) ? $limit : (int) $limit;
 	}
 
 	/**
@@ -223,7 +225,7 @@ class Two_Fa extends Component {
 	 * @return string The URL to the graphic.
 	 */
 	public function get_custom_graphic_url( string $url = '' ): string {
-		if ( empty( $url ) ) {
+		if ( '' === $url ) {
 			// Nothing here, surely it will cause broken, fall back to default.
 			return defender_asset_url( '/assets/img/2factor-disabled.svg' );
 		} else {
@@ -311,7 +313,7 @@ class Two_Fa extends Component {
 	 * @return bool True if there is an intersection, false otherwise.
 	 */
 	public function is_intersected_arrays( array $current_user_roles, array $plugin_user_roles ): bool {
-		return ! empty( array_intersect( $current_user_roles, $plugin_user_roles ) );
+		return array() !== array_intersect( $current_user_roles, $plugin_user_roles );
 	}
 
 	/**
@@ -353,13 +355,13 @@ class Two_Fa extends Component {
 	 * @return array
 	 */
 	public function get_enabled_providers_for_user( $user = null ): array {
-		if ( empty( $user ) || ! is_a( $user, 'WP_User' ) ) {
+		if ( ! ( $user instanceof WP_User ) ) {
 			$user = wp_get_current_user();
 		}
 
 		$providers         = $this->get_providers();
 		$enabled_providers = get_user_meta( $user->ID, self::ENABLED_PROVIDERS_USER_KEY, true );
-		if ( empty( $enabled_providers ) ) {
+		if ( ! is_array( $enabled_providers ) || array() === $enabled_providers ) {
 			$enabled_providers = array();
 		}
 		$enabled_providers = array_intersect( $enabled_providers, array_keys( $providers ) );
@@ -383,7 +385,7 @@ class Two_Fa extends Component {
 	 * @return array An array of available 2FA providers.
 	 */
 	public function get_available_providers_for_user( $user = null ): array {
-		if ( empty( $user ) || ! is_a( $user, 'WP_User' ) ) {
+		if ( ! ( $user instanceof WP_User ) ) {
 			$user = wp_get_current_user();
 		}
 
@@ -408,13 +410,13 @@ class Two_Fa extends Component {
 	 * @return string|null
 	 */
 	public function get_default_provider_slug_for_user( $user_id = null ) {
-		if ( empty( $user_id ) || ! is_numeric( $user_id ) ) {
+		if ( is_null( $user_id ) || ! is_numeric( $user_id ) ) {
 			$user_id = get_current_user_id();
 		}
 
 		$available_providers = $this->get_available_providers_for_user( get_userdata( $user_id ) );
 		// If there's only one available provider, force that to be the primary.
-		if ( empty( $available_providers ) ) {
+		if ( array() === $available_providers ) {
 			return null;
 		} elseif ( 1 === count( $available_providers ) ) {
 			$provider_slug = key( $available_providers );
@@ -453,14 +455,14 @@ class Two_Fa extends Component {
 	/**
 	 * Send emergency email to users.
 	 *
-	 * @param  string     $login_token  This will be generated randomly on frontend each time user refresh, an internal
+	 * @param  string $login_token  This will be generated randomly on frontend each time user refresh, an internal
 	 *                                      OTP.
-	 * @param  string|int $user_id  User ID to send email to.
+	 * @param  int    $user_id  User ID to send email to.
 	 *
 	 * @return boolean|WP_Error
 	 */
-	public function send_otp_to_email( string $login_token, $user_id ) {
-		if ( empty( $user_id ) || ! is_int( $user_id ) ) {
+	public function send_otp_to_email( string $login_token, int $user_id ) {
+		if ( $user_id <= 0 ) {
 			return new WP_Error( Error_Code::INVALID, esc_html__( 'The user is invalid.', 'defender-security' ) );
 		}
 		$settings     = new Two_Fa_Model();
@@ -545,12 +547,12 @@ class Two_Fa extends Component {
 	 * @since 3.0.0
 	 */
 	public function remove_enabled_provider_for_user( string $provider, $user = null ): void {
-		if ( empty( $user ) || ! is_a( $user, 'WP_User' ) ) {
+		if ( ! ( $user instanceof WP_User ) ) {
 			$user = wp_get_current_user();
 		}
 
 		$enabled_providers = get_user_meta( $user->ID, self::ENABLED_PROVIDERS_USER_KEY, true );
-		if ( empty( $enabled_providers ) || ! is_array( $enabled_providers ) ) {
+		if ( ! is_array( $enabled_providers ) || array() === $enabled_providers ) {
 			return;
 		}
 
@@ -602,7 +604,7 @@ class Two_Fa extends Component {
 		) {
 			$line = get_user_meta( $user_id, 'wd_2fa_attempt_' . $slug, true );
 			// Fresh start or there's a record.
-			if ( empty( $line ) ) {
+			if ( in_array( $line, array( false, '', array() ), true ) ) {
 				$count      = $this->get_attempt_limit();
 				$start_time = time();
 			} else {
@@ -688,7 +690,7 @@ class Two_Fa extends Component {
 	 */
 	public function maybe_update( $user_id ) {
 		$old_key = get_user_meta( $user_id, Totp::TOTP_SECRET_KEY, true );
-		if ( ! empty( $old_key ) && is_string( $old_key ) ) {
+		if ( is_string( $old_key ) && '' !== $old_key ) {
 			// Is it a plaintext? It was before v3.3.1.
 			if ( TOTP::TOTP_LENGTH === mb_strlen( $old_key, '8bit' ) ) {
 				return $this->reencrypt_data( $user_id, $old_key );
@@ -716,7 +718,8 @@ class Two_Fa extends Component {
 			return false;
 		}
 
-		return ! empty( array_intersect( $this->get_roles( $user ), $roles ) );
+		$common_roles = array_intersect( $this->get_roles( $user ), $roles );
+		return array() !== $common_roles;
 	}
 
 	/**
@@ -803,7 +806,7 @@ class Two_Fa extends Component {
 		}
 		// Maybe the value has already been cleared.
 		$default_provider = get_user_meta( $user_id, self::DEFAULT_PROVIDER_USER_KEY, true );
-		if ( empty( $default_provider ) ) {
+		if ( in_array( $default_provider, array( false, '', array() ), true ) ) {
 			return;
 		}
 		// Default and enabled 2fa providers are cleared for user.
@@ -834,7 +837,8 @@ class Two_Fa extends Component {
 	 */
 	public function display_user_actions( $actions, WP_User $user ) {
 		// Only for users that have one enabled 2fa method at least.
-		if ( empty( get_user_meta( $user->ID, self::DEFAULT_PROVIDER_USER_KEY, true ) ) ) {
+		$default_provider = get_user_meta( $user->ID, self::DEFAULT_PROVIDER_USER_KEY, true );
+		if ( in_array( $default_provider, array( false, '', array() ), true ) ) {
 			return $actions;
 		}
 

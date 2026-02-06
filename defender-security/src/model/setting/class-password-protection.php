@@ -98,10 +98,12 @@ class Password_Protection extends Setting {
 	 * @return bool
 	 */
 	public function is_active(): bool {
-		return (bool) apply_filters(
+		$enable = apply_filters(
 			'wd_password_protection_enable',
 			$this->enabled && count( $this->user_roles ) > 0
 		);
+
+		return is_bool( $enable ) ? $enable : (bool) $enable;
 	}
 
 	/**

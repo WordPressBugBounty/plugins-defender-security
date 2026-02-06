@@ -334,12 +334,13 @@ function sapi_windows_generate_ctrl_event(int $event, int $pid = 0): void
  * If VT100 support is enabled, it is possible to use control sequences as they are known from the VT100 terminal.
  * They allow the modification of the terminal's output. On Windows these sequences are called Console Virtual Terminal Sequences.
  *
- * @param resource $stream The stream on which the function will operate.
- * @param bool $enable If specified, the VT100 feature will be enabled (if TRUE) or disabled (if FALSE).
+ * @param resource  $stream The stream on which the function will operate.
+ * @param bool|null $enable If specified, the VT100 feature will be enabled (if TRUE) or disabled (if FALSE).
+ *
  * @throws MiscException
  *
  */
-function sapi_windows_vt100_support($stream, bool $enable = null): void
+function sapi_windows_vt100_support($stream, ?bool $enable = null): void
 {
     error_clear_last();
     if ($enable !== null) {

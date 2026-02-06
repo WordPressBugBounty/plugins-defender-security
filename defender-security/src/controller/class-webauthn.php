@@ -66,7 +66,9 @@ class Webauthn extends Controller {
 					'get_credential_request_option',
 				)
 			);
+			// @phpstan-ignore-next-line
 			add_action( 'wp_ajax_defender_webauthn_verify_response', array( $this, 'verify_response' ) );
+			// @phpstan-ignore-next-line
 			add_action( 'wp_ajax_nopriv_defender_webauthn_verify_response', array( $this, 'verify_response' ) );
 			// Handling requests in the frontend.
 			if ( wd_di()->get( Two_Fa_Controller::class )->woo_integration_enabled() ) {
@@ -105,7 +107,7 @@ class Webauthn extends Controller {
 		$arr              = array();
 		$user_id          = get_current_user_id();
 		$user_credentials = $this->service->getCredentials( $user_id );
-		if ( ! empty( $user_credentials ) && is_array( $user_credentials ) ) {
+		if ( array() !== $user_credentials ) {
 			foreach ( $user_credentials as $key => $value ) {
 				$arr[] = array(
 					'key'       => $this->base64url_encode( $key ),
@@ -160,7 +162,7 @@ class Webauthn extends Controller {
 			}
 
 			$type = defender_get_data_from_request( 'type', 'g' );
-			if ( empty( $type ) ) {
+			if ( '' === $type ) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 
@@ -190,13 +192,10 @@ class Webauthn extends Controller {
 			}
 
 			// Create authenticator selection.
-			$resident_key                     = false;
-			$user_verification                = AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_DISCOURAGED;
-			$authenticator_selection_criteria = new AuthenticatorSelectionCriteria(
-				$authenticator_type,
-				$resident_key,
-				$user_verification
-			);
+			$authenticator_selection_criteria = new AuthenticatorSelectionCriteria();
+			$authenticator_selection_criteria->setAuthenticatorAttachment( $authenticator_type );
+			$authenticator_selection_criteria->setRequireResidentKey( false );
+			$authenticator_selection_criteria->setUserVerification( AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_DISCOURAGED );
 
 			$rp_entity = new PublicKeyCredentialRpEntity(
 				$this->get_site_name(),
@@ -247,7 +246,7 @@ class Webauthn extends Controller {
 			}
 
 			$posted_data = defender_get_data_from_request( null, 'p' );
-			if ( empty( $posted_data['data'] ) || empty( $posted_data['client_id'] ) ) {
+			if ( '' === $posted_data['data'] || '' === $posted_data['client_id'] ) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 
@@ -272,10 +271,10 @@ class Webauthn extends Controller {
 				null
 			);
 
-			$response_data = base64_decode( sanitize_text_field( $posted_data['data'] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			$response_data = base64_decode( sanitize_text_field( $posted_data['data'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 			$client_id     = sanitize_text_field( $posted_data['client_id'] );
 			$pub_key_cco   = $this->get_trans_val( 'pub_key_cco', $client_id );
-			$pub_key_cco   = PublicKeyCredentialCreationOptions::createFromString( base64_decode( $pub_key_cco ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			$pub_key_cco   = PublicKeyCredentialCreationOptions::createFromString( base64_decode( $pub_key_cco, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
 			$public_key_credential_source = $server->loadAndCheckAttestationResponse(
 				$response_data,
@@ -329,7 +328,7 @@ class Webauthn extends Controller {
 			}
 
 			$cred_id = defender_get_data_from_request( 'key', 'p' );
-			if ( empty( $cred_id ) ) {
+			if ( '' === $cred_id ) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 
@@ -344,7 +343,7 @@ class Webauthn extends Controller {
 
 				if ( 0 === count( $option_user_credentials ) ) {
 					$enabled_providers = get_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, true );
-					if ( empty( $enabled_providers ) ) {
+					if ( ! is_array( $enabled_providers ) ) {
 						$enabled_providers = array();
 					}
 					$key = array_search( Webauthn_Provider::$slug, $enabled_providers, true );
@@ -378,7 +377,7 @@ class Webauthn extends Controller {
 			}
 
 			$posted_data = defender_get_data_from_request( null, 'p' );
-			if ( empty( $posted_data['key'] ) || empty( $posted_data['label'] ) ) {
+			if ( ! isset( $posted_data['key'], $posted_data['label'] ) || '' === $posted_data['key'] || '' === $posted_data['label'] ) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 
@@ -416,7 +415,7 @@ class Webauthn extends Controller {
 			}
 
 			$posted_data = defender_get_data_from_request( null, 'p' );
-			if ( empty( $posted_data['username'] ) ) {
+			if ( ! isset( $posted_data['username'] ) || '' === $posted_data['username'] ) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 
@@ -442,7 +441,7 @@ class Webauthn extends Controller {
 				throw new Exception( esc_html__( 'User does not exist.', 'defender-security' ) );
 			}
 
-			$auth_type = ! empty( $posted_data['type'] ) ? sanitize_text_field( $posted_data['type'] ) : null;
+			$auth_type = isset( $posted_data['type'] ) && '' !== $posted_data['type'] ? sanitize_text_field( $posted_data['type'] ) : null;
 			if ( in_array( $auth_type, self::ALLOWED_AUTH_TYPES, true ) ) {
 				$credential_sources = $this->service->findAllForUserByType( $user->ID, $auth_type );
 			} else {
@@ -493,7 +492,7 @@ class Webauthn extends Controller {
 	 *
 	 * @param  bool $will_return  Either return array or echo json.
 	 *
-	 * @return array
+	 * @return array|void
 	 * @throws Exception If something goes wrong.
 	 */
 	public function verify_response( bool $will_return = false ) {
@@ -504,15 +503,20 @@ class Webauthn extends Controller {
 			}
 
 			$posted_data = defender_get_data_from_request( null, 'p' );
-			if ( empty( $posted_data['data'] ) || empty( $posted_data['username'] ) || empty( $posted_data['client_id'] ) ) {
+			if (
+				! isset( $posted_data['data'], $posted_data['username'], $posted_data['client_id'] )
+				|| '' === $posted_data['data']
+				|| '' === $posted_data['username']
+				|| '' === $posted_data['client_id']
+			) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 
 			$user_entity   = false;
-			$response_data = base64_decode( $posted_data['data'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			$response_data = base64_decode( $posted_data['data'], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 			$username      = sanitize_text_field( $posted_data['username'] );
 			$client_id     = sanitize_text_field( $posted_data['client_id'] );
-			$pub_key_cro   = PublicKeyCredentialRequestOptions::createFromString( base64_decode( $this->get_trans_val( 'pub_key_cro', $client_id ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			$pub_key_cro   = PublicKeyCredentialRequestOptions::createFromString( base64_decode( $this->get_trans_val( 'pub_key_cro', $client_id ), true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 			$user          = get_user_by( 'login', $username );
 
 			if ( is_object( $user ) ) {

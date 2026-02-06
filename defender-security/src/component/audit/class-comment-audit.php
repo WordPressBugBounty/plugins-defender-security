@@ -206,13 +206,13 @@ class Comment_Audit extends Audit_Event {
 		$comment_id = $args[1]['comment_ID'];
 		if ( ! isset( $args[1]['commentdata'] ) ) {
 			$comment = get_comment( $comment_id );
-			if ( empty( $comment ) ) {
+			if ( ! ( $comment instanceof \WP_Comment ) ) {
 				return false;
 			}
 			$comment = $comment->to_array();
 		} else {
 			$comment = $args[1]['commentdata'];
-			if ( empty( $comment ) ) {
+			if ( ! is_array( $comment ) || array() === $comment ) {
 				return false;
 			}
 		}

@@ -17,7 +17,6 @@ use ReflectionProperty;
  */
 abstract class Model extends Component {
 
-
 	/**
 	 * Table name | option name | post type name.
 	 *
@@ -67,7 +66,7 @@ abstract class Model extends Component {
 	 */
 	public function validate(): bool {
 		$this->before_validate();
-		if ( empty( $this->annotations ) ) {
+		if ( array() === $this->annotations ) {
 			$this->log( 'Empty annotations.', wd_internal_log() );
 		}
 		$validate = $this->get_validate_rules();
@@ -96,7 +95,7 @@ abstract class Model extends Component {
 	 * @return array
 	 */
 	public function export(): array {
-		if ( empty( $this->annotations ) ) {
+		if ( array() === $this->annotations ) {
 			return $this->export_oldway();
 		}
 		$return = array();
@@ -198,7 +197,7 @@ abstract class Model extends Component {
 	public function import_old_way( $data ): void {
 		foreach ( $data as $key => $val ) {
 			// Check if we have a safe list.
-			if ( ! empty( $this->safe ) && ! in_array( $key, $this->safe, true ) ) {
+			if ( array() !== $this->safe && ! in_array( $key, $this->safe, true ) ) {
 				continue;
 			}
 
@@ -221,7 +220,7 @@ abstract class Model extends Component {
 	 * @return void
 	 */
 	public function import( $data ): void {
-		if ( empty( $this->annotations ) ) {
+		if ( array() === $this->annotations ) {
 			$this->import_old_way( $data );
 		} else {
 			foreach ( array_keys( $this->annotations ) as $property ) {
@@ -247,7 +246,7 @@ abstract class Model extends Component {
 			$data     = $this->export();
 			$scenario = 'export';
 		}
-		if ( empty( $this->mapping ) ) {
+		if ( array() === $this->mapping ) {
 			return $data;
 		}
 		foreach ( $this->mapping as $key => $val ) {
@@ -269,7 +268,7 @@ abstract class Model extends Component {
 	 * @return void
 	 */
 	protected function sanitize() {
-		if ( empty( $this->annotations ) ) {
+		if ( array() === $this->annotations ) {
 			return;
 		}
 
@@ -364,7 +363,7 @@ abstract class Model extends Component {
 		$reflection = new ReflectionClass( $this );
 		$props      = $reflection->getProperties( ReflectionProperty::IS_PUBLIC );
 
-		if ( empty( $this->annotations ) ) {
+		if ( array() === $this->annotations ) {
 			return $this->export_type_oldway();
 		}
 

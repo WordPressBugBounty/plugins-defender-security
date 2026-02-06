@@ -8,6 +8,7 @@
 namespace WP_Defender\Component\Security_Tweaks\Servers;
 
 use WP_Error;
+use WP_Filesystem_Base;
 
 /**
  * Provides methods to apply and revert security rules on servers.
@@ -99,7 +100,7 @@ class Apache {
 	public function process() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -180,6 +181,8 @@ class Apache {
 
 			return true;
 		}
+
+		return true;
 	}
 
 	/**
@@ -190,7 +193,7 @@ class Apache {
 	public function revert() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -246,6 +249,8 @@ class Apache {
 
 			return delete_site_option( "defender_security_tweeks_{$this->type}" );
 		}
+
+		return true;
 	}
 
 	/**
@@ -305,7 +310,7 @@ class Apache {
 			$rules .= PHP_EOL;
 			$rules .= '## WP Defender - End ##' . PHP_EOL;
 
-			if ( version_compare( $this->get_version(), '2.4', '<' ) ) {
+			if ( 'apache' === Server::get_current_server() && version_compare( $this->get_version(), '2.4', '<' ) ) {
 				$rules  = '## WP Defender - Protect PHP Executed ##' . PHP_EOL;
 				$rules .= PHP_EOL;
 				$rules .= '<Files *.php>' . PHP_EOL;
@@ -313,6 +318,11 @@ class Apache {
 				$rules .= 'Deny from all' . PHP_EOL;
 				$rules .= '</Files>' . PHP_EOL;
 				$rules .= PHP_EOL;
+				$rules .= '## WP Defender - End ##' . PHP_EOL;
+			} elseif ( 'litespeed' === Server::get_current_server() ) {
+				$rules  = '## WP Defender - Protect PHP Executed ##' . PHP_EOL;
+				$rules .= 'RewriteEngine On' . PHP_EOL;
+				$rules .= 'RewriteRule ^.*\.php$ - [F,L,NC]' . PHP_EOL;
 				$rules .= '## WP Defender - End ##' . PHP_EOL;
 			}
 		}
@@ -374,7 +384,7 @@ class Apache {
 				$apache_version = array();
 			}
 
-			if ( isset( $apache_version[ $url ] ) && ! empty( $apache_version[ $url ] ) ) {
+			if ( isset( $apache_version[ $url ] ) && is_string( $apache_version[ $url ] ) && '' !== $apache_version[ $url ] ) {
 				return strtolower( $apache_version[ $url ] );
 			}
 			// The default support is 2.2.
@@ -397,7 +407,7 @@ class Apache {
 		} else {
 			$version = apache_get_version();
 			$version = explode( '/', $version );
-			$version = ! empty( $version[1] ) ? $version[1] : $version[0];
+			$version = isset( $version[1] ) && is_string( $version[1] ) && '' !== $version[1] ? $version[1] : $version[0];
 		}
 
 		return $version;
@@ -411,13 +421,13 @@ class Apache {
 	public function protect_content_directory() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 		$ht_access_path = $this->contentdir_path;
 
-		if ( empty( $ht_access_path ) ) {
+		if ( ! is_string( $ht_access_path ) || '' === $ht_access_path ) {
 			$ht_access_path = WP_CONTENT_DIR . '/.htaccess';
 		}
 		// Create a htaccess-file if it doesn't exist.
@@ -451,13 +461,13 @@ class Apache {
 	public function protect_includes_directory() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 		$ht_access_path = $this->includedir_path;
 
-		if ( empty( $ht_access_path ) ) {
+		if ( ! is_string( $ht_access_path ) || '' === $ht_access_path ) {
 			$ht_access_path = ABSPATH . WPINC . '/.htaccess';
 		}
 		// Create a htaccess-file if it doesn't exist.
@@ -519,8 +529,9 @@ class Apache {
 	 * @return void|WP_Error
 	 */
 	public function protect_uploads_directory() {
-		if ( defined( 'UPLOADS' ) ) {
-			$this->contentdir_path = ABSPATH . UPLOADS . '/.htaccess';
+		$path = $this->get_custom_upload_dir();
+		if ( '' !== $path ) {
+			$this->contentdir_path = $path;
 
 			return $this->protect_content_directory();
 		}
@@ -534,13 +545,13 @@ class Apache {
 	public function unprotect_content_directory() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 		$ht_access_path = $this->contentdir_path;
 
-		if ( empty( $ht_access_path ) ) {
+		if ( ! is_string( $ht_access_path ) || '' === $ht_access_path ) {
 			$ht_access_path = WP_CONTENT_DIR . '/.htaccess';
 		}
 		// Quick exit if the file does not exist.
@@ -567,13 +578,13 @@ class Apache {
 	public function unprotect_includes_directory() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 		$ht_access_path = $this->includedir_path;
 
-		if ( empty( $ht_access_path ) ) {
+		if ( ! is_string( $ht_access_path ) || '' === $ht_access_path ) {
 			$ht_access_path = ABSPATH . WPINC . '/.htaccess';
 		}
 		// Quick exit if the file does not exist.
@@ -592,12 +603,14 @@ class Apache {
 	/**
 	 * Unprotect upload directory.
 	 *
-	 * @return void
+	 * @return void|WP_Error
 	 */
 	public function unprotect_upload_directory() {
-		if ( defined( 'UPLOADS' ) ) {
-			$this->contentdir_path = ABSPATH . UPLOADS . '/.htaccess';
-			$this->unprotect_content_directory();
+		$path = $this->get_custom_upload_dir();
+		if ( '' !== $path ) {
+			$this->contentdir_path = $path;
+
+			return $this->unprotect_content_directory();
 		}
 	}
 
@@ -607,7 +620,7 @@ class Apache {
 	 * @param  array $config  to set.
 	 */
 	public function set_new_htaccess_config( $config = array() ) {
-		if ( ! empty( $config ) ) {
+		if ( is_array( $config ) && array() !== $config ) {
 			$this->new_htaccess_config = $config;
 		}
 	}
@@ -642,5 +655,19 @@ class Apache {
 		}
 
 		return $exists_rules;
+	}
+
+	/**
+	 * Get custom upload dir path.
+	 *
+	 * @return string
+	 */
+	private function get_custom_upload_dir(): string {
+		if ( defined( 'UPLOADS' ) ) {
+			// @phpstan-ignore-next-line
+			return ABSPATH . UPLOADS . '/.htaccess';
+		}
+
+		return '';
 	}
 }

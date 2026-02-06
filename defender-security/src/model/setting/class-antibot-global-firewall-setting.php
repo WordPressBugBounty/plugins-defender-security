@@ -35,7 +35,7 @@ class Antibot_Global_Firewall_Setting extends Setting {
 	 * @var bool
 	 * @defender_property
 	 */
-	public $enabled = false;
+	public bool $enabled = false;
 
 	/**
 	 * The AntiBot will be managed by WPMU DEV or Defender plugin.

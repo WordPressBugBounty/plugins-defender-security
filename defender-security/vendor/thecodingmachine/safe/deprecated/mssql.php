@@ -82,22 +82,23 @@ function mssql_close($link_identifier = null): void
  * the script ends, unless it's closed earlier by explicitly calling
  * mssql_close.
  *
- * @param string $servername The MS SQL server. It can also include a port number, e.g.
+ * @param string|null $servername The MS SQL server. It can also include a port number, e.g.
  * hostname:port (Linux), or
  * hostname,port (Windows).
- * @param string $username The username.
- * @param string $password The password.
- * @param bool $new_link If a second call is made to mssql_connect with the
+ * @param string|null $username   The username.
+ * @param string|null $password   The password.
+ * @param bool        $new_link   If a second call is made to mssql_connect with the
  * same arguments, no new link will be established, but instead, the link
  * identifier of the already opened link will be returned. This parameter
  * modifies this behavior and makes mssql_connect
  * always open a new link, even if mssql_connect was
  * called before with the same parameters.
+ *
  * @return resource Returns a MS SQL link identifier on success.
  * @throws MssqlException
  *
  */
-function mssql_connect(string $servername = null, string $username = null, string $password = null, bool $new_link = false)
+function mssql_connect( ?string $servername = null, ?string $username = null, ?string $password = null, bool $new_link = false)
 {
     error_clear_last();
     if ($new_link !== false) {
@@ -315,22 +316,23 @@ function mssql_init(string $sp_name, $link_identifier = null)
  *
  * This type of links is therefore called 'persistent'.
  *
- * @param string $servername The MS SQL server. It can also include a port number. e.g.
+ * @param string|null $servername The MS SQL server. It can also include a port number. e.g.
  * hostname:port.
- * @param string $username The username.
- * @param string $password The password.
- * @param bool $new_link If a second call is made to mssql_pconnect with
+ * @param string|null $username   The username.
+ * @param string|null $password   The password.
+ * @param bool        $new_link   If a second call is made to mssql_pconnect with
  * the same arguments, no new link will be established, but instead, the
  * link identifier of the already opened link will be returned. This
  * parameter modifies this behavior and makes
  * mssql_pconnect always open a new link, even if
  * mssql_pconnect was called before with the same
  * parameters.
+ *
  * @return resource Returns a positive MS SQL persistent link identifier on success.
  * @throws MssqlException
  *
  */
-function mssql_pconnect(string $servername = null, string $username = null, string $password = null, bool $new_link = false)
+function mssql_pconnect( ?string $servername = null, ?string $username = null, ?string $password = null, bool $new_link = false)
 {
     error_clear_last();
     if ($new_link !== false) {

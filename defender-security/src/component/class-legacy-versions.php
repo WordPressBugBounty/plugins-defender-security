@@ -11,6 +11,7 @@ use WP_Defender\Component;
 use WP_Defender\Model\Scan;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Controller\Scan as Scan_Controller;
+use WP_Filesystem_Base;
 
 /**
  * Responsible for handling legacy data migration and management related to scan issues and ignored items.
@@ -75,7 +76,7 @@ class Legacy_Versions extends Component {
 		switch ( $old_data['type'] ) {
 			case 'vuln':
 				$new_type = Scan_Item::TYPE_VULNERABILITY;
-				if ( isset( $old_data['raw'] ) && ! empty( $old_data['raw'] ) ) {
+				if ( isset( $old_data['raw'] ) && '' !== $old_data['raw'] ) {
 					$raw = maybe_unserialize( $old_data['raw'] );
 					/**
 					 * Different $raw['slug'] values depending on the type:
@@ -103,7 +104,7 @@ class Legacy_Versions extends Component {
 				break;
 			case 'content':
 				$new_type = Scan_Item::TYPE_SUSPICIOUS;
-				if ( isset( $old_data['raw'] ) && ! empty( $old_data['raw'] ) ) {
+				if ( isset( $old_data['raw'] ) && '' !== $old_data['raw'] ) {
 					$raw  = maybe_unserialize( $old_data['raw'] );
 					$file = is_array( $raw ) && isset( $raw['file'] ) ? $raw['file'] : '';
 				} else {
@@ -116,7 +117,7 @@ class Legacy_Versions extends Component {
 			case 'core':
 			default:
 				$new_type = Scan_Item::TYPE_INTEGRITY;
-				if ( isset( $old_data['raw'] ) && ! empty( $old_data['raw'] ) ) {
+				if ( isset( $old_data['raw'] ) && '' !== $old_data['raw'] ) {
 					$raw  = maybe_unserialize( $old_data['raw'] );
 					$file = is_array( $raw ) && isset( $raw['file'] ) ? $raw['file'] : '';
 				} else {
@@ -149,7 +150,7 @@ class Legacy_Versions extends Component {
 	 * @param  Scan  $model  Scan model instance to use for saving.
 	 */
 	private function save_scan_issue_data( $issue_items, $model ) {
-		if ( empty( $issue_items ) ) {
+		if ( ! is_array( $issue_items ) || array() === $issue_items ) {
 			return;
 		}
 		// Get existed issues.
@@ -157,10 +158,10 @@ class Legacy_Versions extends Component {
 		$unique_arr     = array();
 		foreach ( $issue_items as $item ) {
 			$data = $this->adapt_scan_data( $item );
-			if ( empty( $data['file'] ) ) {
+			if ( '' === $data['file'] ) {
 				continue;
 			}
-			if ( ! empty( $existed_issues ) ) {
+			if ( is_array( $existed_issues ) && array() !== $existed_issues ) {
 				// Scan was started in version > 2.3.2.
 				foreach ( $existed_issues as $issue ) {
 					if ( Scan_Item::TYPE_VULNERABILITY === $data['type'] ) {
@@ -192,7 +193,7 @@ class Legacy_Versions extends Component {
 	 * @param  Scan  $model  Scan model instance to use for saving.
 	 */
 	private function save_scan_ignored_data( $ignored_items, $model ) {
-		if ( empty( $ignored_items ) ) {
+		if ( ! is_array( $ignored_items ) || array() === $ignored_items ) {
 			return;
 		}
 		// Get INDEXER of ignored issues.
@@ -201,10 +202,10 @@ class Legacy_Versions extends Component {
 		$existed_issues = $model->get_issues( null, Scan_Item::STATUS_IGNORE );
 		foreach ( $ignored_items as $item ) {
 			$data = $this->adapt_scan_data( $item );
-			if ( empty( $data['file'] ) ) {
+			if ( '' === $data['file'] ) {
 				continue;
 			}
-			if ( ! empty( $existed_issues ) ) {
+			if ( is_array( $existed_issues ) && array() !== $existed_issues ) {
 				// Scan was started in version > 2.3.2 .
 				foreach ( $existed_issues as $issue ) {
 					if ( Scan_Item::TYPE_VULNERABILITY === $data['type'] ) {
@@ -268,7 +269,7 @@ class Legacy_Versions extends Component {
 	 * @return int ID of the scan.
 	 */
 	private function run_simlpe_scan() {
-		$scan_component = wd_di()->get( Scan::class );
+		$scan_component = wd_di()->get( \WP_Defender\Component\Scan::class );
 		$scan_model     = wd_di()->get( Scan::class );
 		// The simplest data.
 		$scan_model->percent         = 100;
@@ -327,7 +328,7 @@ class Legacy_Versions extends Component {
 	 */
 	public function remove_old_scan_data( $issue_list, $ignored_list ) {
 		// Delete the list of scan issues.
-		if ( ! empty( $issue_list ) ) {
+		if ( is_array( $issue_list ) && array() !== $issue_list ) {
 			$parent_post_id = (int) $issue_list[0]['parentId'];
 			foreach ( $issue_list as $key => $issue ) {
 				// Delete scan items.
@@ -337,7 +338,7 @@ class Legacy_Versions extends Component {
 			wp_delete_post( $parent_post_id );
 		}
 		// Delete the ignored list.
-		if ( ! empty( $ignored_list ) ) {
+		if ( is_array( $ignored_list ) && array() !== $ignored_list ) {
 			$parent_post_id = (int) $ignored_list[0]['parentId'];
 			foreach ( $ignored_list as $key => $item ) {
 				// Delete scan items.
@@ -368,7 +369,7 @@ class Legacy_Versions extends Component {
 	 */
 	private static function decrypt_data_with_pub_key( $encrypt_data, $key ) {
 		// This is not obfuscation. Just decode a base64-encoded string.
-		$str = base64_decode( $encrypt_data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$str = base64_decode( $encrypt_data, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		if ( ! $str ) {
 			return false;
 		}
@@ -390,7 +391,7 @@ class Legacy_Versions extends Component {
 	public static function get_decrypted_data_with_pub_key( $data ) {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}

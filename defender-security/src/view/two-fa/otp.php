@@ -18,7 +18,7 @@ if ( ! function_exists( 'login_header_otp' ) ) {
 	function login_header_otp( $title = 'Log In', $message = '', $show_logo = true, $wp_error = '' ) {
 		global $error, $interim_login, $action;
 
-		if ( empty( $wp_error ) ) {
+		if ( ! ( $wp_error instanceof WP_Error ) ) {
 			$wp_error = new WP_Error();
 		}
 
@@ -196,12 +196,12 @@ if ( ! function_exists( 'login_header_otp' ) ) {
 		 * @since 2.1.0
 		 */
 		$message = apply_filters( 'login_message', $message );
-		if ( ! empty( $message ) ) {
+		if ( is_string( $message ) && '' !== trim( $message ) ) {
 			echo wp_kses_post( $message );
 		}
 
 		// In case a plugin uses $error rather than the $wp_errors object.
-		if ( ! empty( $error ) ) {
+		if ( $error instanceof WP_Error ) {
 			$wp_error->add( 'error', $error );
 			unset( $error );
 		}
@@ -219,7 +219,7 @@ if ( ! function_exists( 'login_header_otp' ) ) {
 					}
 				}
 			}
-			if ( ! empty( $errors ) ) {
+			if ( '' !== $errors ) {
 				/**
 				 * Filters the error messages displayed above the login form.
 				 *
@@ -229,7 +229,7 @@ if ( ! function_exists( 'login_header_otp' ) ) {
 				 */
 				echo wp_kses_post( sprintf( '<div id="login_error" class="notice notice-error">%s</div>', apply_filters( 'login_errors', $errors ) ) );
 			}
-			if ( ! empty( $messages ) ) {
+			if ( '' !== $messages ) {
 				/**
 				 * Filters instructional messages displayed above the login form.
 				 *
@@ -247,7 +247,7 @@ $show_logo = WP_Defender\Model\Setting\Two_Fa::CUSTOM_GRAPHIC_TYPE_NO !== $custo
 if ( isset( $interim_login ) && 'success' === $interim_login ) {
 	login_header_otp( '', $message, $show_logo );
 
-	$modal_close_script = <<<END
+	$modal_close_script = <<<'END'
 		<script>
 		jQuery(function ($) {
 			$('.wp-auth-check-close', window.parent.document).trigger('click');
@@ -269,7 +269,7 @@ END;
 } else {
 	login_header_otp( '', '', $show_logo, $error );
 
-	if ( ! empty( $providers ) ) {
+	if ( is_array( $providers ) && array() !== $providers ) {
 		$nonce = wp_create_nonce( 'verify_otp' );
 		foreach ( $providers as $slug => $provider ) {
 			?>
@@ -294,7 +294,7 @@ END;
 					<input type="hidden" name="requested_user" value="<?php echo esc_attr( $user_id ); ?>"/>
 					<input type="hidden" id="_wpnonce_<?php echo esc_attr( $slug ); ?>" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>" />
 				<?php
-				if ( ! empty( defender_get_data_from_request( 'interim-login', 'r' ) ) ) {
+				if ( '1' === defender_get_data_from_request( 'interim-login', 'r' ) ) {
 					?>
 						<input type="hidden" name="interim-login" value="1"/>
 					<?php
@@ -462,7 +462,7 @@ END;
 </div>
 
 			<?php
-			if ( ! empty( $input_id ) ) :
+			if ( '' !== trim( $input_id ) ) :
 				?>
 	<script type="text/javascript">
 		try {

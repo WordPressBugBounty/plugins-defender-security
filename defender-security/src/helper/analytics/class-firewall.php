@@ -57,10 +57,12 @@ class Firewall extends Event {
 
 	/**
 	 * Exports strings.
+	 *
+	 * @return array
 	 */
 	public function export_strings() {
+		return array();
 	}
-	// End.
 
 	/**
 	 * Get a label of the detection method.

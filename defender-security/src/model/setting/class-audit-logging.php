@@ -54,7 +54,9 @@ class Audit_Logging extends Setting {
 	 * @since 2.6.5
 	 */
 	public function is_active(): bool {
-		return (bool) apply_filters( 'wd_audit_enable', $this->enabled );
+		$enabled = apply_filters( 'wd_audit_enable', $this->enabled );
+
+		return is_bool( $enabled ) ? $enabled : (bool) $enabled;
 	}
 
 	/**

@@ -17,6 +17,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<?php echo $discourage_crawlers ? '<meta name="robots" content="noindex, nofollow">' : ''; ?>
 	<title>
 		<?php
 		$devman_img  = defender_asset_url( '/assets/img/def-stand.svg' );
@@ -140,7 +141,7 @@
 		}
 
 	</style>
-	<?php if ( ! empty( $is_unlock_me_agf ) || ! empty( $is_unlock_me ) ) { ?>
+	<?php if ( true === $is_unlock_me_agf || true === $is_unlock_me ) { ?>
 		<link rel="stylesheet" href="<?php echo esc_url( defender_asset_url( '/assets/css/unlock.css' ) ); ?>">
 		<script src="<?php echo esc_url_raw( includes_url( '/js/jquery/jquery.min.js' ) ); ?>"></script>
 	<?php } ?>
@@ -152,18 +153,18 @@
 		<?php
 		if (
 			( false === $info['hide_branding'] ) ||
-			( true === $info['hide_branding'] && ! empty( $info['hero_image'] ) )
+			( true === $info['hide_branding'] && isset( $info['hero_image'] ) && '' !== $info['hero_image'] )
 		) {
 			echo '<div class="image"></div>';
 		}
 		?>
 		<h1 class="locked_page_header"><?php esc_html_e( 'Access Denied', 'defender-security' ); ?></h1>
-		<p class="message" <?php echo ! empty( $hide_btn_agf ) ? 'style="margin-top: -1.5em; margin-bottom: 3em"' : ''; ?>>
+		<p class="message" <?php echo true === $hide_btn_agf ? 'style="margin-top: -1.5em; margin-bottom: 3em"' : ''; ?>>
 			<?php
 			echo wp_kses_post( $message );
-			echo ! empty( $hide_btn_agf ) ? '' : '<br/>';
-			if ( ! empty( $is_unlock_me_agf ) ) {
-				if ( empty( $hide_btn_agf ) ) {
+			echo true === $hide_btn_agf ? '' : '<br/>';
+			if ( true === $is_unlock_me_agf ) {
+				if ( true !== $hide_btn_agf ) {
 					printf(
 					/* translators: 1. Module name. 2. Button title. */
 						esc_html__(
@@ -183,7 +184,7 @@
 						'<strong>' . $module_name_agf . '</strong>'
 					);
 				}
-			} else if ( ! empty( $is_unlock_me ) ) {
+			} elseif ( true === $is_unlock_me ) {
 				printf(
 				/* translators: %s: Button title. */
 					esc_html__(
@@ -195,8 +196,8 @@
 			}
 			?>
 		</p>
-		<?php if ( ! empty( $is_unlock_me_agf ) ) {
-			if ( empty( $hide_btn_agf ) ) { ?>
+		<?php if ( true === $is_unlock_me_agf ) {
+			if ( true !== $hide_btn_agf ) { ?>
 				<div class="unlock_wrap sui-wrap">
 					<!--Step#1-->
 					<form id="wd_agf_unlock_me_form">
@@ -247,7 +248,7 @@
 					</div>
 				</div>
 		<?php }
-		} else if ( ! empty( $is_unlock_me ) ) { ?>
+		} elseif ( true === $is_unlock_me ) { ?>
 			<div class="unlock_wrap sui-wrap">
 				<!--Step#1-->
 				<button type="button" id="wd_step_show_toggle"
@@ -305,7 +306,7 @@
 
 			</div>
 		<?php } ?>
-		<?php if ( ! empty( $remaining_time ) && is_int( $remaining_time ) && $remaining_time > 0 ) { ?>
+		<?php if ( is_int( $remaining_time ) && $remaining_time > 0 ) { ?>
 			<p class="message"><?php esc_html_e( 'You will be able to attempt to access again in:', 'defender-security' ); ?></p>
 			<p id="countdown-time"><span class="sui-icon-stopwatch" aria-hidden="true"></span><span
 						id="remaining-time"></span></p>
@@ -323,7 +324,7 @@
 	}
 	?>
 </div>
-<?php if ( ! empty( $remaining_time ) && is_int( $remaining_time ) && $remaining_time > 0 ) { ?>
+<?php if ( is_int( $remaining_time ) && $remaining_time > 0 ) { ?>
 	<script>
 		function CountDownTimer(duration, granularity) {
 			this.duration = duration;
@@ -417,7 +418,7 @@
 	</script>
 <?php } ?>
 
-<?php if ( ! empty( $is_unlock_me_agf ) && empty( $hide_btn_agf ) ) { ?>
+<?php if ( true === $is_unlock_me_agf && true !== $hide_btn_agf ) { ?>
 	<script>
 		let altcha = <?php echo json_encode( $altcha ); ?>;
 
@@ -476,7 +477,7 @@
 	<script src="<?php echo plugins_url( 'assets/js/vendor.js', WP_DEFENDER_FILE ); ?>"></script>
 	<script src="<?php echo plugins_url( 'assets/js/manifest.js', WP_DEFENDER_FILE ); ?>"></script>
 	<script src="<?php echo plugins_url( 'assets/js/altcha.js', WP_DEFENDER_FILE ); ?>"></script>
-<?php } else if ( ! empty( $is_unlock_me ) ) { ?>
+<?php } elseif ( true === $is_unlock_me ) { ?>
 	<script>
 		jQuery(function ($) {
 			//Verify user.

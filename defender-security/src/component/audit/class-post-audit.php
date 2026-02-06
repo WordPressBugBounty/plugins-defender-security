@@ -26,7 +26,8 @@ class Post_Audit extends Audit_Event {
 	 */
 	protected function exclude_events() {
 		// Share excluded post types, e.g. from Hummingbird.
-		$public_events       = (array) apply_filters( 'wd_audit_excluded_post_types', array( 'wphb_minify_group' ) );
+		$public_events       = apply_filters( 'wd_audit_excluded_post_types', array( 'wphb_minify_group' ) );
+		$public_events       = is_array( $public_events ) ? $public_events : (array) $public_events;
 		$excluded_post_types = array(
 			// From Defender.
 			'wdscan_result',

@@ -157,10 +157,7 @@ class Product_Analytics extends Component {
 	 *
 	 * @return float The size in megabytes.
 	 */
-	private function convert_to_megabytes( $size_in_bytes ) {
-		if ( empty( $size_in_bytes ) ) {
-			return 0;
-		}
+	private function convert_to_megabytes( int $size_in_bytes ) {
 		$unit_mb = pow( 1024, 2 );
 
 		return round( $size_in_bytes / $unit_mb, 2 );

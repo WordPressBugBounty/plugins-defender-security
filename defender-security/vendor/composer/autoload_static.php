@@ -4,13 +4,12 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
+class ComposerStaticInitdb8e2a479c983870846afbe970e4f0af
 {
     public static $files = array (
         'a4ecaeafb8cfb009ad0e052c90355e98' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/functions.php',
-        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '23c18046f52bef3eea034657bafda50f' => __DIR__ . '/..' . '/symfony/polyfill-php81/bootstrap.php',
-        '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         'e39a8b23c42d4e1452234d762b03835a' => __DIR__ . '/..' . '/ramsey/uuid/src/functions.php',
         '51fcf4e06c07cc00c920b44bcd900e7a' => __DIR__ . '/..' . '/thecodingmachine/safe/deprecated/apc.php',
         '47f619d9197b36cf5ab70738d7743fe2' => __DIR__ . '/..' . '/thecodingmachine/safe/deprecated/libevent.php',
@@ -104,210 +103,209 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
     );
 
     public static $prefixLengthsPsr4 = array (
-        'W' => 
+        'c' =>
+        array (
+            'cweagans\\Composer\\' => 18,
+        ),
+        'W' =>
         array (
             'Webauthn\\MetadataService\\' => 25,
             'Webauthn\\' => 9,
             'WPMU_DEV\\Defender\\Vendor\\' => 25,
         ),
-        'V' => 
+        'V' =>
         array (
             'Valitron\\' => 9,
         ),
-        'S' => 
+        'S' =>
         array (
             'Symfony\\Polyfill\\Php81\\' => 23,
             'Symfony\\Polyfill\\Php80\\' => 23,
-            'Symfony\\Polyfill\\Ctype\\' => 23,
             'Symfony\\Component\\Process\\' => 26,
             'Safe\\' => 5,
         ),
-        'R' => 
+        'R' =>
         array (
             'Ramsey\\Uuid\\' => 12,
             'Ramsey\\Collection\\' => 18,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
             'Psr\\Http\\Client\\' => 16,
         ),
-        'N' => 
+        'N' =>
         array (
             'Nyholm\\Psr7\\' => 12,
             'Nyholm\\Psr7Server\\' => 18,
         ),
-        'L' => 
+        'L' =>
         array (
             'League\\Uri\\' => 11,
         ),
-        'J' => 
+        'J' =>
         array (
             'Jose\\Component\\Signature\\Algorithm\\' => 35,
             'Jose\\Component\\Signature\\' => 25,
             'Jose\\Component\\KeyManagement\\' => 29,
             'Jose\\Component\\Core\\' => 20,
         ),
-        'G' => 
+        'G' =>
         array (
             'Gettext\\Languages\\' => 18,
             'Gettext\\' => 8,
         ),
-        'F' => 
+        'F' =>
         array (
             'FG\\' => 3,
         ),
-        'C' => 
+        'C' =>
         array (
             'Cose\\' => 5,
             'CBOR\\' => 5,
         ),
-        'B' => 
+        'B' =>
         array (
             'Brick\\Math\\' => 11,
             'Base64Url\\' => 10,
         ),
-        'A' => 
+        'A' =>
         array (
             'Assert\\' => 7,
-            'AltchaOrg\\Altcha\\' => 17,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Webauthn\\MetadataService\\' => 
+        'cweagans\\Composer\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/cweagans/composer-patches/src',
+            1 => __DIR__ . '/..' . '/cweagans/composer-configurable-plugin/src',
+        ),
+        'Webauthn\\MetadataService\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-auth/metadata-service/src',
         ),
-        'Webauthn\\' => 
+        'Webauthn\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-auth/webauthn-lib/src',
         ),
-        'WPMU_DEV\\Defender\\Vendor\\' => 
+        'WPMU_DEV\\Defender\\Vendor\\' =>
         array (
             0 => __DIR__ . '/../..' . '/lib/packages',
         ),
-        'Valitron\\' => 
+        'Valitron\\' =>
         array (
             0 => __DIR__ . '/..' . '/vlucas/valitron/src/Valitron',
         ),
-        'Symfony\\Polyfill\\Php81\\' => 
+        'Symfony\\Polyfill\\Php81\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php81',
         ),
-        'Symfony\\Polyfill\\Php80\\' => 
+        'Symfony\\Polyfill\\Php80\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Symfony\\Polyfill\\Ctype\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
-        ),
-        'Symfony\\Component\\Process\\' => 
+        'Symfony\\Component\\Process\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
         ),
-        'Safe\\' => 
+        'Safe\\' =>
         array (
             0 => __DIR__ . '/..' . '/thecodingmachine/safe/lib',
             1 => __DIR__ . '/..' . '/thecodingmachine/safe/deprecated',
             2 => __DIR__ . '/..' . '/thecodingmachine/safe/generated',
         ),
-        'Ramsey\\Uuid\\' => 
+        'Ramsey\\Uuid\\' =>
         array (
             0 => __DIR__ . '/..' . '/ramsey/uuid/src',
         ),
-        'Ramsey\\Collection\\' => 
+        'Ramsey\\Collection\\' =>
         array (
             0 => __DIR__ . '/..' . '/ramsey/collection/src',
         ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
         ),
-        'Psr\\Http\\Message\\' => 
+        'Psr\\Http\\Message\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Psr\\Http\\Client\\' => 
+        'Psr\\Http\\Client\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-client/src',
         ),
-        'Nyholm\\Psr7\\' => 
+        'Nyholm\\Psr7\\' =>
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7/src',
         ),
-        'Nyholm\\Psr7Server\\' => 
+        'Nyholm\\Psr7Server\\' =>
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7-server/src',
         ),
-        'League\\Uri\\' => 
+        'League\\Uri\\' =>
         array (
             0 => __DIR__ . '/..' . '/league/uri/src',
             1 => __DIR__ . '/..' . '/league/uri-interfaces/src',
         ),
-        'Jose\\Component\\Signature\\Algorithm\\' => 
+        'Jose\\Component\\Signature\\Algorithm\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-rsa',
             1 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-eddsa',
             2 => __DIR__ . '/..' . '/web-token/jwt-signature-algorithm-ecdsa',
         ),
-        'Jose\\Component\\Signature\\' => 
+        'Jose\\Component\\Signature\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-token/jwt-signature',
         ),
-        'Jose\\Component\\KeyManagement\\' => 
+        'Jose\\Component\\KeyManagement\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-token/jwt-key-mgmt',
         ),
-        'Jose\\Component\\Core\\' => 
+        'Jose\\Component\\Core\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-token/jwt-core',
         ),
-        'Gettext\\Languages\\' => 
+        'Gettext\\Languages\\' =>
         array (
             0 => __DIR__ . '/..' . '/gettext/languages/src',
         ),
-        'Gettext\\' => 
+        'Gettext\\' =>
         array (
             0 => __DIR__ . '/..' . '/gettext/gettext/src',
         ),
-        'FG\\' => 
+        'FG\\' =>
         array (
             0 => __DIR__ . '/..' . '/fgrosse/phpasn1/lib',
         ),
-        'Cose\\' => 
+        'Cose\\' =>
         array (
             0 => __DIR__ . '/..' . '/web-auth/cose-lib/src',
         ),
-        'CBOR\\' => 
+        'CBOR\\' =>
         array (
             0 => __DIR__ . '/..' . '/spomky-labs/cbor-php/src',
         ),
-        'Brick\\Math\\' => 
+        'Brick\\Math\\' =>
         array (
             0 => __DIR__ . '/..' . '/brick/math/src',
         ),
-        'Base64Url\\' => 
+        'Base64Url\\' =>
         array (
             0 => __DIR__ . '/..' . '/spomky-labs/base64url/src',
         ),
-        'Assert\\' => 
+        'Assert\\' =>
         array (
             0 => __DIR__ . '/..' . '/beberlei/assert/lib/Assert',
-        ),
-        'AltchaOrg\\Altcha\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/altcha-org/altcha/src',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'W' => 
+        'W' =>
         array (
-            'WPMU_DEV\\Defender\\Vendor\\' => 
+            'WPMU_DEV\\Defender\\Vendor\\' =>
             array (
                 0 => __DIR__ . '/../..' . '/lib/packages',
             ),
@@ -315,14 +313,6 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
     );
 
     public static $classMap = array (
-        'AltchaOrg\\Altcha\\Algorithm' => __DIR__ . '/..' . '/altcha-org/altcha/src/Algorithm.php',
-        'AltchaOrg\\Altcha\\Altcha' => __DIR__ . '/..' . '/altcha-org/altcha/src/Altcha.php',
-        'AltchaOrg\\Altcha\\Challenge' => __DIR__ . '/..' . '/altcha-org/altcha/src/Challenge.php',
-        'AltchaOrg\\Altcha\\ChallengeOptions' => __DIR__ . '/..' . '/altcha-org/altcha/src/ChallengeOptions.php',
-        'AltchaOrg\\Altcha\\Payload' => __DIR__ . '/..' . '/altcha-org/altcha/src/Payload.php',
-        'AltchaOrg\\Altcha\\ServerSignaturePayload' => __DIR__ . '/..' . '/altcha-org/altcha/src/ServerSignaturePayload.php',
-        'AltchaOrg\\Altcha\\ServerSignatureVerificationData' => __DIR__ . '/..' . '/altcha-org/altcha/src/ServerSignatureVerificationData.php',
-        'AltchaOrg\\Altcha\\Solution' => __DIR__ . '/..' . '/altcha-org/altcha/src/Solution.php',
         'Assert\\Assert' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/Assert.php',
         'Assert\\Assertion' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/Assertion.php',
         'Assert\\AssertionChain' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/AssertionChain.php',
@@ -766,6 +756,7 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'Ramsey\\Uuid\\Converter\\Time\\DegradedTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/DegradedTimeConverter.php',
         'Ramsey\\Uuid\\Converter\\Time\\GenericTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/GenericTimeConverter.php',
         'Ramsey\\Uuid\\Converter\\Time\\PhpTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/PhpTimeConverter.php',
+        'Ramsey\\Uuid\\Converter\\Time\\UnixTimeConverter' => __DIR__ . '/..' . '/ramsey/uuid/src/Converter/Time/UnixTimeConverter.php',
         'Ramsey\\Uuid\\DegradedUuid' => __DIR__ . '/..' . '/ramsey/uuid/src/DegradedUuid.php',
         'Ramsey\\Uuid\\DeprecatedUuidInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/DeprecatedUuidInterface.php',
         'Ramsey\\Uuid\\DeprecatedUuidMethodsTrait' => __DIR__ . '/..' . '/ramsey/uuid/src/DeprecatedUuidMethodsTrait.php',
@@ -801,6 +792,7 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'Ramsey\\Uuid\\Generator\\RandomLibAdapter' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/RandomLibAdapter.php',
         'Ramsey\\Uuid\\Generator\\TimeGeneratorFactory' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/TimeGeneratorFactory.php',
         'Ramsey\\Uuid\\Generator\\TimeGeneratorInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/TimeGeneratorInterface.php',
+        'Ramsey\\Uuid\\Generator\\UnixTimeGenerator' => __DIR__ . '/..' . '/ramsey/uuid/src/Generator/UnixTimeGenerator.php',
         'Ramsey\\Uuid\\Guid\\Fields' => __DIR__ . '/..' . '/ramsey/uuid/src/Guid/Fields.php',
         'Ramsey\\Uuid\\Guid\\Guid' => __DIR__ . '/..' . '/ramsey/uuid/src/Guid/Guid.php',
         'Ramsey\\Uuid\\Guid\\GuidBuilder' => __DIR__ . '/..' . '/ramsey/uuid/src/Guid/GuidBuilder.php',
@@ -825,8 +817,11 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'Ramsey\\Uuid\\Provider\\Time\\SystemTimeProvider' => __DIR__ . '/..' . '/ramsey/uuid/src/Provider/Time/SystemTimeProvider.php',
         'Ramsey\\Uuid\\Rfc4122\\Fields' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/Fields.php',
         'Ramsey\\Uuid\\Rfc4122\\FieldsInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/FieldsInterface.php',
+        'Ramsey\\Uuid\\Rfc4122\\MaxTrait' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/MaxTrait.php',
+        'Ramsey\\Uuid\\Rfc4122\\MaxUuid' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/MaxUuid.php',
         'Ramsey\\Uuid\\Rfc4122\\NilTrait' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/NilTrait.php',
         'Ramsey\\Uuid\\Rfc4122\\NilUuid' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/NilUuid.php',
+        'Ramsey\\Uuid\\Rfc4122\\TimeTrait' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/TimeTrait.php',
         'Ramsey\\Uuid\\Rfc4122\\UuidBuilder' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidBuilder.php',
         'Ramsey\\Uuid\\Rfc4122\\UuidInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidInterface.php',
         'Ramsey\\Uuid\\Rfc4122\\UuidV1' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV1.php',
@@ -834,6 +829,9 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'Ramsey\\Uuid\\Rfc4122\\UuidV3' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV3.php',
         'Ramsey\\Uuid\\Rfc4122\\UuidV4' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV4.php',
         'Ramsey\\Uuid\\Rfc4122\\UuidV5' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV5.php',
+        'Ramsey\\Uuid\\Rfc4122\\UuidV6' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV6.php',
+        'Ramsey\\Uuid\\Rfc4122\\UuidV7' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV7.php',
+        'Ramsey\\Uuid\\Rfc4122\\UuidV8' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/UuidV8.php',
         'Ramsey\\Uuid\\Rfc4122\\Validator' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/Validator.php',
         'Ramsey\\Uuid\\Rfc4122\\VariantTrait' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/VariantTrait.php',
         'Ramsey\\Uuid\\Rfc4122\\VersionTrait' => __DIR__ . '/..' . '/ramsey/uuid/src/Rfc4122/VersionTrait.php',
@@ -959,15 +957,14 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'Symfony\\Component\\Process\\Pipes\\WindowsPipes' => __DIR__ . '/..' . '/symfony/process/Pipes/WindowsPipes.php',
         'Symfony\\Component\\Process\\Process' => __DIR__ . '/..' . '/symfony/process/Process.php',
         'Symfony\\Component\\Process\\ProcessUtils' => __DIR__ . '/..' . '/symfony/process/ProcessUtils.php',
-        'Symfony\\Polyfill\\Ctype\\Ctype' => __DIR__ . '/..' . '/symfony/polyfill-ctype/Ctype.php',
         'Symfony\\Polyfill\\Php80\\Php80' => __DIR__ . '/..' . '/symfony/polyfill-php80/Php80.php',
         'Symfony\\Polyfill\\Php80\\PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/PhpToken.php',
         'Symfony\\Polyfill\\Php81\\Php81' => __DIR__ . '/..' . '/symfony/polyfill-php81/Php81.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
         'Valitron\\Validator' => __DIR__ . '/..' . '/vlucas/valitron/src/Valitron/Validator.php',
         'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
-        'WPMU_DEV\\Defender\\Vendor\\DI\\Annotation\\Inject' => __DIR__ . '/../..' . '/lib/packages/DI/Annotation/Inject.php',
-        'WPMU_DEV\\Defender\\Vendor\\DI\\Annotation\\Injectable' => __DIR__ . '/../..' . '/lib/packages/DI/Annotation/Injectable.php',
+        'WPMU_DEV\\Defender\\Vendor\\DI\\Attribute\\Inject' => __DIR__ . '/../..' . '/lib/packages/DI/Attribute/Inject.php',
+        'WPMU_DEV\\Defender\\Vendor\\DI\\Attribute\\Injectable' => __DIR__ . '/../..' . '/lib/packages/DI/Attribute/Injectable.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\CompiledContainer' => __DIR__ . '/../..' . '/lib/packages/DI/CompiledContainer.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Compiler\\Compiler' => __DIR__ . '/../..' . '/lib/packages/DI/Compiler/Compiler.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Compiler\\ObjectCreationCompiler' => __DIR__ . '/../..' . '/lib/packages/DI/Compiler/ObjectCreationCompiler.php',
@@ -981,7 +978,7 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Definition' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Definition.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Dumper\\ObjectDefinitionDumper' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Dumper/ObjectDefinitionDumper.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\EnvironmentVariableDefinition' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/EnvironmentVariableDefinition.php',
-        'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Exception\\InvalidAnnotation' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Exception/InvalidAnnotation.php',
+        'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Exception\\InvalidAttribute' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Exception/InvalidAttribute.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Exception\\InvalidDefinition' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Exception/InvalidDefinition.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\ExtendsPreviousDefinition' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/ExtendsPreviousDefinition.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\FactoryDefinition' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/FactoryDefinition.php',
@@ -1004,7 +1001,7 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Resolver\\ParameterResolver' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Resolver/ParameterResolver.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Resolver\\ResolverDispatcher' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Resolver/ResolverDispatcher.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\SelfResolvingDefinition' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/SelfResolvingDefinition.php',
-        'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Source\\AnnotationBasedAutowiring' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Source/AnnotationBasedAutowiring.php',
+        'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Source\\AttributeBasedAutowiring' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Source/AttributeBasedAutowiring.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Source\\Autowiring' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Source/Autowiring.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Source\\DefinitionArray' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Source/DefinitionArray.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Definition\\Source\\DefinitionFile' => __DIR__ . '/../..' . '/lib/packages/DI/Definition/Source/DefinitionFile.php',
@@ -1023,7 +1020,9 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WPMU_DEV\\Defender\\Vendor\\DI\\Invoker\\DefinitionParameterResolver' => __DIR__ . '/../..' . '/lib/packages/DI/Invoker/DefinitionParameterResolver.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Invoker\\FactoryParameterResolver' => __DIR__ . '/../..' . '/lib/packages/DI/Invoker/FactoryParameterResolver.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\NotFoundException' => __DIR__ . '/../..' . '/lib/packages/DI/NotFoundException.php',
+        'WPMU_DEV\\Defender\\Vendor\\DI\\Proxy\\NativeProxyFactory' => __DIR__ . '/../..' . '/lib/packages/DI/Proxy/NativeProxyFactory.php',
         'WPMU_DEV\\Defender\\Vendor\\DI\\Proxy\\ProxyFactory' => __DIR__ . '/../..' . '/lib/packages/DI/Proxy/ProxyFactory.php',
+        'WPMU_DEV\\Defender\\Vendor\\DI\\Proxy\\ProxyFactoryInterface' => __DIR__ . '/../..' . '/lib/packages/DI/Proxy/ProxyFactoryInterface.php',
         'WPMU_DEV\\Defender\\Vendor\\Invoker\\CallableResolver' => __DIR__ . '/../..' . '/lib/packages/Invoker/CallableResolver.php',
         'WPMU_DEV\\Defender\\Vendor\\Invoker\\Exception\\InvocationException' => __DIR__ . '/../..' . '/lib/packages/Invoker/Exception/InvocationException.php',
         'WPMU_DEV\\Defender\\Vendor\\Invoker\\Exception\\NotCallableException' => __DIR__ . '/../..' . '/lib/packages/Invoker/Exception/NotCallableException.php',
@@ -1082,26 +1081,44 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Bootstrap' => __DIR__ . '/../..' . '/src/class-bootstrap.php',
         'WP_Defender\\Central' => __DIR__ . '/../..' . '/src/class-central.php',
         'WP_Defender\\Component' => __DIR__ . '/../..' . '/src/class-component.php',
+        'WP_Defender\\Component\\Altcha\\Altcha' => __DIR__ . '/../..' . '/src/component/altcha/class-altcha.php',
+        'WP_Defender\\Component\\Altcha\\Base_Challenge_Options' => __DIR__ . '/../..' . '/src/component/altcha/class-base-challenge-options.php',
+        'WP_Defender\\Component\\Altcha\\Challenge' => __DIR__ . '/../..' . '/src/component/altcha/class-challenge.php',
+        'WP_Defender\\Component\\Altcha\\Challenge_Options' => __DIR__ . '/../..' . '/src/component/altcha/class-challenge-options.php',
+        'WP_Defender\\Component\\Altcha\\Check_Challenge_Options' => __DIR__ . '/../..' . '/src/component/altcha/class-check-challenge-options.php',
+        'WP_Defender\\Component\\Altcha\\Hasher\\Algorithm' => __DIR__ . '/../..' . '/src/component/altcha/Hasher/class-algorithm.php',
+        'WP_Defender\\Component\\Altcha\\Hasher\\Hasher' => __DIR__ . '/../..' . '/src/component/altcha/Hasher/class-hasher.php',
+        'WP_Defender\\Component\\Altcha\\Hasher\\HasherInterface' => __DIR__ . '/../..' . '/src/component/altcha/Hasher/hasher-interface.php',
+        'WP_Defender\\Component\\Altcha\\Payload' => __DIR__ . '/../..' . '/src/component/altcha/class-payload.php',
         'WP_Defender\\Component\\Altcha_Handler' => __DIR__ . '/../..' . '/src/component/class-altcha-handler.php',
         'WP_Defender\\Component\\Audit' => __DIR__ . '/../..' . '/src/component/class-audit.php',
+        'WP_Defender\\Component\\Audit\\Application_Password_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-application-password-audit.php',
         'WP_Defender\\Component\\Audit\\Audit_Event' => __DIR__ . '/../..' . '/src/component/audit/class-audit-event.php',
         'WP_Defender\\Component\\Audit\\Comment_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-comment-audit.php',
         'WP_Defender\\Component\\Audit\\Core_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-core-audit.php',
+        'WP_Defender\\Component\\Audit\\Feature_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-feature-audit.php',
         'WP_Defender\\Component\\Audit\\Media_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-media-audit.php',
         'WP_Defender\\Component\\Audit\\Menu_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-menu-audit.php',
         'WP_Defender\\Component\\Audit\\Options_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-options-audit.php',
+        'WP_Defender\\Component\\Audit\\Password_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-password-audit.php',
         'WP_Defender\\Component\\Audit\\Post_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-post-audit.php',
-        'WP_Defender\\Component\\Audit\\Users_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-users-audit.php',
+        'WP_Defender\\Component\\Audit\\Theme_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-theme-audit.php',
+        'WP_Defender\\Component\\Audit\\User_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-user-audit.php',
         'WP_Defender\\Component\\Backup_Settings' => __DIR__ . '/../..' . '/src/component/class-backup-settings.php',
         'WP_Defender\\Component\\Blacklist_Lockout' => __DIR__ . '/../..' . '/src/component/class-blacklist-lockout.php',
-        'WP_Defender\\Component\\Bot_Trap' => __DIR__ . '/../..' . '/src/component/class-bot-trap.php',
         'WP_Defender\\Component\\Breadcrumbs' => __DIR__ . '/../..' . '/src/component/class-breadcrumbs.php',
+        'WP_Defender\\Component\\Captcha' => __DIR__ . '/../..' . '/src/component/class-captcha.php',
+        'WP_Defender\\Component\\Captcha\\Interface_Provider' => __DIR__ . '/../..' . '/src/component/captcha/interface-provider.php',
+        'WP_Defender\\Component\\Captcha\\Provider' => __DIR__ . '/../..' . '/src/component/captcha/class-provider.php',
+        'WP_Defender\\Component\\Captcha\\Recaptcha' => __DIR__ . '/../..' . '/src/component/captcha/class-recaptcha.php',
+        'WP_Defender\\Component\\Captcha\\Turnstile' => __DIR__ . '/../..' . '/src/component/captcha/class-turnstile.php',
         'WP_Defender\\Component\\Cli' => __DIR__ . '/../..' . '/src/component/class-cli.php',
         'WP_Defender\\Component\\Config\\Config_Adapter' => __DIR__ . '/../..' . '/src/component/config/class-config-adapter.php',
         'WP_Defender\\Component\\Config\\Config_Hub_Helper' => __DIR__ . '/../..' . '/src/component/config/class-config-hub-helper.php',
         'WP_Defender\\Component\\Cross_Sell' => __DIR__ . '/../..' . '/src/component/class-cross-sell.php',
         'WP_Defender\\Component\\Crypt' => __DIR__ . '/../..' . '/src/component/class-crypt.php',
         'WP_Defender\\Component\\Error_Code' => __DIR__ . '/../..' . '/src/component/class-error-code.php',
+        'WP_Defender\\Component\\Fake_Bot_Detection' => __DIR__ . '/../..' . '/src/component/class-fake-bot-detection.php',
         'WP_Defender\\Component\\Feature_Modal' => __DIR__ . '/../..' . '/src/component/class-feature-modal.php',
         'WP_Defender\\Component\\Firewall' => __DIR__ . '/../..' . '/src/component/class-firewall.php',
         'WP_Defender\\Component\\Firewall_Logs' => __DIR__ . '/../..' . '/src/component/class-firewall-logs.php',
@@ -1121,6 +1138,7 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Component\\Logger\\Rotation_Logger_Interface' => __DIR__ . '/../..' . '/src/component/logger/rotation-logger-interface.php',
         'WP_Defender\\Component\\Login_Lockout' => __DIR__ . '/../..' . '/src/component/class-login-lockout.php',
         'WP_Defender\\Component\\Mail' => __DIR__ . '/../..' . '/src/component/class-mail.php',
+        'WP_Defender\\Component\\Malicious_Bot' => __DIR__ . '/../..' . '/src/component/class-malicious-bot.php',
         'WP_Defender\\Component\\Mask_Login' => __DIR__ . '/../..' . '/src/component/class-mask-login.php',
         'WP_Defender\\Component\\Network_Cron_Manager' => __DIR__ . '/../..' . '/src/component/class-network-cron-manager.php',
         'WP_Defender\\Component\\Notfound_Lockout' => __DIR__ . '/../..' . '/src/component/class-notfound-lockout.php',
@@ -1128,7 +1146,6 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Component\\Password_Protection' => __DIR__ . '/../..' . '/src/component/class-password-protection.php',
         'WP_Defender\\Component\\Product_Analytics' => __DIR__ . '/../..' . '/src/component/class-product-analytics.php',
         'WP_Defender\\Component\\Rate' => __DIR__ . '/../..' . '/src/component/class-rate.php',
-        'WP_Defender\\Component\\Recaptcha' => __DIR__ . '/../..' . '/src/component/class-recaptcha.php',
         'WP_Defender\\Component\\Scan' => __DIR__ . '/../..' . '/src/component/class-scan.php',
         'WP_Defender\\Component\\Scan\\Tokens' => __DIR__ . '/../..' . '/src/component/scan/class-tokens.php',
         'WP_Defender\\Component\\Scheduler\\Scheduler' => __DIR__ . '/../..' . '/src/component/scheduler/class-scheduler.php',
@@ -1184,10 +1201,11 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Controller\\Audit_Logging' => __DIR__ . '/../..' . '/src/controller/class-audit-logging.php',
         'WP_Defender\\Controller\\Blacklist' => __DIR__ . '/../..' . '/src/controller/class-blacklist.php',
         'WP_Defender\\Controller\\Blocklist_Monitor' => __DIR__ . '/../..' . '/src/controller/class-blocklist-monitor.php',
-        'WP_Defender\\Controller\\Bot_Trap' => __DIR__ . '/../..' . '/src/controller/class-bot-trap.php',
+        'WP_Defender\\Controller\\Captcha' => __DIR__ . '/../..' . '/src/controller/class-captcha.php',
         'WP_Defender\\Controller\\Dashboard' => __DIR__ . '/../..' . '/src/controller/class-dashboard.php',
         'WP_Defender\\Controller\\Data_Tracking' => __DIR__ . '/../..' . '/src/controller/class-data-tracking.php',
         'WP_Defender\\Controller\\Expert_Services' => __DIR__ . '/../..' . '/src/controller/class-expert-services.php',
+        'WP_Defender\\Controller\\Fake_Bot_Detection' => __DIR__ . '/../..' . '/src/controller/class-fake-bot-detection.php',
         'WP_Defender\\Controller\\Firewall' => __DIR__ . '/../..' . '/src/controller/class-firewall.php',
         'WP_Defender\\Controller\\Firewall_Logs' => __DIR__ . '/../..' . '/src/controller/class-firewall-logs.php',
         'WP_Defender\\Controller\\Global_Ip' => __DIR__ . '/../..' . '/src/controller/class-global-ip.php',
@@ -1195,13 +1213,14 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Controller\\Hub_Connector' => __DIR__ . '/../..' . '/src/controller/class-hub-connector.php',
         'WP_Defender\\Controller\\Login_Lockout' => __DIR__ . '/../..' . '/src/controller/class-login-lockout.php',
         'WP_Defender\\Controller\\Main_Setting' => __DIR__ . '/../..' . '/src/controller/class-main-setting.php',
+        'WP_Defender\\Controller\\Malicious_Bot' => __DIR__ . '/../..' . '/src/controller/class-malicious-bot.php',
         'WP_Defender\\Controller\\Mask_Login' => __DIR__ . '/../..' . '/src/controller/class-mask-login.php',
         'WP_Defender\\Controller\\Nf_Lockout' => __DIR__ . '/../..' . '/src/controller/class-nf-lockout.php',
         'WP_Defender\\Controller\\Notification' => __DIR__ . '/../..' . '/src/controller/class-notification.php',
         'WP_Defender\\Controller\\Onboard' => __DIR__ . '/../..' . '/src/controller/class-onboard.php',
         'WP_Defender\\Controller\\Password_Protection' => __DIR__ . '/../..' . '/src/controller/class-password-protection.php',
         'WP_Defender\\Controller\\Password_Reset' => __DIR__ . '/../..' . '/src/controller/class-password-reset.php',
-        'WP_Defender\\Controller\\Recaptcha' => __DIR__ . '/../..' . '/src/controller/class-recaptcha.php',
+        'WP_Defender\\Controller\\Rate' => __DIR__ . '/../..' . '/src/controller/class-rate.php',
         'WP_Defender\\Controller\\Scan' => __DIR__ . '/../..' . '/src/controller/class-scan.php',
         'WP_Defender\\Controller\\Security_Headers' => __DIR__ . '/../..' . '/src/controller/class-security-headers.php',
         'WP_Defender\\Controller\\Security_Tweaks' => __DIR__ . '/../..' . '/src/controller/class-security-tweaks.php',
@@ -1214,18 +1233,22 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\DB' => __DIR__ . '/../..' . '/src/class-db.php',
         'WP_Defender\\Event' => __DIR__ . '/../..' . '/src/class-event.php',
         'WP_Defender\\Extra\\Base2n' => __DIR__ . '/../..' . '/src/extra/binary-to-text-php/Base2n.php',
-        'WP_Defender\\Extra\\GeoIp' => __DIR__ . '/../..' . '/src/extra/geoip.php',
-        'WP_Defender\\Extra\\IP_Helper' => __DIR__ . '/../..' . '/src/extra/ip-helper.php',
+        'WP_Defender\\Extra\\GeoIp' => __DIR__ . '/../..' . '/src/extra/class-geoip.php',
+        'WP_Defender\\Extra\\IP_Helper' => __DIR__ . '/../..' . '/src/extra/class-ip-helper.php',
         'WP_Defender\\Helper\\Analytics\\Antibot' => __DIR__ . '/../..' . '/src/helper/analytics/class-antibot.php',
+        'WP_Defender\\Helper\\Analytics\\Deactivation_Survey' => __DIR__ . '/../..' . '/src/helper/analytics/class-deactivation-survey.php',
         'WP_Defender\\Helper\\Analytics\\Firewall' => __DIR__ . '/../..' . '/src/helper/analytics/class-firewall.php',
+        'WP_Defender\\Helper\\Analytics\\Rate' => __DIR__ . '/../..' . '/src/helper/analytics/class-rate.php',
         'WP_Defender\\Helper\\Analytics\\Scan' => __DIR__ . '/../..' . '/src/helper/analytics/class-scan.php',
         'WP_Defender\\Helper\\File' => __DIR__ . '/../..' . '/src/helper/class-file.php',
         'WP_Defender\\Helper\\Request' => __DIR__ . '/../..' . '/src/helper/class-request.php',
         'WP_Defender\\Integrations\\Antibot_Global_Firewall_Client' => __DIR__ . '/../..' . '/src/integrations/class-antibot-global-firewall-client.php',
         'WP_Defender\\Integrations\\Buddypress' => __DIR__ . '/../..' . '/src/integrations/class-buddypress.php',
         'WP_Defender\\Integrations\\Dashboard_Whitelabel' => __DIR__ . '/../..' . '/src/integrations/class-dashboard-whitelabel.php',
+        'WP_Defender\\Integrations\\Hummingbird' => __DIR__ . '/../..' . '/src/integrations/class-hummingbird.php',
         'WP_Defender\\Integrations\\Main_Wp' => __DIR__ . '/../..' . '/src/integrations/class-main-wp.php',
         'WP_Defender\\Integrations\\MaxMind_Geolocation' => __DIR__ . '/../..' . '/src/integrations/class-maxmind-geolocation.php',
+        'WP_Defender\\Integrations\\Smartcrawl' => __DIR__ . '/../..' . '/src/integrations/class-smartcrawl.php',
         'WP_Defender\\Integrations\\Smush' => __DIR__ . '/../..' . '/src/integrations/class-smush.php',
         'WP_Defender\\Integrations\\Woocommerce' => __DIR__ . '/../..' . '/src/integrations/class-woocommerce.php',
         'WP_Defender\\Model\\Antibot_Global_Firewall' => __DIR__ . '/../..' . '/src/model/class-antibot-global-firewall.php',
@@ -1246,6 +1269,7 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Model\\Setting\\Antibot_Global_Firewall_Setting' => __DIR__ . '/../..' . '/src/model/setting/class-antibot-global-firewall-setting.php',
         'WP_Defender\\Model\\Setting\\Audit_Logging' => __DIR__ . '/../..' . '/src/model/setting/class-audit-logging.php',
         'WP_Defender\\Model\\Setting\\Blacklist_Lockout' => __DIR__ . '/../..' . '/src/model/setting/class-blacklist-lockout.php',
+        'WP_Defender\\Model\\Setting\\Captcha' => __DIR__ . '/../..' . '/src/model/setting/class-captcha.php',
         'WP_Defender\\Model\\Setting\\Firewall' => __DIR__ . '/../..' . '/src/model/setting/class-firewall.php',
         'WP_Defender\\Model\\Setting\\Global_Ip_Lockout' => __DIR__ . '/../..' . '/src/model/setting/class-global-ip-lockout.php',
         'WP_Defender\\Model\\Setting\\Login_Lockout' => __DIR__ . '/../..' . '/src/model/setting/class-login-lockout.php',
@@ -1254,7 +1278,6 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Model\\Setting\\Notfound_Lockout' => __DIR__ . '/../..' . '/src/model/setting/class-notfound-lockout.php',
         'WP_Defender\\Model\\Setting\\Password_Protection' => __DIR__ . '/../..' . '/src/model/setting/class-password-protection.php',
         'WP_Defender\\Model\\Setting\\Password_Reset' => __DIR__ . '/../..' . '/src/model/setting/class-password-reset.php',
-        'WP_Defender\\Model\\Setting\\Recaptcha' => __DIR__ . '/../..' . '/src/model/setting/class-recaptcha.php',
         'WP_Defender\\Model\\Setting\\Scan' => __DIR__ . '/../..' . '/src/model/setting/class-scan.php',
         'WP_Defender\\Model\\Setting\\Security_Headers' => __DIR__ . '/../..' . '/src/model/setting/class-security-headers.php',
         'WP_Defender\\Model\\Setting\\Security_Tweaks' => __DIR__ . '/../..' . '/src/model/setting/class-security-tweaks.php',
@@ -1273,7 +1296,6 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'WP_Defender\\Traits\\Device' => __DIR__ . '/../..' . '/src/traits/device.php',
         'WP_Defender\\Traits\\File_Operations' => __DIR__ . '/../..' . '/src/traits/file-operations.php',
         'WP_Defender\\Traits\\Formats' => __DIR__ . '/../..' . '/src/traits/formats.php',
-        'WP_Defender\\Traits\\Hummingbird' => __DIR__ . '/../..' . '/src/traits/hummingbird.php',
         'WP_Defender\\Traits\\IO' => __DIR__ . '/../..' . '/src/traits/io.php',
         'WP_Defender\\Traits\\IP' => __DIR__ . '/../..' . '/src/traits/ip.php',
         'WP_Defender\\Traits\\Permission' => __DIR__ . '/../..' . '/src/traits/permission.php',
@@ -1371,15 +1393,56 @@ class ComposerStaticInitb87f63aad9ef562e75e4b00901679d58
         'Webauthn\\TrustPath\\TrustPathLoader' => __DIR__ . '/..' . '/web-auth/webauthn-lib/src/TrustPath/TrustPathLoader.php',
         'Webauthn\\U2FPublicKey' => __DIR__ . '/..' . '/web-auth/webauthn-lib/src/U2FPublicKey.php',
         'Webauthn\\Util\\CoseSignatureFixer' => __DIR__ . '/..' . '/web-auth/webauthn-lib/src/Util/CoseSignatureFixer.php',
+        'cweagans\\Composer\\Capability\\CommandProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/CommandProvider.php',
+        'cweagans\\Composer\\Capability\\Downloader\\BaseDownloaderProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Downloader/BaseDownloaderProvider.php',
+        'cweagans\\Composer\\Capability\\Downloader\\CoreDownloaderProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Downloader/CoreDownloaderProvider.php',
+        'cweagans\\Composer\\Capability\\Downloader\\DownloaderProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Downloader/DownloaderProvider.php',
+        'cweagans\\Composer\\Capability\\Patcher\\BasePatcherProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Patcher/BasePatcherProvider.php',
+        'cweagans\\Composer\\Capability\\Patcher\\CorePatcherProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Patcher/CorePatcherProvider.php',
+        'cweagans\\Composer\\Capability\\Patcher\\PatcherProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Patcher/PatcherProvider.php',
+        'cweagans\\Composer\\Capability\\Resolver\\BaseResolverProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Resolver/BaseResolverProvider.php',
+        'cweagans\\Composer\\Capability\\Resolver\\CoreResolverProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Resolver/CoreResolverProvider.php',
+        'cweagans\\Composer\\Capability\\Resolver\\ResolverProvider' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Capability/Resolver/ResolverProvider.php',
+        'cweagans\\Composer\\Command\\DoctorCommand' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Command/DoctorCommand.php',
+        'cweagans\\Composer\\Command\\PatchesCommandBase' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Command/PatchesCommandBase.php',
+        'cweagans\\Composer\\Command\\RelockCommand' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Command/RelockCommand.php',
+        'cweagans\\Composer\\Command\\RepatchCommand' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Command/RepatchCommand.php',
+        'cweagans\\Composer\\ConfigurablePlugin' => __DIR__ . '/..' . '/cweagans/composer-configurable-plugin/src/ConfigurablePlugin.php',
+        'cweagans\\Composer\\Downloader' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Downloader.php',
+        'cweagans\\Composer\\Downloader\\ComposerDownloader' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Downloader/ComposerDownloader.php',
+        'cweagans\\Composer\\Downloader\\DownloaderBase' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Downloader/DownloaderBase.php',
+        'cweagans\\Composer\\Downloader\\DownloaderInterface' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Downloader/DownloaderInterface.php',
+        'cweagans\\Composer\\Downloader\\Exception\\HashMismatchException' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Downloader/Exception/HashMismatchException.php',
+        'cweagans\\Composer\\Event\\PatchEvent' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Event/PatchEvent.php',
+        'cweagans\\Composer\\Event\\PatchEvents' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Event/PatchEvents.php',
+        'cweagans\\Composer\\Event\\PluginEvent' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Event/PluginEvent.php',
+        'cweagans\\Composer\\Event\\PluginEvents' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Event/PluginEvents.php',
+        'cweagans\\Composer\\Locker' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Locker.php',
+        'cweagans\\Composer\\Patch' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patch.php',
+        'cweagans\\Composer\\PatchCollection' => __DIR__ . '/..' . '/cweagans/composer-patches/src/PatchCollection.php',
+        'cweagans\\Composer\\Patcher' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patcher.php',
+        'cweagans\\Composer\\Patcher\\FreeformPatcher' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patcher/FreeformPatcher.php',
+        'cweagans\\Composer\\Patcher\\GitInitPatcher' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patcher/GitInitPatcher.php',
+        'cweagans\\Composer\\Patcher\\GitPatcher' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patcher/GitPatcher.php',
+        'cweagans\\Composer\\Patcher\\PatcherBase' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patcher/PatcherBase.php',
+        'cweagans\\Composer\\Patcher\\PatcherInterface' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Patcher/PatcherInterface.php',
+        'cweagans\\Composer\\Plugin\\Patches' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Plugin/Patches.php',
+        'cweagans\\Composer\\Resolver' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Resolver.php',
+        'cweagans\\Composer\\Resolver\\Dependencies' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Resolver/Dependencies.php',
+        'cweagans\\Composer\\Resolver\\PatchesFile' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Resolver/PatchesFile.php',
+        'cweagans\\Composer\\Resolver\\ResolverBase' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Resolver/ResolverBase.php',
+        'cweagans\\Composer\\Resolver\\ResolverInterface' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Resolver/ResolverInterface.php',
+        'cweagans\\Composer\\Resolver\\RootComposer' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Resolver/RootComposer.php',
+        'cweagans\\Composer\\Util' => __DIR__ . '/..' . '/cweagans/composer-patches/src/Util.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitb87f63aad9ef562e75e4b00901679d58::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitb87f63aad9ef562e75e4b00901679d58::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitb87f63aad9ef562e75e4b00901679d58::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitb87f63aad9ef562e75e4b00901679d58::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitdb8e2a479c983870846afbe970e4f0af::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitdb8e2a479c983870846afbe970e4f0af::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitdb8e2a479c983870846afbe970e4f0af::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitdb8e2a479c983870846afbe970e4f0af::$classMap;
 
         }, null, ClassLoader::class);
     }

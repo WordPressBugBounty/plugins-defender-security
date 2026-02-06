@@ -106,18 +106,34 @@ class PHP_Version extends Abstract_Security_Tweaks {
 		$supported_php    = apply_filters(
 			"defender_{$this->slug}_supported_php",
 			array(
-				'7.4',
 				'8.0',
 				'8.1',
 				'8.2',
 				'8.3',
+				'8.4',
 			)
 		);
 		$this->stable_php = $info['recommended_version'];
-		$position         = array_search( $this->stable_php, $supported_php, true );
 
-		if ( false !== $position && ! empty( $supported_php[ $position ] ) ) {
+		// If the recommended version is lower than plugin's minimum requirement.
+		if ( version_compare( $this->stable_php, WP_DEFENDER_MIN_PHP_VERSION, '<' ) ) {
+			// WordPress may recommend a PHP version older than what plugin requires.
+			// In that case, use plugin's minimum requirement instead.
+			$this->stable_php = WP_DEFENDER_MIN_PHP_VERSION;
+		}
+
+		$position = array_search( $this->stable_php, $supported_php, true );
+
+		if (
+			false !== $position
+			&& isset( $supported_php[ $position ] )
+			&& is_string( $supported_php[ $position ] )
+			&& '' !== $supported_php[ $position ]
+		) {
 			$this->min_php = $supported_php[ $position ];
+		} else {
+			// Fallback to first supported version if search fails.
+			$this->min_php = reset( $supported_php );
 		}
 	}
 

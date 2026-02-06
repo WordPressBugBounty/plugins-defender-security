@@ -97,6 +97,7 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 		// Disable XML-RPC methods that require authentication.
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 		// Class used for handling XML-RPC requests.
+		// @phpstan-ignore-next-line.
 		add_filter( 'wp_xmlrpc_server_class', array( $this, 'send_forbidden_response' ) );
 		// Methods exposed by the XML-RPC server.
 		add_filter( 'xmlrpc_methods', '__return_empty_array' );

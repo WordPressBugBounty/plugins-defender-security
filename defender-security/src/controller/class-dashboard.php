@@ -54,9 +54,9 @@ class Dashboard extends Event {
 	/**
 	 * Because we move the notifications on separate modules, so links from HUB should be redirected to correct URL.
 	 *
-	 * @return void|null
+	 * @return void
 	 */
-	public function maybe_redirect_notification_request() {
+	public function maybe_redirect_notification_request(): void {
 		$page = HTTP::get( 'page' );
 		if ( ! in_array( $page, array( 'wdf-scan', 'wdf-ip-lockout', 'wdf-hardener', 'wdf-logging' ), true ) ) {
 			return;
@@ -109,10 +109,7 @@ class Dashboard extends Event {
 		$this->register_page(
 			$this->get_menu_title(),
 			$this->parent_slug,
-			array(
-				&$this,
-				'main_view',
-			),
+			array( $this, 'main_view' ),
 			null,
 			$this->get_menu_icon()
 		);
@@ -266,7 +263,7 @@ class Dashboard extends Event {
 					'mask_login'         => wd_di()->get( Mask_Login::class )->dashboard_widget(),
 					'security_headers'   => wd_di()->get( Security_Headers::class )->dashboard_widget(),
 					'pwned_passwords'    => wd_di()->get( Password_Protection::class )->dashboard_widget(),
-					'recaptcha'          => wd_di()->get( Recaptcha::class )->dashboard_widget(),
+					'captcha'            => wd_di()->get( Captcha::class )->dashboard_widget(),
 					'strong_passwords'   => wd_di()->get( Strong_Password::class )->dashboard_widget(),
 					'session_protection' => wd_di()->get( Session_Protection::class )->export(),
 				),

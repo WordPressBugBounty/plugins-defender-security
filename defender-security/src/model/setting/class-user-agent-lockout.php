@@ -19,8 +19,8 @@ use WP_Defender\Component\User_Agent as User_Agent_Service;
  * 'Custom User Agents' is associated with the property $blacklist.
  */
 class User_Agent_Lockout extends Setting {
-	const BOT_TRAP_LOCKOUT_TYPE_ALLOWED          = array( 'temporary', 'permanent' );
-	const BOT_TRAP_LOCKOUT_DURATION_UNIT_ALLOWED = array( 'seconds', 'minutes', 'hours' );
+	const BOT_LOCKOUT_TYPE_ALLOWED          = array( 'temporary', 'permanent' );
+	const BOT_LOCKOUT_DURATION_UNIT_ALLOWED = array( 'seconds', 'minutes', 'hours' );
 
 	/**
 	 * Option name.
@@ -35,7 +35,7 @@ class User_Agent_Lockout extends Setting {
 	 * @var bool
 	 * @defender_property
 	 */
-	public $enabled = false;
+	public bool $enabled = false;
 
 	/**
 	 * Blacklist User Agents.
@@ -103,12 +103,101 @@ class User_Agent_Lockout extends Setting {
 	public $script_preset_values = array();
 
 	/**
+	 * Is malicious bot enabled?
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public bool $malicious_bot_enabled = false;
+
+	/**
+	 * How the lock is going to be, if we choose permanent, then their IP will be blacklisted.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @rule in[temporary,permanent]
+	 */
+	public $malicious_bot_lockout_type = 'temporary';
+
+	/**
+	 * Duration for the lockout.
+	 *
+	 * @var int
+	 * @defender_property
+	 * @rule required|integer
+	 */
+	public $malicious_bot_lockout_duration = 300;
+
+	/**
+	 * Duration unit.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @rule in[seconds,minutes,hours]
+	 */
+	public $malicious_bot_lockout_duration_unit = 'seconds';
+
+	/**
+	 * The message to show on frontend when a malicious bot is triggered.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @sanitize sanitize_textarea_field
+	 */
+	public $malicious_bot_message = '';
+
+	/**
+	 * Is fake bots enabled?
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public bool $fake_bots_enabled = false;
+
+	/**
+	 * How the lock is going to be, if we choose permanent, then their IP will be blacklisted.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @rule in[temporary,permanent]
+	 */
+	public $fake_bots_lockout_type = 'temporary';
+
+	/**
+	 * Duration for the lockout.
+	 *
+	 * @var int
+	 * @defender_property
+	 * @rule required|integer
+	 */
+	public $fake_bots_lockout_duration = 300;
+
+	/**
+	 * Duration unit.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @rule in[seconds,minutes,hours]
+	 */
+	public $fake_bots_lockout_duration_unit = 'seconds';
+
+	/**
+	 * The message to show on frontend when a fake bot is triggered.
+	 *
+	 * @var string
+	 * @defender_property
+	 * @sanitize sanitize_textarea_field
+	 */
+	public $fake_bots_message = '';
+
+	/**
+	 * Old properties of the Bot Trap option for backward compatibility. We can remove them in future versions.
 	 * Is bot trap enabled?
 	 *
 	 * @var bool
 	 * @defender_property
 	 */
-	public $bot_trap_enabled = false;
+	public bool $bot_trap_enabled = false;
 
 	/**
 	 * How the lock is going to be, if we choose permanent, then their IP will be blacklisted.
@@ -138,23 +227,27 @@ class User_Agent_Lockout extends Setting {
 	public $bot_trap_lockout_duration_unit = 'seconds';
 
 	/**
-	 * The message to show on frontend when a bot trap is triggered.
-	 *
-	 * @var string
-	 * @defender_property
-	 * @sanitize sanitize_textarea_field
-	 */
-	public $bot_trap_message = '';
-
-	/**
 	 * Rules for validation.
 	 *
 	 * @var array
 	 */
 	protected $rules = array(
-		array( array( 'enabled', 'empty_headers', 'blocklist_presets', 'script_presets' ), 'boolean' ),
-		array( array( 'bot_trap_lockout_type' ), 'in', self::BOT_TRAP_LOCKOUT_TYPE_ALLOWED ),
-		array( array( 'bot_trap_lockout_duration_unit' ), 'in', self::BOT_TRAP_LOCKOUT_DURATION_UNIT_ALLOWED ),
+		array(
+			array(
+				'enabled',
+				'empty_headers',
+				'blocklist_presets',
+				'script_presets',
+				'malicious_bot_enabled',
+				'bot_trap_enabled',
+				'fake_bots_enabled',
+			),
+			'boolean',
+		),
+		array( array( 'malicious_bot_lockout_type' ), 'in', self::BOT_LOCKOUT_TYPE_ALLOWED ),
+		array( array( 'malicious_bot_lockout_duration_unit' ), 'in', self::BOT_LOCKOUT_DURATION_UNIT_ALLOWED ),
+		array( array( 'fake_bots_lockout_type' ), 'in', self::BOT_LOCKOUT_TYPE_ALLOWED ),
+		array( array( 'fake_bots_lockout_duration_unit' ), 'in', self::BOT_LOCKOUT_DURATION_UNIT_ALLOWED ),
 	);
 
 	/**
@@ -173,7 +266,8 @@ class User_Agent_Lockout extends Setting {
 
 		return array(
 			'message'                 => $message,
-			'bot_trap_message'        => $message,
+			'malicious_bot_message'   => $message,
+			'fake_bots_message'       => $message,
 			'whitelist'               => $whitelist,
 			// Blocked User Agents.
 			'blacklist'               => '',
@@ -200,7 +294,8 @@ class User_Agent_Lockout extends Setting {
 		$this->blocklist_preset_values = $default_values['blocklist_preset_values'];
 		$this->script_presets          = $default_values['script_presets'];
 		$this->script_preset_values    = $default_values['script_preset_values'];
-		$this->bot_trap_message        = $default_values['bot_trap_message'];
+		$this->malicious_bot_message   = $default_values['malicious_bot_message'];
+		$this->fake_bots_message       = $default_values['fake_bots_message'];
 	}
 
 	/**
@@ -209,29 +304,47 @@ class User_Agent_Lockout extends Setting {
 	 * @return bool Returns true if the User Agent Lockout feature is active, false otherwise.
 	 */
 	public function is_active(): bool {
-		return (bool) apply_filters(
+		$enable = apply_filters(
 			'wd_user_agents_enable',
 			$this->enabled
 		);
+
+		return is_bool( $enable ) ? $enable : (bool) $enable;
 	}
 
 	/**
-	 * Get list of blocklisted or allowlisted data.
+	 * Get a list of blocklisted or allowlisted data.
 	 *
-	 * @param  string $type  blocklist|allowlist.
+	 * @param  string $type   blocklist|allowlist.
 	 * @param  bool   $lower  Whether to convert the list to lowercase.
 	 *
 	 * @return array
 	 */
 	public function get_lockout_list( $type = 'blocklist', $lower = true ): array {
 		$data = 'blocklist' === $type ? $this->blacklist : $this->whitelist;
-		$arr  = array_filter( preg_split( "/\r\n|\n|\r/", $data ), 'boolval' );
-		$arr  = array_map( 'trim', $arr );
-		if ( $lower ) {
-			$arr = array_map( 'strtolower', $arr );
+		$data = trim( $data );
+
+		if ( '' === $data ) {
+			return array();
 		}
 
-		return $arr;
+		$arr = preg_split( "/\r\n|\n|\r/", $data );
+		if ( ! is_array( $arr ) ) {
+			return array();
+		}
+
+		if ( $lower ) {
+			$arr = array_map(
+				function ( $value ) {
+					return strtolower( trim( $value ) );
+				},
+				$arr
+			);
+		} else {
+			$arr = array_map( 'trim', $arr );
+		}
+
+		return array_unique( $arr );
 	}
 
 	/**
@@ -424,6 +537,24 @@ class User_Agent_Lockout extends Setting {
 	}
 
 	/**
+	 * Filter the UAs, as we use a textarea to submit, so it can contain some un-valid UAs.
+	 */
+	protected function after_validate(): void {
+		$lists = array(
+			'blacklist' => $this->get_lockout_list( 'blocklist' ),
+			'whitelist' => $this->get_lockout_list( 'allowlist' ),
+		);
+
+		foreach ( $lists as $key => &$collection ) {
+			// If UA collection is not valid, we should display an error message. We'll improve it by UA standard/pattern.
+			if ( property_exists( $this, $key ) ) {
+				// @phpstan-ignore-next-line
+				$this->$key = implode( PHP_EOL, array_filter( $collection, 'strlen' ) );
+			}
+		}
+	}
+
+	/**
 	 * Get the module name.
 	 *
 	 * @return string
@@ -456,5 +587,14 @@ class User_Agent_Lockout extends Setting {
 		$script_presets    = $this->script_presets ? $this->script_preset_values : array();
 
 		return array_merge( $blocklist_custom, $blocklist_presets, $script_presets );
+	}
+
+	/**
+	 * Return the module slug.
+	 *
+	 * @return string
+	 */
+	public static function get_module_slug(): string {
+		return 'ua-lockout';
 	}
 }

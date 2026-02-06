@@ -13,7 +13,7 @@ $abs_path               = untrailingslashit( ABSPATH );
 foreach ( $issues as $item ) {
 	$detail    = $item->to_array();
 	$full_path = '';
-	if ( ! empty( $detail['full_path'] ) ) {
+	if ( isset( $detail['full_path'] ) && is_string( $detail['full_path'] ) && '' !== trim( $detail['full_path'] ) ) {
 		$full_path = esc_html( $detail['full_path'] );
 		if ( 0 === strpos( $full_path, $abs_path ) ) {
 			$full_path = $abs_path . '<span>' . substr( $full_path, strlen( $abs_path ) ) . '</span>';
@@ -50,7 +50,7 @@ foreach ( $issues as $item ) {
 	}
 }
 
-if ( ! empty( $other_issues_html ) ) : ?>
+if ( '' !== $other_issues_html ) : ?>
 <table class="reports-list" align="center"
 		style="border-collapse: collapse;border-spacing: 0;margin: 0 0 30px;padding: 0;text-align: left;vertical-align: top;width: 100%">
 	<thead>
@@ -85,7 +85,7 @@ if ( ! empty( $other_issues_html ) ) : ?>
 	?>
 	</tbody>
 </table>
-<?php endif; if ( ! empty( $abandoned_plugins_html ) ) : ?>
+<?php endif; if ( '' !== $abandoned_plugins_html ) : ?>
 <div style="margin-top: 30px;">
 	<table class="abandoned-plugins-list" align="center"
 			style="border-collapse: collapse;border-spacing: 0;margin: 0 0 20px;padding: 0;text-align: left;vertical-align: top;width: 100%">

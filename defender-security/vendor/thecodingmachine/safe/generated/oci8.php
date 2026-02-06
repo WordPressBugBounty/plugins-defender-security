@@ -410,9 +410,9 @@ function oci_commit($connection): void
  * handles need to be transactionally isolated from each other, use
  * oci_new_connect instead.
  *
- * @param string $username The Oracle user name.
- * @param string $password The password for username.
- * @param string $connection_string Contains
+ * @param string      $username          The Oracle user name.
+ * @param string      $password          The password for username.
+ * @param string|null $connection_string Contains
  * the Oracle instance to connect to. It can be
  * an Easy Connect
  * string, or a Connect Name from
@@ -444,7 +444,7 @@ function oci_commit($connection): void
  * set TNS_ADMIN so
  * that $TNS_ADMIN/tnsnames.ora is read.  Make sure
  * the web daemon has read access to the file.
- * @param string $character_set Determines
+ * @param string|null $character_set Determines
  * the character set used by the Oracle Client libraries.  The character
  * set does not need to match the character set used by the database.  If
  * it doesn't match, Oracle will do its best to convert data to and from
@@ -457,7 +457,7 @@ function oci_commit($connection): void
  *
  * Passing this parameter can
  * reduce the time taken to connect.
- * @param int $session_mode This
+ * @param int|null $session_mode This
  * parameter is available since version PHP 5 (PECL OCI8 1.1) and accepts the
  * following values: OCI_DEFAULT,
  * OCI_SYSOPER and OCI_SYSDBA.
@@ -485,11 +485,12 @@ function oci_commit($connection): void
  *
  * OCI_CRED_EXT is not supported on Windows for
  * security reasons.
+ *
  * @return resource Returns a connection identifier.
  * @throws Oci8Exception
  *
  */
-function oci_connect(string $username, string $password, string $connection_string = null, string $character_set = null, int $session_mode = null)
+function oci_connect(string $username, string $password, ?string $connection_string = null, ?string $character_set = null, ?int $session_mode = null)
 {
     error_clear_last();
     if ($session_mode !== null) {
@@ -903,16 +904,17 @@ function oci_free_statement($statement): void
 /**
  * Allocates a new collection object.
  *
- * @param resource $connection An Oracle connection identifier, returned by
+ * @param resource    $connection An Oracle connection identifier, returned by
  * oci_connect or oci_pconnect.
- * @param string $tdo Should be a valid named type (uppercase).
- * @param string $schema Should point to the scheme, where the named type was created. The name
+ * @param string      $tdo        Should be a valid named type (uppercase).
+ * @param string|null $schema     Should point to the scheme, where the named type was created. The name
  * of the current user is the default value.
+ *
  * @return \OCI-Collection Returns a new OCICollection object.
  * @throws Oci8Exception
  *
  */
-function oci_new_collection($connection, string $tdo, string $schema = null)
+function oci_new_collection($connection, string $tdo, ?string $schema = null)
 {
     error_clear_last();
     $result = \oci_new_collection($connection, $tdo, $schema);
@@ -932,9 +934,9 @@ function oci_new_collection($connection, string $tdo, string $schema = null)
  * opened connection handle. This is useful if your application needs
  * transactional isolation between two sets of queries.
  *
- * @param string $username The Oracle user name.
- * @param string $password The password for username.
- * @param string $connection_string Contains
+ * @param string      $username          The Oracle user name.
+ * @param string      $password          The password for username.
+ * @param string|null $connection_string Contains
  * the Oracle instance to connect to. It can be
  * an Easy Connect
  * string, or a Connect Name from
@@ -966,7 +968,7 @@ function oci_new_collection($connection, string $tdo, string $schema = null)
  * set TNS_ADMIN so
  * that $TNS_ADMIN/tnsnames.ora is read.  Make sure
  * the web daemon has read access to the file.
- * @param string $character_set Determines
+ * @param string|null $character_set Determines
  * the character set used by the Oracle Client libraries.  The character
  * set does not need to match the character set used by the database.  If
  * it doesn't match, Oracle will do its best to convert data to and from
@@ -979,7 +981,7 @@ function oci_new_collection($connection, string $tdo, string $schema = null)
  *
  * Passing this parameter can
  * reduce the time taken to connect.
- * @param int $session_mode This
+ * @param int|null $session_mode This
  * parameter is available since version PHP 5 (PECL OCI8 1.1) and accepts the
  * following values: OCI_DEFAULT,
  * OCI_SYSOPER and OCI_SYSDBA.
@@ -1007,11 +1009,12 @@ function oci_new_collection($connection, string $tdo, string $schema = null)
  *
  * OCI_CRED_EXT is not supported on Windows for
  * security reasons.
+ *
  * @return resource Returns a connection identifier.
  * @throws Oci8Exception
  *
  */
-function oci_new_connect(string $username, string $password, string $connection_string = null, string $character_set = null, int $session_mode = null)
+function oci_new_connect(string $username, string $password, ?string $connection_string = null, ?string $character_set = null, ?int $session_mode = null)
 {
     error_clear_last();
     if ($session_mode !== null) {
@@ -1153,9 +1156,9 @@ function oci_parse($connection, string $sql_text)
  * child process (or PHP FastCGI/CGI process). See the Persistent Database
  * Connections section for more information.
  *
- * @param string $username The Oracle user name.
- * @param string $password The password for username.
- * @param string $connection_string Contains
+ * @param string      $username          The Oracle user name.
+ * @param string      $password          The password for username.
+ * @param string|null $connection_string Contains
  * the Oracle instance to connect to. It can be
  * an Easy Connect
  * string, or a Connect Name from
@@ -1187,7 +1190,7 @@ function oci_parse($connection, string $sql_text)
  * set TNS_ADMIN so
  * that $TNS_ADMIN/tnsnames.ora is read.  Make sure
  * the web daemon has read access to the file.
- * @param string $character_set Determines
+ * @param string|null $character_set Determines
  * the character set used by the Oracle Client libraries.  The character
  * set does not need to match the character set used by the database.  If
  * it doesn't match, Oracle will do its best to convert data to and from
@@ -1200,7 +1203,7 @@ function oci_parse($connection, string $sql_text)
  *
  * Passing this parameter can
  * reduce the time taken to connect.
- * @param int $session_mode This
+ * @param int|null $session_mode This
  * parameter is available since version PHP 5 (PECL OCI8 1.1) and accepts the
  * following values: OCI_DEFAULT,
  * OCI_SYSOPER and OCI_SYSDBA.
@@ -1228,11 +1231,12 @@ function oci_parse($connection, string $sql_text)
  *
  * OCI_CRED_EXT is not supported on Windows for
  * security reasons.
+ *
  * @return resource Returns a connection identifier.
  * @throws Oci8Exception
  *
  */
-function oci_pconnect(string $username, string $password, string $connection_string = null, string $character_set = null, int $session_mode = null)
+function oci_pconnect(string $username, string $password, ?string $connection_string = null, ?string $character_set = null, ?int $session_mode = null)
 {
     error_clear_last();
     if ($session_mode !== null) {

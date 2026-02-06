@@ -280,7 +280,7 @@ function dns_get_record(string $hostname, int $type = DNS_ANY, ?array &$authns =
  * @param int $port The port number. This can be omitted and skipped with
  * -1 for transports that do not use ports, such as
  * unix://.
- * @param int|null $errno If provided, holds the system level error number that occurred in the
+ * @param int|null    $errno If provided, holds the system level error number that occurred in the
  * system-level connect() call.
  *
  * If the value returned in errno is
@@ -289,13 +289,14 @@ function dns_get_record(string $hostname, int $type = DNS_ANY, ?array &$authns =
  * connect() call. This is most likely due to a
  * problem initializing the socket.
  * @param string|null $errstr The error message as a string.
- * @param float $timeout The connection timeout, in seconds.
+ * @param float|null  $timeout The connection timeout, in seconds.
  *
  * If you need to set a timeout for reading/writing data over the
  * socket, use stream_set_timeout, as the
  * timeout parameter to
  * fsockopen only applies while connecting the
  * socket.
+ *
  * @return resource fsockopen returns a file pointer which may be used
  * together with the other file functions (such as
  * fgets, fgetss,
@@ -304,7 +305,7 @@ function dns_get_record(string $hostname, int $type = DNS_ANY, ?array &$authns =
  * @throws NetworkException
  *
  */
-function fsockopen(string $hostname, int $port = -1, ?int &$errno = null, ?string &$errstr = null, float $timeout = null)
+function fsockopen(string $hostname, int $port = -1, ?int &$errno = null, ?string &$errstr = null, ?float $timeout = null)
 {
     error_clear_last();
     if ($timeout !== null) {

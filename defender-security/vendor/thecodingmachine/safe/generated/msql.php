@@ -67,7 +67,7 @@ function msql_close($link_identifier = null): void
  * script ends, unless it's closed earlier by explicitly calling
  * msql_close.
  *
- * @param string $hostname The hostname can also include a port number. e.g.
+ * @param string|null $hostname The hostname can also include a port number. e.g.
  * hostname,port.
  *
  * If not specified, the connection is established by the means of a Unix
@@ -77,11 +77,12 @@ function msql_close($link_identifier = null): void
  * While this function will accept a colon (:) as a
  * host/port separator, a comma (,) is the preferred
  * method.
+ *
  * @return resource Returns a positive mSQL link identifier on success.
  * @throws MsqlException
  *
  */
-function msql_connect(string $hostname = null)
+function msql_connect(?string $hostname = null)
 {
     error_clear_last();
     if ($hostname !== null) {
@@ -359,17 +360,18 @@ function msql_free_result($result): void
  * future use (msql_close will not close links
  * established by this function).
  *
- * @param string $hostname The hostname can also include a port number. e.g.
+ * @param string|null $hostname The hostname can also include a port number. e.g.
  * hostname,port.
  *
  * If not specified, the connection is established by the means of a Unix
  * domain socket, being more efficient than a localhost TCP socket
  * connection.
+ *
  * @return resource Returns a positive mSQL link identifier on success.
  * @throws MsqlException
  *
  */
-function msql_pconnect(string $hostname = null)
+function msql_pconnect(?string $hostname = null)
 {
     error_clear_last();
     if ($hostname !== null) {

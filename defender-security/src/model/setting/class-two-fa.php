@@ -229,7 +229,7 @@ To complete your login, copy and paste the temporary password into the Password 
 	 *
 	 * @param  string $plugin  The plugin to check for conflict.
 	 *
-	 * @return int Returns 0 if the plugin is not in conflict, 1 if it is in conflict, and 0 if it is not in conflict
+	 * @return int|bool Returns 0 if the plugin is not in conflict, true if it is in conflict, and false if it is not in conflict
 	 *     but has been marked as not conflicting.
 	 */
 	public function is_conflict( $plugin ) {
@@ -307,7 +307,9 @@ To complete your login, copy and paste the temporary password into the Password 
 	 * @since 3.12.0
 	 */
 	public function is_active(): bool {
-		return (bool) apply_filters( 'wd_2fa_enable', $this->enabled );
+		$enable = apply_filters( 'wd_2fa_enable', $this->enabled );
+
+		return is_bool( $enable ) ? $enable : (bool) $enable;
 	}
 
 	/**

@@ -7,8 +7,10 @@
 
 namespace WP_Defender\Component;
 
-use AltchaOrg\Altcha\ChallengeOptions;
-use AltchaOrg\Altcha\Altcha;
+use WP_Defender\Component\Altcha\Challenge;
+use WP_Defender\Component\Altcha\Challenge_Options;
+use WP_Defender\Component\Altcha\Altcha;
+use WP_Defender\Component\Altcha\Hasher\Algorithm;
 
 /**
  * Provides methods for creating and verifying Altcha's challenge.
@@ -47,7 +49,7 @@ class Altcha_Handler {
 	private function get_hmac_key() {
 		$hmac_key = get_option( self::HMAC_KEY_OPTION_NAME );
 
-		if ( ! $hmac_key ) {
+		if ( ! is_string( $hmac_key ) || '' === trim( $hmac_key ) ) {
 			// Generate a random key if it doesn't exist.
 			$hmac_key = wp_generate_password( 64, true, true );
 
@@ -62,17 +64,19 @@ class Altcha_Handler {
 	 *
 	 * @param int $max_number Maximum random number for the challenge.
 	 *
-	 * @return array Challenge data.
+	 * @return Challenge Challenge data.
 	 */
-	public function create_challenge( $max_number = 100000 ) {
-		$options = new ChallengeOptions(
-			array(
-				'hmacKey'   => $this->hmac_key,
-				'maxNumber' => $max_number,
-			)
+	public function create_challenge( $max_number = 100000 ): Challenge {
+		$altcha = new Altcha( $this->hmac_key );
+
+		// Create a new challenge.
+		$options = new Challenge_Options(
+			Algorithm::SHA256,
+			$max_number,
+			( new \DateTimeImmutable() )->add( new \DateInterval( 'PT10S' ) )
 		);
 
-		return Altcha::createChallenge( $options );
+		return $altcha->create_challenge( $options );
 	}
 
 	/**
@@ -84,6 +88,8 @@ class Altcha_Handler {
 	 * @return bool Verification result.
 	 */
 	public function verify_solution( array $payload, $strict_mode = true ) {
-		return Altcha::verifySolution( $payload, $this->hmac_key, $strict_mode );
+		$altcha = new Altcha( $this->hmac_key );
+
+		return $altcha->verify_solution( $payload, $strict_mode );
 	}
 }

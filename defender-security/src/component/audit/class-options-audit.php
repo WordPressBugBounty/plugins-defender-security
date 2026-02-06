@@ -234,7 +234,7 @@ class Options_Audit extends Audit_Event {
 		);
 
 		if ( isset( $human_read[ $key ] ) ) {
-			if ( empty( $human_read[ $key ] ) ) {
+			if ( '' === $human_read[ $key ] ) {
 				return $key;
 			}
 

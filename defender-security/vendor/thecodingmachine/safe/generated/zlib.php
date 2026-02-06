@@ -48,8 +48,8 @@ function deflate_add($context, string $data, int $flush_mode = ZLIB_SYNC_FLUSH):
  * == DEFLATE); 6 zero bytes; the operating system set to the current system
  * (\x00 = Windows, \x03 = Unix, etc.)
  *
- * @param int $encoding One of the ZLIB_ENCODING_* constants.
- * @param array $options An associative array which may contain the following elements:
+ * @param int        $encoding One of the ZLIB_ENCODING_* constants.
+ * @param array|null $options  An associative array which may contain the following elements:
  *
  *
  * level
@@ -110,12 +110,13 @@ function deflate_add($context, string $data, int $flush_mode = ZLIB_SYNC_FLUSH):
  *
  * A string or an array of strings
  * of the preset dictionary (default: no preset dictionary).
+ *
  * @return resource Returns a deflate context resource (zlib.deflate) on
  * success.
  * @throws ZlibException
  *
  */
-function deflate_init(int $encoding, array $options = null)
+function deflate_init(int $encoding, ?array $options = null)
 {
     error_clear_last();
     $result = \deflate_init($encoding, $options);
@@ -177,13 +178,14 @@ function gzcompress(string $data, int $level = -1, int $encoding = ZLIB_ENCODING
  * This function returns a decoded version of the input
  * data.
  *
- * @param string $data The data to decode, encoded by gzencode.
- * @param int $length The maximum length of data to decode.
+ * @param string   $data   The data to decode, encoded by gzencode.
+ * @param int|null $length The maximum length of data to decode.
+ *
  * @return string The decoded string.
  * @throws ZlibException
  *
  */
-function gzdecode(string $data, int $length = null): string
+function gzdecode(string $data, ?int $length = null): string
 {
     error_clear_last();
     if ($length !== null) {
@@ -269,14 +271,15 @@ function gzencode(string $data, int $level = -1, int $encoding_mode = FORCE_GZIP
  * file pointer. Reading ends when length - 1 bytes have been read, on a
  * newline, or on EOF (whichever comes first).
  *
- * @param resource $zp The gz-file pointer. It must be valid, and must point to a file
+ * @param resource $zp     The gz-file pointer. It must be valid, and must point to a file
  * successfully opened by gzopen.
- * @param int $length The length of data to get.
+ * @param int|null $length The length of data to get.
+ *
  * @return string The uncompressed string.
  * @throws ZlibException
  *
  */
-function gzgets($zp, int $length = null): string
+function gzgets($zp, ?int $length = null): string
 {
     error_clear_last();
     if ($length !== null) {
@@ -296,16 +299,17 @@ function gzgets($zp, int $length = null): string
  * gzgetss attempts to strip any HTML and PHP
  * tags from the text it reads.
  *
- * @param resource $zp The gz-file pointer. It must be valid, and must point to a file
+ * @param resource    $zp             The gz-file pointer. It must be valid, and must point to a file
  * successfully opened by gzopen.
- * @param int $length The length of data to get.
- * @param string $allowable_tags You can use this optional parameter to specify tags which should not
+ * @param int         $length         The length of data to get.
+ * @param string|null $allowable_tags You can use this optional parameter to specify tags which should not
  * be stripped.
+ *
  * @return string The uncompressed and stripped string.
  * @throws ZlibException
  *
  */
-function gzgetss($zp, int $length, string $allowable_tags = null): string
+function gzgetss($zp, int $length, ?string $allowable_tags = null): string
 {
     error_clear_last();
     if ($allowable_tags !== null) {
@@ -483,8 +487,8 @@ function inflate_add($context, string $encoded_data, int $flush_mode = ZLIB_SYNC
  * Initialize an incremental inflate context with the specified
  * encoding.
  *
- * @param int $encoding One of the ZLIB_ENCODING_* constants.
- * @param array $options An associative array which may contain the following elements:
+ * @param int        $encoding One of the ZLIB_ENCODING_* constants.
+ * @param array|null $options  An associative array which may contain the following elements:
  *
  *
  * level
@@ -545,12 +549,13 @@ function inflate_add($context, string $encoded_data, int $flush_mode = ZLIB_SYNC
  *
  * A string or an array of strings
  * of the preset dictionary (default: no preset dictionary).
+ *
  * @return resource Returns an inflate context resource (zlib.inflate) on
  * success.
  * @throws ZlibException
  *
  */
-function inflate_init(int $encoding, array $options = null)
+function inflate_init(int $encoding, ?array $options = null)
 {
     error_clear_last();
     $result = \inflate_init($encoding, $options);
@@ -590,13 +595,14 @@ function readgzfile(string $filename, int $use_include_path = 0): int
 /**
  * Uncompress any raw/gzip/zlib encoded data.
  *
- * @param string $data
- * @param int $max_decoded_len
+ * @param string   $data
+ * @param int|null $max_decoded_len
+ *
  * @return string Returns the uncompressed data.
  * @throws ZlibException
  *
  */
-function zlib_decode(string $data, int $max_decoded_len = null): string
+function zlib_decode(string $data, ?int $max_decoded_len = null): string
 {
     error_clear_last();
     if ($max_decoded_len !== null) {

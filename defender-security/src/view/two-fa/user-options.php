@@ -19,7 +19,7 @@ wp_nonce_field( 'wpdef_2fa_user_options', '_wpdef_2fa_nonce_user_options', false
 			<?php if ( $is_force_auth ) : ?>
 				<div class="def-notification" style="margin-right: 0;margin-top: 0;">
 					<i class="dashicons dashicons-warning" aria-hidden="true"></i>
-					<?php echo wp_kses_post( ( ! empty( $force_auth_message ) ) ? $force_auth_message : $default_message ); ?>
+					<?php echo wp_kses_post( ( '' !== trim( $force_auth_message ) ) ? $force_auth_message : $default_message ); ?>
 				</div>
 			<?php endif; ?>
 			<table class="auth-methods-table">

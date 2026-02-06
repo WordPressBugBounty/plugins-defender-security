@@ -25,8 +25,9 @@ class Breadcrumbs extends Component {
 	 * @return string
 	 */
 	private function get_feature_slug(): string {
+		// Update value for the next feature.
 		return self::BREADCRUMBS_PREFIX_KEY
-			. \WP_Defender\Model\Scan_Item::TYPE_PLUGIN_OUTDATED . self::BREADCRUMBS_SUFFIX_KEY;
+			. \WP_Defender\Component\Fake_Bot_Detection::SCENARIO_FAKE_BOT . self::BREADCRUMBS_SUFFIX_KEY;
 	}
 
 	/**
@@ -36,7 +37,7 @@ class Breadcrumbs extends Component {
 	 */
 	private function get_previous_feature_slug(): string {
 		return self::BREADCRUMBS_PREFIX_KEY
-		. \WP_Defender\Model\Setting\Session_Protection::get_module_slug() . self::BREADCRUMBS_SUFFIX_KEY;
+		. \WP_Defender\Component\Fake_Bot_Detection::SCENARIO_FAKE_BOT . self::BREADCRUMBS_SUFFIX_KEY;
 	}
 
 	/**
@@ -45,7 +46,7 @@ class Breadcrumbs extends Component {
 	 * @return void
 	 */
 	public function update_meta_key(): void {
-		update_user_meta( get_current_user_id(), $this->get_feature_slug(), 1 );
+		// Add value for the next feature.
 	}
 
 	/**

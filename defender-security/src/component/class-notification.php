@@ -77,7 +77,7 @@ class Notification extends Component {
 			'exclude' => $exclude,
 		);
 
-		if ( ! empty( $username ) ) {
+		if ( '' !== $username ) {
 			$params['search']         = strtolower( $username );
 			$params['search_columns'] = array(
 				'user_login',
@@ -155,7 +155,7 @@ class Notification extends Component {
 	 */
 	public function send_subscription_confirm_email( \WP_Defender\Model\Notification $model ) {
 		foreach ( $model->in_house_recipients as &$subscriber ) {
-			if ( empty( $subscriber['status'] ) ) {
+			if ( ! isset( $subscriber['status'] ) || '' === $subscriber['status'] ) {
 				continue;
 			}
 			if ( \WP_Defender\Model\Notification::USER_SUBSCRIBE_NA !== $subscriber['status'] ) {
@@ -168,7 +168,7 @@ class Notification extends Component {
 			}
 		}
 		foreach ( $model->out_house_recipients as &$subscriber ) {
-			if ( empty( $subscriber['status'] ) ) {
+			if ( ! isset( $subscriber['status'] ) || '' === $subscriber['status'] ) {
 				continue;
 			}
 			if ( \WP_Defender\Model\Notification::USER_SUBSCRIBE_NA !== $subscriber['status'] ) {

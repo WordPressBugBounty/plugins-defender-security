@@ -46,14 +46,15 @@ function gnupg_addencryptkey($identifier, string $fingerprint): void
 /**
  *
  *
- * @param resource $identifier The gnupg identifier, from a call to
+ * @param resource    $identifier  The gnupg identifier, from a call to
  * gnupg_init or gnupg.
- * @param string $fingerprint The fingerprint key.
- * @param string $passphrase The pass phrase.
+ * @param string      $fingerprint The fingerprint key.
+ * @param string|null $passphrase  The pass phrase.
+ *
  * @throws GnupgException
  *
  */
-function gnupg_addsignkey($identifier, string $fingerprint, string $passphrase = null): void
+function gnupg_addsignkey($identifier, string $fingerprint, ?string $passphrase = null): void
 {
     error_clear_last();
     if ($passphrase !== null) {

@@ -237,21 +237,22 @@ function sqlsrv_free_stmt($stmt): void
  * Gets field data from the currently selected row. Fields must be accessed in
  * order. Field indices start at 0.
  *
- * @param resource $stmt A statement resource returned by sqlsrv_query or
+ * @param resource $stmt       A statement resource returned by sqlsrv_query or
  * sqlsrv_execute.
- * @param int $fieldIndex The index of the field to be retrieved. Field indices start at 0. Fields
+ * @param int      $fieldIndex The index of the field to be retrieved. Field indices start at 0. Fields
  * must be accessed in order. i.e. If you access field index 1, then field
  * index 0 will not be available.
- * @param int $getAsType The PHP data type for the returned field data. If this parameter is not
+ * @param int|null $getAsType  The PHP data type for the returned field data. If this parameter is not
  * set, the field data will be returned as its default PHP data type.
  * For information about default PHP data types, see
  * Default PHP Data Types
  * in the Microsoft SQLSRV documentation.
+ *
  * @return mixed Returns data from the specified field on success.
  * @throws SqlsrvException
  *
  */
-function sqlsrv_get_field($stmt, int $fieldIndex, int $getAsType = null)
+function sqlsrv_get_field($stmt, int $fieldIndex, ?int $getAsType = null)
 {
     error_clear_last();
     if ($getAsType !== null) {
@@ -340,9 +341,9 @@ function sqlsrv_num_rows($stmt): int
  * Prepares a query for execution. This function is ideal for preparing a query
  * that will be executed multiple times with different parameter values.
  *
- * @param resource $conn A connection resource returned by sqlsrv_connect.
- * @param string $sql The string that defines the query to be prepared and executed.
- * @param array $params An array specifying parameter information when executing a parameterized
+ * @param resource   $conn    A connection resource returned by sqlsrv_connect.
+ * @param string     $sql     The string that defines the query to be prepared and executed.
+ * @param array|null $params  An array specifying parameter information when executing a parameterized
  * query. Array elements can be any of the following:
  *
  * A literal value
@@ -351,13 +352,14 @@ function sqlsrv_num_rows($stmt): int
  * array($value [, $direction [, $phpType [, $sqlType]]])
  *
  * The following table describes the elements in the array structure above:
- * @param array $options An array specifying query property options. The supported keys are described
+ * @param array|null $options An array specifying query property options. The supported keys are described
  * in the following table:
+ *
  * @return resource Returns a statement resource on success.
  * @throws SqlsrvException
  *
  */
-function sqlsrv_prepare($conn, string $sql, array $params = null, array $options = null)
+function sqlsrv_prepare($conn, string $sql, ?array $params = null, ?array $options = null)
 {
     error_clear_last();
     if ($options !== null) {
@@ -377,9 +379,9 @@ function sqlsrv_prepare($conn, string $sql, array $params = null, array $options
 /**
  * Prepares and executes a query.
  *
- * @param resource $conn A connection resource returned by sqlsrv_connect.
- * @param string $sql The string that defines the query to be prepared and executed.
- * @param array $params An array specifying parameter information when executing a parameterized query.
+ * @param resource   $conn    A connection resource returned by sqlsrv_connect.
+ * @param string     $sql     The string that defines the query to be prepared and executed.
+ * @param array|null $params  An array specifying parameter information when executing a parameterized query.
  * Array elements can be any of the following:
  *
  * A literal value
@@ -388,13 +390,14 @@ function sqlsrv_prepare($conn, string $sql, array $params = null, array $options
  * array($value [, $direction [, $phpType [, $sqlType]]])
  *
  * The following table describes the elements in the array structure above:
- * @param array $options An array specifying query property options. The supported keys are described
+ * @param array|null $options An array specifying query property options. The supported keys are described
  * in the following table:
+ *
  * @return resource Returns a statement resource on success.
  * @throws SqlsrvException
  *
  */
-function sqlsrv_query($conn, string $sql, array $params = null, array $options = null)
+function sqlsrv_query($conn, string $sql, ?array $params = null, ?array $options = null)
 {
     error_clear_last();
     if ($options !== null) {

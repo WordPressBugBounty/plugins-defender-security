@@ -32,7 +32,7 @@ class Sh_Feature_Policy extends Security_Header {
 		if ( ! $model->sh_feature_policy ) {
 			return false;
 		}
-		if ( isset( $model->sh_feature_policy_mode ) && ! empty( $model->sh_feature_policy_mode ) ) {
+		if ( isset( $model->sh_feature_policy_mode ) && '' !== $model->sh_feature_policy_mode ) {
 			return true;
 		}
 		$headers = $this->head_request( network_site_url(), self::$rule_slug );
@@ -137,7 +137,7 @@ class Sh_Feature_Policy extends Security_Header {
 					$headers = 'Permissions-Policy: ' . implode( ', ', $features );
 					break;
 				case 'origins':
-					if ( isset( $model->sh_feature_policy_urls ) && ! empty( $model->sh_feature_policy_urls ) ) {
+					if ( isset( $model->sh_feature_policy_urls ) && '' !== $model->sh_feature_policy_urls ) {
 						$urls = explode( PHP_EOL, $model->sh_feature_policy_urls );
 						$urls = array_map( 'trim', $urls );
 						// Wrap strings in quotes.

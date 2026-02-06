@@ -32,7 +32,7 @@ class Sh_Referrer_Policy extends Security_Header {
 		if ( ! $model->sh_referrer_policy ) {
 			return false;
 		}
-		if ( isset( $model->sh_referrer_policy_mode ) && ! empty( $model->sh_referrer_policy_mode ) ) {
+		if ( isset( $model->sh_referrer_policy_mode ) && '' !== $model->sh_referrer_policy_mode ) {
 			return true;
 		}
 		$headers = $this->head_request( network_site_url(), self::$rule_slug );

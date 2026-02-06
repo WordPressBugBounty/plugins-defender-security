@@ -17,6 +17,7 @@ use Calotes\Component\Behavior;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Traits\File_Operations;
 use WP_Defender\Component\Quarantine as Quarantine_Component;
+use WP_Filesystem_Base;
 
 /**
  * Class Plugin_Integrity
@@ -91,7 +92,7 @@ class Plugin_Integrity extends Behavior {
 	public function resolve() {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
@@ -133,10 +134,24 @@ class Plugin_Integrity extends Behavior {
 	 * @return array An array with a message indicating successful ignore.
 	 */
 	public function ignore(): array {
-		$scan = Scan::get_last();
-		$scan->ignore_issue( $this->owner->id );
+		$scan       = Scan::get_last();
+		$data       = $this->owner->raw_data;
+		$issue_name = '<b>' . pathinfo( $data['file'], PATHINFO_BASENAME ) . '</b>';
+		$res        = $scan->ignore_issue( $this->owner->id );
+		if ( ! $res ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => $this->get_failed_ignore_result( $issue_name ),
+			);
+		}
 
-		return array( 'message' => esc_html__( 'The suspicious file has been successfully ignored.', 'defender-security' ) );
+		return array(
+			'message' => sprintf(
+			/* translators: %s: Scan issue name. */
+				esc_html__( 'You’ve successfully ignored the security issue related to %s.', 'defender-security' ),
+				$issue_name
+			),
+		);
 	}
 
 	/**
@@ -185,7 +200,7 @@ class Plugin_Integrity extends Behavior {
 	public function pull_src(): array {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}

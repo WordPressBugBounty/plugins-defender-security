@@ -263,10 +263,11 @@ trait User {
 	 * Check if the user has a role selected by the admin.
 	 *
 	 * @param WP_User|\stdClass $user User object.
+	 * @param object            $model Model object.
 	 *
 	 * @return bool True if the user has a selected role, false otherwise.
 	 */
-	private function should_enforce_for_user( $user ): bool {
+	private function should_enforce_for_user( $user, $model ): bool {
 		$roles = array();
 		if ( ! is_multisite() ) {
 			if ( $user instanceof WP_User ) {
@@ -289,25 +290,13 @@ trait User {
 			}
 		}
 
-		$user_roles = $this->get_user_roles_property();
+		$user_roles = array();
+		if ( is_object( $model ) && property_exists( $model, 'user_roles' ) ) {
+			$user_roles = $model->user_roles;
+		}
 
 		$array_intersect = array_intersect( $user_roles, $roles );
 
 		return array() !== $array_intersect;
-	}
-
-	/**
-	 * Retrieve the user roles property dynamically.
-	 *
-	 * @return array The user roles from the appropriate property.
-	 */
-	private function get_user_roles_property(): array {
-		if ( isset( $this->model ) && property_exists( $this->model, 'user_roles' ) ) {
-			return $this->model->user_roles;
-		} elseif ( isset( $this->settings ) && property_exists( $this->settings, 'user_roles' ) ) {
-			return $this->settings->user_roles;
-		}
-
-		return array();
 	}
 }

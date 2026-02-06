@@ -8,14 +8,15 @@ use Safe\Exceptions\FtpException;
  * Sends an ALLO command to the remote FTP server to
  * allocate space for a file to be uploaded.
  *
- * @param resource $ftp_stream The link identifier of the FTP connection.
- * @param int $filesize The number of bytes to allocate.
- * @param string $result A textual representation of the servers response will be returned by
+ * @param resource    $ftp_stream The link identifier of the FTP connection.
+ * @param int         $filesize   The number of bytes to allocate.
+ * @param string|null $result     A textual representation of the servers response will be returned by
  * reference in result if a variable is provided.
+ *
  * @throws FtpException
  *
  */
-function ftp_alloc($ftp_stream, int $filesize, string &$result = null): void
+function ftp_alloc($ftp_stream, int $filesize, ?string &$result = null): void
 {
     error_clear_last();
     $result = \ftp_alloc($ftp_stream, $filesize, $result);

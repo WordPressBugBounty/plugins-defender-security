@@ -3,6 +3,7 @@
 namespace WP_Defender;
 
 use WP_Defender\Traits\Defender_Bootstrap;
+use WP_Defender\Component\Rate;
 
 /**
  * Class Bootstrap
@@ -26,9 +27,13 @@ class Bootstrap {
 	 * @since 2.4
 	 */
 	protected function set_free_installation_timestamp(): void {
-		// It's for both cases because don’t have a Pro checking during plugin activation.
-		if ( empty( get_site_option( 'defender_free_install_date' ) ) ) {
-			update_site_option( 'defender_free_install_date', time() );
+		// Let's equate the plugin installation and postponed notice dates. This will simplify future checks.
+		$install_date = (int) get_site_option( Rate::SLUG_FREE_INSTALL_DATE, 0 );
+		if ( 0 === $install_date ) {
+			update_site_option( Rate::SLUG_FREE_INSTALL_DATE, time() );
+			update_site_option( Rate::SLUG_POSTPONED_NOTICE_DATE, time() );
+		} else {
+			update_site_option( Rate::SLUG_POSTPONED_NOTICE_DATE, $install_date );
 		}
 	}
 
@@ -53,7 +58,7 @@ class Bootstrap {
 			$screen_prefix = 'defender';
 			$screen_suffix = is_multisite() ? '-network' : '';
 
-			$free_install_date = get_site_option( 'defender_free_install_date', false );
+			$free_install_date = get_site_option( Rate::SLUG_FREE_INSTALL_DATE, false );
 
 			do_action(
 				'wpmudev_register_notices',

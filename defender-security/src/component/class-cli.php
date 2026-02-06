@@ -14,7 +14,9 @@ use Countable;
 use Throwable;
 use Faker\Factory;
 use WP_CLI\ExitException;
+use WP_Defender\Traits\IO;
 use WP_Defender\Traits\Theme;
+use WP_Defender\Traits\Plugin;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Model\Audit_Log;
 use WP_Defender\Model\Scan_Item;
@@ -34,6 +36,8 @@ use WP_Defender\Model\Setting\Notfound_Lockout;
 use WP_Defender\Model\Setting\Security_Headers;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Component\Logger\Rotation_Logger;
+use WP_Defender\Component\Scan as Scan_Component;
+use WP_Filesystem_Base;
 use function WP_CLI\Utils\format_items;
 
 if ( ! defined( 'WPINC' ) ) {
@@ -58,7 +62,9 @@ class Cli {
 		persistent_hub_datetime_format as protected;
 		time_since as protected;
 	}
+	use IO;
 	use Theme;
+	use Plugin;
 
 	/**
 	 * This is a helper for scan module.
@@ -68,7 +74,7 @@ class Cli {
 	 * or (un)ignore|delete|resolve to do the relevant task,
 	 * or clear_logs to remove completed schedule logs.
 	 * [--type=<type>]
-	 * : Default, without values, is for all items, or core_integrity|plugin_integrity|vulnerability|suspicious_code.
+	 * : Default, without values, is for all items, or core_integrity|plugin_integrity|vulnerability|suspicious_code|plugin_outdated|plugin_closed.
 	 *
 	 * @param  mixed $args  Command arguments.
 	 * @param  mixed $options  Command options.
@@ -76,7 +82,7 @@ class Cli {
 	 * @throws ExitException If an invalid command is provided.
 	 */
 	public function scan( $args, $options ) {
-		if ( empty( $args ) ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::error( 'Invalid command' );
 
 			return;
@@ -110,12 +116,66 @@ class Cli {
 	}
 
 	/**
+	 * Split scan issue into file and dir.
+	 *
+	 * @param  string|null $type      Scan type.
+	 * @param  array       $raw_data  Array of raw scan data.
+	 *
+	 * @return array
+	 */
+	private function split_scan_issue_into_file_and_dir( $type, $raw_data ): array {
+		// General case without type-param.
+		if ( null === $type ) {
+			if ( isset( $raw_data['file'] ) ) {
+				return array(
+					'type' => 'file',
+					'path' => $raw_data['file'],
+				);
+			} elseif ( isset( $raw_data['base_slug'] ) ) {
+				return array(
+					'type' => 'folder',
+					'path' => $this->get_abs_plugin_path_by_slug( $raw_data['base_slug'] ),
+				);
+			} elseif ( isset( $raw_data['slug'] ) ) {
+				return array(
+					'type' => 'folder',
+					'path' => $this->get_abs_plugin_path_by_slug( $raw_data['slug'] ),
+				);
+			}
+		}
+		// Specific case with type-param.
+		if ( in_array(
+			$type,
+			array(
+				Scan_Item::TYPE_PLUGIN_OUTDATED,
+				Scan_Item::TYPE_PLUGIN_CLOSED,
+			),
+			true
+		) ) {
+			return array(
+				'type' => 'folder',
+				'path' => $this->get_abs_plugin_path_by_slug( $raw_data['slug'] ),
+			);
+		} elseif ( Scan_Item::TYPE_VULNERABILITY === $type ) {
+			return array(
+				'type' => 'folder',
+				'path' => $this->get_abs_plugin_path_by_slug( $raw_data['base_slug'] ),
+			);
+		} else {
+			return array(
+				'type' => 'file',
+				'path' => $raw_data['file'],
+			);
+		}
+	}
+
+	/**
 	 * Executes tasks based on the type of scan.
 	 *
-	 * @param  mixed $task  The task to perform.
-	 * @param  mixed $options  Command options.
+	 * @param  string $command  The task to perform.
+	 * @param  mixed  $options  Command options.
 	 */
-	private function scan_task( $task, $options ) {
+	private function scan_task( $command, $options ) {
 		$type = $options['type'] ?? null;
 		switch ( $type ) {
 			case null:
@@ -134,7 +194,12 @@ class Cli {
 			case 'suspicious_code':
 				$type = Scan_Item::TYPE_SUSPICIOUS;
 				break;
-			// Todo: add Abandoned type.
+			case 'plugin_outdated':
+				$type = Scan_Item::TYPE_PLUGIN_OUTDATED;
+				break;
+			case 'plugin_closed':
+				$type = Scan_Item::TYPE_PLUGIN_CLOSED;
+				break;
 			default:
 				WP_CLI::error( sprintf( 'Unknown scan type %s', $type ) );
 				break;
@@ -147,20 +212,24 @@ class Cli {
 		if ( ! is_object( $model ) ) {
 			return;
 		}
-		switch ( $task ) {
+		switch ( $command ) {
 			case 'ignore':
 				$issues = $model->get_issues( $type, Scan_Item::STATUS_ACTIVE );
 				foreach ( $issues as $issue ) {
-					$model->ignore_issue( $issue->id );
-					WP_CLI::log( sprintf( 'Ignoring file: %s', $issue->raw_data['file'] ) );
+					$issue_data = $this->split_scan_issue_into_file_and_dir( $type, $issue->raw_data );
+					if ( $model->ignore_issue( $issue->id ) ) {
+						WP_CLI::log( sprintf( 'Ignoring %s: %s', $issue_data['type'], $issue_data['path'] ) );
+					}
 				}
 				WP_CLI::log( sprintf( 'Ignored %s items', count( $issues ) ) );
 				break;
 			case 'unignore':
 				$issues = $model->get_issues( $type, Scan_Item::STATUS_IGNORE );
 				foreach ( $issues as $issue ) {
-					$model->unignore_issue( $issue->id );
-					WP_CLI::log( sprintf( 'Unignoring file: %s', $issue->raw_data['file'] ) );
+					$issue_data = $this->split_scan_issue_into_file_and_dir( $type, $issue->raw_data );
+					if ( $model->unignore_issue( $issue->id ) ) {
+						WP_CLI::log( sprintf( 'Unignoring %s: %s', $issue_data['type'], $issue_data['path'] ) );
+					}
 				}
 				WP_CLI::log( sprintf( 'Unignored %s items', count( $issues ) ) );
 				break;
@@ -213,6 +282,7 @@ class Cli {
 							return WP_CLI::error( sprintf( "Can't delete file %s", $path ) );
 						}
 					}
+					// No result for Vulnerability, Outdated or Closed plugin types.
 				}
 				WP_CLI::log( sprintf( 'Resolved %s items', count( $resolved ) ) );
 				break;
@@ -220,13 +290,42 @@ class Cli {
 				$items   = $model->get_issues( $type, Scan_Item::STATUS_ACTIVE );
 				$deleted = array();
 				foreach ( $items as $item ) {
-					$path = $item->raw_data['file'];
-					if ( wp_delete_file( $path ) ) {
-						WP_CLI::log( sprintf( 'Delete file %s', $path ) );
-						$model->remove_issue( $item->id );
-						$deleted[] = $item;
-					} else {
-						return WP_CLI::error( sprintf( "Can't delete file %s", $path ) );
+					$issue_data = $this->split_scan_issue_into_file_and_dir( $type, $item->raw_data );
+					$path       = $issue_data['path'];
+					$issue_type = $issue_data['type'];
+					if ( ! file_exists( $path ) ) {
+						continue;
+					}
+					// Work with plugin dir or single file, e.g. for Vulnerability, Outdated or Closed plugin types.
+					if ( 'folder' === $issue_type ) {
+						if ( $this->is_active_plugin( $path ) ) {
+							WP_CLI::warning( sprintf( 'This plugin %s cannot be removed because it is active.', $path ) );
+							continue;
+						}
+
+						if ( is_dir( $path ) ) {
+							if ( $this->delete_dir( $path ) ) {
+								WP_CLI::log( sprintf( 'Delete %s: %s', $issue_type, $path ) );
+								$model->remove_issue( $item->id );
+								$deleted[] = $item;
+							}
+						} elseif ( wp_delete_file( $path ) ) {
+							WP_CLI::log( sprintf( 'Delete %s: %s', $issue_type, $path ) );
+							$model->remove_issue( $item->id );
+							$deleted[] = $item;
+						} else {
+
+							return WP_CLI::error( sprintf( "Can't delete %s: %s", $issue_type, $path ) );
+						}
+					} elseif ( 'file' === $issue_type ) {
+						// Work with core_integrity, plugin_integrity or suspicious_code types.
+						if ( wp_delete_file( $path ) ) {
+							WP_CLI::log( sprintf( 'Delete %s: %s', $issue_type, $path ) );
+							$model->remove_issue( $item->id );
+							$deleted[] = $item;
+						} else {
+							return WP_CLI::error( sprintf( "Can't delete %s: %s", $issue_type, $path ) );
+						}
 					}
 				}
 				WP_CLI::log( sprintf( 'Deleted %s items', count( $deleted ) ) );
@@ -237,7 +336,7 @@ class Cli {
 	}
 
 	/**
-	 * Generate dummy data, use in cypress & unit test.
+	 * Generate dummy data, use in unit tests.
 	 * DO NOT USE IN PRODUCTION.
 	 *
 	 * @param  mixed $args  Command arguments.
@@ -245,11 +344,11 @@ class Cli {
 	public function seed( $args ) {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
-		if ( empty( $args ) ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::error( 'Invalid command' );
 
 			return;
@@ -369,11 +468,11 @@ class Cli {
 	public function unseed( $args ) {
 		global $wp_filesystem;
 		// Initialize the WP filesystem, no more using 'file-put-contents' function.
-		if ( empty( $wp_filesystem ) ) {
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
-		if ( empty( $args ) ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::error( 'Invalid command' );
 
 			return;
@@ -402,7 +501,7 @@ class Cli {
 	 * @param  mixed $args  Command arguments.
 	 */
 	public function audit( $args ) {
-		if ( empty( $args ) ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::log( 'Invalid command, add necessary arguments. See below...' );
 			WP_CLI::runcommand( 'defender audit --help' );
 
@@ -451,6 +550,7 @@ class Cli {
 			if ( is_wp_error( $scan ) ) {
 				return WP_CLI::error( $scan->get_error_message() );
 			}
+			wd_di()->get( Scan_Component::class )->gather_actioned_plugin_details();
 		} else {
 			WP_CLI::log( 'Continue from last scan' );
 		}
@@ -458,7 +558,7 @@ class Cli {
 		if ( $is_detailed ) {
 			$start = microtime( true );
 		}
-		$handler = wd_di()->get( Scan::class );
+		$handler = wd_di()->get( Scan_Component::class );
 		$ret     = false;
 		while ( $handler->process() === false ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
 		}
@@ -467,7 +567,7 @@ class Cli {
 			return;
 		}
 		$results = $scan->to_array();
-		if ( is_array( $results ) && ! empty( $results['issues_items'] ) ) {
+		if ( is_array( $results ) && isset( $results['issues_items'] ) && array() !== $results['issues_items'] ) {
 			$count = is_array( $results['issues_items'] ) || $results['issues_items'] instanceof Countable
 				? count( $results['issues_items'] )
 				: 0;
@@ -499,7 +599,7 @@ class Cli {
 	 * @throws ExitException|Exception If an invalid command is provided.
 	 */
 	public function security_headers( $args ) {
-		if ( empty( $args ) ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::error( 'Invalid command.' );
 
 			return;
@@ -523,6 +623,7 @@ class Cli {
 				break;
 			case 'activate':
 				foreach ( $model->get_headers() as $header ) {
+					// @phpstan-ignore-next-line
 					$model->{$header::$rule_slug} = true;
 				}
 				$model->save();
@@ -530,6 +631,7 @@ class Cli {
 				break;
 			case 'deactivate':
 				foreach ( $model->get_headers() as $header ) {
+					// @phpstan-ignore-next-line
 					$model->{$header::$rule_slug} = false;
 				}
 				$model->save();
@@ -553,7 +655,7 @@ class Cli {
 	 * @param  mixed $options  Command options.
 	 */
 	public function settings( $args, $options ) {
-		if ( empty( $args ) ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::log( 'Invalid command, add necessary arguments. See below...' );
 			WP_CLI::runcommand( 'defender settings --help' );
 
@@ -617,7 +719,7 @@ class Cli {
 		}
 
 		[ $command, $type, $field ] = $args;
-		if ( empty( $type ) || empty( $field ) ) {
+		if ( ! is_string( $type ) || '' === $type || ! is_string( $field ) || '' === $field ) {
 			WP_CLI::log( 'Invalid option.' );
 			WP_CLI::runcommand( 'defender firewall --help' );
 
@@ -812,14 +914,14 @@ class Cli {
 		}
 		$model = wd_di()->get( User_Agent_Lockout::class );
 		$data  = $model->export();
-		if ( 'all' === $field && ! empty( $data['whitelist'] ) && ! empty( $data['blacklist'] ) ) {
+		if ( 'all' === $field && isset( $data['whitelist'] ) && '' !== $data['whitelist'] && isset( $data['blacklist'] ) && '' !== $data['blacklist'] ) {
 			WP_CLI::log( 'ALLOWLIST:' );
 			WP_CLI::log( $data['whitelist'] );
 			WP_CLI::log( 'BLOCKLIST:' );
 			WP_CLI::log( $data['blacklist'] );
-		} elseif ( 'allowlist' === $field && ! empty( $data['whitelist'] ) ) {
+		} elseif ( 'allowlist' === $field && isset( $data['whitelist'] ) && '' !== $data['whitelist'] ) {
 			WP_CLI::log( $data['whitelist'] );
-		} elseif ( 'blocklist' === $field && ! empty( $data['blacklist'] ) ) {
+		} elseif ( 'blocklist' === $field && isset( $data['blacklist'] ) && '' !== $data['blacklist'] ) {
 			WP_CLI::log( $data['blacklist'] );
 		} else {
 			WP_CLI::log( 'No data.' );
@@ -887,7 +989,7 @@ class Cli {
 	 * @return string The renamed field name.
 	 */
 	private function rename_field( $field ) {
-		if ( ! empty( $field ) ) {
+		if ( '' !== $field ) {
 			return str_replace( array( 'allow', 'block' ), array( 'white', 'black' ), $field );
 		}
 
@@ -951,7 +1053,7 @@ class Cli {
 	 * Clear completed action scheduler logs.
 	 */
 	private function scan_clear_logs() {
-		$scan_component = wd_di()->get( Scan::class );
+		$scan_component = wd_di()->get( Scan_Component::class );
 		$result         = $scan_component::clear_logs();
 		$message        = $result['success'] ?? $result['error'] ?? 'Malware scan logs are cleared';
 
@@ -990,21 +1092,21 @@ class Cli {
 	}
 
 	/**
-	 * This is a helper for Google Recaptcha actions.
-	 * Syntax: wp defender google_recaptcha <command>
+	 * This is a helper for Captcha actions.
+	 * Syntax: wp defender captcha <command>
 	 * <command> activate|deactivate|clear
-	 * Example: wp defender google_recaptcha activate
+	 * Example: wp defender captcha activate
 	 *
 	 * @param  mixed $args  Command arguments.
 	 */
-	public function google_recaptcha( $args ) {
-		if ( empty( $args ) ) {
+	public function captcha( $args ) {
+		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::error( 'Invalid command.' );
-			WP_CLI::runcommand( 'defender google_recaptcha --help' );
+			WP_CLI::runcommand( 'defender captcha --help' );
 
 			return;
 		}
-		$model       = wd_di()->get( \WP_Defender\Model\Setting\Recaptcha::class );
+		$model       = wd_di()->get( \WP_Defender\Model\Setting\Captcha::class );
 		[ $command ] = $args;
 		switch ( $command ) {
 			case 'activate':
@@ -1012,7 +1114,7 @@ class Cli {
 					$model->enabled = true;
 					$model->save();
 				}
-				WP_CLI::log( 'Google reCAPTCHA is activated.' );
+				WP_CLI::log( 'CAPTCHA is activated.' );
 				break;
 			case 'deactivate':
 				if ( false !== $model->enabled ) {
@@ -1020,12 +1122,13 @@ class Cli {
 					$model->save();
 				}
 				$model->save();
-				WP_CLI::log( 'Google reCAPTCHA is deactivated.' );
+				WP_CLI::log( 'CAPTCHA is deactivated.' );
 				break;
 			case 'clear':
 				$default_values                      = $model->get_default_values();
 				$model->message                      = $default_values['message'];
 				$model->language                     = 'automatic';
+				$model->provider                     = 'recaptcha';
 				$model->data_v2_checkbox             = array(
 					'key'    => '',
 					'secret' => '',
@@ -1041,6 +1144,14 @@ class Cli {
 					'secret'    => '',
 					'threshold' => '0.5',
 				);
+				$model->data_turnstile               = array(
+					'key'      => '',
+					'secret'   => '',
+					'size'     => 'normal',
+					'style'    => 'auto',
+					'message'  => $default_values['turnstile_message'],
+					'language' => 'auto',
+				);
 				$model->locations                    = array();
 				$model->detect_woo                   = false;
 				$model->woo_checked_locations        = array();
@@ -1049,11 +1160,11 @@ class Cli {
 				$model->disable_for_known_users      = true;
 				$model->save();
 
-				WP_CLI::log( 'Google reCAPTCHA is cleared.' );
+				WP_CLI::log( 'CAPTCHA is cleared.' );
 				break;
 			default:
 				WP_CLI::error( sprintf( 'Unknown command %s.', $command ) );
-				WP_CLI::runcommand( 'defender google_recaptcha --help' );
+				WP_CLI::runcommand( 'defender captcha --help' );
 				break;
 		}
 	}

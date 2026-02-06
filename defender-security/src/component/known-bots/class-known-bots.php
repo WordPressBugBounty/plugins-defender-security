@@ -80,6 +80,6 @@ class Known_Bots {
 		$key = 'wpdef_known_bot_ips_' . $name;
 		$ips = get_site_transient( $key );
 
-		return ! empty( $ips ) ? $ips : array();
+		return is_array( $ips ) && array() !== $ips ? $ips : array();
 	}
 }

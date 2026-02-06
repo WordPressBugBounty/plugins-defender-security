@@ -18,7 +18,6 @@ use WP_Defender\Model\Audit_Log;
  */
 class Menu_Audit extends Audit_Event {
 
-	public const ACTION_CREATED = 'created';
 	/**
 	 * Type of audit.
 	 *
@@ -52,8 +51,8 @@ class Menu_Audit extends Audit_Event {
 
 		if (
 			'nav-menus.php' === basename( $script_name )
-			&& ! empty( $action_type )
-			&& ! empty( $term_id )
+			&& ! is_null( $action_type )
+			&& ! is_null( $term_id )
 		) {
 			Array_Cache::append(
 				'menu_updated',
@@ -74,13 +73,13 @@ class Menu_Audit extends Audit_Event {
 		$menu     = array();
 		$menu_obj = wp_get_nav_menu_object( $term_id );
 
-		if ( ! empty( $menu_obj ) ) {
+		if ( $menu_obj instanceof \WP_Term ) {
 			$menu['term_id'] = $menu_obj->term_id;
 			$menu['name']    = $menu_obj->name;
 			$menu['items']   = array();
 
 			$items = wp_get_nav_menu_items( $menu_obj->term_id );
-			if ( ! empty( $items ) ) {
+			if ( is_array( $items ) && array() !== $items ) {
 				foreach ( $items as $item ) {
 					array_push(
 						$menu['items'],
@@ -164,17 +163,17 @@ class Menu_Audit extends Audit_Event {
 		$blog_name       = is_multisite() ? '[' . get_bloginfo( 'name' ) . ']' : '';
 		$old_menu        = $this->get_cached_menu( $menu_id );
 
-		if ( ! empty( $old_menu ) ) {
+		if ( isset( $old_menu['items'] ) && is_array( $old_menu['items'] ) ) {
 			$old_items = array_column( $old_menu['items'], 'item_id' );
 			$new_items = array_keys( $post_array['menu-item-title'] );
 
-			if ( ! empty( $old_menu['items'] ) ) {
+			if ( array() !== $old_menu['items'] ) {
 				foreach ( $old_menu['items'] as $old_item ) {
 					if ( $menu_item_db_id === $old_item['item_id'] ) {
 						if (
 							$old_item['menu_order'] !== $args['menu-item-position']
 							|| $old_item['menu_item_parent'] !== $args['menu-item-parent-id']
-							|| ( ! empty( $args['menu-item-title'] ) && $old_item['title'] !== $args['menu-item-title'] )
+							|| ( isset( $args['menu-item-title'] ) && '' !== $args['menu-item-title'] && $old_item['title'] !== $args['menu-item-title'] )
 						) {
 							return array(
 								sprintf(
@@ -231,7 +230,7 @@ class Menu_Audit extends Audit_Event {
 		$blog_name       = is_multisite() ? '[' . get_bloginfo( 'name' ) . ']' : '';
 		$old_menu        = $this->get_cached_menu( $menu_id );
 
-		if ( ! empty( $old_menu ) && is_array( $old_menu ) ) {
+		if ( isset( $old_menu['items'] ) && is_array( $old_menu['items'] ) && array() !== $old_menu['items'] ) {
 			$old_items = array_column( $old_menu['items'], 'item_id' );
 			if ( in_array( $menu_item_db_id, $old_items, true ) ) {
 				$key = array_search( $menu_item_db_id, $old_items, true );
@@ -294,11 +293,11 @@ class Menu_Audit extends Audit_Event {
 		if ( $new_items === $old_items ) {
 			// Check if item title, position or parent is changed.
 			$is_any_item_changed = false;
-			foreach ( $old_menu['items'] as $old_items ) {
+			foreach ( $old_menu['items'] as $items ) {
 				if (
-					$old_items['title'] !== $post_array['menu-item-title'][ $old_items['item_id'] ]
-					|| $old_items['menu_order'] !== (int) $post_array['menu-item-position'][ $old_items['item_id'] ]
-					|| $old_items['menu_item_parent'] !== $post_array['menu-item-parent-id'][ $old_items['item_id'] ]
+					$items['title'] !== $post_array['menu-item-title'][ $items['item_id'] ]
+					|| $items['menu_order'] !== (int) $post_array['menu-item-position'][ $items['item_id'] ]
+					|| $items['menu_item_parent'] !== $post_array['menu-item-parent-id'][ $items['item_id'] ]
 				) {
 					$is_any_item_changed = true;
 					break;

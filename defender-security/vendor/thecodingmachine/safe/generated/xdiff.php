@@ -205,21 +205,22 @@ function xdiff_string_patch_binary(string $str, string $patch): string
  * rejected parts of the patch will be stored inside error variable if
  * it is provided.
  *
- * @param string $str The original string.
- * @param string $patch The unified patch string. It has to be created using xdiff_string_diff,
+ * @param string      $str   The original string.
+ * @param string      $patch The unified patch string. It has to be created using xdiff_string_diff,
  * xdiff_file_diff functions or compatible tools.
- * @param int $flags flags can be either
+ * @param int|null    $flags flags can be either
  * XDIFF_PATCH_NORMAL (default mode, normal patch)
  * or XDIFF_PATCH_REVERSE (reversed patch).
  *
  * Starting from version 1.5.0, you can also use binary OR to enable
  * XDIFF_PATCH_IGNORESPACE flag.
  * @param string|null $error If provided then rejected parts are stored inside this variable.
+ *
  * @return string Returns the patched string.
  * @throws XdiffException
  *
  */
-function xdiff_string_patch(string $str, string $patch, int $flags = null, ?string &$error = null): string
+function xdiff_string_patch(string $str, string $patch, ?int $flags = null, ?string &$error = null): string
 {
     error_clear_last();
     if ($error !== null) {

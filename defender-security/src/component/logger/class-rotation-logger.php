@@ -9,6 +9,7 @@ namespace WP_Defender\Component\Logger;
 
 use GlobIterator;
 use WP_Defender\Traits\IO;
+use WP_Defender\Component\Network_Cron_Manager;
 
 /**
  * Deals rotation log file naming & purging old logs.
@@ -47,7 +48,7 @@ class Rotation_Logger implements Rotation_Logger_Interface {
 		} else {
 			$file_name = uniqid( $file_name . '-' );
 
-			if ( ! empty( $file_parts['extension'] ) ) {
+			if ( isset( $file_parts['extension'] ) && '' !== $file_parts['extension'] ) {
 				$file_name .= '.' . $file_parts['extension'];
 			}
 		}
@@ -68,7 +69,7 @@ class Rotation_Logger implements Rotation_Logger_Interface {
 		$unit = self::ROTATION_UNIT
 	) {
 		$threshold_timestamp = strtotime( '-' . $count . $unit );
-		if ( empty( $directory_path ) ) {
+		if ( '' === $directory_path ) {
 			$directory_path = $this->get_tmp_path();
 		}
 		$iterator = new GlobIterator( $directory_path . '/*.log' );
@@ -89,10 +90,14 @@ class Rotation_Logger implements Rotation_Logger_Interface {
 	public function init() {
 		/**
 		 * Delete old logs rotationally.
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
 		 */
-		if ( ! wp_next_scheduled( 'wpdef_log_rotational_delete' ) ) {
-			wp_schedule_event( time(), 'daily', 'wpdef_log_rotational_delete' );
-		}
-		add_action( 'wpdef_log_rotational_delete', array( $this, 'purge_old_log' ) );
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->register_callback(
+			'wpdef_log_rotational_delete',
+			array( $this, 'purge_old_log' ),
+			DAY_IN_SECONDS
+		);
 	}
 }

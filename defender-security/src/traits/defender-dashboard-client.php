@@ -13,6 +13,7 @@ use WPMUDEV\Hub\Connector\Data;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 
 trait Defender_Dashboard_Client {
+	use \WP_Defender\Traits\Plugin;
 
 	/**
 	 * Get membership status.
@@ -20,7 +21,7 @@ trait Defender_Dashboard_Client {
 	 * @return bool
 	 */
 	public function is_pro(): bool {
-		return $this->get_apikey() !== false;
+		return method_exists( $this, 'get_apikey' ) && $this->get_apikey() !== false;
 	}
 
 	/**
@@ -66,7 +67,7 @@ trait Defender_Dashboard_Client {
 		} else {
 			// Check if it's Pro but user logged the WPMU DEV Dashboard out.
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-			$menu_title = file_exists( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . WP_DEFENDER_PRO_PATH )
+			$menu_title = file_exists( $this->get_abs_plugin_path_by_slug( WP_DEFENDER_PRO_PATH ) )
 							&& is_plugin_active( WP_DEFENDER_PRO_PATH )
 				? esc_html__( 'Defender Pro', 'defender-security' )
 				: esc_html__( 'Defender', 'defender-security' );
@@ -126,10 +127,14 @@ trait Defender_Dashboard_Client {
 	 */
 	public function is_site_connected_to_hub(): bool {
 		// The case if Pro version is activated, it is TFH account and a site is from 3rd party hosting.
-		if ( WP_DEFENDER_PRO_PATH === DEFENDER_PLUGIN_BASENAME && $this->is_another_hosted_site_connected_to_tfh() ) {
+		if (
+			WP_DEFENDER_PRO_PATH === DEFENDER_PLUGIN_BASENAME
+			&& method_exists( $this, 'is_another_hosted_site_connected_to_tfh' )
+			&& $this->is_another_hosted_site_connected_to_tfh()
+		) {
 			return '' !== $this->get_api_key();
 		} else {
-			$hub_site_id = $this->get_site_id();
+			$hub_site_id = method_exists( $this, 'get_site_id' ) ? $this->get_site_id() : null;
 
 			return is_int( $hub_site_id ) && $hub_site_id > 0;
 		}
@@ -148,6 +153,10 @@ trait Defender_Dashboard_Client {
 	 * Get remote access.
 	 */
 	public function get_remote_access() {
+		if ( ! class_exists( 'WPMUDEV_Dashboard' ) ) {
+			return false;
+		}
+
 		// Use backward compatibility.
 		if ( WPMUDEV_Dashboard::$version > '4.11.9' ) {
 			return WPMUDEV_Dashboard::$settings->get( 'remote_access' );

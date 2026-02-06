@@ -54,7 +54,7 @@ class HUB extends Event {
 	 */
 	public function __construct() {
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
-		add_action( 'wdp_register_hub_action', array( $this, 'add_hub_endpoint' ) );
+		add_filter( 'wdp_register_hub_action', array( $this, 'add_hub_endpoint' ) );
 		add_action( 'defender_hub_sync', array( $this, 'hub_sync' ) );
 	}
 
@@ -104,9 +104,8 @@ class HUB extends Event {
 				)
 			);
 		}
-		// Todo: need to save Malware_Report last_sent & est_timestamp?
-		$scan_controller = wd_di()->get( Scan::class );
-		$scan_controller->do_async_scan( 'hub' );
+
+		wd_di()->get( Scan::class )->run_scan_mechanisms_from( 'hub' );
 
 		wp_send_json_success();
 	}
@@ -215,7 +214,7 @@ class HUB extends Event {
 			}
 			$settings->save();
 			$feature = '404 Detection';
-		} elseif ( 'ua-lockout' === $type ) {
+		} elseif ( User_Agent_Lockout::get_module_slug() === $type ) {
 			$settings = new User_Agent_Lockout();
 			if ( $settings->enabled ) {
 				$settings->enabled = false;
@@ -342,14 +341,19 @@ class HUB extends Event {
 	 */
 	public function import_settings( $params ) {
 		// Dirty but quick.
-		if ( empty( $params->configs ) ) {
+		if (
+			! isset( $params->configs )
+			|| ! ( is_array( $params->configs ) || is_object( $params->configs ) )
+			|| ( is_array( $params->configs ) && array() === $params->configs )
+			|| ( is_object( $params->configs ) && 0 === count( get_object_vars( $params->configs ) ) )
+		) {
 			wp_send_json_error(
 				array( 'message' => esc_html__( 'Invalid config', 'defender-security' ) )
 			);
 		}
 
 		$configs = json_decode( wp_json_encode( $params->configs ), true );
-		if ( empty( $configs ) ) {
+		if ( array() === $configs ) {
 			wp_send_json_error(
 				array( 'message' => esc_html__( 'Empty data', 'defender-security' ) )
 			);
@@ -361,7 +365,7 @@ class HUB extends Event {
 			foreach ( $mdata as $key => $value ) {
 				// Todo: update logic to import/export whitelisted/blocklisted countries via maxmind_license_key.
 				if ( in_array( $key, array( 'geoIP_db', 'geodb_path' ), true ) ) {
-					if ( ! empty( $value ) ) {
+					if ( is_string( $value ) && '' !== trim( $value ) ) {
 						// Download it.
 						$lockout_service->is_geodb_downloaded();
 					} else {
@@ -377,7 +381,7 @@ class HUB extends Event {
 		}
 
 		// If it's old config structure then we upgrade configs to new format.
-		if ( ! empty( $configs ) && ! $config_component->check_for_new_structure( $configs ) ) {
+		if ( array() !== $configs && ! $config_component->check_for_new_structure( $configs ) ) {
 			$adapter = wd_di()->get( Config_Adapter::class );
 			$configs = $adapter->upgrade( $configs );
 		}
@@ -528,8 +532,9 @@ class HUB extends Event {
 					'sh_feature_policy'       => $model_sec_headers->sh_feature_policy,
 				),
 				'mask_login'          => wd_di()->get( \WP_Defender\Model\Setting\Mask_Login::class )->is_active(),
+				// We'll change 'google_recaptcha'-key to 'captcha' in the future.
 				'google_recaptcha'    => array(
-					'status' => wd_di()->get( \WP_Defender\Model\Setting\Recaptcha::class )->is_active(),
+					'status' => wd_di()->get( \WP_Defender\Model\Setting\Captcha::class )->is_active(),
 				),
 				'password_protection' => array(
 					'status' => wd_di()->get( \WP_Defender\Model\Setting\Password_Protection::class )->is_active(),
@@ -594,8 +599,6 @@ class HUB extends Event {
 	 * Placeholder for importing data.
 	 *
 	 * @param  array $data  Data to import.
-	 *
-	 * @return void
 	 */
 	public function import_data( array $data ) {
 	}
@@ -628,12 +631,12 @@ class HUB extends Event {
 	}
 
 	/**
-	 * Activate/deactivate reCaptcha from HUB.
+	 * Activate/deactivate Captcha from HUB.
 	 */
 	public function manage_recaptcha() {
 		$response = null;
-		if ( class_exists( \WP_Defender\Model\Setting\Recaptcha::class ) ) {
-			$settings = new \WP_Defender\Model\Setting\Recaptcha();
+		if ( class_exists( \WP_Defender\Model\Setting\Captcha::class ) ) {
+			$settings = new \WP_Defender\Model\Setting\Captcha();
 			$response = array();
 			if ( true === $settings->enabled ) {
 				$settings->enabled   = false;

@@ -108,16 +108,17 @@ function com_load_typelib(string $typelib_name, bool $case_sensitive = true): vo
  * object, provided that it supports enough of the introspection interfaces,
  * and that you know the name of the interface you want to display.
  *
- * @param object $comobject comobject should be either an instance of a COM
+ * @param object      $comobject     comobject should be either an instance of a COM
  * object, or be the name of a typelibrary (which will be resolved according
  * to the rules set out in com_load_typelib).
- * @param string $dispinterface The name of an IDispatch descendant interface that you want to display.
- * @param bool $wantsink If set to TRUE, the corresponding sink interface will be displayed
+ * @param string|null $dispinterface The name of an IDispatch descendant interface that you want to display.
+ * @param bool        $wantsink      If set to TRUE, the corresponding sink interface will be displayed
  * instead.
+ *
  * @throws ComException
  *
  */
-function com_print_typeinfo(object $comobject, string $dispinterface = null, bool $wantsink = false): void
+function com_print_typeinfo(object $comobject, ?string $dispinterface = null, bool $wantsink = false): void
 {
     error_clear_last();
     $result = \com_print_typeinfo($comobject, $dispinterface, $wantsink);

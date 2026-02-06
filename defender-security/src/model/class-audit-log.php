@@ -211,11 +211,11 @@ class Audit_Log extends DB {
 			$builder->where( 'event_type', 'in', $events );
 		}
 
-		if ( ! empty( $user_id ) ) {
+		if ( is_numeric( $user_id ) && $user_id > 0 ) {
 			$builder->where( 'user_id', $user_id );
 		}
 
-		if ( ! empty( $ip ) ) {
+		if ( is_string( $ip ) && '' !== trim( $ip ) ) {
 			$builder->where( 'ip', 'like', "%$ip%" );
 		}
 		$builder->order_by( 'timestamp', 'desc' );
@@ -274,15 +274,15 @@ class Audit_Log extends DB {
 			$builder->where( 'event_type', 'in', $events );
 		}
 
-		if ( ! empty( $user_id ) ) {
+		if ( is_numeric( $user_id ) && $user_id > 0 ) {
 			$builder->where( 'user_id', $user_id );
 		}
 
-		if ( ! empty( $ip ) ) {
+		if ( is_string( $ip ) && '' !== trim( $ip ) ) {
 			$builder->where( 'ip', 'like', "%$ip%" );
 		}
 
-		return $builder->count();
+		return (int) $builder->count();
 	}
 
 	/**

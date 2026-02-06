@@ -41,7 +41,7 @@ class Vuln_Result extends Behavior {
 	protected function upgrade_possible( array $bugs ): string {
 		$upgrade = 'disabled';
 		foreach ( $bugs as $bug ) {
-			if ( ! empty( $bug['fixed_in'] ) ) {
+			if ( isset( $bug['fixed_in'] ) && '' !== $bug['fixed_in'] ) {
 				$upgrade = 'enabled';
 				break;
 			}
@@ -95,11 +95,22 @@ class Vuln_Result extends Behavior {
 	 * @return array An array with a message indicating successful ignore.
 	 */
 	public function ignore(): array {
-		$scan = Scan::get_last();
-		$scan->ignore_issue( $this->owner->id );
+		$scan       = Scan::get_last();
+		$issue_name = '<b>' . $this->get_issue_name( $this->owner->raw_data ) . '</b>';
+		$res        = $scan->ignore_issue( $this->owner->id );
+		if ( ! $res ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => $this->get_failed_ignore_result( $issue_name ),
+			);
+		}
 
 		return array(
-			'message' => esc_html__( 'The suspicious file has been successfully ignored.', 'defender-security' ),
+			'message' => sprintf(
+			/* translators: %s: Scan issue name. */
+				esc_html__( 'You’ve successfully ignored the security issue related to %s.', 'defender-security' ),
+				$issue_name
+			),
 		);
 	}
 
@@ -109,11 +120,22 @@ class Vuln_Result extends Behavior {
 	 * @return array An array with a message indicating successful restoration.
 	 */
 	public function unignore(): array {
-		$scan = Scan::get_last();
-		$scan->unignore_issue( $this->owner->id );
+		$scan       = Scan::get_last();
+		$issue_name = '<b>' . $this->get_issue_name( $this->owner->raw_data ) . '</b>';
+		$res        = $scan->unignore_issue( $this->owner->id );
+		if ( ! $res ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => $this->get_failed_restore_result( $issue_name ),
+			);
+		}
 
 		return array(
-			'message' => esc_html__( 'The suspicious file has been successfully restored.', 'defender-security' ),
+			'message' => sprintf(
+			/* translators: %s: Scan issue name. */
+				esc_html__( 'You’ve successfully restored the security issue related to %s.', 'defender-security' ),
+				$issue_name
+			),
 		);
 	}
 
@@ -196,7 +218,7 @@ class Vuln_Result extends Behavior {
 				'type_notice' => 'error',
 				'message'     => $skin->get_error_messages(),
 			);
-		} elseif ( is_array( $result ) && ! empty( $result[ $slug ] ) ) {
+		} elseif ( is_array( $result ) && isset( $result[ $slug ] ) && array() !== $result[ $slug ] ) {
 			$model = Scan::get_last();
 			$model->remove_issue( $this->owner->id );
 
@@ -252,7 +274,7 @@ class Vuln_Result extends Behavior {
 			);
 		}
 
-		$abs_path = wp_normalize_path( WP_PLUGIN_DIR ) . DIRECTORY_SEPARATOR . $data['base_slug'];
+		$abs_path = $this->get_abs_plugin_path_by_slug( $data['base_slug'] );
 		if ( file_exists( $abs_path ) && ! $this->remove_vulnerability( $abs_path ) ) {
 			return array(
 				'type_notice' => 'error',
@@ -334,7 +356,7 @@ class Vuln_Result extends Behavior {
 	protected function get_vulnerability_body( array $bug ): string {
 		$text  = '#' . $bug['title'] . PHP_EOL;
 		$text .= '-' . esc_html__( 'Vulnerability type:', 'defender-security' ) . ' ' . $bug['vuln_type'] . PHP_EOL;
-		if ( empty( $bug['fixed_in'] ) ) {
+		if ( ! isset( $bug['fixed_in'] ) || '' === $bug['fixed_in'] ) {
 			$text .= '-' . esc_html__( 'No Update Available', 'defender-security' ) . PHP_EOL;
 		} else {
 			$text .= '-' . esc_html__(

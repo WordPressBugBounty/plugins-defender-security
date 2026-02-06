@@ -41,9 +41,9 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 	 *
 	 * @param int $user_id The user ID.
 	 *
-	 * @return mixed
+	 * @return array
 	 */
-	public function getCredentials( int $user_id ) {
+	public function getCredentials( int $user_id ): array {
 		return $this->get_user_meta( $user_id, self::CREDENTIAL_OPTION_KEY );
 	}
 
@@ -121,7 +121,12 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 
 		if ( is_array( $user_data ) ) {
 			foreach ( $user_data as $data ) {
-				if ( ! empty( $type ) && ! empty( $data['authenticator_type'] ) && $type !== $data['authenticator_type'] ) {
+				if (
+					! in_array( $type, array( null, '' ), true )
+					&& isset( $data['authenticator_type'] )
+					&& '' !== $data['authenticator_type']
+					&& $type !== $data['authenticator_type']
+				) {
 					continue;
 				}
 
@@ -200,11 +205,11 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 	 * @since 3.4.0
 	 */
 	public function addUserHandleMatchFailed( $user, $data ): void {
-		if ( ! empty( $user->ID ) && ! empty( $data['rawId'] ) ) {
+		if ( isset( $user->ID ) && $user->ID > 0 && '' !== $data['rawId'] ) {
 			$meta_val                = $this->getUserHandleMatchFailed( $user->ID );
 			$meta_val['show_notice'] = $meta_val['show_notice'] ?? true;
 
-			if ( empty( $meta_val['authenticators'] ) || ! in_array( $data['rawId'], $meta_val['authenticators'], true ) ) {
+			if ( ! isset( $meta_val['authenticators'] ) || array() === $meta_val['authenticators'] || ! in_array( $data['rawId'], $meta_val['authenticators'], true ) ) {
 				$meta_val['authenticators'][] = $data['rawId'];
 			}
 
@@ -222,10 +227,10 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 	 * @since 3.4.0
 	 */
 	public function removeUserHandleMatchFailed( int $user_id, string $auth_id ): void {
-		if ( ! empty( $auth_id ) ) {
+		if ( '' !== $auth_id ) {
 			$meta_val = $this->getUserHandleMatchFailed( $user_id );
 
-			if ( ! empty( $meta_val['authenticators'] ) && is_array( $meta_val['authenticators'] ) ) {
+			if ( isset( $meta_val['authenticators'] ) && is_array( $meta_val['authenticators'] ) && array() !== $meta_val['authenticators'] ) {
 				$pos = array_search( $auth_id, $meta_val['authenticators'], true );
 
 				if ( false !== $pos ) {

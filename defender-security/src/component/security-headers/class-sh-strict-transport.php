@@ -60,7 +60,7 @@ class Sh_Strict_Transport extends Security_Header {
 			return false;
 		}
 		// 'max-age' directive is required
-		if ( ! empty( $model->hsts_cache_duration ) ) {
+		if ( '' !== $model->hsts_cache_duration ) {
 			return true;
 		}
 		$headers = $this->head_request( network_site_url(), self::$rule_slug );
@@ -127,9 +127,9 @@ class Sh_Strict_Transport extends Security_Header {
 	 *
 	 * @param  string $domain  The domain from which to extract the suffix.
 	 *
-	 * @return mixed Returns the most appropriate domain suffix if found, otherwise false.
+	 * @return string Returns the most appropriate domain suffix if found, otherwise false.
 	 */
-	private function get_domain_suffix( $domain ) {
+	private function get_domain_suffix( $domain ): string {
 		require_once dirname( __DIR__ ) . '/public-suffix.php';
 		$tlds = get_public_suffix();
 		// whitelist development.
@@ -155,8 +155,8 @@ class Sh_Strict_Transport extends Security_Header {
 				}
 			}
 		}
-		if ( empty( $collection ) ) {
-			return false;
+		if ( array() === $collection ) {
+			return '';
 		}
 
 		return $collection[0];
@@ -176,7 +176,7 @@ class Sh_Strict_Transport extends Security_Header {
 			return false;
 		}
 		$suffix = $this->get_domain_suffix( $domain );
-		if ( ! $suffix ) {
+		if ( '' === $suffix ) {
 			return false;
 		}
 		// exclude 'www.'.
@@ -258,7 +258,7 @@ class Sh_Strict_Transport extends Security_Header {
 		if ( true === $model->sh_strict_transport ) {
 			$headers         = 'Strict-Transport-Security:';
 			$default_max_age = 604800;
-			if ( isset( $model->hsts_cache_duration ) && ! empty( $model->hsts_cache_duration ) ) {
+			if ( isset( $model->hsts_cache_duration ) && '' !== $model->hsts_cache_duration ) {
 				$arr = $this->time_in_seconds();
 				// set default for a week, so RIPs wont waring weak header.
 				$seconds = $arr[ $model->hsts_cache_duration ] ?? $default_max_age;

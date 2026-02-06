@@ -24,18 +24,19 @@ function zip_entry_close($zip_entry): void
 /**
  * Opens a directory entry in a zip file for reading.
  *
- * @param resource $zip A valid resource handle returned by zip_open.
- * @param resource $zip_entry A directory entry returned by zip_read.
- * @param string $mode Any of the modes specified in the documentation of
+ * @param resource    $zip       A valid resource handle returned by zip_open.
+ * @param resource    $zip_entry A directory entry returned by zip_read.
+ * @param string|null $mode      Any of the modes specified in the documentation of
  * fopen.
  *
  * Currently, mode is ignored and is always
  * "rb". This is due to the fact that zip support
  * in PHP is read only access.
+ *
  * @throws ZipException
  *
  */
-function zip_entry_open($zip, $zip_entry, string $mode = null): void
+function zip_entry_open($zip, $zip_entry, ?string $mode = null): void
 {
     error_clear_last();
     if ($mode !== null) {

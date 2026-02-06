@@ -21,6 +21,7 @@ use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\User_Agent;
 use WP_Defender\Component\IP\Global_IP;
 use WP_Defender\Component\Table_Lockout;
+use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Integrations\Antibot_Global_Firewall_Client;
 use WP_Defender\Model\Setting\Blacklist_Lockout;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
@@ -78,11 +79,16 @@ class Firewall_Logs extends Controller {
 
 		/**
 		 * Send Firewall logs to AntiBot Global Firewall API.
+		 *
+		 * @var Network_Cron_Manager $network_cron_manager
 		 */
-		if ( ! wp_next_scheduled( 'wpdef_firewall_send_compact_logs_to_api' ) ) {
-			wp_schedule_event( time() + 15, 'twicedaily', 'wpdef_firewall_send_compact_logs_to_api' );
-		}
-		add_action( 'wpdef_firewall_send_compact_logs_to_api', array( $this, 'send_compact_logs_to_api' ) );
+		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
+		$network_cron_manager->register_callback(
+			'wpdef_firewall_send_compact_logs_to_api',
+			array( $this, 'send_compact_logs_to_api' ),
+			12 * HOUR_IN_SECONDS,
+			time() + 15
+		);
 		if ( class_exists( 'Akismet' ) ) {
 			add_filter( 'http_response', array( $this, 'akismet_http_response' ), 10, 3 );
 		}
@@ -708,6 +714,7 @@ class Firewall_Logs extends Controller {
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data() {
+		delete_site_transient( self::AKISMET_BLOCKED_IPS );
 	}
 
 	/**
@@ -723,17 +730,22 @@ class Firewall_Logs extends Controller {
 	 * Exports strings.
 	 *
 	 * @param array $logs Prepared logs.
+	 * @param bool  $is_staging  Send logs to staging.
 	 */
-	private function maybe_send_reports( array $logs ): void {
+	private function maybe_send_reports( array $logs, bool $is_staging = false ): void {
 		$offset     = 0;
 		$length     = 1000;
 		$logs_chunk = array_slice( $logs, $offset, $length );
-		while ( ! empty( $logs_chunk ) ) {
+		while ( array() !== $logs_chunk ) {
 			$data = array(
 				'logs' => $logs_chunk,
 			);
 
-			$response = $this->antibot_client->send_reports( $data );
+			$antibot_client = $this->antibot_client;
+			if ( $is_staging ) {
+				$antibot_client = new Antibot_Global_Firewall_Client( 'https://staging-api.blocklist-service.com' );
+			}
+			$response = $antibot_client->send_reports( $data );
 
 			if ( is_wp_error( $response ) ) {
 				$this->log(
@@ -773,7 +785,8 @@ class Firewall_Logs extends Controller {
 		 *
 		 * @since 4.5.0
 		 */
-		$send_logs = (bool) apply_filters( 'wpdef_firewall_send_logs_to_api', true );
+		$send_logs = apply_filters( 'wpdef_firewall_send_logs_to_api', true );
+		$send_logs = is_bool( $send_logs ) ? $send_logs : (bool) $send_logs;
 
 		if (
 			! $send_logs ||
@@ -792,8 +805,8 @@ class Firewall_Logs extends Controller {
 		$this->log( "{$event_name} is processing from site {$site_id}", Firewall::FIREWALL_LOG );
 		$from = time() - ( 7 * DAY_IN_SECONDS );
 
-		$last_run_time = get_site_option( 'wpdef_ip_blocklist_sync_last_run_time' );
-		if ( $last_run_time ) {
+		$last_run_time = get_site_option( 'wpdef_ip_blocklist_sync_last_run_time', 0 );
+		if ( 0 < $last_run_time ) {
 			$time_difference = time() - $last_run_time;
 
 			if ( $time_difference < 7 * DAY_IN_SECONDS ) { // 7 days in seconds
@@ -803,15 +816,20 @@ class Firewall_Logs extends Controller {
 		update_site_option( 'wpdef_ip_blocklist_sync_last_run_time', time() );
 
 		$service = wd_di()->get( Firewall_Logs_Component::class );
-		$logs    = $service->get_compact_logs( $from );
 
-		if ( ! empty( $logs ) ) {
+		$logs = $service->get_compact_logs( $from );
+		if ( array() !== $logs ) {
 			$this->maybe_send_reports( $logs );
 		}
 
 		$logs = $service->get_akismet_auto_spam_comment_logs();
-		if ( ! empty( $logs ) ) {
+		if ( array() !== $logs ) {
 			$this->maybe_send_reports( $logs );
+		}
+
+		$logs = $service->get_404_intelligence_logs( $from );
+		if ( array() !== $logs ) {
+			$this->maybe_send_reports( $logs, true );
 		}
 
 		// Release lock after execution.
@@ -836,23 +854,29 @@ class Firewall_Logs extends Controller {
 		// Retrieve response body safely.
 		$body = wp_remote_retrieve_body( $response );
 		// If the body is empty or does not equal 'true' (indicating spam), return the response as is.
-		if ( empty( $body ) || trim( $body ) !== 'true' ) {
+		if ( ! is_string( $body ) || in_array( trim( $body ), array( '', 'true' ), true ) ) {
 			return $response;
 		}
 
 		// Ensure the request body contains data; otherwise, return the response.
-		if ( empty( $parsed_args['body'] ) ) {
+		$body_arg = $parsed_args['body'] ?? '';
+		if (
+			( is_string( $body_arg ) && '' === trim( $body_arg ) )
+			|| ( is_array( $body_arg ) && array() === $body_arg )
+			|| ( is_object( $body_arg ) && 0 === count( get_object_vars( $body_arg ) ) )
+		) {
 			return $response;
 		}
 
-		$request_data = wp_parse_args( $parsed_args['body'] );
+		$request_data = wp_parse_args( $body_arg );
 		// If the comment author's IP is not present in the request data, return the response.
-		if ( empty( $request_data['comment_author_IP'] ) ) {
+		$author_ip = $request_data['comment_author_IP'] ?? '';
+		if ( '' === $author_ip ) {
 			return $response;
 		}
 
 		// Validate the user IP address from the request data.
-		$user_ip = filter_var( $request_data['comment_author_IP'], FILTER_VALIDATE_IP );
+		$user_ip = filter_var( $author_ip, FILTER_VALIDATE_IP );
 		if ( false === $user_ip ) {
 			return $response;
 		}

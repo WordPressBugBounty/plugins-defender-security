@@ -49,7 +49,7 @@ class Server_Factory {
 
 		$this->get_supported_servers();
 
-		if ( empty( $this->servers[ $server ] ) ) {
+		if ( ! isset( $this->servers[ $server ] ) || ! $this->servers[ $server ] ) {
 			global $defender_server_not_supported;
 
 			$defender_server_not_supported = new WP_Error(

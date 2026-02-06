@@ -98,6 +98,18 @@ abstract class Event extends Controller {
 	}
 
 	/**
+	 * Forced tracking.
+	 *
+	 * @param  string $event The event to track.
+	 * @param  array  $data  The data associated with the event.
+	 *
+	 * @return void
+	 */
+	public function forced_track( $event, $data ) {
+		$this->tracker()->track( $event, $data );
+	}
+
+	/**
 	 * Save tracking state.
 	 *
 	 * @param  Request $request  Request object.
@@ -109,7 +121,7 @@ abstract class Event extends Controller {
 		// Forced tracking.
 		$data = $request->get_data();
 		if ( isset( $data['force'] ) ) {
-			$this->tracker()->track( $data['event'], $data['data'] );
+			$this->forced_track( $data['event'], $data['data'] );
 
 			return new Response( true, array() );
 		}

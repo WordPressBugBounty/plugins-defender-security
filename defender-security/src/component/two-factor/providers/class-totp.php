@@ -282,7 +282,7 @@ class Totp extends Two_Factor_Provider {
 	 *
 	 * @param  string $secret_key  The secret key for the TOTP.
 	 *
-	 * @retun string
+	 * @return string
 	 */
 	public static function generate_qr_code( $secret_key ) {
 		$settings = new Two_Fa();
@@ -314,12 +314,12 @@ class Totp extends Two_Factor_Provider {
 	 */
 	public function validate_authentication( WP_User $user ) {
 		$otp = HTTP::post( 'otp' );
-		if ( empty( $otp ) ) {
+		if ( ! is_string( $otp ) || '' === $otp ) {
 			$lockout_message = $this->get_component()->verify_attempt( $user->ID, self::$slug );
 
 			return new WP_Error(
 				'opt_fail',
-				empty( $lockout_message )
+				'' === $lockout_message
 					? esc_html__( 'Whoops, the passcode you entered was incorrect or expired.', 'defender-security' )
 					: $lockout_message
 			);
@@ -346,14 +346,14 @@ class Totp extends Two_Factor_Provider {
 	private static function get_user_secret( $user_id ) {
 		// First, we check the new 'TOTP_SODIUM_SECRET_KEY' key.
 		$data = get_user_meta( $user_id, self::TOTP_SODIUM_SECRET_KEY, true );
-		if ( ! empty( $data ) ) {
+		if ( is_string( $data ) && '' !== $data ) {
 			return Crypt::get_decrypted_data( $data );
 		}
 		// Then check the old 'TOTP_SECRET_KEY' key.
 		if ( ( new Two_Fa_Component() )->maybe_update( $user_id ) ) {
 			// Check a new key again.
 			$data = get_user_meta( $user_id, self::TOTP_SODIUM_SECRET_KEY, true );
-			if ( ! empty( $data ) && is_string( $data ) ) {
+			if ( is_string( $data ) && '' !== $data ) {
 				return Crypt::get_decrypted_data( $data );
 			}
 		}
@@ -392,7 +392,7 @@ class Totp extends Two_Factor_Provider {
 	 * @throws SodiumException Exceptions thrown by the sodium functions.
 	 */
 	private static function generate_otp( $counter, $user_id, $setup_key ) {
-		if ( empty( $setup_key ) || ! is_string( $setup_key ) ) {
+		if ( ! is_string( $setup_key ) || '' === $setup_key ) {
 			$setup_key = self::get_user_secret( $user_id );
 			if ( is_wp_error( $setup_key ) ) {
 				return $setup_key;

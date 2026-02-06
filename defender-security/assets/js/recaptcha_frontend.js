@@ -5,8 +5,8 @@
 		// Display reCaptcha for plugin`s block. Also check if elements exists when loaded via lazy loading.
 		var tryReCaptchaCounter = 0,
 			wpdefRecaptchaTimer = setInterval( function() {
-				if ( $( '.wpdef_recaptcha_v2_checkbox, .wpdef_recaptcha_v2_invisible' ).length > 0 ) {
-					$( '.wpdef_recaptcha_v2_checkbox, .wpdef_recaptcha_v2_invisible' ).each( function() {
+				if ( $( '.wpdef_captcha_v2_checkbox, .wpdef_captcha_v2_invisible' ).length > 0 ) {
+					$( '.wpdef_captcha_v2_checkbox, .wpdef_captcha_v2_invisible' ).each( function() {
 						var container = $( this ).find( '.wpdef_recaptcha' );
 
 						if (
@@ -175,7 +175,7 @@
 		}
 
 		var grecaptcha_version = WPDEF.options.version;
-		
+
 		if ( 'v2_checkbox' == grecaptcha_version ) {
 			var parameters = params ? params : { 'sitekey' : WPDEF.options.sitekey, 'theme' : WPDEF.options.theme, 'size' : WPDEF.options.size },
 				block = $( '#' + container ),

@@ -224,20 +224,21 @@ function fflush($handle): void
  * @param resource|null $context A valid context resource created with
  * stream_context_create. If you don't need to use a
  * custom context, you can skip this parameter by NULL.
- * @param int $offset The offset where the reading starts on the original stream.
+ * @param int           $offset The offset where the reading starts on the original stream.
  * Negative offsets count from the end of the stream.
  *
  * Seeking (offset) is not supported with remote files.
  * Attempting to seek on non-local files may work with small offsets, but this
  * is unpredictable because it works on the buffered stream.
- * @param int $maxlen Maximum length of data read. The default is to read until end
+ * @param int|null      $maxlen Maximum length of data read. The default is to read until end
  * of file is reached. Note that this parameter is applied to the
  * stream processed by the filters.
+ *
  * @return string The function returns the read data.
  * @throws FilesystemException
  *
  */
-function file_get_contents(string $filename, bool $use_include_path = false, $context = null, int $offset = 0, int $maxlen = null): string
+function file_get_contents(string $filename, bool $use_include_path = false, $context = null, int $offset = 0, ?int $maxlen = null): string
 {
     error_clear_last();
     if ($maxlen !== null) {
@@ -908,8 +909,8 @@ function ftruncate($handle, int $size): void
  *
  * @param resource $handle A file system pointer resource
  * that is typically created using fopen.
- * @param string $string The string that is to be written.
- * @param int $length If the length argument is given, writing will
+ * @param string   $string The string that is to be written.
+ * @param int|null $length If the length argument is given, writing will
  * stop after length bytes have been written or
  * the end of string is reached, whichever comes
  * first.
@@ -918,11 +919,12 @@ function ftruncate($handle, int $size): void
  * then the magic_quotes_runtime
  * configuration option will be ignored and no slashes will be
  * stripped from string.
+ *
  * @return int
  * @throws FilesystemException
  *
  */
-function fwrite($handle, string $string, int $length = null): int
+function fwrite($handle, string $string, ?int $length = null): int
 {
     error_clear_last();
     if ($length !== null) {
@@ -1438,17 +1440,18 @@ function tmpfile()
  *
  * If the file does not exist, it will be created.
  *
- * @param string $filename The name of the file being touched.
- * @param int $time The touch time. If time is not supplied,
+ * @param string   $filename The name of the file being touched.
+ * @param int|null $time     The touch time. If time is not supplied,
  * the current system time is used.
- * @param int $atime If present, the access time of the given filename is set to
+ * @param int|null $atime    If present, the access time of the given filename is set to
  * the value of atime. Otherwise, it is set to
  * the value passed to the time parameter.
  * If neither are present, the current system time is used.
+ *
  * @throws FilesystemException
  *
  */
-function touch(string $filename, int $time = null, int $atime = null): void
+function touch(string $filename, ?int $time = null, ?int $atime = null): void
 {
     error_clear_last();
     if ($atime !== null) {
