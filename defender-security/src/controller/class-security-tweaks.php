@@ -113,7 +113,6 @@ class Security_Tweaks extends Event {
 
 		$var = '$' . uniqid( '', true );
 		// This should output a warning. Ignored phpcs as it's a test.
-		// @phpstan-ignore-next-line.
 		echo ${$var}; // phpcs:ignore
 		exit();
 	}
@@ -740,8 +739,7 @@ class Security_Tweaks extends Event {
 			$tmp = $tweaks;
 		} else {
 			$settings = new Model_Security_Tweaks();
-			// @phpstan-ignore-next-line
-			$compare = $settings->$type;
+			$compare  = $settings->$type;
 			foreach ( $compare as $slug ) {
 				if ( isset( $tweaks[ $slug ] ) ) {
 					$tmp[ $slug ] = $tweaks[ $slug ];

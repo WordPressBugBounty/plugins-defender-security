@@ -101,51 +101,139 @@ class Mapper extends Component {
 	/**
 	 * Set the WHERE clause for the query based on the provided arguments.
 	 *
+	 * Supports multiple call signatures:
+	 * - where($column, $value) - equals comparison
+	 * - where($column, $operator, $value) - custom operator comparison
+	 *
 	 * @param  mixed ...$args  The conditions to apply in the WHERE clause.
 	 *
 	 * @return $this
 	 */
 	public function where( ...$args ) {
-		global $wpdb;
-		if ( 2 === count( $args ) ) {
-			list($key, $value) = $args;
-			// It is safe because guess_var_type() returns correct placeholder and value goes through $wpdb->prepare().
-			$this->where[] = $wpdb->prepare( "`$key` = " . $this->guess_var_type( $value ), $value ); // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$result = $this->prepare_where_args( $args );
 
+		if ( null === $result ) {
 			return $this;
 		}
 
-		[$key, $operator, $value] = $args;
+		[ $column, $operator, $value ] = $result;
+
 		if ( ! $this->valid_operator( $operator ) ) {
-			// Prevent this operator.
 			return $this;
 		}
-		if ( in_array( strtolower( $operator ), array( 'in', 'not in' ), true ) ) {
-			$tmp           = $key . " {$operator} (" . implode(
-				', ',
-				array_fill( 0, count( $value ), $this->guess_var_type( $value ) )
-			) . ')';
-			$sql           = call_user_func_array(
-				array(
-					$wpdb,
-					'prepare',
-				),
-				array_merge( array( $tmp ), $value )
-			);
+
+		$sql = $this->compile_where( $column, $operator, $value );
+
+		if ( $sql ) {
 			$this->where[] = $sql;
-		} elseif ( 'between' === strtolower( $operator ) ) {
-			// It is safe because guess_var_type() returns correct placeholder and value goes through $wpdb->prepare().
-			$this->where[] = $wpdb->prepare(
-				"{$key} {$operator} {$this->guess_var_type($value[0])} AND {$this->guess_var_type($value[1])}", // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$value[0],
-				$value[1]
-			);
-		} else {
-			// It is safe because guess_var_type() returns correct placeholder and value goes through $wpdb->prepare().
-			$this->where[] = $wpdb->prepare( "`$key` $operator {$this->guess_var_type($value)}", $value ); // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Prepare where arguments - handles both 2-arg and 3-arg signatures.
+	 *
+	 * @param  array $args  The arguments passed to where().
+	 *
+	 * @return array|null [$column, $operator, $value] or null if invalid argument count.
+	 */
+	private function prepare_where_args( array $args ): ?array {
+		$count = count( $args );
+
+		if ( 2 === $count ) {
+			return array( $args[0], '=', $args[1] );
+		}
+
+		if ( 3 === $count ) {
+			return array( $args[0], $args[1], $args[2] );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Compile a where clause into SQL.
+	 *
+	 * @param  string $column    The column name.
+	 * @param  string $operator  The operator.
+	 * @param  mixed  $value     The value to compare against.
+	 *
+	 * @return string|null The compiled SQL or null if invalid.
+	 */
+	private function compile_where( string $column, string $operator, $value ): ?string {
+		global $wpdb;
+
+		$op_lower = strtolower( $operator );
+
+		// Handle IN / NOT IN operators.
+		if ( in_array( $op_lower, array( 'in', 'not in' ), true ) ) {
+			return $this->compile_where_in( $column, $operator, $value );
+		}
+
+		// Handle BETWEEN operator.
+		if ( 'between' === $op_lower ) {
+			return $this->compile_where_between( $column, $operator, $value );
+		}
+
+		// Handle basic comparison operators.
+		$placeholder = $this->guess_var_type( $value );
+
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->prepare( "`$column` $operator $placeholder", $value );
+	}
+
+	/**
+	 * Compile a WHERE IN / NOT IN clause.
+	 *
+	 * @param  string $column    The column name.
+	 * @param  string $operator  The operator (IN or NOT IN).
+	 * @param  mixed  $values    The values (should be array, invalid inputs skipped).
+	 *
+	 * @return string|null The compiled SQL or null if empty values.
+	 */
+	private function compile_where_in( string $column, string $operator, $values ): ?string {
+		if ( ! is_array( $values ) || 0 === count( $values ) ) {
+			return null;
+		}
+
+		global $wpdb;
+
+		$placeholders = array();
+		foreach ( $values as $val ) {
+			$placeholders[] = $this->guess_var_type( $val );
+		}
+
+		$sql_template = "`$column` $operator (" . implode( ', ', $placeholders ) . ')';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		return $wpdb->prepare( $sql_template, ...$values );
+	}
+
+	/**
+	 * Compile a WHERE BETWEEN clause.
+	 *
+	 * @param  string $column    The column name.
+	 * @param  string $operator  The operator (BETWEEN).
+	 * @param  mixed  $values    The values (should be array with min/max, invalid inputs skipped).
+	 *
+	 * @return string|null The compiled SQL or null if invalid values.
+	 */
+	private function compile_where_between( string $column, string $operator, $values ): ?string {
+		if ( ! is_array( $values ) || count( $values ) < 2 ) {
+			return null;
+		}
+
+		global $wpdb;
+
+		$placeholder_min = $this->guess_var_type( $values[0] );
+		$placeholder_max = $this->guess_var_type( $values[1] );
+
+		return $wpdb->prepare(
+			"`$column` $operator $placeholder_min AND $placeholder_max", // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$values[0],
+			$values[1]
+		);
 	}
 
 	/**
@@ -156,11 +244,11 @@ class Mapper extends Component {
 	 * @return string
 	 */
 	private function guess_var_type( $value ): string {
-		if ( filter_var( $value, FILTER_VALIDATE_INT ) ) {
+		if ( false !== filter_var( $value, FILTER_VALIDATE_INT ) ) {
 			return '%d';
 		}
 
-		if ( filter_var( $value, FILTER_VALIDATE_FLOAT ) ) {
+		if ( false !== filter_var( $value, FILTER_VALIDATE_FLOAT ) ) {
 			return '%f';
 		}
 
@@ -496,8 +584,15 @@ class Mapper extends Component {
 	 * @throws \ReflectionException If class is not defined.
 	 */
 	private function query_build( string $select = '*' ) {
-		$table = $this->table();
-		$where = implode( ' AND ', $this->where );
+		$table       = $this->table();
+		$where_parts = array_filter(
+			$this->where,
+			static function ( $clause ) {
+				return null !== $clause && '' !== trim( (string) $clause );
+			}
+		);
+		$where       = implode( ' AND ', $where_parts );
+		$where       = '' === $where ? '1=1' : $where;
 
 		$select   = '' !== $this->select ? $this->select : $select;
 		$group_by = $this->group;

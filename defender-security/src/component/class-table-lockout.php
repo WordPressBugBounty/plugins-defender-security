@@ -149,4 +149,37 @@ class Table_Lockout extends Component {
 			'limit_logs'    => $this->limit_per_page(),
 		);
 	}
+
+	/**
+	 * Resolves sorting parameters based on the provided sort key.
+	 *
+	 * @param  string $sort  The sort key.
+	 *
+	 * @return array An associative array containing 'order' and 'order_by' keys.
+	 */
+	public function resolve_sort( string $sort ): array {
+		switch ( $sort ) {
+			case self::SORT_BY_IP:
+				return array(
+					'order'    => 'desc',
+					'order_by' => 'ip',
+				);
+			case self::SORT_ASC:
+				return array(
+					'order'    => 'asc',
+					'order_by' => 'id',
+				);
+			case self::SORT_BY_UA:
+				return array(
+					'order'    => 'asc',
+					'order_by' => 'user_agent',
+				);
+			case self::SORT_DESC:
+			default:
+				return array(
+					'order'    => 'desc',
+					'order_by' => 'id',
+				);
+		}
+	}
 }

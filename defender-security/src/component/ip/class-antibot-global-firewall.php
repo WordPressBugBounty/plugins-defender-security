@@ -38,6 +38,12 @@ class Antibot_Global_Firewall extends Component {
 
 	public const BLOCKLIST_STATS_KEY = 'wpdef_antibot_global_firewall_stats';
 
+	public const BLOCKLIST_STATS_FAILURE_KEY = 'wpdef_antibot_global_firewall_stats_failure';
+
+	public const FAILURE_CACHE_TTL = HOUR_IN_SECONDS;
+
+	public const MAX_BACKOFF_TIME = HOUR_IN_SECONDS;
+
 	public const IS_SWITCHING_TO_PLUGIN_IN_PROGRESS = 'wpdef_antibot_global_firewall_switching_to_plugin_in_progress';
 
 	public const GLOBAL_NOTICE_TIME_OPTION = 'wpdef_antibot_global_firewall_global_notice_time';
@@ -357,12 +363,21 @@ class Antibot_Global_Firewall extends Component {
 	 * @return string The blocklisted IP count.
 	 */
 	public function get_blocklisted_ip_count(): string {
+		static $count = null;
+
+		if ( null !== $count ) {
+			return $count;
+		}
+
 		// Check if the feature is enabled.
 		if ( ! $this->frontend_is_enabled() ) {
-			return '0';
+			$count = '0';
+		} else {
+			// Since from v5.0.2 one method is used for counting.
+			$count = number_format( $this->get_cached_blocklisted_ips() );
 		}
-		// Since from v5.0.2 one method is used for counting.
-		return number_format( $this->get_cached_blocklisted_ips() );
+
+		return $count;
 	}
 
 	/**
@@ -586,6 +601,7 @@ class Antibot_Global_Firewall extends Component {
 	 * Fetches the number of blocklisted IPs from cache or from the Blocklist API.
 	 *
 	 * If the value is not cached, it will fetch the number of blocklisted IPs from the Blocklist API and cache it.
+	 * Implements failure caching and exponential backoff to prevent API hammering on errors.
 	 *
 	 * @return int The number of blocklisted IPs.
 	 */
@@ -597,23 +613,67 @@ class Antibot_Global_Firewall extends Component {
 			return (int) $cached_data;
 		}
 
+		// Check if we're in a backoff period due to previous failures.
+		$failure_key  = self::BLOCKLIST_STATS_FAILURE_KEY;
+		$failure_data = get_site_transient( $failure_key );
+		if ( is_array( $failure_data ) && array() !== $failure_data ) {
+			$fail_count = isset( $failure_data['count'] ) ? (int) $failure_data['count'] : 0;
+			$fail_time  = isset( $failure_data['time'] ) ? (int) $failure_data['time'] : 0;
+
+			if ( $fail_count > 0 && $fail_time > 0 ) {
+				// Exponential backoff: 5, 25, 125, 625, 3125, max 1 hour.
+				$backoff = min( pow( 5, $fail_count ), self::MAX_BACKOFF_TIME );
+				if ( $fail_time > ( defender_get_current_time() - $backoff ) ) {
+					$this->log( 'AntiBot Global Firewall: Skipping API call due to backoff (failures: ' . $fail_count . ')', Firewall::FIREWALL_LOG );
+					return 0;
+				}
+			}
+		}
+
 		$blocklist_stats = $this->antibot_client->get_blocklist_stats();
 
 		if ( is_wp_error( $blocklist_stats ) ) {
 			$this->log( 'AntiBot Global Firewall Error: ' . $blocklist_stats->get_error_message(), Firewall::FIREWALL_LOG );
+			$this->record_stats_failure( $failure_key, $failure_data );
 			return 0;
 		}
 
 		$blocklisted_ips_key = Antibot_Global_Firewall_Setting::MODE_BASIC === $mode ? 'blocked_ips' : 'strict_blocked_ips';
 		if ( ! isset( $blocklist_stats[ $blocklisted_ips_key ] ) || ! is_int( $blocklist_stats[ $blocklisted_ips_key ] ) || 0 >= $blocklist_stats[ $blocklisted_ips_key ] ) {
 			$this->log( 'AntiBot Global Firewall Error: Stats missing for mode: ' . $mode, Firewall::FIREWALL_LOG );
+			$this->record_stats_failure( $failure_key, $failure_data );
 			return 0;
 		}
+
+		// Success - clear any failure tracking.
+		delete_site_transient( $failure_key );
 
 		$blocklisted_ips = $blocklist_stats[ $blocklisted_ips_key ];
 		set_site_transient( $stats_key, $blocklisted_ips, 12 * HOUR_IN_SECONDS );
 
 		return $blocklisted_ips;
+	}
+
+	/**
+	 * Records a stats API failure for backoff tracking.
+	 *
+	 * @param string      $failure_key  The transient key for failure tracking.
+	 * @param array|false $failure_data Existing failure data or false.
+	 */
+	private function record_stats_failure( string $failure_key, $failure_data ): void {
+		$fail_count = 0;
+		if ( false !== $failure_data && is_array( $failure_data ) && isset( $failure_data['count'] ) ) {
+			$fail_count = (int) $failure_data['count'];
+		}
+
+		set_site_transient(
+			$failure_key,
+			array(
+				'count' => $fail_count + 1,
+				'time'  => defender_get_current_time(),
+			),
+			self::FAILURE_CACHE_TTL
+		);
 	}
 
 	/**
@@ -784,6 +844,10 @@ class Antibot_Global_Firewall extends Component {
 	 * @return bool True if the notice should be shown, false otherwise.
 	 */
 	public function should_show_global_notice(): bool {
+		// Is this from Unlimited hosting?
+		if ( defender_is_unlimited_hosting() ) {
+			return false;
+		}
 		// Is FREE or PRO plugin?
 		if ( $this->wpmudev->is_pro() ) {
 			return false;
@@ -803,5 +867,79 @@ class Antibot_Global_Firewall extends Component {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Get the Unlimited Hosting site ID.
+	 *
+	 * @return string|bool
+	 */
+	private function get_uh_site_id() {
+		return defined( 'WPMUDEV_HOSTING_SITE_ID' ) ? WPMUDEV_HOSTING_SITE_ID : gethostname();
+	}
+
+	/**
+	 * Get the link to the site tools page on the Unlimited Hosting dashboard.
+	 *
+	 * @return string|bool
+	 */
+	public function get_uh_site_tools_link() {
+		if ( $this->get_uh_site_id() ) {
+			return 'https://wpmudev.com/hub2/unlimited-hosting/' . $this->get_uh_site_id() . '/tools';
+		}
+
+		return false;
+	}
+
+	/**
+	 * Show some Antibot parts depending on Antibot settings on Unlimited hosting (UH) server:
+	 * 1) when Antibot is enabled on UH, on the plugin side we need to:
+	 * -remove the Switch & Deactivate buttons,
+	 * -only show the Active Mode & hide the other mode.
+	 * 2) when Antibot is disabled on UH, on the plugin side we need to:
+	 * -remove only the Switch button.
+	 * 2.1) if Whitelabel is enabled, the activation button is disabled.
+	 * 2.2) if Whitelabel is disabled, the activation button is redirected to the Hub.
+	 *
+	 * If the Antibot is managed by Dedicated DEV hosting, we can show the Switch button.
+	 *
+	 * Without changes for other hostings.
+	 */
+	public function get_states_of_antibot_options_for_different_hosting_types(): array {
+		$show_antibot_options = array(
+			'is_unlimited_hosting' => false,
+			'switch_button'        => true,
+			'deactivate_button'    => true,
+			'available_modes'      => Antibot_Global_Firewall_Setting::get_valid_modes(),
+			'uh_activate_btn_text' => __( 'Activate', 'defender-security' ),
+			'uh_activate_btn_link' => '',
+		);
+
+		if ( defender_is_unlimited_hosting() ) {
+			$show_antibot_options['switch_button'] = false;
+			if ( $this->is_active_via_hosting() ) {
+				$show_antibot_options['deactivate_button'] = false;
+				// Rewrite the array().
+				$show_antibot_options['available_modes'] = array( $this->frontend_mode() );
+			}
+			// Get activation button text if the Antibot is disabled.
+			if ( ! $this->frontend_is_enabled() ) {
+				$show_antibot_options['is_unlimited_hosting'] = true;
+				if ( $this->wpmudev->is_whitelabel_enabled() ) {
+					$show_antibot_options['uh_activate_btn_text'] = __( 'DISABLED', 'defender-security' );
+				} else {
+					$uh_site_tools_link = $this->get_uh_site_tools_link();
+					if ( $uh_site_tools_link ) {
+						$show_antibot_options['uh_activate_btn_link'] = $uh_site_tools_link;
+						$show_antibot_options['uh_activate_btn_text'] = __( 'MANAGE', 'defender-security' );
+
+					}
+				}
+			}
+		} else {
+			$show_antibot_options['switch_button'] = $this->wpmudev->is_wpmu_hosting();
+		}
+
+		return $show_antibot_options;
 	}
 }

@@ -296,7 +296,6 @@ class Scan extends Component {
 
 				return $this->abandoned_plugin_check( $this->abandoned_plugin );
 			default:
-				// @phpstan-ignore-next-line
 				return is_callable( array( $this, $task ) ) ? $this->$task() : false;
 		}
 	}

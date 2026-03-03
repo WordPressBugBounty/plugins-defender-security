@@ -752,6 +752,15 @@ function defender_get_hosting_feature_state( string $feature_key ) {
 }
 
 /**
+ * Is a site is from WPMU DEV unlimited hosting?
+ *
+ * @return bool
+ */
+function defender_is_unlimited_hosting(): bool {
+	return defined( 'WPMUDEV_HOSTING_WEBSITE_ID' ) && '' !== WPMUDEV_HOSTING_WEBSITE_ID;
+}
+
+/**
  * Get an internal log file name.
  *
  * @return string

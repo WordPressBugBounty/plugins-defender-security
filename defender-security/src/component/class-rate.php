@@ -444,13 +444,15 @@ class Rate extends Component {
 	private static function was_rate_request(): bool {
 		$display_rating = apply_filters( 'wd_display_rating', false );
 		$display_rating = is_bool( $display_rating ) ? $display_rating : (bool) $display_rating;
-		if ( true === get_site_option( self::SLUG_FOR_BUTTON_RATE, $display_rating ) ) {
+		// Avoid case with '1'.
+		if ( true === (bool) get_site_option( self::SLUG_FOR_BUTTON_RATE, $display_rating ) ) {
 			return true;
 		}
 
 		$dismiss_rating = apply_filters( 'wd_dismiss_rating', false );
 		$dismiss_rating = is_bool( $dismiss_rating ) ? $dismiss_rating : (bool) $dismiss_rating;
-		if ( true === get_site_option( self::SLUG_FOR_BUTTON_THANKS, $dismiss_rating ) ) {
+		// Avoid case with '1'.
+		if ( true === (bool) get_site_option( self::SLUG_FOR_BUTTON_THANKS, $dismiss_rating ) ) {
 			return true;
 		}
 

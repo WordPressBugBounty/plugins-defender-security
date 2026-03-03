@@ -623,7 +623,6 @@ class Cli {
 				break;
 			case 'activate':
 				foreach ( $model->get_headers() as $header ) {
-					// @phpstan-ignore-next-line
 					$model->{$header::$rule_slug} = true;
 				}
 				$model->save();
@@ -631,7 +630,6 @@ class Cli {
 				break;
 			case 'deactivate':
 				foreach ( $model->get_headers() as $header ) {
-					// @phpstan-ignore-next-line
 					$model->{$header::$rule_slug} = false;
 				}
 				$model->save();

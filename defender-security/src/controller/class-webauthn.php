@@ -66,9 +66,7 @@ class Webauthn extends Controller {
 					'get_credential_request_option',
 				)
 			);
-			// @phpstan-ignore-next-line
 			add_action( 'wp_ajax_defender_webauthn_verify_response', array( $this, 'verify_response' ) );
-			// @phpstan-ignore-next-line
 			add_action( 'wp_ajax_nopriv_defender_webauthn_verify_response', array( $this, 'verify_response' ) );
 			// Handling requests in the frontend.
 			if ( wd_di()->get( Two_Fa_Controller::class )->woo_integration_enabled() ) {

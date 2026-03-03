@@ -190,7 +190,6 @@ class Blacklist_Lockout extends Setting {
 			}
 
 			if ( property_exists( $this, $key ) ) {
-				// @phpstan-ignore-next-line
 				$this->$key = implode( PHP_EOL, array_filter( $collection, 'strlen' ) );
 			}
 		}

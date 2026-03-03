@@ -243,6 +243,7 @@ class Antibot_Global_Firewall extends Event {
 		 * Show the onboarding reminder notice if:
 		 * 1. If the reminder time is set and the time difference is greater than a week.
 		 * 2. No click on the Cross icon before.
+		 * 3. This is not on Unlimited hosting.
 		 */
 		$is_reminder   = false;
 		$last_reminder = (int) get_site_option( Onboard::REMINDER_KEY, 0 );
@@ -264,7 +265,8 @@ class Antibot_Global_Firewall extends Event {
 					'module_slug'               => Antibot_Global_Firewall_Setting::get_module_slug(),
 					'module_name'               => $module_name,
 					'show_notice'               => $is_reminder
-						&& (bool) get_site_option( Antibot_Global_Firewall_Component::NOTICE_SLUG, false ),
+						&& (bool) get_site_option( Antibot_Global_Firewall_Component::NOTICE_SLUG )
+						&& ! defender_is_unlimited_hosting(),
 					'sync_schedule'             => __( 'Twice Daily', 'defender-security' ),
 					'ips_count'                 => $this->service->get_blocklisted_ip_count(),
 					'frontend_is_enabled'       => $this->service->frontend_is_enabled(),
@@ -284,6 +286,7 @@ class Antibot_Global_Firewall extends Event {
 					'current_plan'              => $this->get_membership_type(),
 					'is_expired_membership'     => $this->is_expired_membership_type(),
 					'should_show_global_notice' => $this->service->should_show_global_notice(),
+					'show_antibot_options'      => $this->service->get_states_of_antibot_options_for_different_hosting_types(),
 				),
 			),
 			$this->dump_routes_and_nonces()

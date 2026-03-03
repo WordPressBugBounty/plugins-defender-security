@@ -664,7 +664,6 @@ class Apache {
 	 */
 	private function get_custom_upload_dir(): string {
 		if ( defined( 'UPLOADS' ) ) {
-			// @phpstan-ignore-next-line
 			return ABSPATH . UPLOADS . '/.htaccess';
 		}
 

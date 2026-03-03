@@ -548,7 +548,6 @@ class User_Agent_Lockout extends Setting {
 		foreach ( $lists as $key => &$collection ) {
 			// If UA collection is not valid, we should display an error message. We'll improve it by UA standard/pattern.
 			if ( property_exists( $this, $key ) ) {
-				// @phpstan-ignore-next-line
 				$this->$key = implode( PHP_EOL, array_filter( $collection, 'strlen' ) );
 			}
 		}

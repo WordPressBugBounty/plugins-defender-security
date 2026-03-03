@@ -22,8 +22,6 @@ use WP_Defender\Traits\IP;
 class Malicious_Bot extends Controller {
 	use IP;
 
-	const URL_QUERY = 'wpdef-malicious-bot-url';
-
 	/**
 	 * Service for handling logic.
 	 *
@@ -42,7 +40,7 @@ class Malicious_Bot extends Controller {
 
 		if ( $this->service->is_enabled() ) {
 			add_action( 'init', array( $this, 'init' ) );
-			add_action( 'wpdef_rotate_malicious_bot_secret_hash', array( $this, 'rotate_hash' ) );
+			add_action( 'wpdef_rotate_malicious_bot_secret_hash', array( $this->service, 'rotate_hash' ) );
 			add_filter( 'query_vars', array( $this, 'add_query_var' ) );
 			add_action( 'after_switch_theme', array( $this, 'flush_rewrite' ) );
 
@@ -65,9 +63,10 @@ class Malicious_Bot extends Controller {
 
 		if ( ! $this->service->get_hash() ) {
 			$this->service->rotate_hash();
+		} else {
+			$this->service->register_rewrite_rule();
 		}
 
-		$this->flush_rewrite();
 		$this->service->handle_robots_txt();
 	}
 
@@ -90,23 +89,6 @@ class Malicious_Bot extends Controller {
 	}
 
 	/**
-	 * Registers a rewrite rule for the malicious bot URL.
-	 * The URL will be in the format: /{hash}/
-	 * where {hash} is a 16-character hexadecimal string.
-	 */
-	public function register_rewrite_rule() {
-		$hash = $this->service->get_hash();
-		add_rewrite_rule( "^{$hash}/?$", 'index.php?' . self::URL_QUERY . '=' . $hash, 'top' );
-	}
-
-	/**
-	 * Rotates the malicious bot hash and flushes rewrite rules.
-	 */
-	public function rotate_hash() {
-		$this->service->rotate_hash();
-	}
-
-	/**
 	 * Adds a query variable for the malicious bot URL.
 	 * This allows us to capture the hash from the URL.
 	 *
@@ -114,7 +96,7 @@ class Malicious_Bot extends Controller {
 	 * @return array Modified query variables.
 	 */
 	public function add_query_var( $vars ) {
-		$vars[] = self::URL_QUERY;
+		$vars[] = Malicious_Bot_Component::URL_QUERY;
 		return $vars;
 	}
 
@@ -124,7 +106,7 @@ class Malicious_Bot extends Controller {
 	 * Otherwise, it will do nothing.
 	 */
 	public function handle_hash_url() {
-		$used_hash  = get_query_var( self::URL_QUERY );
+		$used_hash  = get_query_var( Malicious_Bot_Component::URL_QUERY );
 		$valid_hash = $this->service->get_hash();
 
 		if ( $used_hash === $valid_hash ) {
@@ -195,14 +177,6 @@ class Malicious_Bot extends Controller {
 
 		$hash = $this->service->get_hash();
 		echo '<div style="display:none;"><a href="' . esc_url( home_url( "/{$hash}" ) ) . '" rel="nofollow">Secret Link</a></div>';
-	}
-
-	/**
-	 * Flushes the rewrite rules to ensure the new malicious bot URL is recognized.
-	 */
-	public function flush_rewrite() {
-		$this->register_rewrite_rule();
-		flush_rewrite_rules();
 	}
 
 	/**

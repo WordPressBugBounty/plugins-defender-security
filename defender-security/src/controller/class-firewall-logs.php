@@ -204,10 +204,6 @@ class Firewall_Logs extends Controller {
 	public function export_as_csv(): void {
 		$date_from = HTTP::get( 'date_from', strtotime( '-7 days midnight' ) );
 		$date_to   = HTTP::get( 'date_to', strtotime( 'tomorrow' ) );
-		// Convert date using timezone.
-		$timezone  = wp_timezone();
-		$date_from = ( new DateTime( $date_from, $timezone ) )->setTime( 0, 0, 0 )->getTimestamp();
-		$date_to   = ( new DateTime( $date_to, $timezone ) )->setTime( 23, 59, 59 )->getTimestamp();
 		$filters   = array(
 			'from'       => $date_from,
 			'to'         => $date_to,
@@ -236,7 +232,11 @@ class Firewall_Logs extends Controller {
 		if ( 0 === $paged ) {
 			$paged = 1;
 		}
-		$logs = Lockout_Log::query_logs( $filters, $paged, 'id', 'desc', $per_page );
+
+		$sort        = HTTP::get( 'sort', Table_Lockout::SORT_DESC );
+		$sort_params = wd_di()->get( Table_Lockout::class )->resolve_sort( $sort );
+
+		$logs = Lockout_Log::query_logs( $filters, $paged, $sort_params['order_by'], $sort_params['order'], $per_page );
 
 		$tl_component = new Table_Lockout();
 
@@ -345,11 +345,11 @@ class Firewall_Logs extends Controller {
 		$filter_data = $request->get_data(
 			array(
 				'date_from' => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'date_to'   => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'ip_filter' => array(
@@ -372,8 +372,8 @@ class Firewall_Logs extends Controller {
 		);
 		$logs        = Lockout_Log::get_logs_and_format(
 			array(
-				'from' => strtotime( $filter_data['date_from'] . ' 00:00:00' ),
-				'to'   => strtotime( $filter_data['date_to'] . ' 23:59:59' ),
+				'from' => $filter_data['date_from'],
+				'to'   => $filter_data['date_to'],
 				'ip'   => $filter_data['ip_filter'],
 				// If this is all, then we set to null to exclude it from the filter.
 				'type' => 'all' === $filter_data['type'] ? '' : $filter_data['type'],
@@ -465,11 +465,11 @@ class Firewall_Logs extends Controller {
 		$filter_data = $request->get_data(
 			array(
 				'date_from' => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'date_to'   => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'ip_filter' => array(
@@ -492,8 +492,8 @@ class Firewall_Logs extends Controller {
 		);
 		$logs        = Lockout_Log::get_logs_and_format(
 			array(
-				'from' => strtotime( $filter_data['date_from'] . ' 00:00:00' ),
-				'to'   => strtotime( $filter_data['date_to'] . ' 23:59:59' ),
+				'from' => $filter_data['date_from'],
+				'to'   => $filter_data['date_to'],
 				'ip'   => $filter_data['ip_filter'],
 				// If this is all, then we set to null to exclude it from the filter.
 				'type' => 'all' === $filter_data['type'] ? '' : $filter_data['type'],
@@ -534,11 +534,11 @@ class Firewall_Logs extends Controller {
 		$data = $request->get_data(
 			array(
 				'date_from'  => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'date_to'    => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'ip'         => array(
@@ -566,50 +566,27 @@ class Firewall_Logs extends Controller {
 		// Validate.
 		$v = new Validator( $data, array() );
 		$v->rule( 'required', array( 'date_from', 'date_to' ) );
-		$v->rule( 'date', array( 'date_from', 'date_to' ) );
+		$v->rule( 'integer', array( 'date_from', 'date_to' ) );
+		$v->rule( 'min', array( 'date_from', 'date_to' ), 0 );
 		if ( ! $v->validate() ) {
 			return new Response( false, array( 'message' => esc_html__( 'Wrong start and end date.', 'defender-security' ) ) );
 		}
-		$sort = $data['sort'] ?? Table_Lockout::SORT_DESC;
-		switch ( $sort ) {
-			case 'ip':
-				$order    = 'desc';
-				$order_by = 'ip';
-				break;
-			case 'oldest':
-				$order    = 'asc';
-				$order_by = 'id';
-				break;
-			case 'user_agent':
-				$order    = 'asc';
-				$order_by = 'user_agent';
-				break;
-			default:
-				$order    = 'desc';
-				$order_by = 'id';
-				break;
-		}
-		// Convert date using timezone.
-		$timezone  = wp_timezone();
-		$date_from = ( new DateTime( $data['date_from'], $timezone ) )
-			->setTime( 0, 0, 0 )
-			->getTimestamp();
-		$date_to   = ( new DateTime( $data['date_to'], $timezone ) )
-			->setTime( 23, 59, 59 )
-			->getTimestamp();
+
+		$sort        = $data['sort'] ?? Table_Lockout::SORT_DESC;
+		$sort_params = wd_di()->get( Table_Lockout::class )->resolve_sort( $sort );
 
 		$result = $this->retrieve_logs(
 			array(
-				'from'       => $date_from,
-				'to'         => $date_to,
+				'from'       => $data['date_from'],
+				'to'         => $data['date_to'],
 				'ip'         => $data['ip'],
 				// If this is all, then we set to null to exclude it from the filter.
 				'type'       => 'all' === $data['type'] ? '' : $data['type'],
 				'ban_status' => 'all' === $data['ban_status'] ? '' : $data['ban_status'],
 			),
 			$data['paged'],
-			$order,
-			$order_by
+			$sort_params['order'],
+			$sort_params['order_by']
 		);
 
 		return new Response( true, $result );

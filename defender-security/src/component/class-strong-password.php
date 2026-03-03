@@ -104,6 +104,11 @@ class Strong_Password extends Component {
 			return $user;
 		}
 
+		// Skip enforcement on WooCommerce requests — dedicated Woo filters handle them based on settings.
+		if ( $this->is_woo_request() ) {
+			return $user;
+		}
+
 		// Validate the strength of the provided password.
 		if ( $this->is_weak_password( $password ) ) {
 			$this->helper->trigger_redirect( $user, self::CODE, self::COOKIE_KEY );
@@ -210,14 +215,17 @@ class Strong_Password extends Component {
 				'wd-strong-password',
 				'wpdef_pws_strings',
 				array(
-					'message'      => esc_html__( 'Hint: Your password must follow the guidelines below.', 'defender-security' ),
-					'requirements' => array(
+					'message'       => esc_html__( 'Hint: Your password must follow the guidelines below.', 'defender-security' ),
+					'requirements'  => array(
 						'length' => esc_html__( 'At least 12 characters', 'defender-security' ),
 						'case'   => esc_html__( 'Uppercase and lowercase letters', 'defender-security' ),
 						'symbol' => esc_html__( 'At least one symbol', 'defender-security' ),
 						'number' => esc_html__( 'At least one number', 'defender-security' ),
 						'zxcvbn' => esc_html__( 'Avoid common words or sequences of letters/numbers', 'defender-security' ),
 					),
+					'woo_locations' => isset( $this->model->forms['woocommerce'] ) && is_array( $this->model->forms['woocommerce'] )
+						? $this->model->forms['woocommerce']
+						: array(),
 				)
 			);
 			add_filter( 'password_hint', '__return_empty_string' );
@@ -266,6 +274,11 @@ class Strong_Password extends Component {
 		}
 
 		if ( ! $this->should_enforce_for_user( $user, $this->model ) ) {
+			return;
+		}
+
+		// WooCommerce also fires this core hook — gate on the lost-password form setting.
+		if ( $this->is_woo_request() && ! $this->is_woo_form_enabled( Woocommerce::WOO_LOST_PASSWORD_FORM ) ) {
 			return;
 		}
 
@@ -335,6 +348,10 @@ class Strong_Password extends Component {
 	 * @return string              WooCommerce error message.
 	 */
 	public function add_woocommerce_error_message( $wc_message ) {
+		if ( ! isset( $this->model->forms['woocommerce'] ) ) {
+			return $wc_message;
+		}
+
 		if ( isset( $_COOKIE[ self::COOKIE_KEY ] ) && function_exists( 'wc_print_notice' ) && ! $this->cookie_handled ) {
 			$message = $this->model->get_message();
 			wc_print_notice( $message, 'error' );
@@ -351,6 +368,10 @@ class Strong_Password extends Component {
 	 * @return WP_Error Modified error object.
 	 */
 	public function during_woo_registration( $errors ) {
+		if ( ! isset( $this->model->forms['woocommerce'] ) || ! is_array( $this->model->forms['woocommerce'] ) || ! in_array( Woocommerce::WOO_REGISTER_FORM, $this->model->forms['woocommerce'], true ) ) {
+			return $errors;
+		}
+
 		$password = $this->helper->get_submitted_password();
 
 		if (
@@ -379,6 +400,10 @@ class Strong_Password extends Component {
 			return;
 		}
 
+		if ( ! isset( $this->model->forms['woocommerce'] ) || ! is_array( $this->model->forms['woocommerce'] ) ) {
+			return;
+		}
+
 		$password = $this->helper->get_submitted_password();
 
 		if (
@@ -404,6 +429,9 @@ class Strong_Password extends Component {
 			return $validation_error;
 		}
 
+		if ( $this->is_woo_request() && ! $this->is_woo_form_enabled( Woocommerce::WOO_LOGIN_FORM ) ) {
+			return $validation_error;
+		}
 		$user = get_user_by( 'login', $username );
 		if ( ! $user ) {
 			$user = get_user_by( 'email', $username );
@@ -417,36 +445,37 @@ class Strong_Password extends Component {
 			return $validation_error;
 		}
 
-		return $this->during_core_authentication( $user, $password );
+		if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+			return $validation_error;
+		}
+
+		if ( $this->is_weak_password( $password ) ) {
+			$this->helper->trigger_redirect( $user, self::CODE, self::COOKIE_KEY );
+			exit;
+		}
+
+		return $validation_error;
 	}
 
 	/**
-	 * Modify the lost password URL.
-	 *
-	 * @param string $redirect The redirect URL.
-	 *
-	 * @return string Modified lost password URL.
+	 * Determine if current request is coming from WooCommerce flows.
 	 */
-	public function lostpassword_url( $redirect = '' ) {
-		$args = array(
-			'action' => 'lostpassword',
-		);
+	private function is_woo_request(): bool {
+		return $this->woo->is_activated() && $this->woo->is_wc_login_context();
+	}
 
-		if ( '' !== $redirect ) {
-			$args['redirect_to'] = rawurlencode( $redirect );
+	/**
+	 * Check whether a specific WooCommerce form is enabled in settings.
+	 *
+	 * @param string $form Form slug.
+	 */
+	private function is_woo_form_enabled( string $form ): bool {
+		if ( empty( $this->model->plugins['woocommerce'] ) ) {
+			return false;
 		}
 
-		if ( is_multisite() ) {
-			$blog_details = get_site();
-			if ( null !== $blog_details ) {
-				$wp_login_path = $blog_details->path . 'wp-login.php';
-			} else {
-				$wp_login_path = 'wp-login.php';
-			}
-		} else {
-			$wp_login_path = 'wp-login.php';
-		}
+		$forms = $this->model->forms['woocommerce'] ?? array();
 
-		return add_query_arg( $args, network_site_url( $wp_login_path, 'login' ) );
+		return in_array( $form, $forms, true );
 	}
 }

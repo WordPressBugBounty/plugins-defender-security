@@ -347,18 +347,20 @@ class UA_Lockout extends Event {
 	public function export_ua(): void {
 		$data = array();
 
-		foreach ( $this->model->get_lockout_list( 'blocklist', false ) as $ua ) {
-			$data[] = array(
-				'ua'   => $ua,
-				'type' => 'blocklist',
-			);
-		}
 		foreach ( $this->model->get_lockout_list( 'allowlist', false ) as $ua ) {
 			$data[] = array(
 				'ua'   => $ua,
 				'type' => 'allowlist',
 			);
 		}
+
+		foreach ( $this->model->get_all_selected_blocklist_ua( false ) as $ua ) {
+			$data[] = array(
+				'ua'   => $ua,
+				'type' => 'blocklist',
+			);
+		}
+
 		// WP_Filesystem class doesn’t directly provide a function for opening a stream to php://memory with the 'w' mode.
 		$fp = fopen( 'php://memory', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		foreach ( $data as $fields ) {

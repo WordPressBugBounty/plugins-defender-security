@@ -38,7 +38,7 @@ class Plugin_Integrity extends Behavior {
 	public function to_array(): array {
 		$data = $this->owner->raw_data;
 		$file = $data['file'];
-		list ( $file_created_at, $file_size, $deleted ) = $this->get_file_meta( $file );
+		list( $file_created_at, $file_size, $deleted ) = $this->get_file_meta( $file );
 
 		$is_quarantinable = $this->is_quarantinable( $this->owner->raw_data['file'] );
 

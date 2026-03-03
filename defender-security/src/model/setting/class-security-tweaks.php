@@ -109,13 +109,11 @@ class Security_Tweaks extends Setting {
 				continue;
 			}
 
-			// @phpstan-ignore-next-line
 			$arr   = $this->$collection;
 			$index = array_search( $slug, $arr, true );
 			if ( false !== $index ) {
 				unset( $arr[ $index ] );
 			}
-			// @phpstan-ignore-next-line
 			$this->$collection = $arr;
 		}
 
@@ -127,10 +125,8 @@ class Security_Tweaks extends Setting {
 			return;
 		}
 
-		// @phpstan-ignore-next-line
-		$collection   = $this->{$status};
-		$collection[] = $slug;
-		// @phpstan-ignore-next-line
+		$collection      = $this->{$status};
+		$collection[]    = $slug;
 		$this->{$status} = $collection;
 		$this->save();
 	}

@@ -565,7 +565,7 @@ class Lockout_Log extends DB {
 		$type       = $filters['type'] ?? 'all';
 
 		// Define lockout type categories.
-		$ua_types = array( self::get_ua_lockout_types() );
+		$ua_types = self::get_ua_lockout_types();
 
 		if ( 'all' === $type || '' === $type ) {
 			// For 'all' type, only show UA types with ban_status filtering.
@@ -688,7 +688,7 @@ class Lockout_Log extends DB {
 			$log['access_status'] = $arr_statuses;
 
 			// For UA lockout types, show UA status; for others show IP status.
-			if ( in_array( $item->type, array( self::get_ua_lockout_types() ), true ) ) {
+			if ( in_array( $item->type, self::get_ua_lockout_types(), true ) ) {
 				$ua_statuses               = $ua_model->get_access_status( $item->user_agent );
 				$log['access_status_text'] = $ip_model->get_access_status_text( $ua_statuses[0] ?? 'na' );
 			} else {

@@ -55,6 +55,13 @@ class Audit_Logging extends Event {
 	public ?Audit $service;
 
 	/**
+	 * Indicates whether the current installation is a pro version.
+	 *
+	 * @var bool
+	 */
+	private $is_pro;
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -68,7 +75,8 @@ class Audit_Logging extends Event {
 		$this->model   = wd_di()->get( Model_Audit_Logging::class );
 		$this->service = new Audit();
 		$this->register_routes();
-		if ( $this->model->is_active() ) {
+		$this->is_pro = wd_di()->get( WPMUDEV::class )->is_pro();
+		if ( $this->is_pro_permission() ) {
 			$this->service->enqueue_event_listener();
 			add_action( 'shutdown', array( $this, 'cache_audit_logs' ) );
 
@@ -93,6 +101,15 @@ class Audit_Logging extends Event {
 	}
 
 	/**
+	 * Is there permission to Pro feature?
+	 *
+	 * @return bool
+	 */
+	private function is_pro_permission(): bool {
+		return $this->model->is_active() && $this->is_pro;
+	}
+
+	/**
 	 * Exports audit logs as a CSV file.
 	 *
 	 * @return void
@@ -100,27 +117,33 @@ class Audit_Logging extends Event {
 	 * @defender_route
 	 */
 	public function export_as_csv(): void {
-		$date_from = HTTP::get(
+		$date_from  = HTTP::get(
 			'date_from',
-			wp_date( 'Y-m-d H:i:s', strtotime( '-7 days', time() ) )
+			strtotime( '-7 days', time() )
 		);
-		$date_to   = HTTP::get( 'date_to', wp_date( 'Y-m-d H:i:s', time() ) );
-		// Convert date using timezone.
-		$timezone  = wp_timezone();
-		$date_from = ( new DateTime( $date_from, $timezone ) )->setTime( 0, 0, 0 )->getTimestamp();
-		$date_to   = ( new DateTime( $date_to, $timezone ) )->setTime( 23, 59, 59 )->getTimestamp();
-		$username  = HTTP::get( 'term', '' );
-		$user_id   = '';
-		$user      = get_user_by( 'login', $username );
-		$data      = defender_get_data_from_request( null, 'g' );
-		$events    = isset( $data['event_type'] ) && is_array( $data['event_type'] ) ? $data['event_type'] : array();
-		if ( is_object( $user ) ) {
-			$user_id = $user->ID;
+		$date_to    = HTTP::get( 'date_to', time() );
+		$data       = defender_get_data_from_request( null, 'g' );
+		$events     = isset( $data['event_type'] ) && is_array( $data['event_type'] ) ? $data['event_type'] : array();
+		$ip_address = HTTP::get( 'ip_address', '' );
+		$username   = HTTP::get( 'term', '' );
+		$user_id    = '';
+		$handler    = new Audit();
+
+		if ( '' !== $username ) {
+			$user = get_user_by( 'login', $username );
+			if ( is_object( $user ) ) {
+				$user_id = $user->ID;
+				// Fetch result with the specified user.
+				$result = $handler->fetch( $date_from, $date_to, $events, $user_id, $ip_address, false );
+			} else {
+				// A non-existent username.
+				$result = array();
+			}
+		} else {
+			// Fetch result with empty user field.
+			$result = $handler->fetch( $date_from, $date_to, $events, $user_id, $ip_address, false );
 		}
 
-		$handler    = new Audit();
-		$ip_address = HTTP::get( 'ip_address', '' );
-		$result     = $handler->fetch( $date_from, $date_to, $events, $user_id, $ip_address, false );
 		// WP_Filesystem class doesn’t directly provide a function for opening a stream to php://memory with the 'w' mode.
 		$fp      = fopen( 'php://memory', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$headers = array(
@@ -182,11 +205,11 @@ class Audit_Logging extends Event {
 		$data = $request->get_data(
 			array(
 				'date_from'  => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'date_to'    => array(
-					'type'     => 'string',
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'username'   => array(
@@ -207,18 +230,12 @@ class Audit_Logging extends Event {
 				),
 			)
 		);
-		if ( ! isset( $data['date_from'] ) || '' === $data['date_from'] || ! isset( $data['date_to'] ) || '' === $data['date_to'] ) {
+		if ( ! isset( $data['date_from'] ) || $data['date_from'] <= 0 || ! isset( $data['date_to'] ) || $data['date_to'] <= 0 ) {
 			return new Response( false, array( 'message' => esc_html__( 'Invalid data.', 'defender-security' ) ) );
 		}
-		// Convert date using timezone.
-		$timezone  = wp_timezone();
-		$date_from = ( new DateTime( $data['date_from'], $timezone ) )
-			->setTime( 0, 0, 0 )
-			->getTimestamp();
-		$date_to   = ( new DateTime( $data['date_to'], $timezone ) )
-			->setTime( 23, 59, 59 )
-			->getTimestamp();
 
+		$date_from  = $data['date_from'];
+		$date_to    = $data['date_to'];
 		$events     = $data['events'] ?? array();
 		$ip_address = $data['ip_address'] ?? '';
 		$paged      = $data['paged'] ?? 1;
@@ -336,7 +353,7 @@ class Audit_Logging extends Event {
 	 * @defender_route
 	 */
 	public function summary(): void {
-		$response = $this->model->is_active() ? $this->summary_data() : array();
+		$response = $this->is_pro_permission() ? $this->summary_data() : array();
 		wp_send_json_success( $response );
 	}
 
@@ -425,7 +442,7 @@ class Audit_Logging extends Event {
 	public function to_array(): array {
 		return array_merge(
 			array(
-				'enabled' => $this->model->is_active(),
+				'enabled' => $this->is_pro_permission(),
 				'report'  => true,
 			),
 			$this->dump_routes_and_nonces()
@@ -463,18 +480,14 @@ class Audit_Logging extends Event {
 		$count      = 0;
 		$per_page   = 20;
 		$total_page = 1;
-		if ( $this->model->is_active() && ( new WPMUDEV() )->is_pro() ) {
+		if ( $this->is_pro_permission() ) {
 			$timezone  = wp_timezone();
 			$date_from = ( new DateTime() )->setTimezone( $timezone )
 											->sub( new DateInterval( 'P7D' ) )->setTime( 0, 0, 0 );
 			$date_to   = ( new DateTime() )->setTimezone( $timezone )->setTime( 23, 59, 59 );
 			$result    = $this->service->fetch(
 				$date_from->getTimestamp(),
-				$date_to->getTimestamp(),
-				array(),
-				'',
-				'',
-				1
+				$date_to->getTimestamp()
 			);
 			if ( ! is_wp_error( $result ) ) {
 				foreach ( $result as $item ) {
@@ -543,7 +556,7 @@ class Audit_Logging extends Event {
 	 * @return array An array of strings.
 	 */
 	public function export_strings(): array {
-		if ( ! ( new WPMUDEV() )->is_pro() ) {
+		if ( ! $this->is_pro ) {
 			return array(
 				sprintf(
 					/* translators: %s: Html for Pro-tag. */
@@ -553,7 +566,7 @@ class Audit_Logging extends Event {
 			);
 		}
 
-		if ( $this->model->is_active() ) {
+		if ( $this->is_pro_permission() ) {
 			$strings      = array( esc_html__( 'Active', 'defender-security' ) );
 			$audit_report = new Audit_Report();
 			if ( 'enabled' === $audit_report->status ) {

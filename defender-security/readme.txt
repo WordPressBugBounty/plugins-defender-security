@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.9.0
+Version: 5.10.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 6.9
-Stable tag: 5.9.0
+Tested up to: 6.9.1
+Stable tag: 5.10.0
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -261,6 +261,19 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 4. Done!
 
 == Changelog ==
+
+= 5.10.0 ( 2026-02-26 ) =
+
+- Enhancement: Improve AntiBot Stats endpoint
+- Enhancement: Improve handling of response data in the Audit API
+- Enhancement: Update malware signatures
+- Enhancement: Improve suspicious issue view on the Malware Scanning page
+- Enhancement: Include selected presets in the User Agent blocklist during export
+- Fix: Error when filtering the Firewall logs
+- Fix: Error when switching languages with WPML while Bot Trap is enabled
+- Fix: Strong Passwords do not work when Mask Login URL is enabled
+- Fix: Colored elements appear on Defender admin pages when High Contrast Mode is enabled
+- Fix: Exported Firewall logs do not follow the selected sort order
 
 = 5.9.0 ( 2026-01-27 ) =
 

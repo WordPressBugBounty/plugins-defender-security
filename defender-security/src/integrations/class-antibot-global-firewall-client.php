@@ -108,6 +108,17 @@ class Antibot_Global_Firewall_Client {
 			return new WP_Error( 'no_api_key', 'No API key provided' );
 		}
 
+		// Check length.
+		if ( 40 !== strlen( $apikey ) ) {
+			return new WP_Error( 'invalid_api_key', 'Invalid API key length' );
+		}
+
+		// Check characters.
+		preg_match( '/[a-f0-9]{40}/', $apikey, $matches );
+		if ( ! isset( $matches[0] ) ) {
+			return new WP_Error( 'invalid_api_key', 'Invalid API key format' );
+		}
+
 		$base_url = $this->get_base_url();
 		// Combine Url.
 		$url  = $base_url . $endpoint;
@@ -131,6 +142,16 @@ class Antibot_Global_Firewall_Client {
 			return $response;
 		}
 
-		return json_decode( wp_remote_retrieve_body( $response ), true );
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $status_code >= 400 ) {
+			$error_message = isset( $body['message'] ) ? $body['message'] : wp_remote_retrieve_response_message( $response );
+			$error_code    = isset( $body['status'] ) ? $body['status'] : 'http_error_' . $status_code;
+
+			return new WP_Error( $error_code, $error_message, array( 'status_code' => $status_code ) );
+		}
+
+		return $body;
 	}
 }

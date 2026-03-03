@@ -113,9 +113,23 @@ class Onboard extends Event {
 			// @since 4.2.0 No display the Data Tracking after the Onboarding.
 			Data_Tracking::delete_modal_key();
 
-			update_site_option( 'wp_defender_onboarding_step', 'activate-antibot' );
+			if ( defender_is_unlimited_hosting() ) {
+				// Without Antibot step.
+				$next_step = 'finish';
+				update_site_option( 'wp_defender_shown_activator', true );
+				delete_site_option( 'wp_defender_is_free_activated' );
+				delete_site_option( 'wp_defender_onboarding_step' );
+				// Track.
+				if ( $this->is_tracking_active() ) {
+					wd_di()->get( \WP_Defender\Helper\Analytics\Antibot::class )
+						->track_antibot( false, 'Onboarding' );
+				}
+			} else {
+				$next_step = 'activate-antibot';
+				update_site_option('wp_defender_onboarding_step', $next_step );
+			}
 
-			wp_send_json_success();
+			wp_send_json_success( array( 'next_step' => $next_step ) );
 		} else {
 			$antibot_service = wd_di()->get( Antibot_Global_Firewall::class );
 			$managed_by      = $antibot_service->get_default_managed_by();
@@ -373,6 +387,7 @@ class Onboard extends Event {
 				'privacy_link'         => Model_Main_Setting::PRIVACY_LINK,
 				'antibot'              => Antibot_Global_Firewall_Setting::get_module_name(),
 			),
+
 			'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
 			'step'          => get_site_option( 'wp_defender_onboarding_step', 'init' ),
 		);

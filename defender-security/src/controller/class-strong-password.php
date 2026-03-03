@@ -59,12 +59,7 @@ class Strong_Password extends Event {
 		add_filter( 'wp_defender_advanced_tools_data', array( $this, 'script_data' ) );
 		$this->register_routes();
 		if ( $this->model->is_active() ) {
-			if ( ! wp_using_themes() ) {
-				$this->setup_core_hooks();
-			}
-			if ( $this->woo->is_activated() ) {
-				add_action( 'woocommerce_init', array( $this, 'setup_woo_hooks' ) );
-			}
+			$this->setup_hooks();
 		}
 	}
 
@@ -72,15 +67,7 @@ class Strong_Password extends Event {
 	 * Set up core WordPress hooks for strong password functionality.
 	 * These hooks work independently of WooCommerce settings.
 	 */
-	private function setup_core_hooks() {
-		// Update site url on sub-site when MaskLogin is disabled.
-		if (
-			is_multisite() && ! is_main_site()
-			&& ! wd_di()->get( \WP_Defender\Model\Setting\Mask_Login::class )->is_active()
-		) {
-			add_filter( 'network_site_url', array( $this->helper, 'filter_site_url' ), 100, 2 );
-		}
-
+	private function setup_hooks() {
 		// Remove conflicting plugins.
 		remove_action( 'user_profile_update_errors', 'slt_fsp_validate_profile_update', 0 );
 		remove_action( 'resetpass_form', 'slt_fsp_validate_resetpass_form', 10 );
@@ -96,49 +83,44 @@ class Strong_Password extends Event {
 		add_action( 'validate_password_reset', array( $this->service, 'on_password_reset' ), 100, 2 );
 		add_action( 'wp_authenticate_user', array( $this->service, 'during_core_authentication' ), 100, 2 );
 		add_filter( 'random_password', array( $this->service, 'generate_password' ), 10, 2 );
-		add_filter( 'lostpassword_url', array( $this->service, 'lostpassword_url' ), 10, 1 );
-	}
 
-	/**
-	 * Add hooks for handling strong password in WooCommerce forms.
-	 */
-	public function setup_woo_hooks() {
-		$woo_locations = $this->model->forms['woocommerce'] ?? array();
+		// WooCommerce-specific hooks — each gated on its own form setting.
+		if ( $this->woo->is_activated() && ! empty( $this->model->plugins['woocommerce'] ) ) {
+			$woo_forms = $this->model->forms['woocommerce'] ?? array();
 
-		if ( array() === $woo_locations ) {
-			return;
-		}
-
-		if ( in_array( Woocommerce::WOO_LOGIN_FORM, $woo_locations, true ) ) {
-			add_filter( 'woocommerce_process_login_errors', array( $this->service, 'during_woo_authentication' ), 10, 3 );
-		}
-
-		$referer                      = wp_get_referer();
-		$add_woo_reset_password_hooks = false;
-		if ( $referer && function_exists( 'wc_get_page_id' ) ) {
-			$my_account_page_id = wc_get_page_id( 'myaccount' );
-			if ( $my_account_page_id > 0 ) {
-				$my_account_url               = get_permalink( $my_account_page_id );
-				$add_woo_reset_password_hooks = strpos( $referer, $my_account_url ) === 0;
+			if ( array() !== $woo_forms ) {
+				add_action( 'wp_enqueue_scripts', array( $this->service, 'scripts' ) );
+				add_action(
+					'woocommerce_save_account_details_errors',
+					array( $this->service, 'on_woo_account_update' ),
+					100,
+					2
+				);
 			}
-		}
 
-		if (
-			in_array( Woocommerce::WOO_LOST_PASSWORD_FORM, $woo_locations, true ) ||
-			$add_woo_reset_password_hooks
-		) {
-			add_action( 'wp_enqueue_scripts', array( $this->service, 'scripts' ) );
-			add_action( 'validate_password_reset', array( $this->service, 'on_password_reset' ), 100, 2 );
-			add_filter( 'woocommerce_reset_password_message', array( $this->service, 'add_woocommerce_error_message' ) );
-			add_action( 'woocommerce_save_account_details_errors', array( $this->service, 'on_woo_account_update' ), 10, 2 );
-		}
+			if ( in_array( Woocommerce::WOO_REGISTER_FORM, $woo_forms, true ) ) {
+				add_filter(
+					'woocommerce_process_registration_errors',
+					array( $this->service, 'during_woo_registration' ),
+					100
+				);
+			}
 
-		if (
-			in_array( Woocommerce::WOO_REGISTER_FORM, $woo_locations, true ) ||
-			in_array( Woocommerce::WOO_CHECKOUT_FORM, $woo_locations, true )
-		) {
-			add_action( 'wp_enqueue_scripts', array( $this->service, 'scripts' ) );
-			add_filter( 'woocommerce_registration_errors', array( $this->service, 'during_woo_registration' ) );
+			if ( in_array( Woocommerce::WOO_LOGIN_FORM, $woo_forms, true ) || in_array( Woocommerce::WOO_CHECKOUT_FORM, $woo_forms, true ) ) {
+				add_filter(
+					'woocommerce_process_login_errors',
+					array( $this->service, 'during_woo_authentication' ),
+					100,
+					3
+				);
+			}
+
+			if ( in_array( Woocommerce::WOO_LOST_PASSWORD_FORM, $woo_forms, true ) ) {
+				add_filter(
+					'woocommerce_reset_password_message',
+					array( $this->service, 'add_woocommerce_error_message' )
+				);
+			}
 		}
 	}
 

@@ -778,7 +778,6 @@ class Backup_Settings extends Component {
 								$scan_notification->in_house_recipients  = array();
 								$scan_notification->out_house_recipients = array();
 								foreach ( $module_data['notification_subscribers'] as $key => $subscribers ) {
-									// @phpstan-ignore-next-line
 									$scan_notification->$key = $subscribers;
 								}
 							}
@@ -800,7 +799,6 @@ class Backup_Settings extends Component {
 							$scan_report->in_house_recipients  = array();
 							$scan_report->out_house_recipients = array();
 							foreach ( $module_data['report_subscribers'] as $key => $subscribers ) {
-								// @phpstan-ignore-next-line
 								$scan_report->$key = $subscribers;
 							}
 						}
@@ -877,7 +875,6 @@ class Backup_Settings extends Component {
 								$lockout_notification->in_house_recipients  = array();
 								$lockout_notification->out_house_recipients = array();
 								foreach ( $module_data['notification_subscribers'] as $key => $subscribers ) {
-									// @phpstan-ignore-next-line
 									$lockout_notification->$key = $subscribers;
 								}
 							}
@@ -906,7 +903,6 @@ class Backup_Settings extends Component {
 								$lockout_report->in_house_recipients  = array();
 								$lockout_report->out_house_recipients = array();
 								foreach ( $module_data['report_subscribers'] as $key => $subscribers ) {
-									// @phpstan-ignore-next-line
 									$lockout_report->$key = $subscribers;
 								}
 							}
@@ -971,7 +967,6 @@ class Backup_Settings extends Component {
 							$audit_report->in_house_recipients  = array();
 							$audit_report->out_house_recipients = array();
 							foreach ( $module_data['subscribers'] as $key => $subscribers ) {
-								// @phpstan-ignore-next-line
 								$audit_report->$key = $subscribers;
 							}
 						}
@@ -1066,7 +1061,6 @@ class Backup_Settings extends Component {
 							$tweak_notification->in_house_recipients  = array();
 							$tweak_notification->out_house_recipients = array();
 							foreach ( $module_data['subscribers'] as $key => $subscribers ) {
-								// @phpstan-ignore-next-line
 								$tweak_notification->$key = $subscribers;
 							}
 						}

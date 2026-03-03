@@ -25,6 +25,7 @@ class Malicious_Bot extends Component {
 	public const URL_HASH_KEY           = 'wpdef_malicious_bot_url_hash';
 	public const SCENARIO_MALICIOUS_BOT = 'malicious_bot';
 	public const USER_AGENT_REGEX       = '/(^User-agent:\s*\*)/mi';
+	public const URL_QUERY              = 'wpdef-malicious-bot-url';
 
 	/**
 	 * The path to the robots.txt file.
@@ -104,6 +105,8 @@ class Malicious_Bot extends Component {
 	public function rotate_hash() {
 		$new_hash = $this->generate_hash();
 		$this->set_hash( $new_hash );
+
+		$this->register_rewrite_rule();
 
 		flush_rewrite_rules();
 
@@ -327,5 +330,15 @@ class Malicious_Bot extends Component {
 		$contents_without_defender = preg_replace( $defender_block_pattern, '', $contents );
 
 		return preg_match( $pattern, $contents_without_defender ) === 1;
+	}
+
+	/**
+	 * Registers a rewrite rule for the malicious bot URL.
+	 * The URL will be in the format: /{hash}/
+	 * where {hash} is a 16-character hexadecimal string.
+	 */
+	public function register_rewrite_rule() {
+		$hash = $this->get_hash();
+		add_rewrite_rule( "^{$hash}/?$", 'index.php?' . self::URL_QUERY . '=' . $hash, 'top' );
 	}
 }
