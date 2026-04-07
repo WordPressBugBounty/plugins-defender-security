@@ -74,46 +74,6 @@ class Legacy_Versions extends Component {
 	private function adapt_scan_data( $old_data ) {
 		$raw = '';
 		switch ( $old_data['type'] ) {
-			case 'vuln':
-				$new_type = Scan_Item::TYPE_VULNERABILITY;
-				if ( isset( $old_data['raw'] ) && '' !== $old_data['raw'] ) {
-					$raw = maybe_unserialize( $old_data['raw'] );
-					/**
-					 * Different $raw['slug'] values depending on the type:
-					 * 'type' => 'theme', 'slug' => {THEME_SLUG}, ...
-					 * 'type' => 'plugin', 'slug' => {PLUGIN_SLUG}, ...
-					 * 'type' => 'WordPress', 'slug' => 'WordPress', ...
-					 */
-					$file = is_array( $raw ) && isset( $raw['slug'] ) ? $raw['slug'] : '';
-				} else {
-					$file = '';
-				}
-
-				if ( is_array( $raw ) && 'WordPress' !== $raw['type'] ) {
-					$raw_data = array(
-						'type'      => $raw['type'],
-						'slug'      => $raw['slug'],
-						'base_slug' => $raw['slug'],
-						'version'   => '',
-						'name'      => $raw['slug'],
-						'bugs'      => $raw['bugs'],
-					);
-				} else {
-					$raw_data = $old_data['raw'];
-				}
-				break;
-			case 'content':
-				$new_type = Scan_Item::TYPE_SUSPICIOUS;
-				if ( isset( $old_data['raw'] ) && '' !== $old_data['raw'] ) {
-					$raw  = maybe_unserialize( $old_data['raw'] );
-					$file = is_array( $raw ) && isset( $raw['file'] ) ? $raw['file'] : '';
-				} else {
-					$file = '';
-				}
-
-				$raw_data         = is_array( $raw ) && isset( $raw['meta'] ) ? $raw['meta'] : array();
-				$raw_data['file'] = $file;
-				break;
 			case 'core':
 			default:
 				$new_type = Scan_Item::TYPE_INTEGRITY;
@@ -164,11 +124,7 @@ class Legacy_Versions extends Component {
 			if ( is_array( $existed_issues ) && array() !== $existed_issues ) {
 				// Scan was started in version > 2.3.2.
 				foreach ( $existed_issues as $issue ) {
-					if ( Scan_Item::TYPE_VULNERABILITY === $data['type'] ) {
-						$file_name = $issue->raw_data['base_slug'] ?? '';
-					} else {
 						$file_name = $issue->raw_data['file'] ?? '';
-					}
 					// Check for uniqueness of elements.
 					if ( $data['file'] !== $file_name && ! in_array( $file_name, $unique_arr, true ) ) {
 						$unique_arr[] = $file_name;
@@ -208,11 +164,7 @@ class Legacy_Versions extends Component {
 			if ( is_array( $existed_issues ) && array() !== $existed_issues ) {
 				// Scan was started in version > 2.3.2 .
 				foreach ( $existed_issues as $issue ) {
-					if ( Scan_Item::TYPE_VULNERABILITY === $data['type'] ) {
-						$file_name = $issue->raw_data['base_slug'] ?? '';
-					} else {
 						$file_name = $issue->raw_data['file'] ?? '';
-					}
 					// Check for uniqueness of elements.
 					if ( $data['file'] !== $file_name && ! in_array( $file_name, $index_lists, true ) ) {
 						if ( isset( $data['file'] ) ) {
@@ -242,7 +194,6 @@ class Legacy_Versions extends Component {
 	 * @return array Array of all scan issue data.
 	 */
 	public function get_scan_issue_data() {
-
 		return $this->find_all_scan_issue_items();
 	}
 

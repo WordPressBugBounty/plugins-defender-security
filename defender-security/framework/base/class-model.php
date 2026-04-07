@@ -60,6 +60,15 @@ abstract class Model extends Component {
 	protected $mapping = array();
 
 	/**
+	 * Get the table name.
+	 *
+	 * @return string|null
+	 */
+	public function get_table(): ?string {
+		return $this->table;
+	}
+
+	/**
 	 * Run the validation.
 	 *
 	 * @return bool

@@ -60,20 +60,6 @@ class Scan extends Event {
 	protected $service;
 
 	/**
-	 * Quarantine controller.
-	 *
-	 * @var Quarantine
-	 */
-	private $quarantine_controller;
-
-	/**
-	 * Indicates whether the current installation is a pro version.
-	 *
-	 * @var bool
-	 */
-	private $is_pro;
-
-	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -86,11 +72,6 @@ class Scan extends Event {
 
 		$this->model   = new Scan_Settings();
 		$this->service = wd_di()->get( Scan_Component::class );
-		$this->is_pro  = wd_di()->get( WPMUDEV::class )->is_pro();
-
-		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-			$this->quarantine_controller = wd_di()->get( Quarantine::class );
-		}
 
 		$this->register_routes();
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
@@ -99,17 +80,6 @@ class Scan extends Event {
 		add_action( 'defender/async_scan', array( $this, 'process' ) );
 		// Clean up data after successful core update.
 		add_action( '_core_updated_successfully', array( $this, 'clean_up_data' ) );
-
-		global $pagenow;
-		// since 2.6.2.
-		if (
-			is_admin() &&
-			'plugins.php' === $pagenow &&
-			apply_filters( 'wd_display_vulnerability_warnings', true ) &&
-			$this->is_pro
-		) {
-			$this->service->display_vulnerability_warnings();
-		}
 
 		/**
 		 * Schedule a time to clear completed action scheduler logs.
@@ -295,7 +265,6 @@ class Scan extends Event {
 				'ignore'     => 'Ignore',
 				'delete'     => 'Delete',
 				'unignore'   => 'Unignore',
-				'quarantine' => 'Safe Repair & Quarantine',
 			);
 
 			$resolution_method = $intention_desc[ $intention ];
@@ -314,14 +283,6 @@ class Scan extends Event {
 				if ( isset( $raw_data['type'] ) && 'modified' === $raw_data['type'] ) {
 					$threat_type = 'plugin file modified';
 				}
-			} elseif ( Scan_Item::TYPE_VULNERABILITY === $scan_item->type ) {
-				$threat_type = 'Vulnerability';
-
-				if ( 'resolve' === $intention ) {
-					$resolution_method = 'Update';
-				}
-			} elseif ( Scan_Item::TYPE_SUSPICIOUS === $scan_item->type ) {
-				$threat_type = 'Suspicious function';
 			} elseif (
 				in_array(
 					$scan_item->type,
@@ -377,16 +338,14 @@ class Scan extends Event {
 			$allowed_intentions,
 			true
 		) ) {
-			wp_die();
+			return new Response( false, array() );
 		}
 
 		$scan = Model_Scan::get_last();
 		if ( $scan instanceof Model_Scan ) {
 			$item = $scan->get_issue( $id );
 			if ( is_object( $item ) && $item->has_method( $intention ) ) {
-				if ( 'quarantine' === $intention ) {
-					$result = $item->quarantine( $data['parent_action'], $item->owner );
-				} elseif ( 'resolve' === $intention ) {
+				if ( 'resolve' === $intention ) {
 					$result = $item->resolve();
 				} elseif ( 'delete' === $intention ) {
 					$result = $item->delete();
@@ -561,66 +520,15 @@ class Scan extends Event {
 			$data['check_core']    = true;
 			$data['check_plugins'] = true;
 		}
-
-		// Case#2: Suspicious code is activated BUT File change detection is deactivated then show the notice.
-		if ( $data['scan_malware'] && ! $data['integrity_check'] ) {
-			$response = array(
-				'type_notice' => 'info',
-				'message'     => sprintf(
-					/* translators: 1. Open tag. 2. Close tag. 3. Open tag. 4. Close tag. */
-					esc_html__(
-						'To reduce false-positive results, we recommend enabling %1$sFile change detection%2$s options for all scan types while the %3$sSuspicious code%4$s option is enabled.',
-						'defender-security'
-					),
-					'<strong>',
-					'</strong>',
-					'<strong>',
-					'</strong>'
-				),
-			);
-		} else {
-			// Prepare response message for usual successful case.
 			$response = array(
 				'message'    => esc_html__( 'Your settings have been updated.', 'defender-security' ),
 				'auto_close' => true,
 			);
-		}
-		// Additional cases are in the Scan model.
-		$report_change = false;
-		// If 'Scheduled Scanning' is checked then need to change Malware_Report.
-		if ( true === $data['scheduled_scanning'] ) {
-			$report            = new Malware_Report();
-			$report_change     = true;
-			$report->frequency = $data['frequency'];
-			$report->day       = $data['day'];
-			$report->day_n     = (int) $data['day_n'];
-			$report->time      = $data['time'];
-			// Disable 'Scheduled Scanning'.
-		} elseif ( true === $this->model->scheduled_scanning && false === $data['scheduled_scanning'] ) {
-			$report         = new Malware_Report();
-			$report_change  = true;
-			$report->status = \WP_Defender\Model\Notification::STATUS_DISABLED;
-		}
-
-		$before_import_schedule = $this->model->quarantine_expire_schedule;
 
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
-
-			if ( class_exists( 'WP_Defender\Component\Quarantine' ) ) {
-				$quarantine_component = wd_di()->get( Quarantine_Component::class );
-				$quarantine_component->reschedule_file_expiry_cron(
-					$before_import_schedule,
-					$data['quarantine_expire_schedule']
-				);
-			}
-
-			// Todo: need to disable Malware_Notification & Malware_Report if all scan settings are deactivated?
+			// Todo: need to disable Malware_Notification if all scan settings are deactivated?
 			$this->model->save();
-			// Save Report's changes.
-			if ( $report_change ) {
-				$report->save();
-			}
 			Config_Hub_Helper::set_clear_active_flag();
 
 			return new Response(
@@ -677,7 +585,7 @@ class Scan extends Event {
 			return new Response(
 				false,
 				array(
-					'message' => '',
+					'message' => esc_html__( 'Wrong scan issue data.', 'defender-security' ),
 				)
 			);
 		}
@@ -780,28 +688,9 @@ class Scan extends Event {
 		$settings    = new Scan_Settings();
 		$report      = wd_di()->get( Malware_Report::class );
 		$report_text = esc_html__( 'Automatic scans are disabled', 'defender-security' );
-		if ( $settings->scheduled_scanning && isset( $settings->frequency ) ) {
-			$report_text = sprintf(
-			/* translators: 1. Line break tag. 2. Frequency value. */
-				esc_html__( 'Automatic scans are %1$srunning %2$s', 'defender-security' ),
-				'<br/>',
-				$settings->frequency
-			);
-		}
-		$misc                  = array(
+		$misc = array(
 			'outdated_period' => \WP_Defender\Behavior\Scan\Abandoned_Plugin::get_outdated_period(),
 			'labels'          => $settings->labels(),
-			'days_of_week'    => $this->get_days_of_week(),
-			'times_of_day'    => $this->get_times(),
-		);
-		$misc['timezone_text'] = sprintf(
-			/* translators: 1. Timezone. 2. Time. */
-			esc_html__(
-				'Your timezone is set to %1$s, so your current time is %2$s.',
-				'defender-security'
-			),
-			'<strong>' . wp_timezone_string() . '</strong>',
-			'<strong>' . wp_date( 'H:i', time() ) . '</strong>'
 		);
 
 		// Todo: add logic for deactivated scan settings. Maybe display some notice.
@@ -811,9 +700,6 @@ class Scan extends Event {
 			'report'        => $report_text,
 			'active_tools'  => array(
 				'integrity_check'        => $settings->integrity_check,
-				'check_known_vuln'       => $settings->check_known_vuln,
-				'scan_malware'           => $settings->scan_malware,
-				'scheduled_scanning'     => $settings->scheduled_scanning,
 				'check_abandoned_plugin' => $settings->check_abandoned_plugin,
 			),
 			'notification'  => $report->to_string(),
@@ -825,10 +711,6 @@ class Scan extends Event {
 			'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
 			'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 		);
-
-		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-			$data['quarantine'] = $this->quarantine_controller->data_frontend();
-		}
 
 		return array_merge( $data, $this->dump_routes_and_nonces() );
 	}
@@ -856,72 +738,34 @@ class Scan extends Event {
 	}
 
 	/**
-	 * Checks if any scan is active.
-	 *
-	 * @param  bool $is_pro  Indicates if the product is a pro version.
-	 *
-	 * @return bool True if any scan is active, false otherwise.
-	 */
-	private function is_any_active( bool $is_pro ): bool {
-		$settings          = new Scan_Settings();
-		$file_change_check = $settings->is_checked_any_file_change_types();
-
-		if ( $is_pro ) {
-			// Pro version. Check all parent types.
-			return $file_change_check || $settings->check_known_vuln || $settings->scan_malware;
-		} else {
-			// Free version:
-			// Check the 'File change detection' type because only it's available with nested types.
-			// Check the Abandoned plugin type.
-			return $file_change_check || $settings->check_abandoned_plugin;
-		}
-	}
-
-	/**
 	 * Exports strings.
 	 *
 	 * @return array An array of strings.
 	 */
 	public function export_strings(): array {
 		$strings = array();
-		if ( $this->is_any_active( $this->is_pro ) ) {
-			$strings[] = esc_html__( 'Active', 'defender-security' );
-		} else {
 			$strings[] = esc_html__( 'Inactive', 'defender-security' );
-		}
-
-		$scan_report       = new Malware_Report();
 		$scan_notification = new Malware_Notification();
 		if ( 'enabled' === $scan_notification->status ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
-		if ( $this->is_pro && 'enabled' === $scan_report->status ) {
-			$strings[] = sprintf(
-			/* translators: %s: Frequency value. */
-				esc_html__( 'Email reports sending %s', 'defender-security' ),
-				$scan_report->frequency
-			);
-		} elseif ( ! $this->is_pro ) {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
-		}
 
 		return $strings;
 	}
 
 	/**
-	 * Generates configuration strings based on the provided configuration and
-	 * whether the product is a pro version.
+	 * Generates configuration strings based on the provided configuration.
 	 *
 	 * @param  array $config  Configuration data.
-	 * @param  bool  $is_pro  Indicates if the product is a pro version.
 	 *
 	 * @return array Returns an array of configuration strings.
 	 */
-	public function config_strings( array $config, bool $is_pro ): array {
+	public function config_strings( array $config ): array {
 		$strings   = array();
 		$strings[] = $this->service->is_any_scan_active( $config )
 			? esc_html__( 'Active', 'defender-security' )
@@ -930,13 +774,7 @@ class Scan extends Event {
 		if ( 'enabled' === $config['notification'] ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
-		if ( $is_pro && 'enabled' === $config['report'] ) {
-			$strings[] = sprintf(
-			/* translators: %s: Frequency value. */
-				esc_html__( 'Email reports sending %s', 'defender-security' ),
-				$config['frequency']
-			);
-		} elseif ( ! $is_pro ) {
+		if ( ! ( property_exists( $this, 'is_pro' ) ? $this->is_pro : wd_di()->get( WPMUDEV::class )->is_pro() ) ) {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),

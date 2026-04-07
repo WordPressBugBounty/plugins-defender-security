@@ -391,14 +391,13 @@ class Password_Protection extends Event {
 	}
 
 	/**
-	 * Generates configuration strings based on the provided configuration and whether the product is a pro version.
+	 * Generates configuration strings based on the provided configuration.
 	 *
 	 * @param  mixed $config  The configuration data.
-	 * @param  bool  $is_pro  Indicates if the product is a pro version.
 	 *
 	 * @return array Returns an array of configuration strings.
 	 */
-	public function config_strings( $config, bool $is_pro ): array {
+	public function config_strings( $config ): array {
 		$is_enabled = isset( $config['enabled'] ) ? (bool) $config['enabled'] : false;
 		if (
 			! $is_enabled ||

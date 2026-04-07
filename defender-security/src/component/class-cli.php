@@ -26,12 +26,10 @@ use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Two_Factor;
 use WP_Defender\Model\Scan as Model_Scan;
 use WP_Defender\Controller\Main_Setting;
-use WP_Defender\Controller\Audit_Logging;
 use WP_Defender\Controller\Advanced_Tools;
 use WP_Defender\Controller\Security_Tweaks;
 use WP_Defender\Model\Setting\Login_Lockout;
 use WP_Defender\Model\Setting\Password_Reset;
-use WP_Defender\Controller\Blocklist_Monitor;
 use WP_Defender\Model\Setting\Notfound_Lockout;
 use WP_Defender\Model\Setting\Security_Headers;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
@@ -61,6 +59,37 @@ class Cli {
 		moment_datetime_format_from as protected;
 		persistent_hub_datetime_format as protected;
 		time_since as protected;
+		get_local_human_date as protected;
+		release_cron_lock as protected;
+		create_lock as protected;
+		has_lock as protected;
+		remove_lock as protected;
+		check_plugin_on_wp_org as protected;
+		check_by_readme_file as protected;
+		acquire_cron_lock as protected;
+		compare_hashes as protected;
+		delete_dir as protected;
+		detect_line_ending as protected;
+		get_abs_plugin_path_by_slug as protected;
+		get_active_plugin_names as protected;
+		get_path_of_themes_dir as protected;
+		get_log_path as protected;
+		get_plugin_details_by as protected;
+		get_plugin_directory_name as protected;
+		get_plugin_headers as protected;
+		get_plugin_relative_path as protected;
+		get_plugin_slugs as protected;
+		get_plugins as protected;
+		get_plugin_slug_by as protected;
+		get_theme as protected;
+		get_theme_slugs as protected;
+		get_themes as protected;
+		get_time_diff as protected;
+		handle_wp_org_response_by as protected;
+		is_active_plugin as protected;
+		is_active_theme as protected;
+		is_likely_wporg_slug as protected;
+		ping_wp_org_by_plugin_slug as protected;
 	}
 	use IO;
 	use Theme;
@@ -143,7 +172,7 @@ class Cli {
 				);
 			}
 		}
-		// Specific case with type-param.
+
 		if ( in_array(
 			$type,
 			array(
@@ -155,11 +184,6 @@ class Cli {
 			return array(
 				'type' => 'folder',
 				'path' => $this->get_abs_plugin_path_by_slug( $raw_data['slug'] ),
-			);
-		} elseif ( Scan_Item::TYPE_VULNERABILITY === $type ) {
-			return array(
-				'type' => 'folder',
-				'path' => $this->get_abs_plugin_path_by_slug( $raw_data['base_slug'] ),
 			);
 		} else {
 			return array(
@@ -176,7 +200,22 @@ class Cli {
 	 * @param  mixed  $options  Command options.
 	 */
 	private function scan_task( $command, $options ) {
-		$type = $options['type'] ?? null;
+		$type = $options['type'] ? strtolower( $options['type'] ) : null;
+		if ( defender_is_wp_org_version()
+			&& in_array(
+				$type,
+				array(
+					Scan_Item::TYPE_VULNERABILITY,
+					// TYPE_SUSPICIOUS const is not suitable for use.
+					'suspicious_code',
+				),
+				true
+			)
+		) {
+			WP_CLI::warning( 'A WPMU DEV subscription is required to use this command.' );
+			return;
+		}
+
 		switch ( $type ) {
 			case null:
 				// All items.
@@ -187,12 +226,6 @@ class Cli {
 				break;
 			case 'plugin_integrity':
 				$type = Scan_Item::TYPE_PLUGIN_CHECK;
-				break;
-			case 'vulnerability':
-				$type = Scan_Item::TYPE_VULNERABILITY;
-				break;
-			case 'suspicious_code':
-				$type = Scan_Item::TYPE_SUSPICIOUS;
 				break;
 			case 'plugin_outdated':
 				$type = Scan_Item::TYPE_PLUGIN_OUTDATED;
@@ -250,36 +283,6 @@ class Cli {
 							$resolved[] = $item;
 						} else {
 							return WP_CLI::error( $ret->get_error_message() );
-						}
-					} elseif ( Scan_Item::TYPE_SUSPICIOUS === $item->type ) {
-						// If this is content, we will try to delete them.
-						$whitelist  = array(
-							// wordfence waf.
-							ABSPATH . '/wordfence-waf.php',
-							// Any files inside plugins, if removed, can cause fatal error.
-							WP_CONTENT_DIR . '/plugins/',
-							// Any files inside themes.
-							$this->get_path_of_themes_dir(),
-						);
-						$path       = $item->raw_data['file'];
-						$can_delete = true;
-						$current    = '';
-						foreach ( $whitelist as $value ) {
-							$current = $value;
-							if ( strpos( $value, $path ) > 0 ) {
-								// Ignore this.
-								$can_delete = false;
-								break;
-							}
-						}
-						if ( false === $can_delete ) {
-							WP_CLI::log( sprintf( 'Ignore file %s as it is in %s', $path, $current ) );
-						} elseif ( wp_delete_file( $path ) ) {
-							WP_CLI::log( sprintf( 'Delete file %s', $path ) );
-							$model->remove_issue( $item->id );
-							$resolved[] = $item;
-						} else {
-							return WP_CLI::error( sprintf( "Can't delete file %s", $path ) );
 						}
 					}
 					// No result for Vulnerability, Outdated or Closed plugin types.
@@ -363,33 +366,6 @@ class Cli {
 				}
 				$wp_filesystem->put_contents( $file_path, $content );
 				break;
-			case 'audit:logs':
-				$types = array(
-					Audit_Log::EVENT_TYPE_USER,
-					Audit_Log::EVENT_TYPE_SYSTEM,
-					Audit_Log::EVENT_TYPE_COMMENT,
-					Audit_Log::EVENT_TYPE_MEDIA,
-					Audit_Log::EVENT_TYPE_SETTINGS,
-					Audit_Log::EVENT_TYPE_CONTENT,
-					Audit_Log::EVENT_TYPE_MENU,
-				);
-				$faker = Factory::create();
-				for ( $i = 0; $i < 500; $i++ ) {
-					$log              = new Audit_Log();
-					$log->timestamp   = Crypt::random_int( strtotime( '-31 days' ), time() );
-					$log->event_type  = $types[ array_rand( $types ) ];
-					$log->action_type = $faker->word();
-					$log->site_url    = $faker->url();
-					$log->user_id     = $faker->numberBetween( 1, 1000 );
-					$log->context     = $faker->word();
-					$log->ip          = $faker->ipv4();
-					$log->msg         = $faker->word();
-					$log->blog_id     = $faker->numberBetween( 1, 100 );
-					$log->synced      = $faker->numberBetween( 0, 1 );
-					$log->ttl         = $faker->numberBetween( 1, 3600 );
-					$log->save();
-				}
-				break;
 			case 'ip:logs':
 				// We will generate randomly 10k logs in 3 months.
 				$types   = array(
@@ -462,6 +438,7 @@ class Cli {
 
 	/**
 	 * Clean up dummy data.
+	 * DO NOT USE IN PRODUCTION.
 	 *
 	 * @param  mixed $args  Command arguments.
 	 */
@@ -483,9 +460,6 @@ class Cli {
 				$content = file_get_contents( ABSPATH . 'wp-load.php' );
 				$wp_filesystem->put_contents( ABSPATH . 'wp-load.php', str_replace( '//this make different', '', $content ) );
 				break;
-			case 'scan:suspicious':
-				wp_delete_file( WP_CONTENT_DIR . '/false-positive.php' );
-				break;
 			default:
 				break;
 		}
@@ -494,31 +468,13 @@ class Cli {
 	/**
 	 * Clears the audit log from Database.
 	 * <command> reset
-	 * This command must have this command
-	 * Syntax: wp defender audit <command>
-	 * Example: wp defender audit reset
 	 *
 	 * @param  mixed $args  Command arguments.
 	 */
 	public function audit( $args ) {
-		if ( ! is_array( $args ) || array() === $args ) {
-			WP_CLI::log( 'Invalid command, add necessary arguments. See below...' );
-			WP_CLI::runcommand( 'defender audit --help' );
-
+		if ( defender_is_wp_org_version() ) {
+			WP_CLI::warning( 'A WPMU DEV subscription is required to use this command.' );
 			return;
-		}
-		[ $command ] = $args;
-		switch ( $command ) {
-			case 'reset':
-				Audit_Log::truncate();
-				delete_site_option( 'wd_audit_fetch_checkpoint' );
-
-				WP_CLI::log( 'All clear' );
-				break;
-			default:
-				WP_CLI::log( 'Invalid command, add necessary arguments. See below...' );
-				WP_CLI::runcommand( 'defender audit --help' );
-				break;
 		}
 	}
 
@@ -669,7 +625,6 @@ class Cli {
 				);
 				// Analog Settings > Reset Settings.
 				wd_di()->get( Advanced_Tools::class )->remove_settings();
-				wd_di()->get( Audit_Logging::class )->remove_settings();
 				wd_di()->get( Dashboard::class )->remove_settings();
 				wd_di()->get( Security_Tweaks::class )->remove_settings();
 				wd_di()->get( \WP_Defender\Controller\Scan::class )->remove_settings();
@@ -679,7 +634,6 @@ class Cli {
 				wd_di()->get( \WP_Defender\Controller\Mask_Login::class )->remove_settings();
 				wd_di()->get( \WP_Defender\Controller\Notification::class )->remove_settings();
 				wd_di()->get( Two_Factor::class )->remove_settings();
-				wd_di()->get( Blocklist_Monitor::class )->remove_settings();
 				wd_di()->get( Main_Setting::class )->remove_settings();
 				WP_CLI::log( 'All cleared!' );
 				break;

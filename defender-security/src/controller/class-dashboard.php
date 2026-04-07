@@ -251,13 +251,10 @@ class Dashboard extends Event {
 			array(
 				'scan'              => wd_di()->get( Scan::class )->data_frontend(),
 				'firewall'          => $firewall->data_frontend(),
-				'waf'               => wd_di()->get( WAF::class )->data_frontend(),
-				'audit'             => wd_di()->get( Audit_Logging::class )->data_frontend(),
 				'blacklist'         => array(
 					'nonces'    => $nonces,
 					'endpoints' => $endpoints,
 				),
-				'blocklist_monitor' => wd_di()->get( Blocklist_Monitor::class )->data_frontend(),
 				'two_fa'            => wd_di()->get( Two_Factor::class )->data_frontend(),
 				'advanced_tools'    => array(
 					'mask_login'         => wd_di()->get( Mask_Login::class )->dashboard_widget(),
@@ -265,7 +262,6 @@ class Dashboard extends Event {
 					'pwned_passwords'    => wd_di()->get( Password_Protection::class )->dashboard_widget(),
 					'captcha'            => wd_di()->get( Captcha::class )->dashboard_widget(),
 					'strong_passwords'   => wd_di()->get( Strong_Password::class )->dashboard_widget(),
-					'session_protection' => wd_di()->get( Session_Protection::class )->export(),
 				),
 				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->dashboard_widget(),
 				'notifications'     => wd_di()->get( Notification::class )->data_frontend(),

@@ -42,54 +42,12 @@ class Bootstrap {
 	 */
 	public function init_modules(): void {
 		$this->init_modules_common();
-		$this->init_free_dashboard();
 	}
 
 	/**
-	 * Load Free Dashboard module.
+	 * Deactivation clears only free version cron hooks.
 	 */
-	public function init_free_dashboard(): void {
-		$file_path = defender_path( 'extra/free-dashboard/module.php' );
-		if ( file_exists( $file_path ) ) {
-			require_once $file_path;
-
-			add_filter( 'wdev_email_message_' . DEFENDER_PLUGIN_BASENAME, array( $this, 'defender_ads_message' ) );
-
-			$screen_prefix = 'defender';
-			$screen_suffix = is_multisite() ? '-network' : '';
-
-			$free_install_date = get_site_option( Rate::SLUG_FREE_INSTALL_DATE, false );
-
-			do_action(
-				'wpmudev_register_notices',
-				'defender',
-				array(
-					'basename'     => DEFENDER_PLUGIN_BASENAME,
-					'title'        => 'Defender',
-					'wp_slug'      => 'defender-security',
-					'cta_email'    => __( 'Get Secure!', 'defender-security' ),
-					'installed_on' => $free_install_date ?: time(),
-					'screens'      => array(
-						'toplevel_page_wp-defender' . $screen_suffix,
-						$screen_prefix . '_page_wdf-hardener' . $screen_suffix,
-						$screen_prefix . '_page_wdf-scan' . $screen_suffix,
-						$screen_prefix . '_page_wdf-logging' . $screen_suffix,
-						$screen_prefix . '_page_wdf-ip-lockout' . $screen_suffix,
-						$screen_prefix . '_page_wdf-waf' . $screen_suffix,
-						$screen_prefix . '_page_wdf-2fa' . $screen_suffix,
-						$screen_prefix . '_page_wdf-advanced-tools' . $screen_suffix,
-						$screen_prefix . '_page_wdf-notification' . $screen_suffix,
-						$screen_prefix . '_page_wdf-setting' . $screen_suffix,
-					),
-				)
-			);
-		}
-	}
-
-	/**
-	 * @return string
-	 */
-	public function defender_ads_message(): string {
-		return __( "You're awesome for installing Defender! Are you interested in how to make the most of this plugin? We've collected all the best security resources we know in a single email - just for users of Defender!", 'defender-security' );
+	public function deactivation_hook(): void {
+		$this->deactivation_hook_common();
 	}
 }

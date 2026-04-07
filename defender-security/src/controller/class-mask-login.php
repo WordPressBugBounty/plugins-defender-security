@@ -866,15 +866,13 @@ class Mask_Login extends Event {
 	}
 
 	/**
-	 * Generates configuration strings based on the provided configuration and
-	 * whether the product is a pro version.
+	 * Generates configuration strings based on the provided configuration.
 	 *
 	 * @param  array $config  Configuration data.
-	 * @param  bool  $is_pro  Indicates if the product is a pro version.
 	 *
 	 * @return array Returns an array of configuration strings.
 	 */
-	public function config_strings( array $config, bool $is_pro ): array {
+	public function config_strings( array $config ): array {
 		return array(
 			$config['enabled'] ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
 		);

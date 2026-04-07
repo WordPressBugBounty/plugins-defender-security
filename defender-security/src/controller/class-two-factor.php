@@ -463,21 +463,8 @@ class Two_Factor extends Event {
 		}
 
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
-		$custom_graphic      = '';
-		$custom_graphic_type = '';
-		$custom_graphic_url  = trim( $this->model->custom_graphic_url );
-		$custom_graphic_link = trim( $this->model->custom_graphic_link );
-		if ( $this->is_pro() && $this->model->custom_graphic ) {
-			$custom_graphic_type = $this->model->custom_graphic_type;
-			if ( Two_Fa::CUSTOM_GRAPHIC_TYPE_UPLOAD === $custom_graphic_type && '' !== $custom_graphic_url ) {
-				$custom_graphic = $custom_graphic_url;
-			} elseif ( Two_Fa::CUSTOM_GRAPHIC_TYPE_LINK === $custom_graphic_type && '' !== $custom_graphic_link ) {
-				$custom_graphic = $custom_graphic_link;
-			}
-		}
-
-		$params['custom_graphic']      = $custom_graphic;
-		$params['custom_graphic_type'] = $custom_graphic_type;
+		$params['custom_graphic']      = '';
+		$params['custom_graphic_type'] = '';
 
 		$collection = $this->dump_routes_and_nonces();
 		$routes     = $collection['routes'];
@@ -1160,10 +1147,6 @@ class Two_Factor extends Event {
 		$model = new Two_Fa();
 
 		$model->import( $data );
-		/**
-		 * Sometime, the custom image broken on import. When that happen, we will revert to the default image.
-		 */
-		$model->custom_graphic_url = $this->service->get_custom_graphic_url( $model->custom_graphic_url );
 		if ( $model->validate() ) {
 			$model->save();
 		}
@@ -1183,15 +1166,13 @@ class Two_Factor extends Event {
 	}
 
 	/**
-	 * Generates configuration strings based on the provided configuration and
-	 * whether the product is a pro version.
+	 * Generates configuration strings based on the provided configuration.
 	 *
 	 * @param  array $config  Configuration data.
-	 * @param  bool  $is_pro  Indicates if the product is a pro version.
 	 *
 	 * @return array Returns an array of configuration strings.
 	 */
-	public function config_strings( array $config, bool $is_pro ): array {
+	public function config_strings( array $config ): array {
 		return array(
 			$config['enabled'] ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
 		);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles interactions with the database for quarantined files.
+ * Model for the unlock out table.
  *
  * @package WP_Defender\Model
  */

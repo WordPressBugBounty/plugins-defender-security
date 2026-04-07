@@ -49,7 +49,7 @@ class Tweak_Reminder extends \WP_Defender\Model\Notification {
 				'defender-security'
 			),
 			// @since 3.0.0 Fix 'Guest'-line.
-			'in_house_recipients'  => is_user_logged_in() ? array( $this->get_default_user() ) : array(),
+			'in_house_recipients'  => $this->get_default_user(),
 			'out_house_recipients' => array(),
 			'type'                 => 'notification',
 			'dry_run'              => false,

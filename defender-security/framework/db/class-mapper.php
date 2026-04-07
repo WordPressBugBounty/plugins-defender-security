@@ -7,7 +7,6 @@
 
 namespace Calotes\DB;
 
-use ReflectionClass;
 use Calotes\Base\Model;
 use Calotes\Base\Component;
 
@@ -526,6 +525,18 @@ class Mapper extends Component {
 		$table = self::table();
 		global $wpdb;
 
+		// Uninstall/reset flows can run in mixed Free/Pro states where some tables were never created.
+		$exists = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				'SHOW TABLES LIKE %s',
+				$wpdb->esc_like( $table )
+			)
+		);
+
+		if ( empty( $exists ) ) {
+			return false;
+		}
+
 		$query = "TRUNCATE TABLE $table"; // SQL is prepared here. so we can ignore WordPress.DB.PreparedSQL.NotPrepared.
 
 		return $wpdb->query( $query );  // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
@@ -543,21 +554,16 @@ class Mapper extends Component {
 	 */
 	private function table( $model = null ) {
 		if ( is_null( $model ) ) {
-			$class_name = $this->repository;
-			$model      = $this->get_model();
-		} else {
-			$class_name = $model;
+			$model = $this->get_model();
 		}
-		$refection = new ReflectionClass( $class_name );
-		if ( $refection->hasProperty( 'table' ) ) {
-			$property = $refection->getProperty( 'table' );
-			$property->setAccessible( true );
+		if ( is_object( $model ) && method_exists( $model, 'get_table' ) ) {
+			$table = $model->get_table();
+			if ( null !== $table ) {
+				global $wpdb;
 
-			$table = $property->getValue( $model );
-			global $wpdb;
-
-			// Have to set the prefix.
-			return $wpdb->base_prefix . $table;
+				// Have to set the prefix.
+				return $wpdb->base_prefix . $table;
+			}
 		}
 		// This when class doesn't exist.
 		return false;

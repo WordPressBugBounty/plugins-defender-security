@@ -65,9 +65,12 @@ class Tokens extends Component {
 	 * @return int The line number at the specified offset.
 	 */
 	public static function get_line_from_offset( $content, $offset ): int {
+		if ( '' === (string) $content ) {
+			return 1;
+		}
 		// Polyfill for PHP version < 8.0.
 		$offset     = max( $offset, 1 );
-		[ $before ] = str_split( $content, $offset );
+		[ $before ] = str_split( (string) $content, $offset );
 
 		return strlen( $before ) - strlen( str_replace( PHP_EOL, '', $before ) ) + 1;
 	}

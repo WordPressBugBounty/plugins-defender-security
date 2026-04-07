@@ -31,8 +31,7 @@ class Scan extends DB {
 	// Default state.
 	public const STEP_GATHER_INFO = 'gather_info', STEP_ABANDONED_PLUGIN_CHECK = 'abandoned_plugin_check';
 	public const STEP_CHECK_CORE  = 'core_integrity_check', STEP_CHECK_PLUGIN = 'plugin_integrity_check';
-	public const STEP_VULN_CHECK  = 'vuln_check', STEP_SUSPICIOUS_CHECK = 'suspicious_check';
-	public const IGNORE_INDEXER   = 'defender_scan_ignore_index';
+	public const IGNORE_INDEXER = 'defender_scan_ignore_index';
 
 	/**
 	 * Table name.
@@ -220,22 +219,6 @@ class Scan extends DB {
 	}
 
 	/**
-	 * Get all Scan types.
-	 *
-	 * @return array
-	 */
-	private static function get_all_scan_types(): array {
-		return array(
-			Scan_Item::TYPE_VULNERABILITY,
-			Scan_Item::TYPE_INTEGRITY,
-			Scan_Item::TYPE_PLUGIN_CHECK,
-			Scan_Item::TYPE_SUSPICIOUS,
-			Scan_Item::TYPE_PLUGIN_CLOSED,
-			Scan_Item::TYPE_PLUGIN_OUTDATED,
-		);
-	}
-
-	/**
 	 * Get abandoned plugin types.
 	 *
 	 * @return array
@@ -267,8 +250,8 @@ class Scan extends DB {
 		$builder = $orm->get_repository( Scan_Item::class )
 						->where( 'parent_id', $this->id );
 
+		$valid_types = Scan_Item::get_all_scan_types();
 		if ( null !== $type ) {
-			$valid_types = self::get_all_scan_types();
 			if ( is_array( $type ) ) {
 				$filtered_types = array_intersect( $type, $valid_types );
 				if ( array() !== $filtered_types ) {
@@ -276,12 +259,16 @@ class Scan extends DB {
 				}
 			} elseif ( in_array( $type, $valid_types, true ) ) {
 				$builder->where( 'type', $type );
+			} elseif ( 'all' === $type ) {
+				$builder->where( 'type', 'IN', $valid_types );
 			}
+		} else {
+			// Include all possible types.
+			$builder->where( 'type', 'IN', $valid_types );
 		}
 
 		if ( null !== $status ) {
-			static $valid_statuses = array( Scan_Item::STATUS_IGNORE, Scan_Item::STATUS_ACTIVE );
-			if ( in_array( $status, $valid_statuses, true ) ) {
+			if ( in_array( $status, Scan_Item::get_all_scan_statuses(), true ) ) {
 				$builder->where( 'status', $status );
 			}
 		}
@@ -313,9 +300,7 @@ class Scan extends DB {
 	/**
 	 * Counts the number of Scan_Item models that match the given type and status.
 	 *
-	 * @param  string|null $type  The type of Scan_Item to count. Must be one of the following:
-	 *                          Scan_Item::TYPE_VULNERABILITY, Scan_Item::TYPE_INTEGRITY,
-	 *                          Scan_Item::TYPE_PLUGIN_CHECK, Scan_Item::TYPE_SUSPICIOUS.
+	 * @param  string|null $type  The type of Scan_Item to count.
 	 * @param  string|null $status  The status of the Scan_Item to count. Must be one of the following:
 	 *                          Scan_Item::STATUS_IGNORE, Scan_Item::STATUS_ACTIVE.
 	 *
@@ -325,19 +310,20 @@ class Scan extends DB {
 		$orm     = self::get_orm();
 		$builder = $orm->get_repository( Scan_Item::class )->where( 'parent_id', $this->id );
 
+		$valid_types = Scan_Item::get_all_scan_types();
+
 		if (
 			! is_null( $type )
-			&& in_array(
-				$type,
-				self::get_all_scan_types(),
-				true
-			)
+			&& in_array( $type, $valid_types, true )
 		) {
 			$builder->where( 'type', $type );
+		} elseif ( is_null( $type ) || 'all' === $type ) {
+			$builder->where( 'type', 'IN', $valid_types );
 		}
+
 		if (
 			! is_null( $status )
-			&& in_array( $status, array( Scan_Item::STATUS_IGNORE, Scan_Item::STATUS_ACTIVE ), true )
+			&& in_array( $status, Scan_Item::get_all_scan_statuses(), true )
 		) {
 			$builder->where( 'status', $status );
 		}
@@ -476,7 +462,6 @@ class Scan extends DB {
 	 */
 	private function get_scan_types_for_whole_folder(): array {
 		return array(
-			Scan_Item::TYPE_VULNERABILITY,
 			Scan_Item::TYPE_PLUGIN_CLOSED,
 			Scan_Item::TYPE_PLUGIN_OUTDATED,
 		);
@@ -521,7 +506,7 @@ class Scan extends DB {
 	 * @return array The array representation of the object.
 	 */
 	public function to_array( $per_page = null, $paged = null, $type = null ) {
-		if ( ! in_array( $this->status, array( self::STATUS_ERROR, self::STATUS_FINISH, self::STATUS_IDLE ), true ) ) {
+		if ( ! in_array( $this->status, self::get_inactive_statuses(), true ) ) {
 
 			return array(
 				'status'          => $this->status,
@@ -655,6 +640,19 @@ class Scan extends DB {
 	}
 
 	/**
+	 * Get the inactive scan statuses.
+	 *
+	 * @return array
+	 */
+	public static function get_inactive_statuses(): array {
+		return array(
+			self::STATUS_FINISH,
+			self::STATUS_ERROR,
+			self::STATUS_IDLE,
+		);
+	}
+
+	/**
 	 * Get the current active scan if any.
 	 *
 	 * @return self|null
@@ -663,7 +661,7 @@ class Scan extends DB {
 		$orm = self::get_orm();
 
 		return $orm->get_repository( self::class )
-			->where( 'status', 'NOT IN', array( self::STATUS_FINISH, self::STATUS_ERROR, self::STATUS_IDLE ) )
+			->where( 'status', 'NOT IN', self::get_inactive_statuses() )
 			->first();
 	}
 
@@ -743,10 +741,6 @@ class Scan extends DB {
 				return esc_html__( 'Analyzing WordPress Core...', 'defender-security' );
 			case self::STEP_CHECK_PLUGIN:
 				return esc_html__( 'Analyzing WordPress Plugins...', 'defender-security' );
-			case self::STEP_VULN_CHECK:
-				return esc_html__( 'Checking for any published vulnerabilities in your plugins and themes...', 'defender-security' );
-			case self::STEP_SUSPICIOUS_CHECK:
-				return esc_html__( 'Analyzing WordPress Content...', 'defender-security' );
 			case self::STEP_ABANDONED_PLUGIN_CHECK:
 				return esc_html__( 'Checking for any outdated & removed plugins...', 'defender-security' );
 			default:

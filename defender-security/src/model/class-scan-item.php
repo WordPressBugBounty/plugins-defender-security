@@ -75,16 +75,21 @@ class Scan_Item extends DB {
 	 * @param  int    $parent_id  The primary key of the scan table.
 	 * @param  string $status  Active or ignore status of scan item(s).
 	 *
-	 * @return array Return array of group and all total.
+	 * @return array Return array of groups and all total.
 	 */
-	public function get_types_total( $parent_id, $status ) {
+	public function get_types_total( $parent_id, $status ): array {
 		global $wpdb;
 
+		$types        = self::get_all_scan_types();
+		$placeholders = implode( ', ', array_fill( 0, count( $types ), '%s' ) );
+
 		$records = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			$wpdb->prepare(
-				"SELECT IFNULL(`type`, 'all') as `item_type`, count(*) as `type_total` FROM {$wpdb->base_prefix}defender_scan_item WHERE `parent_id` = %d AND `status` = %s Group BY `type` WITH ROLLUP",
-				$parent_id,
-				$status
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				"SELECT IFNULL(`type`, 'all') as `item_type`, count(*) as `type_total`" .
+				" FROM {$wpdb->base_prefix}defender_scan_item" .
+				" WHERE `parent_id` = %d AND `status` = %s AND `type` IN ($placeholders)" . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				' Group BY `type` WITH ROLLUP',
+				array_merge( array( $parent_id, $status ), $types )
 			)
 		);
 
@@ -119,14 +124,8 @@ class Scan_Item extends DB {
 	 */
 	public function import( $data ): void {
 		parent::import( $data );
+		// Add behaviors.
 		switch ( $this->type ) {
-			// Add other behaviors here.
-			case self::TYPE_SUSPICIOUS:
-				$this->attach_behavior( Malware_Result::class, Malware_Result::class );
-				break;
-			case self::TYPE_VULNERABILITY:
-				$this->attach_behavior( Vuln_Result::class, Vuln_Result::class );
-				break;
 			case self::TYPE_PLUGIN_CLOSED:
 			case self::TYPE_PLUGIN_OUTDATED:
 				$this->attach_behavior( Abandoned_Result::class, Abandoned_Result::class );
@@ -134,5 +133,31 @@ class Scan_Item extends DB {
 			default:
 				break;
 		}
+	}
+
+	/**
+	 * Get all Scan types.
+	 *
+	 * @return array
+	 */
+	public static function get_all_scan_types(): array {
+		return array(
+			self::TYPE_INTEGRITY,
+			self::TYPE_PLUGIN_CHECK,
+			self::TYPE_PLUGIN_CLOSED,
+			self::TYPE_PLUGIN_OUTDATED,
+		);
+	}
+
+	/**
+	 * Get all scan statuses.
+	 *
+	 * @return array
+	 */
+	public static function get_all_scan_statuses(): array {
+		return array(
+			self::STATUS_ACTIVE,
+			self::STATUS_IGNORE,
+		);
 	}
 }

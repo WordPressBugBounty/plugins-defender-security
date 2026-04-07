@@ -71,44 +71,13 @@ class WAF extends Controller {
 	}
 
 	/**
-	 * Retrieves the WAF status for a given site.
-	 *
-	 * @return bool Returns false on failure, true if WAF is enabled.
-	 */
-	public function get_waf_status(): bool {
-		$status = defender_get_hosting_feature_state( 'waf' );
-		return '' !== $status && true === (bool) $status;
-	}
-
-	/**
 	 * Remove the cache and return latest data.
 	 *
 	 * @return Response
 	 * @defender_route
 	 */
 	public function recheck(): Response {
-		return new Response( true, array( 'waf' => $this->data_frontend()['waf'] ) );
-	}
-
-	/**
-	 * Checks if the WAF dashboard widget should be shown.
-	 *
-	 * @return bool Whether to show the widget or not.
-	 */
-	public function maybe_show_dashboard_widget(): bool {
-		if (
-			// Not hosted on us.
-			! $this->wpmudev->is_wpmu_hosting()
-			// Pro.
-			&& true === $this->wpmudev->is_pro()
-			// Enable whitelabel.
-			&& $this->wpmudev->is_whitelabel_enabled()
-		) {
-			// Hide it.
-			return false;
-		}
-
-		return true;
+		return new Response( true, array( 'waf' => $this->data_frontend() ) );
 	}
 
 	/**
@@ -117,13 +86,7 @@ class WAF extends Controller {
 	 * @return array The array representation of the object.
 	 */
 	public function to_array(): array {
-		return array(
-			'waf' => array(
-				'hosted'     => $this->wpmudev->is_wpmu_hosting(),
-				'status'     => $this->get_waf_status(),
-				'maybe_show' => $this->maybe_show_dashboard_widget(),
-			),
-		);
+		return array();
 	}
 
 	/**
@@ -144,20 +107,7 @@ class WAF extends Controller {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
-		$site_id = $this->wpmudev->get_site_id();
-
-		return array_merge(
-			array(
-				'site_id'       => $site_id,
-				'waf'           => array(
-					'hosted' => $this->wpmudev->is_wpmu_hosting(),
-					'status' => $this->get_waf_status(),
-				),
-				'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
-				'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
-			),
-			$this->dump_routes_and_nonces()
-		);
+		return array();
 	}
 
 	/**

@@ -984,11 +984,10 @@ class Security_Tweaks extends Event {
 	 * Config strings.
 	 *
 	 * @param  array $config  Settings.
-	 * @param  bool  $is_pro  True if it is a pro version.
 	 *
 	 * @return array Strings to be displayed in the settings page.
 	 */
-	public function config_strings( $config, $is_pro ): array {
+	public function config_strings( $config ): array {
 		$strings = array();
 		if (
 			! isset( $config['issues'] )

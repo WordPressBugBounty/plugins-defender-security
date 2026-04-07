@@ -312,19 +312,6 @@ class Plugin_Integrity extends Behavior {
 			$model->task_checkpoint = '';
 		}
 		$model->save();
-		/**
-		 * Reduce false positive reports. Check it only if enabled 'Suspicious code' option.
-		 *
-		 * @since 2.4.10
-		 */
-		if ( ( new Scan_Settings() )->scan_malware ) {
-			if ( array() !== $slugs_of_edited_plugins ) {
-				update_site_option( self::PLUGIN_SLUGS, array_unique( $slugs_of_edited_plugins ) );
-			}
-			if ( array() !== $this->premium_slugs ) {
-				update_site_option( self::PLUGIN_PREMIUM_SLUGS, $this->premium_slugs );
-			}
-		}
 
 		return ! $plugin_files->valid();
 	}

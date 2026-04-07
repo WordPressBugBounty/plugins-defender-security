@@ -8,7 +8,6 @@
 namespace WP_Defender\Controller;
 
 use WP_Defender\Controller;
-use WP_Defender\Behavior\WPMUDEV;
 
 /**
  * Contains methods for handling scans.
@@ -26,17 +25,6 @@ class Expert_Services extends Controller {
 	 * Initializes the model and service, registers routes.
 	 */
 	public function __construct() {
-		$wpmudev = new WPMUDEV();
-		if ( $wpmudev->is_pro() && ! $wpmudev->is_whitelabel_enabled() ) {
-			$this->register_page(
-				esc_html__( 'Expert Services', 'defender-security' ),
-				$this->slug,
-				array( $this, 'main_view' ),
-				$this->parent_slug
-			);
-			$this->register_routes();
-			add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
-		}
 	}
 
 	/**

@@ -121,8 +121,6 @@ class Firewall extends Event {
 		wd_di()->get( UA_Lockout::class );
 		wd_di()->get( Global_Ip::class );
 		wd_di()->get( Antibot_Global_Firewall::class );
-		wd_di()->get( Malicious_Bot::class );
-		wd_di()->get( Fake_Bot_Detection::class );
 
 		// Integrate MainWP plugin.
 		wd_di()->get( Main_Wp::class );
@@ -620,14 +618,12 @@ class Firewall extends Event {
 			header( 'Expires: ' . wp_date( 'D, d M Y H:i:s', time() - 3600 ) . ' GMT' ); // Proxies.
 			header( 'Clear-Site-Data: "cache"' ); // Clear cache of the current request.
 
-			$global_ip_lockout   = wd_di()->get( Global_Ip_Lockout::class );
-			$is_displayed        = Unlock_Me::is_displayed( $reason, $ips );
-			$is_displayed_agf    = $antibot_service->is_displayed( $ips );
-			$allow_self_unlock   = $global_ip_lockout->allow_self_unlock;
-			$hide_btn_agf        = $is_displayed_agf && ! $allow_self_unlock;
-			$malicious_bot       = wd_di()->get( Malicious_Bot::class );
-			$discourage_crawlers = ! $discourage_crawlers && $malicious_bot->is_hash_request() ? true : $discourage_crawlers;
-			$params              = array(
+			$global_ip_lockout = wd_di()->get( Global_Ip_Lockout::class );
+			$is_displayed      = Unlock_Me::is_displayed( $reason, $ips );
+			$is_displayed_agf  = $antibot_service->is_displayed( $ips );
+			$allow_self_unlock = $global_ip_lockout->allow_self_unlock;
+			$hide_btn_agf      = $is_displayed_agf && ! $allow_self_unlock;
+			$params = array(
 				'message'             => ! $hide_btn_agf ? $message : '',
 				'remaining_time'      => $remaining_time,
 				'is_unlock_me'        => $is_displayed,
@@ -850,10 +846,6 @@ class Firewall extends Event {
 		( new Global_Ip() )->remove_data();
 		// Remove AntiBot Global Firewall data.
 		wd_di()->get( Antibot_Global_Firewall::class )->remove_data();
-		// Remove Malicious Bot data.
-		wd_di()->get( Malicious_Bot::class )->remove_data();
-		// Remove Fake Bot data.
-		wd_di()->get( Fake_Bot_Detection::class )->remove_data();
 		// Remove Firewall Logs data.
 		wd_di()->get( Firewall_Logs::class )->remove_data();
 		// Clear Trusted Proxy data.
@@ -947,9 +939,7 @@ class Firewall extends Event {
 	 * @return array An array of strings.
 	 */
 	public function export_strings(): array {
-		$strings         = array();
-		$is_pro          = $this->wpmudev->is_pro();
-		$firewall_report = new Firewall_Report();
+		$strings = array();
 		// Login lockout.
 		$strings[] = Login_Lockout_Model::get_module_name() . ' '
 					. Login_Lockout_Model::get_module_state( ( new Login_Lockout_Model() )->enabled );
@@ -966,38 +956,28 @@ class Firewall extends Event {
 		if ( 'enabled' === ( new Firewall_Notification() )->status ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
-		if ( $is_pro && 'enabled' === $firewall_report->status ) {
-			$strings[] = sprintf(
-			/* translators: %s: Frequency value. */
-				esc_html__( 'Email reports sending %s', 'defender-security' ),
-				$firewall_report->frequency
-			);
-		} elseif ( ! $is_pro ) {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
-		}
 
 		return $strings;
 	}
 
 	/**
-	 * Generates configuration strings based on the provided configuration and
-	 * whether the product is a pro version.
+	 * Generates configuration strings based on the provided configuration.
 	 *
 	 * @param  array $config  Configuration data.
-	 * @param  bool  $is_pro  Indicates if the product is a pro version.
 	 *
 	 * @return array Returns an array of configuration strings.
 	 */
-	public function config_strings( array $config, bool $is_pro ): array {
+	public function config_strings( array $config ): array {
 		$strings = array();
 		// Login lockout.
 		if ( isset( $config['login_protection'] ) ) {
 			$strings[] = Login_Lockout_Model::get_module_name() . ' '
-						. Login_Lockout_Model::get_module_state( (bool) $config['login_protection'] );
+					. Login_Lockout_Model::get_module_state( (bool) $config['login_protection'] );
 		}
 		// NF lockout.
 		if ( isset( $config['detect_404'] ) ) {
@@ -1018,20 +998,11 @@ class Firewall extends Event {
 		if ( isset( $config['notification'] ) && 'enabled' === $config['notification'] ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
-		// Report.
-		if ( $is_pro && 'enabled' === $config['report'] ) {
 			$strings[] = sprintf(
-			/* translators: %s: Frequency value. */
-				esc_html__( 'Email reports sending %s', 'defender-security' ),
-				$config['report_frequency']
-			);
-		} elseif ( ! $is_pro ) {
-			$strings[] = sprintf(
-			/* translators: %s: Html for Pro-tag. */
+				/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
-		}
 
 		return $strings;
 	}

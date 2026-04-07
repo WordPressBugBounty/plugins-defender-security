@@ -320,13 +320,6 @@ END;
 				</div>
 			<?php } ?>
 		<?php } ?>
-		<?php if ( $custom_graphic ) { ?>
-			<style type="text/css">
-				body.login div#login h1 a {
-					background-image: url("<?php echo esc_url_raw( $custom_graphic ); ?>");
-				}
-			</style>
-		<?php } ?>
 		<?php
 		$totp_script = <<<END
 		<script>
@@ -424,7 +417,7 @@ END;
 				echo $totp_script; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			}
 		);
-		?>
+	?>
 		<?php
 }
 ?>

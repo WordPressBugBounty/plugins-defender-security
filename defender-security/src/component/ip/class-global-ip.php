@@ -291,6 +291,8 @@ class Global_IP extends Component {
 			try {
 				$data = $this->make_wpmu_free_request( WPMUDEV::API_GLOBAL_IP_LIST );
 			} catch ( Exception $e ) {
+				$this->log( 'Global IP API Error: ' . $e->getMessage(), Firewall::FIREWALL_LOG );
+
 				return new WP_Error( 'defender_hub_api_invalid_returned', $e->getMessage() );
 			}
 
@@ -315,6 +317,8 @@ class Global_IP extends Component {
 				try {
 					$data = $this->make_wpmu_free_request( WPMUDEV::API_GLOBAL_IP_LIST );
 				} catch ( Exception $e ) {
+					$this->log( 'Global IP API Error: ' . $e->getMessage(), Firewall::FIREWALL_LOG );
+
 					return new WP_Error( 'defender_hub_api_invalid_returned', $e->getMessage() );
 				}
 
@@ -596,7 +600,7 @@ class Global_IP extends Component {
 	 * @return void
 	 */
 	public function handle_expired_membership(): void {
-		if ( $this->is_expired_membership_type() && $this->model->enabled ) {
+		if ( $this->model->enabled && $this->is_expired_membership_type() ) {
 			$this->model->enabled = false;
 			$this->model->save();
 			$this->log( 'Central IP automatically disabled due to expired membership.', 'central_ip.log' );

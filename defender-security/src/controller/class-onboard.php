@@ -102,11 +102,6 @@ class Onboard extends Event {
 			$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 
 			$this->maybe_tracking( 'Activate & Configure' );
-			// Run plugin modules.
-			if ( $this->is_pro() ) {
-				$this->preset_audit();
-				$this->preset_blacklist_monitor();
-			}
 			$this->preset_firewall();
 			$this->resolve_security_tweaks();
 			$this->preset_scanning();
@@ -126,7 +121,7 @@ class Onboard extends Event {
 				}
 			} else {
 				$next_step = 'activate-antibot';
-				update_site_option('wp_defender_onboarding_step', $next_step );
+				update_site_option( 'wp_defender_onboarding_step', $next_step );
 			}
 
 			wp_send_json_success( array( 'next_step' => $next_step ) );
@@ -157,30 +152,6 @@ class Onboard extends Event {
 
 			wp_send_json_success( $data );
 		}
-	}
-
-	/**
-	 * Enable blacklist status.
-	 */
-	private function preset_blacklist_monitor() {
-		$this->make_wpmu_request(
-			WPMUDEV::API_BLACKLIST,
-			array(),
-			array(
-				'method' => 'POST',
-			)
-		);
-	}
-
-	/**
-	 * Sets the audit logging to enabled and saves the changes.
-	 *
-	 * @return void
-	 */
-	private function preset_audit() {
-		$audit          = new \WP_Defender\Model\Setting\Audit_Logging();
-		$audit->enabled = true;
-		$audit->save();
 	}
 
 	/**
@@ -252,13 +223,7 @@ class Onboard extends Event {
 			'Firewall',
 			'Recommendations',
 		);
-		if ( $this->is_pro() ) {
-			$modules[] = 'Malware Scanning';
-			$modules[] = 'Audit Logging';
-			$modules[] = 'Blocklist Monitor';
-		} else {
 			$modules[] = 'WP file scanning';
-		}
 
 		return $modules;
 	}

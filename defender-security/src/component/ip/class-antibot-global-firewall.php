@@ -129,14 +129,23 @@ class Antibot_Global_Firewall extends Component {
 	}
 
 	/**
+	 * Is managed by Plugin side?
+	 *
+	 * @return bool
+	 */
+	protected function is_managed_by_plugin(): bool {
+		return 'plugin' === $this->get_managed_by();
+	}
+
+	/**
 	 * Check if the AntiBot Global Firewall is enabled based on managed by.
 	 *
 	 * @return bool True if the AntiBot Global Firewall is enabled, false otherwise.
 	 */
 	public function frontend_is_enabled(): bool {
-		return 'plugin' === $this->get_managed_by() ?
-			! $this->is_expired_membership_type() && $this->is_enabled() :
-			$this->hosting_is_enabled();
+		return $this->is_managed_by_plugin()
+			? ! $this->is_expired_membership_type() && $this->is_enabled()
+			: $this->hosting_is_enabled();
 	}
 
 	/**
@@ -155,7 +164,7 @@ class Antibot_Global_Firewall extends Component {
 	 * @return bool True if the AntiBot Global Firewall is active via plugin, false otherwise.
 	 */
 	public function is_active_via_plugin(): bool {
-		return 'plugin' === $this->get_managed_by() && $this->is_enabled() && $this->is_site_connected_to_hub_via_hcm_or_dash();
+		return $this->is_managed_by_plugin() && $this->is_enabled() && $this->is_site_connected_to_hub_via_hcm_or_dash();
 	}
 
 	/**
@@ -441,7 +450,7 @@ class Antibot_Global_Firewall extends Component {
 	 * @return string The AntiBot managed by label.
 	 */
 	public function get_managed_by_label(): string {
-		return 'plugin' === $this->get_managed_by() ?
+		return $this->is_managed_by_plugin() ?
 			esc_html__( 'Defender Plugin', 'defender-security' ) :
 			esc_html__( 'WPMU DEV Hosting', 'defender-security' );
 	}
@@ -470,7 +479,7 @@ class Antibot_Global_Firewall extends Component {
 	 * @return string|false The managed by value if it's switched, false otherwise.
 	 */
 	public function switch_managed_by() {
-		$managed_by = 'plugin' === $this->get_managed_by() ? 'hosting' : 'plugin';
+		$managed_by = $this->is_managed_by_plugin() ? 'hosting' : 'plugin';
 
 		if ( $this->set_managed_by( $managed_by ) ) {
 			if ( 'plugin' === $managed_by ) {
@@ -606,6 +615,11 @@ class Antibot_Global_Firewall extends Component {
 	 * @return int The number of blocklisted IPs.
 	 */
 	public function get_cached_blocklisted_ips(): int {
+		// If not connected skip the remote call entirely and return zero.
+		if ( ! $this->is_site_connected_to_hub_via_hcm_or_dash() ) {
+			return 0;
+		}
+
 		$mode        = $this->frontend_mode();
 		$stats_key   = self::BLOCKLIST_STATS_KEY . '_' . $mode;
 		$cached_data = get_site_transient( $stats_key );
@@ -738,9 +752,7 @@ class Antibot_Global_Firewall extends Component {
 	 * @return string The AntiBot mode.
 	 */
 	public function frontend_mode(): string {
-		return 'plugin' === $this->get_managed_by() ?
-			$this->get_mode() :
-			$this->get_hosting_mode();
+		return $this->is_managed_by_plugin() ? $this->get_mode() : $this->get_hosting_mode();
 	}
 
 	/**
@@ -749,7 +761,7 @@ class Antibot_Global_Firewall extends Component {
 	 * @return string|false|WP_Error The AntiBot mode value if it's switched, false otherwise.
 	 */
 	public function switch_mode() {
-		if ( 'plugin' === $this->get_managed_by() ) {
+		if ( $this->is_managed_by_plugin() ) {
 			$mode = $this->get_mode();
 
 			$this->model_setting->mode = Antibot_Global_Firewall_Setting::MODE_STRICT === $mode
@@ -799,9 +811,14 @@ class Antibot_Global_Firewall extends Component {
 		if ( $this->is_site_connected_to_hub_via_hcm_or_dash() ) {
 			return;
 		}
-		if ( $this->get_cached_blocklisted_ips() <= 0 ) {
+		// Skip if there is nothing to clean up. No local DB records and no cached stats transients.
+		$has_db_records   = $this->model->has_records();
+		$has_stats_cached = false !== get_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_mode() )
+			|| false !== get_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_hosting_mode() );
+		if ( ! $has_db_records && ! $has_stats_cached ) {
 			return;
 		}
+
 		$this->delete_blocklist();
 		delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_mode() );
 		delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_hosting_mode() );

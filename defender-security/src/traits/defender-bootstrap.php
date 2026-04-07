@@ -22,7 +22,6 @@ use WP_Defender\Controller\Webauthn;
 use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Captcha;
 use WP_Defender\Controller\Mask_Login;
-use WP_Defender\Controller\Quarantine;
 use WP_Defender\Controller\Two_Factor;
 use WP_Defender\Component\Hub_Connector;
 use WP_Defender\Controller\Main_Setting;
@@ -49,112 +48,13 @@ use WP_Defender\Component\Rate as Rate_Component;
 use WP_Defender\Upgrader;
 
 trait Defender_Bootstrap {
-	/**
-	 * Table name for quarantine.
-	 *
-	 * @var string
-	 */
-	private $quarantine_table = 'defender_quarantine';
-
-	/**
-	 * Table name for scan item.
-	 *
-	 * @var string
-	 */
-	private $scan_item_table = 'defender_scan_item';
-
-	/**
-	 * Check is all quarantine dependent table is having storage engine InnoDB.
-	 *
-	 * @return bool True if all dependent table is InnoDB else false.
-	 */
-	private function is_quarantine_dependent_tables_innodb(): bool {
-		global $wpdb;
-
-		$tables      = array( $wpdb->users, $wpdb->base_prefix . $this->scan_item_table );
-		$total_table = count( $tables );
-
-		return $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT COUNT(`ENGINE`) = %d FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND `ENGINE` = %s AND TABLE_NAME IN ( '{$wpdb->users}', '{$wpdb->base_prefix}defender_scan_item' );",
-				$total_table,
-				$wpdb->dbname,
-				'innodb',
-			)
-		) === '1';
-	}
-
-	/**
-	 * Creates the quarantine table if it doesn't exist.
-	 *
-	 * @return void
-	 */
-	public function create_table_quarantine() {
-		global $wpdb;
-
-		// Define table names and charset.
-		$quarantine_table = $wpdb->base_prefix . $this->quarantine_table;
-		$scan_item_table  = $wpdb->base_prefix . $this->scan_item_table;
-		$charset_collate  = $wpdb->get_charset_collate();
-		$unique_id        = uniqid( $wpdb->prefix );
-
-		$common_columns = <<<'SQL'
-		`id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-		`defender_scan_item_id` int UNSIGNED DEFAULT NULL,
-		`file_hash` char(53) NOT NULL,
-		`file_full_path` text NOT NULL,
-		`file_original_name` tinytext NOT NULL,
-		`file_extension` varchar(16) DEFAULT NULL,
-		`file_mime_type` varchar(64) DEFAULT NULL,
-		`file_rw_permission` smallint UNSIGNED DEFAULT NULL,
-		`file_owner` varchar(255) DEFAULT NULL,
-		`file_group` varchar(255) DEFAULT NULL,
-		`file_version` varchar(32) DEFAULT NULL,
-		`file_category` tinyint UNSIGNED DEFAULT 0,
-		`file_modified_time` datetime NOT NULL,
-		`source_slug` varchar(255) NOT NULL,
-		`created_time` datetime NOT NULL,
-		`created_by` bigint UNSIGNED DEFAULT NULL,
-		PRIMARY KEY (`id`)
-		SQL;
-
-		// Define key names.
-		$scan_item_key  = "{$unique_id}_defender_scan_item_id";
-		$created_by_key = "{$unique_id}_created_by";
-
-		// Build the SQL statement based on the storage engine.
-		if ( $this->is_quarantine_dependent_tables_innodb() ) {
-			$sql = <<<SQL
-			CREATE TABLE IF NOT EXISTS `{$quarantine_table}` (
-				$common_columns,
-				CONSTRAINT `{$scan_item_key}`
-				FOREIGN KEY (`defender_scan_item_id`) REFERENCES {$scan_item_table}(`id`)
-				ON UPDATE CASCADE ON DELETE SET NULL,
-				CONSTRAINT `{$created_by_key}`
-				FOREIGN KEY (`created_by`) REFERENCES {$wpdb->users}(`ID`)
-				ON UPDATE CASCADE ON DELETE SET NULL
-			) {$charset_collate};
-			SQL;
-		} else {
-			$sql = <<<SQL
-			CREATE TABLE IF NOT EXISTS `{$quarantine_table}` (
-				$common_columns,
-				KEY `{$scan_item_key}` (`defender_scan_item_id`),
-				KEY `{$created_by_key}` (`created_by`)
-			) {$charset_collate};
-			SQL;
-		}
-
-		// Execute the SQL query.
-		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	}
 
 	/**
 	 * Activation.
 	 */
 	private function activation_hook_common(): void {
 		Upgrader::date_activated();
-		$this->create_database_tables();
+		$this->create_database_tables_common();
 		$this->on_activation();
 		// Create a file with a random key if it doesn't exist.
 		( new Crypt() )->create_key_file();
@@ -171,12 +71,10 @@ trait Defender_Bootstrap {
 	}
 
 	/**
-	 * Deactivation.
+	 * Deactivation - clears shared cron hooks present in both free and pro versions.
 	 */
-	public function deactivation_hook(): void {
+	protected function deactivation_hook_common(): void {
 		wp_clear_scheduled_hook( 'firewall_clean_up_logs' );
-		wp_clear_scheduled_hook( 'audit_sync_events' );
-		wp_clear_scheduled_hook( 'audit_clean_up_logs' );
 		wp_clear_scheduled_hook( 'wdf_maybe_send_report' );
 		wp_clear_scheduled_hook( 'wp_defender_clear_logs' );
 		wp_clear_scheduled_hook( 'wpdef_sec_key_gen' );
@@ -184,7 +82,6 @@ trait Defender_Bootstrap {
 		wp_clear_scheduled_hook( 'wpdef_log_rotational_delete' );
 		wp_clear_scheduled_hook( 'wpdef_update_geoip' );
 		wp_clear_scheduled_hook( 'wpdef_fetch_global_ip_list' );
-		wp_clear_scheduled_hook( 'wpdef_quarantine_delete_expired' );
 		wp_clear_scheduled_hook( 'wpdef_firewall_clean_up_lockout' );
 		wp_clear_scheduled_hook( 'wpdef_firewall_send_compact_logs_to_api' );
 		wp_clear_scheduled_hook( 'wpdef_firewall_fetch_trusted_proxy_preset_ips' );
@@ -197,7 +94,6 @@ trait Defender_Bootstrap {
 
 		// Remove old legacy cron jobs if they exist.
 		wp_clear_scheduled_hook( 'lockoutReportCron' );
-		wp_clear_scheduled_hook( 'auditReportCron' );
 		wp_clear_scheduled_hook( 'cleanUpOldLog' );
 		wp_clear_scheduled_hook( 'scanReportCron' );
 		wp_clear_scheduled_hook( 'tweaksSendNotification' );
@@ -261,7 +157,7 @@ SQL;
 	 * @since 2.7.1 No use dbDelta because PHP v8.1 triggers an error when calling query "DESCRIBE {$table};" if the
 	 *     table doesn't exist.
 	 */
-	protected function create_database_tables(): void {
+	protected function create_database_tables_common(): void {
 		global $wpdb;
 
 		$charset_collate = $wpdb->get_charset_collate();
@@ -275,29 +171,6 @@ SQL;
  `to` varchar(255) NOT NULL,
  PRIMARY KEY  (`id`),
  KEY `source` (`source`)
-) $charset_collate;";
-		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		// Audit log table. Though our data mainly store on API side, we will need a table for caching.
-		$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->base_prefix}defender_audit_log (
- `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
- `timestamp` int NOT NULL,
- `event_type` varchar(255) NOT NULL,
- `action_type` varchar(255) NOT NULL,
- `site_url` varchar(255) NOT NULL,
- `user_id` int NOT NULL,
- `context` varchar(255) NOT NULL,
- `ip` varchar(45) NOT NULL,
- `msg` varchar(255) NOT NULL,
- `blog_id` int NOT NULL,
- `synced` int NOT NULL,
- `ttl` int NOT NULL,
- PRIMARY KEY  (`id`),
- KEY `event_type` (`event_type`),
- KEY `action_type` (`action_type`),
- KEY `user_id` (`user_id`),
- KEY `context` (`context`),
- KEY `ip` (`ip`)
 ) $charset_collate;";
 		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -367,9 +240,7 @@ SQL;
 ) $charset_collate;";
 		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		$this->create_table_quarantine();
-
-		// Create Unlock table.
+		// Create unlockout table.
 		$this->create_table_unlockout();
 		// Create Blocklist table.
 		$this->create_table_blocklist();
@@ -430,10 +301,6 @@ SQL;
 		wd_di()->get( Hub_Connector_Controller::class );
 		wd_di()->get( Strong_Password::class );
 		wd_di()->get( Session_Protection::class );
-
-		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-			wd_di()->get( Quarantine::class );
-		}
 		wd_di()->get( Data_Tracking::class );
 		if ( defender_is_wp_org_version() ) {
 			wd_di()->get( Rate_Controller::class );

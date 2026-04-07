@@ -12,7 +12,6 @@ use WP_Defender\Traits\IO;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Lockout_Log;
-use WP_Defender\Component\Quarantine;
 use WP_Defender\Model\Setting\Two_Fa;
 use WP_Defender\Component\IP\Antibot_Global_Firewall;
 use WP_Defender\Component\IP\Global_IP;
@@ -66,9 +65,7 @@ class HUB extends Event {
 	 * @return array The updated actions array with hub endpoints added.
 	 */
 	public function add_hub_endpoint( $actions ) {
-		$actions['defender_new_scan']              = array( $this, 'new_scan' );
-		$actions['defender_schedule_scan']         = array( $this, 'schedule_scan' );
-		$actions['defender_manage_audit_log']      = array( $this, 'manage_audit_log' );
+		$actions['defender_new_scan'] = array( $this, 'new_scan' );
 		$actions['defender_manage_lockout']        = array( $this, 'manage_lockout' );
 		$actions['defender_whitelist_ip']          = array( $this, 'whitelist_ip' );
 		$actions['defender_blacklist_ip']          = array( $this, 'blacklist_ip' );
@@ -85,9 +82,6 @@ class HUB extends Event {
 		$actions['defender_get_stats'] = array( $this, 'get_stats' );
 		// Version#2.
 		$actions['defender_get_stats_v2'] = array( $this, 'defender_get_stats_v2' );
-
-		$actions['defender_get_quarantined_files']    = array( $this, 'get_quarantined_files' );
-		$actions['defender_restore_quarantined_file'] = array( $this, 'restore_quarantined_file' );
 
 		return $actions;
 	}
@@ -111,32 +105,6 @@ class HUB extends Event {
 	}
 
 	/**
-	 * Schedule a scan, from HUB.
-	 *
-	 * @param  array $params  Schedule config.
-	 */
-	public function schedule_scan( $params ) {
-		$frequency    = $params['frequency'];
-		$day          = $params['day'];
-		$time         = $params['time'];
-		$allowed_freq = array( 1, 7, 30 );
-		if (
-			! in_array( $frequency, $allowed_freq, true )
-			|| ! in_array( $day, $this->get_days_of_week(), true )
-			|| ! in_array( $time, $this->get_times(), true )
-		) {
-			wp_send_json_error();
-		}
-		$malware_report            = new Malware_Report();
-		$malware_report->frequency = $frequency;
-		$malware_report->day       = $day;
-		$malware_report->time      = $time;
-		$malware_report->save();
-
-		wp_send_json_success();
-	}
-
-	/**
 	 * Track a feature activation or deactivation from the Hub.
 	 *
 	 * @param  bool   $is_active  Whether the feature is being activated or deactivated.
@@ -153,38 +121,10 @@ class HUB extends Event {
 	}
 
 	/**
-	 * Manage the audit log settings by toggling the enabled status of the Audit Logging feature.
-	 *
-	 * @return void
-	 */
-	public function manage_audit_log() {
-		$response = null;
-		if ( class_exists( Model_Audit_Logging::class ) ) {
-			$settings = new Model_Audit_Logging();
-			$response = array();
-			if ( true === $settings->enabled ) {
-				$settings->enabled   = false;
-				$response['enabled'] = false;
-			} else {
-				$settings->enabled   = true;
-				$response['enabled'] = true;
-			}
-			$settings->save();
-			// Track.
-			if ( $this->is_tracking_active() ) {
-				$this->track_feature_from_hub( ! $settings->enabled, 'Audit Logging' );
-			}
-		}
-
-		wp_send_json_success( $response );
-	}
-
-	/**
 	 * Manages the lockout feature based on the given parameters.
 	 *
 	 * @param  array  $params  The parameters for managing the lockout.
-	 *                       - type (string): The type of lockout to manage. Possible values: 'login', '404',
-	 *                       'ua-lockout'.
+	 *                       - type (string): The type of lockout to manage. Possible values: 'login', '404', 'ua-lockout'.
 	 * @param  string $action  The action to perform on the lockout.
 	 *
 	 * @return void
@@ -436,10 +376,9 @@ class HUB extends Event {
 		$model_sec_headers = wd_di()->get( \WP_Defender\Model\Setting\Security_Headers::class );
 		$scan_report       = wd_di()->get( Malware_Report::class );
 		$two_fa            = wd_di()->get( Two_Fa::class );
+			$quarantined_files = array();
 
-		$quarantined_files = class_exists( 'WP_Defender\Component\Quarantine' ) ?
-			wd_di()->get( Quarantine::class )->hub_list() : array();
-		$antibot_service   = wd_di()->get( Antibot_Global_Firewall::class );
+		$antibot_service = wd_di()->get( Antibot_Global_Firewall::class );
 
 		$ret = array(
 			'summary'           => array(
@@ -516,10 +455,10 @@ class HUB extends Event {
 				'antibot_mode'               => $antibot_service->frontend_mode(),
 			),
 			'audit'             => array(
-				'last_event' => $audit['lastEvent'],
-				'24_hours'   => $audit['dayCount'],
-				'7_days'     => $audit['weekCount'],
-				'30_days'    => $audit['monthCount'],
+				'last_event' => $audit['lastEvent'] ?? 'n/a',
+				'24_hours'   => $audit['dayCount'] ?? 0,
+				'7_days'     => $audit['weekCount'] ?? 0,
+				'30_days'    => $audit['monthCount'] ?? 0,
 				'enabled'    => $audit_log->model->is_active(),
 			),
 			'advanced_tools'    => array(
@@ -581,9 +520,10 @@ class HUB extends Event {
 	/**
 	 * Placeholder for frontend data.
 	 *
-	 * @return void
+	 * @return array
 	 */
 	public function data_frontend() {
+		return array();
 	}
 
 	/**
@@ -736,67 +676,6 @@ class HUB extends Event {
 
 		wp_send_json_success(
 			array( 'enabled' => $global_ip_component->is_global_ip_enabled() )
-		);
-	}
-
-	/**
-	 * Get recent quarantined files.
-	 */
-	public function get_quarantined_files(): void {
-		if ( ! class_exists( 'WP_Defender\Component\Quarantine' ) ) {
-			$result = array(
-				'message' => defender_quarantine_pro_only(),
-				'success' => false,
-			);
-
-			wp_send_json_error( $result );
-		}
-
-		$quarantine_obj = wd_di()->get( Quarantine::class );
-
-		$quarantined_files = $quarantine_obj->hub_list();
-
-		wp_send_json_success(
-			array( 'quarantined_files' => $quarantined_files )
-		);
-	}
-
-	/**
-	 * Restores a quarantined file based on the provided parameters.
-	 *
-	 * @param  object $params  The parameters for restoring the quarantined file.
-	 *                     Requires the 'id' property to be set.
-	 *
-	 * @return void
-	 */
-	public function restore_quarantined_file( object $params ): void {
-		if ( ! class_exists( 'WP_Defender\Component\Quarantine' ) ) {
-			$result = array(
-				'message' => defender_quarantine_pro_only(),
-				'success' => false,
-			);
-
-			wp_send_json_error( $result );
-		}
-
-		if ( isset( $params->id ) ) {
-			$id = (int) $params->id;
-
-			$quarantine_obj = wd_di()->get( Quarantine::class );
-
-			$result = $quarantine_obj->restore_file( $id );
-
-			if ( isset( $result['success'] ) && false === $result['success'] ) {
-				wp_send_json_error( $result );
-			}
-
-			wp_send_json_success( $result );
-		}
-
-		wp_send_json_error(
-			array(
-				'message' => esc_html__( 'Missing parameter: id.', 'defender-security' ),
-			)
 		);
 	}
 

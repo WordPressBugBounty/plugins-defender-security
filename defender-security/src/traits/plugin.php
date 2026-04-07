@@ -8,7 +8,6 @@
 namespace WP_Defender\Traits;
 
 use WP_Error;
-use WP_Defender\Component\Quarantine as Quarantine_Component;
 use WP_Defender\Model\Scan_Item;
 use WP_Filesystem_Base;
 
@@ -481,16 +480,10 @@ trait Plugin {
 	 * @return array|WP_Error
 	 */
 	public function quarantine( string $parent_action, Scan_Item $scan_item ) {
-		if ( ! class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
 			return new WP_Error(
 				'DEFENDER_PRO_ONLY_FEATURE',
 				defender_quarantine_pro_only()
 			);
-		}
-
-		$quarantine_component = wd_di()->get( Quarantine_Component::class );
-
-		return $quarantine_component->quarantine_file( $scan_item, $parent_action );
 	}
 
 	/**

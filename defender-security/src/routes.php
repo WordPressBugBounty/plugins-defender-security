@@ -76,12 +76,6 @@ function defender_init_routes() {
 			'update_settings' => 'save_settings',
 			'bulk_action'     => 'bulk_action',
 		),
-		'audit'             => array(
-			'update_settings' => 'save_settings',
-			'pull_logs'       => 'pull_logs',
-			'summary'         => 'summary',
-			'export_as_csv'   => 'export_as_csv',
-		),
 		'notification'      => array(
 			'get_users'         => 'get_users',
 			'save_notification' => 'save_notification',
@@ -104,17 +98,10 @@ function defender_init_routes() {
 			'update_settings' => 'save_settings',
 			'reset_settings'  => 'reset_settings',
 		),
-		'waf'               => array(
-			'recheck' => 'recheck',
-		),
 		'onboard'           => array(
 			'activating'       => 'activating',
 			'skip'             => 'skip',
 			'antibot_reminder' => 'antibot_reminder',
-		),
-		'blocklist_monitor' => array(
-			'blacklist_status'        => 'blacklist_status',
-			'toggle_blacklist_status' => 'toggle_blacklist_status',
 		),
 		'tracking'          => array(
 			'close_track_modal' => 'close_track_modal',
@@ -129,16 +116,11 @@ function defender_init_routes() {
 			'handle_notice'   => 'handle_notice',
 		),
 	);
-
-	if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-		$routes['quarantine'] = array(
-			'restore_file'          => 'restore_file',
-			'quarantine_collection' => 'quarantine_collection',
-			'delete_file'           => 'delete_file',
-		);
-	}
-
 	foreach ( $routes as $module => $info ) {
+		$controller = Array_Cache::get( $module );
+		if ( null === $controller ) {
+			continue;
+		}
 		foreach ( $info as $name => $func ) {
 			$nopriv = false;
 			if ( is_array( $func ) ) {
@@ -148,10 +130,7 @@ function defender_init_routes() {
 				$name,
 				$module,
 				$name,
-				array(
-					Array_Cache::get( $module ),
-					$func,
-				),
+				array( $controller, $func ),
 				$nopriv
 			);
 		}

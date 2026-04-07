@@ -16,7 +16,6 @@ use WP_Defender\Traits\Formats;
 use Calotes\Component\Behavior;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Traits\File_Operations;
-use WP_Defender\Component\Quarantine as Quarantine_Component;
 use WP_Filesystem_Base;
 
 /**
@@ -39,12 +38,7 @@ class Plugin_Integrity extends Behavior {
 		$data = $this->owner->raw_data;
 		$file = $data['file'];
 		list( $file_created_at, $file_size, $deleted ) = $this->get_file_meta( $file );
-
-		$is_quarantinable = $this->is_quarantinable( $this->owner->raw_data['file'] );
-
-		$quarantine_data = class_exists( 'WP_Defender\Component\Quarantine' ) ?
-			wd_di()->get( Quarantine_Component::class )->scan_item_data( $this->owner ) :
-			array( 'is_quarantinable' => $is_quarantinable );
+			$quarantine_data = array( 'is_quarantinable' => false );
 
 		return array_merge(
 			array(

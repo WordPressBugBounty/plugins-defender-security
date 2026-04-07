@@ -283,7 +283,6 @@ class Antibot_Global_Firewall extends Event {
 						$module_name
 					),
 					'current_user'              => esc_html( wp_get_current_user()->display_name ?? __( 'User', 'defender-security' ) ),
-					'current_plan'              => $this->get_membership_type(),
 					'is_expired_membership'     => $this->is_expired_membership_type(),
 					'should_show_global_notice' => $this->service->should_show_global_notice(),
 					'show_antibot_options'      => $this->service->get_states_of_antibot_options_for_different_hosting_types(),
@@ -669,7 +668,7 @@ class Antibot_Global_Firewall extends Event {
 	 * @return void
 	 */
 	public function handle_expired_membership(): void {
-		if ( $this->is_expired_membership_type() && $this->model->enabled ) {
+		if ( $this->model->enabled && $this->is_expired_membership_type() ) {
 			$this->service->managed_by_plugin_action( false );
 			$this->log( 'AntiBot Global Firewall automatically disabled due to expired membership.', Antibot_Global_Firewall_Component::LOG_FILE_NAME );
 		}

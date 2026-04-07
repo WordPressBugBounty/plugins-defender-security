@@ -54,7 +54,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @var bool
 	 */
-	public $scan_malware = true;
+	public $scan_malware = false;
 
 	/**
 	 * Check if any plugins or themes have a known vulnerability.
@@ -62,7 +62,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @var bool
 	 */
-	public $check_known_vuln = true;
+	public $check_known_vuln = false;
 
 	/**
 	 * If a file is smaller than this, we wil include it to the test.
@@ -87,7 +87,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @rule in[daily,weekly,monthly]
 	 */
-	public $frequency;
+	public $frequency = 'weekly';
 
 	/**
 	 * The day of scheduled scan.
@@ -96,7 +96,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @sanitize_text_field
 	 */
-	public $day;
+	public $day = '';
 
 	/**
 	 * This is for when user select scheduled scan as monthly, we will have the day number, instead of text.
@@ -114,7 +114,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @sanitize_text_field
 	 */
-	public $time;
+	public $time = '';
 
 	/**
 	 * Quarantine file deletion/expiration cron schedule.
@@ -178,15 +178,15 @@ class Scan extends Setting {
 	 * @return void
 	 */
 	protected function after_validate(): void {
-		// Case#1: all child types of File change detection are unchecked BUT parent type is checked.
+		// Case#1: all child types of File change detection are unchecked BUT the parent type is checked.
 		if ( $this->integrity_check && ! $this->check_core && ! $this->check_plugins ) {
 			$this->errors[] = sprintf(
 				/* translators: %s: File change detection. */
 				esc_html__( 'You have not selected a scan type for the %s. Please choose at least one and save the settings again.', 'defender-security' ),
 				'<strong>' . esc_html__( 'File change detection', 'defender-security' ) . '</strong>'
 			);
-			// Case#2: all scan types are unchecked and Scheduled Scanning is checked.
-		} elseif ( ! $this->is_enabled_any_scan_type() && $this->scheduled_scanning ) {
+			// Case#2: all scan types are unchecked.
+		} elseif ( ! $this->is_enabled_any_scan_type() ) {
 			$this->errors[] = esc_html__(
 				'You have not selected a scan type. Please enable at least one scan type and save the settings again.',
 				'defender-security'
@@ -195,34 +195,11 @@ class Scan extends Setting {
 	}
 
 	/**
-	 * Initializes the object by setting default values for the frequency, day, day_n, and time properties based on the
-	 * current day and time.
+	 * Initializes the object by setting default values.
 	 *
 	 * @return void
-	 * @throws Exception Emits Exception in case of an error.
-	 * @since 4.7.1 Implement Dynamic Scan Scheduling to avoid event spikes on MP.
 	 */
 	protected function before_load(): void {
-		// Get current day and time.
-		$date          = new DateTime( 'now', wp_timezone() );
-		$result        = explode( '--', $date->format( 'l--H--i' ) );
-		$day           = strtolower( $result[0] );
-		$current_hours = (int) $result[1];
-		$current_mins  = (int) $result[2];
-		// We have a 30 minute span, so XX:00-15 => XX:00, XX:16-45 => XX:30, XX:46-59 => (XX+1):00.
-		if ( $current_mins > 15 && $current_mins <= 45 ) {
-			$mins = '30';
-		} elseif ( $current_mins >= 0 && $current_mins < 16 ) {
-			$mins = '00';
-		} else {
-			++$current_hours;
-			$mins = '00';
-		}
-
-		$this->frequency = 'weekly';
-		$this->day       = $day;
-		$this->day_n     = 1;
-		$this->time      = $current_hours . ':' . $mins;
 	}
 
 	/**
@@ -231,9 +208,15 @@ class Scan extends Setting {
 	 * @return bool
 	 */
 	private function is_enabled_any_scan_type(): bool {
-		return $this->integrity_check
-			|| $this->check_known_vuln
-			|| $this->scan_malware
-			|| $this->check_abandoned_plugin;
+		return $this->integrity_check || $this->check_abandoned_plugin;
+	}
+
+	/**
+	 * Is enabled Scheduled Scanning?
+	 *
+	 * @return bool
+	 */
+	public function is_enabled_scheduled_scanning(): bool {
+		return false;
 	}
 }

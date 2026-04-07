@@ -93,7 +93,6 @@ class Advanced_Tools extends Event {
 		wd_di()->get( \WP_Defender\Controller\Password_Protection::class )->remove_data();
 		wd_di()->get( \WP_Defender\Controller\Password_Reset::class )->remove_data();
 		wd_di()->get( \WP_Defender\Controller\Strong_Password::class )->remove_data();
-		wd_di()->get( \WP_Defender\Controller\Session_Protection::class )->remove_data();
 		// End.
 		wd_di()->get( \WP_Defender\Controller\Captcha::class )->remove_data();
 
@@ -108,10 +107,8 @@ class Advanced_Tools extends Event {
 		$maxmind_dir = $service_geo->get_db_base_path();
 		$wp_filesystem->delete( $maxmind_dir, true );
 		$arr_deleted_files = array(
-			\WP_Defender\Component\Audit::AUDIT_LOG,
 			\WP_Defender\Controller\Firewall::FIREWALL_LOG,
 			wd_internal_log(),
-			\WP_Defender\Behavior\Scan\Malware_Scan::MALWARE_LOG,
 			\WP_Defender\Controller\Scan::SCAN_LOG,
 			\WP_Defender\Component\Password_Protection::PASSWORD_LOG,
 			\WP_Defender\Component\IP\Antibot_Global_Firewall::LOG_FILE_NAME,

@@ -62,16 +62,12 @@ trait Defender_Dashboard_Client {
 	 * @return string Menu title.
 	 */
 	public function get_menu_title(): string {
-		if ( $this->is_pro() ) {
-			$menu_title = esc_html__( 'Defender Pro', 'defender-security' );
-		} else {
-			// Check if it's Pro but user logged the WPMU DEV Dashboard out.
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-			$menu_title = file_exists( $this->get_abs_plugin_path_by_slug( WP_DEFENDER_PRO_PATH ) )
-							&& is_plugin_active( WP_DEFENDER_PRO_PATH )
-				? esc_html__( 'Defender Pro', 'defender-security' )
-				: esc_html__( 'Defender', 'defender-security' );
-		}
+		// Check if it's Pro but user logged the WPMU DEV Dashboard out.
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$menu_title = file_exists( $this->get_abs_plugin_path_by_slug( WP_DEFENDER_PRO_PATH ) )
+						&& is_plugin_active( WP_DEFENDER_PRO_PATH )
+			? esc_html__( 'Defender Pro', 'defender-security' )
+			: esc_html__( 'Defender', 'defender-security' );
 
 		return $menu_title;
 	}

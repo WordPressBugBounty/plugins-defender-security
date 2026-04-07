@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles fake bot detection functionality (Free version stub).
+ * Handles malicious bot functionality (Free version stub).
  *
  * @package WP_Defender\Controller
  */
@@ -10,13 +10,13 @@ namespace WP_Defender\Controller;
 use WP_Defender\Controller;
 
 /**
- * Stub class for fake bot detection functionality in the Free version.
+ * Stub class for malicious bot functionality in the Free version.
  * This feature is only available in the Pro version.
  */
-class Fake_Bot_Detection extends Controller {
+class Malicious_Bot extends Controller {
 
 	/**
-	 * Constructor for the Fake_Bot_Detection class.
+	 * Constructor for the Malicious_Bot class.
 	 * Does nothing in the Free version.
 	 *
 	 * @param mixed $service Unused in Free version.

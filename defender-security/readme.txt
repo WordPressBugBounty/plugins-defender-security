@@ -1,12 +1,12 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 5.10.0
+Version: 5.11.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 6.9.1
+Tested up to: 7.0
 Stable tag: 5.10.0
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
@@ -262,6 +262,16 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 5.11.0 ( 2026-03-31 ) =
+
+- Enhancement: Improvements to Audit Logging in both API and plugin
+- Enhancement: Compatibility with WordPress 7.0
+- Enhancement: Improve compliance with wp.org guidelines throughout the plugin
+- Enhancement: Submit button activates without radio button selection on Deactivate modal
+- Fix: Error when Uninstall plugin settings are set to Delete value
+- Fix: Console error when saving User Agent Banning changes
+- Fix: Deprecated function warnings on PHP 8.5.X
+
 = 5.10.0 ( 2026-02-26 ) =
 
 - Enhancement: Improve AntiBot Stats endpoint
@@ -328,29 +338,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 = 5.7.1 ( 2025-11-24 ) =
 
 - Fix: Improve 404 detection flow
-
-= 5.7.0 ( 2025-11-18 ) =
-
-- New: Cloudflare Turnstile integration
-- Enhancement: Compatibility with WordPress 6.9
-- Enhancement: Redesigned CAPTCHA menu
-- Enhancement: Optimize database performance on multisite
-- Enhancement: Add additional widget IDs on Defender’s Dashboard page
-- Enhancement: Add new hooks to simplify Audit testing and Firewall logs deletion
-- Enhancement: Update minimum supported PHP version to 8.0
-- Enhancement: Disable New Scan button until the background scan is complete
-- Enhancement: Migrate Security Recommendations multisite events to the centralized Cron Manager system
-- Enhancement: Migrate Malware Scanning multisite events to the centralized Cron Manager system
-- Enhancement: Tracking improvements
-- Fix: Masking URL displays a notice when using a slug already assigned to another page
-- Fix: Defender not detecting some outdated plugins
-- Fix: Recommended PHP version appears as NULL on WP Engine hosting
-- Fix: Default Security Config name and description not saving properly
-- Fix: UI improvements
-
-= 5.6.2 ( 2025-11-20 ) =
-
-- Enhancement: Miscellaneous improvements
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

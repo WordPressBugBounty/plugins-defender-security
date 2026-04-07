@@ -414,7 +414,7 @@ class Rate extends Component {
 		} else {
 			$tweak_arr    = wd_di()->get( Security_Tweaks::class )->get_tweak_types();
 			$total_tweaks = $tweak_arr['count_fixed'] + $tweak_arr['count_ignored'] + $tweak_arr['count_issues'];
-			if ( $tweak_arr['count_fixed'] === $total_tweaks ) {
+			if ( $tweak_arr['count_fixed'] === $total_tweaks && $total_tweaks > 0 ) {
 				$res['slug'] = 'resolved_tweaks';
 			} elseif ( self::get_count_scans( self::SLUG_UA_LOCKOUTS ) >= self::NUMBER_UA_LOCKOUTS ) {
 				$res['slug'] = 'ua_lockouts';

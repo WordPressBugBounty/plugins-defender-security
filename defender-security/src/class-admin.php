@@ -170,7 +170,11 @@ class Admin {
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"],
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:hover,
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:active,
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:focus {
+			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:focus,
+			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"],
+			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:hover,
+			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:active,
+			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:focus {
 				margin-left: -4px;
 			}
 		</style>

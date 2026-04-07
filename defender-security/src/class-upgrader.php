@@ -346,12 +346,19 @@ class Upgrader {
 		}
 
 		if ( DEFENDER_DB_VERSION === $db_version ) {
+			// Check if we need to create pro tables (Free to Pro upgrade scenario).
+			if ( class_exists( Bootstrap::class ) && method_exists( Bootstrap::class, 'create_database_tables' ) && ! get_site_option( 'wd_pro_tables_created' ) ) {
+				wd_di()->get( Bootstrap::class )->create_database_tables();
+			}
 			return;
 		}
 		// Cache last updated time.
 		self::cache_event_time( 'plugin_upgraded' );
 
-		$this->create_database_tables();
+		$this->create_database_tables_common();
+		if ( class_exists( Bootstrap::class ) && method_exists( Bootstrap::class, 'create_database_tables' ) ) {
+			wd_di()->get( Bootstrap::class )->create_database_tables();
+		}
 		$this->maybe_show_new_features( $db_version );
 		$this->migrate_configs( $db_version );
 
@@ -1372,7 +1379,6 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	private function update_malware_notification_setting(): void {
 		$models = array(
 			wd_di()->get( Malware_Notification::class ),
-			wd_di()->get( Malware_Report::class ),
 		);
 
 		foreach ( $models as $model ) {
@@ -1556,8 +1562,6 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 		$wpdb->query( "ALTER TABLE{$wpdb->base_prefix}defender_lockout MODIFY COLUMN ip VARCHAR(45)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		// Changes for Lockout log table.
 		$wpdb->query( "ALTER TABLE{$wpdb->base_prefix}defender_lockout_log MODIFY COLUMN ip VARCHAR(45)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		// Changes for Audit log table.
-		$wpdb->query( "ALTER TABLE{$wpdb->base_prefix}defender_audit_log MODIFY COLUMN ip VARCHAR(45)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$wpdb->show_errors( $prev_val );
 	}
 
@@ -1618,8 +1622,6 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	 * @return void
 	 */
 	private function upgrade_4_0_0(): void {
-		$bootstrap = wd_di()->get( Bootstrap::class );
-		$bootstrap->create_table_quarantine();
 	}
 
 	/**
@@ -1930,43 +1932,11 @@ To complete your login, copy and paste the temporary password into the Password 
 	}
 
 	/**
-	 * Change lockout log mentions from fake_bot to malicious_bot. Also move BotTrap settings.
-	 *
-	 * @return void
-	 */
-	private function change_to_malicious_bot(): void {
-		global $wpdb;
-
-		$table_name = $wpdb->base_prefix . 'defender_lockout_log';
-
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"UPDATE $table_name SET type = %s, log = %s WHERE type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				'malicious_bot',
-				'Lockout occurred: Bot ignored robots.txt rules.',
-				'bot_trap'
-			)
-		);
-		// Clear schedule as the name has changed to 'wpdef_rotate_malicious_bot_secret_hash'.
-		wp_clear_scheduled_hook( 'wpdef_rotate_bot_trap_secret_hash' );
-		// Move the BotTrap settings to new Malicious Bot settings.
-		$settings = wd_di()->get( User_Agent_Lockout::class );
-		if ( isset( $settings->bot_trap_enabled ) ) {
-			$settings->malicious_bot_enabled               = $settings->bot_trap_enabled;
-			$settings->malicious_bot_lockout_type          = $settings->bot_trap_lockout_type;
-			$settings->malicious_bot_lockout_duration      = $settings->bot_trap_lockout_duration;
-			$settings->malicious_bot_lockout_duration_unit = $settings->bot_trap_lockout_duration_unit;
-			$settings->save();
-		}
-	}
-
-	/**
 	 * Upgrade to 5.6.0.
 	 *
 	 * @return void
 	 */
 	private function upgrade_5_6_0(): void {
-		$this->change_to_malicious_bot();
 		// Add the "What's new" modal.
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}

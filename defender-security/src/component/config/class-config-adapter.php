@@ -46,8 +46,6 @@ class Config_Adapter extends Component {
 			'iplockout'         => ! isset( $old_data['iplockout'] ) || ! is_array( $old_data['iplockout'] )
 				? array()
 				: $this->update_ip_lockout( $old_data['iplockout'] ),
-			// Empty data if Audit module is disabled.
-			'audit'             => ! isset( $old_data['audit'] ) || ! is_array( $old_data['audit'] ) ? array() : $this->update_audit( $old_data['audit'] ),
 			'two_factor'        => ! isset( $old_data['two_factor'] ) || ! is_array( $old_data['two_factor'] )
 				? array()
 				: $this->update_two_factor( $old_data['two_factor'] ),
@@ -55,7 +53,6 @@ class Config_Adapter extends Component {
 			'mask_login'        => $this->update_mask_login( $old_data['mask_login'] ),
 			'security_headers'  => $this->update_security_headers( $old_data['security_headers'] ),
 			'settings'          => ! isset( $old_data['settings'] ) || ! is_array( $old_data['settings'] ) ? array() : $old_data['settings'],
-			'blocklist_monitor' => ! isset( $old_data['blocklist_monitor'] ) || ! is_array( $old_data['blocklist_monitor'] ) ? array() : $old_data['blocklist_monitor'],
 			'pwned_passwords'   => ! isset( $old_data['pwned_passwords'] ) || ! is_array( $old_data['pwned_passwords'] ) ? array() : $old_data['pwned_passwords'],
 		);
 	}
@@ -207,8 +204,6 @@ class Config_Adapter extends Component {
 			'integrity_check'               => ! isset( $old_data['scan_core'] ) || ! is_bool( $old_data['scan_core'] ) ? true : $old_data['scan_core'],
 			'check_core'                    => ! isset( $old_data['check_core'] ) || ! is_bool( $old_data['check_core'] ) ? true : $old_data['check_core'],
 			'check_plugins'                 => ! isset( $old_data['check_plugins'] ) || ! is_bool( $old_data['check_plugins'] ) ? false : $old_data['check_plugins'],
-			'check_known_vuln'              => ! isset( $old_data['scan_vuln'] ) || ! is_bool( $old_data['scan_vuln'] ) ? true : $old_data['scan_vuln'],
-			'scan_malware'                  => ! isset( $old_data['scan_content'] ) || ! is_bool( $old_data['scan_content'] ) ? false : $old_data['scan_content'],
 			'filesize'                      => ! isset( $old_data['max_filesize'] ) || ! is_int( $old_data['max_filesize'] ) ? 3 : $old_data['max_filesize'],
 			// Should get bool value.
 			'report'                        => isset( $old_data['report'] ) && $old_data['report'] ? 'enabled' : 'disabled',
@@ -231,8 +226,6 @@ class Config_Adapter extends Component {
 			'email_content_issue_found'     => $old_data['email_has_issue'] ?? '',
 			'email_content_issue_not_found' => $old_data['email_all_ok'] ?? '',
 			'email_content_error'           => $old_data['email_content_error'] ?? '',
-			// Since 2.7.0.
-			'scheduled_scanning'            => false,
 			// Since 5.9.0.
 			'check_abandoned_plugin'        => true,
 		);

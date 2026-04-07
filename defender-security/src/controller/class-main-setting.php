@@ -185,7 +185,6 @@ class Main_Setting extends Event {
 	 */
 	public function reset_settings(): Response {
 		wd_di()->get( Advanced_Tools::class )->remove_settings();
-		wd_di()->get( Audit_Logging::class )->remove_settings();
 		wd_di()->get( Dashboard::class )->remove_settings();
 		wd_di()->get( Security_Tweaks::class )->remove_settings();
 		wd_di()->get( Scan::class )->remove_settings();
@@ -195,7 +194,6 @@ class Main_Setting extends Event {
 		wd_di()->get( Mask_Login::class )->remove_settings();
 		wd_di()->get( Notification::class )->remove_settings();
 		wd_di()->get( Two_Factor::class )->remove_settings();
-		wd_di()->get( Blocklist_Monitor::class )->remove_settings();
 		$this->set_intention( 'Data Reset' );
 		// Track first until settings are removed.
 		$this->track_opt( false );

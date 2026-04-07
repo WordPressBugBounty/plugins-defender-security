@@ -178,7 +178,6 @@ class Global_Ip extends Controller {
 						Global_Ip_Lockout::get_module_name()
 					),
 					'is_show_dashboard_notice' => $this->service->is_show_dashboard_notice(),
-					'current_plan'             => $this->service->get_membership_type(),
 					'is_expired_membership'    => $this->service->is_expired_membership_type(),
 				),
 				'hub'   => array(

@@ -8,15 +8,12 @@
 namespace WP_Defender\Traits;
 
 use WP_Error;
-use DateTime;
 use Exception;
 use WP_User_Query;
 use WPMUDEV_Dashboard;
 use WP_Defender\Model\Scan;
-use WP_Defender\Model\Audit_Log;
 use WP_Defender\Model\Notification;
 use WP_Defender\Controller\Firewall;
-use WP_Defender\Component\Quarantine;
 use WP_Defender\Model\Setting\Two_Fa;
 use WP_Defender\Component\IP\Antibot_Global_Firewall;
 use WP_Defender\Model\Setting\Captcha;
@@ -62,25 +59,6 @@ trait Defender_Hub_Client {
 	public function get_endpoint( $scenario ): string {
 		$base = $this->get_api_base_url();
 		switch ( $scenario ) {
-			case self::API_SCAN_KNOWN_VULN:
-				return $base . 'api/defender/v1/vulnerabilities';
-			case self::API_SCAN_SIGNATURE:
-				return $base . 'api/defender/v1/yara-signatures';
-			case self::API_AUDIT:
-				// This is from another endpoint.
-				$base = defined( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
-					? constant( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
-					: 'https://audit.wpmudev.org/';
-
-				return $base . 'logs';
-			case self::API_AUDIT_ADD:
-				$base = defined( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
-					? constant( 'WPMUDEV_CUSTOM_AUDIT_SERVER' )
-					: 'https://audit.wpmudev.org/';
-
-				return $base . 'logs/add_multiple';
-			case self::API_BLACKLIST:
-				return $base . 'api/defender/v1/blacklist-monitoring?domain=' . network_site_url();
 			case self::API_GLOBAL_IP_LIST:
 				return $base . 'api/hub/v1/global-ip-list';
 			case self::API_PACKAGE_CONFIGS:
@@ -161,13 +139,16 @@ trait Defender_Hub_Client {
 			}
 		}
 
-		$result = wp_remote_retrieve_body( $request );
-		$result = json_decode( $result, true );
+		$response_code = wp_remote_retrieve_response_code( $request );
+		$result        = wp_remote_retrieve_body( $request );
+		$result        = json_decode( $result, true );
 
-		if ( 200 !== wp_remote_retrieve_response_code( $request ) ) {
+		if ( $response_code < 200 || $response_code >= 300 ) {
 			return new WP_Error(
-				wp_remote_retrieve_response_code( $request ),
-				$result['message'] ?? wp_remote_retrieve_response_message( $request )
+				$response_code,
+				isset( $result['message'] )
+					? $result['message']
+					: wp_remote_retrieve_response_message( $request )
 			);
 		}
 
@@ -202,7 +183,7 @@ trait Defender_Hub_Client {
 			return new WP_Error(
 				'dashboard_required',
 				sprintf(
-				/* translators: %s - wpmudev link */
+					/* translators: %s - wpmudev link */
 					esc_html__(
 						'WPMU DEV Dashboard will be required for this action. Please visit %s and install the WPMU DEV Dashboard.',
 						'defender-security'
@@ -305,7 +286,7 @@ trait Defender_Hub_Client {
 			'scan_result'   => $scan_result,
 			'scan_schedule' => array(
 				// @since 2.7.0 change scheduled scan logic.
-				'is_activated' => $settings->scheduled_scanning,
+				'is_activated' => $settings->is_enabled_scheduled_scanning(),
 				// Example of frequency, day, time in build_notification_hub_data() method.
 				'time'         => $settings->time,
 				'day'          => $this->get_notification_day( $settings ),
@@ -373,31 +354,15 @@ trait Defender_Hub_Client {
 
 	/**
 	 * Builds an array of audit data to be sent to the hub.
+	 * Audit log is Pro-only; returns empty stub by default.
 	 *
-	 * @return array An array containing the number of audit log entries, the timestamp of the
-	 *               last audit log entry, and a boolean indicating if audit logging is enabled.
+	 * @return array
 	 */
 	public function build_audit_hub_data(): array {
-		$date_from   = ( new DateTime( wp_date( 'Y-m-d', strtotime( '-30 days' ) ) ) )->setTime(
-			0,
-			0,
-			0
-		)->getTimestamp();
-		$date_to     = ( new DateTime( wp_date( 'Y-m-d' ) ) )->setTime( 23, 59, 59 )->getTimestamp();
-		$month_count = Audit_Log::count( $date_from, $date_to );
-		$last        = Audit_Log::get_last();
-		if ( is_object( $last ) ) {
-			$last = wp_date( 'Y-m-d g:i a', $last->timestamp );
-		} else {
-			$last = 'n/a';
-		}
-
-		$settings = new Audit_Logging();
-
 		return array(
-			'month'      => $month_count,
-			'last_event' => $last,
-			'enabled'    => $settings->is_active(),
+			'month'      => 0,
+			'last_event' => 'n/a',
+			'enabled'    => false,
 		);
 	}
 
@@ -662,7 +627,6 @@ trait Defender_Hub_Client {
 						'parent_integrity' => esc_html__( 'File change detection', 'defender-security' ),
 						'core_integrity'   => esc_html__( 'Scan core files', 'defender-security' ),
 						'plugin_integrity' => esc_html__( 'Scan plugin files', 'defender-security' ),
-						'vulnerability_db' => esc_html__( 'Known vulnerabilities', 'defender-security' ),
 						'file_suspicious'  => esc_html__( 'Suspicious code', 'defender-security' ),
 					),
 					'scan_page_url'          => network_admin_url( 'admin.php?page=wdf-scan' ),
@@ -760,11 +724,7 @@ trait Defender_Hub_Client {
 	 * @return array
 	 */
 	protected function build_quarantined_files_hub_data(): array {
-		if ( ! class_exists( 'WP_Defender\Component\Quarantine' ) ) {
 			return array();
-		}
-
-		return wd_di()->get( Quarantine::class )->hub_list();
 	}
 
 	/**

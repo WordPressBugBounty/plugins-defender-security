@@ -14,6 +14,9 @@ use WP_Defender\Component;
  */
 class Audit extends Component {
 
+	public const AUDIT_LOG             = 'audit.log';
+	public const CACHE_LAST_CHECKPOINT = 'wd_audit_fetch_checkpoint';
+
 	/**
 	 * Dummy.
 	 *

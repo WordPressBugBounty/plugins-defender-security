@@ -164,15 +164,21 @@ abstract class Notification extends Setting {
 	 * @return array
 	 */
 	protected function get_default_user(): array {
+		if ( ! is_user_logged_in() ) {
+			return array();
+		}
+
 		$user_id = get_current_user_id();
 
 		return array(
-			'name'   => $this->get_user_display( $user_id ),
-			'id'     => $user_id,
-			'email'  => $this->get_current_user_email( $user_id ),
-			'role'   => $this->get_current_user_role( $user_id ),
-			'avatar' => get_avatar_url( $this->get_current_user_email( $user_id ) ),
-			'status' => self::USER_SUBSCRIBED,
+			array(
+				'name'   => $this->get_user_display( $user_id ),
+				'id'     => $user_id,
+				'email'  => $this->get_current_user_email( $user_id ),
+				'role'   => $this->get_current_user_role( $user_id ),
+				'avatar' => get_avatar_url( $this->get_current_user_email( $user_id ) ),
+				'status' => self::USER_SUBSCRIBED,
+			),
 		);
 	}
 
@@ -308,7 +314,7 @@ abstract class Notification extends Setting {
 	public function check_active_status(): bool {
 		// Exception after migrating Scheduled scanning to Scan settings.
 		if ( Malware_Report::SLUG === $this->slug
-			&& true === ( new \WP_Defender\Model\Setting\Scan() )->scheduled_scanning
+			&& ( new \WP_Defender\Model\Setting\Scan() )->is_enabled_scheduled_scanning()
 		) {
 			return true;
 		}

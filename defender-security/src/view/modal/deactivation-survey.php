@@ -148,7 +148,7 @@
 					<div class="sui-box-footer">
 						<button type="button" class="sui-button-ghost sui-button wpdef-skip-deactivate-button"><?php esc_html_e( 'Skip & Deactivate', 'defender-security' ); ?></button>
 						<div class="sui-actions-right">
-							<button type="button" class="sui-button-blue sui-button wpdef-submit-deactivate-button"><?php esc_html_e( 'Submit & Deactivate', 'defender-security' ); ?></button>
+							<button type="button" class="sui-button-blue sui-button wpdef-submit-deactivate-button" disabled><?php esc_html_e( 'Submit & Deactivate', 'defender-security' ); ?></button>
 						</div>
 					</div>
 				</div>

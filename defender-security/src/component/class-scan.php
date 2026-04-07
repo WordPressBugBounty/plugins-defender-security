@@ -18,8 +18,6 @@ use WP_Defender\Behavior\Scan\Gather_Fact;
 use WP_Defender\Behavior\Scan\Malware_Scan;
 use WP_Defender\Behavior\Scan\Core_Integrity;
 use WP_Defender\Behavior\Scan\Plugin_Integrity;
-use WP_Defender\Behavior\Scan\Malware_Deep_Scan;
-use WP_Defender\Behavior\Scan\Malware_Quick_Scan;
 use WP_Defender\Behavior\Scan\Known_Vulnerability;
 use WP_Defender\Behavior\Scan\Abandoned_Plugin;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
@@ -48,28 +46,6 @@ class Scan extends Component {
 	 * @var Scan_Settings
 	 */
 	public $settings;
-
-	/**
-	 * Details of vulnerabilities found during the scan.
-	 *
-	 * @var array
-	 */
-	protected $vulnerability_details = array();
-
-	/**
-	 * Instance of Known_Vulnerability to handle known vulnerability checks.
-	 *
-	 * @var Known_Vulnerability
-	 */
-	private $known_vulnerability;
-
-	/**
-	 * Instance of Malware_Scan to handle malware scanning.
-	 *
-	 * @var Malware_Scan
-	 */
-	private $malware_scan;
-
 	/**
 	 * Instance of Gather_Fact to gather necessary information before scanning.
 	 *
@@ -91,12 +67,6 @@ class Scan extends Component {
 	 */
 	protected string $lock_filename = 'scan.lock';
 
-	/**
-	 * Indicate whether the current installation is a pro version.
-	 *
-	 * @var bool
-	 */
-	private $is_pro;
 
 	/**
 	 * Constructs the Scan object and initializes behaviors.
@@ -105,7 +75,6 @@ class Scan extends Component {
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 		$this->attach_behavior( Core_Integrity::class, Core_Integrity::class );
 		$this->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
-		$this->is_pro   = wd_di()->get( WPMUDEV::class )->is_pro();
 		$this->settings = wd_di()->get( Scan_Settings::class );
 	}
 
@@ -240,16 +209,6 @@ class Scan extends Component {
 		if ( $this->settings->check_abandoned_plugin ) {
 			$tasks[ Scan_Model::STEP_ABANDONED_PLUGIN_CHECK ] = 'abandoned_plugin_check';
 		}
-		if ( $this->is_pro ) {
-			if ( $this->settings->check_known_vuln && $this->has_method( Scan_Model::STEP_VULN_CHECK ) ) {
-				$tasks[ Scan_Model::STEP_VULN_CHECK ] = 'vuln_check';
-			}
-			// The division between PHP and JS files occurs when collecting files.
-			if ( $this->settings->scan_malware && $this->has_method( Scan_Model::STEP_SUSPICIOUS_CHECK )
-			) {
-				$tasks[ Scan_Model::STEP_SUSPICIOUS_CHECK ] = 'suspicious_check';
-			}
-		}
 
 		return $tasks;
 	}
@@ -271,22 +230,6 @@ class Scan extends Component {
 				}
 
 				return $this->gather_info( $this->gather_fact );
-			case 'vuln_check':
-				if ( ! ( $this->known_vulnerability instanceof Known_Vulnerability ) && class_exists( Known_Vulnerability::class ) ) {
-					$this->set_known_vulnerability(
-						wd_di()->make( Known_Vulnerability::class, array( 'scan' => $this->scan ) )
-					);
-				}
-
-				return $this->vuln_check( $this->known_vulnerability );
-			case 'suspicious_check':
-				if ( class_exists( Malware_Scan::class ) ) {
-					$this->set_malware_scan(
-						wd_di()->make( Malware_Scan::class, array( 'scan' => $this->scan ) )
-					);
-				}
-
-				return $this->suspicious_check( $this->malware_scan );
 			case 'abandoned_plugin_check':
 				if ( ! ( $this->abandoned_plugin instanceof Abandoned_Plugin ) && class_exists( Abandoned_Plugin::class ) ) {
 					$this->set_abandoned_plugin(
@@ -299,62 +242,6 @@ class Scan extends Component {
 				return is_callable( array( $this, $task ) ) ? $this->$task() : false;
 		}
 	}
-
-	/**
-	 * A wrapper method for Known_Vulnerability class method vuln_check.
-	 *
-	 * @param  Known_Vulnerability $known_vulnerability  An instance of Known_Vulnerability.
-	 *
-	 * @return bool True always as in wrapped method Known_Vulnerability::vuln_check.
-	 */
-	private function vuln_check( Known_Vulnerability $known_vulnerability ): bool {
-		if ( method_exists( $known_vulnerability, 'vuln_check' ) ) {
-			return $known_vulnerability->vuln_check();
-		}
-
-		return true; // Followed Known_Vulnerability::vuln_check return pattern i.e. always true for skipped vuln check.
-	}
-
-	/**
-	 * Setter injection method for Known_Vulnerability instance.
-	 *
-	 * @param  Known_Vulnerability $known_vulnerability  The Known_Vulnerability instance to set.
-	 */
-	public function set_known_vulnerability( Known_Vulnerability $known_vulnerability ) {
-		if ( class_exists( Known_Vulnerability::class ) ) {
-			$this->known_vulnerability = $known_vulnerability;
-		}
-	}
-
-	/**
-	 * A wrapper method for Malware_Scan class method suspicious_check.
-	 *
-	 * @param  Malware_Scan $malware_scan  An instance of Malware_Scan.
-	 *
-	 * @return bool True if method Malware_Scan::suspicious_check not exists else bool value returned by that method.
-	 */
-	private function suspicious_check( Malware_Scan $malware_scan ): bool {
-		if ( method_exists( $malware_scan, 'suspicious_check' ) ) {
-			$quick_scan = wd_di()->get( Malware_Quick_Scan::class );
-			$deep_scan  = wd_di()->get( Malware_Deep_Scan::class );
-
-			return $malware_scan->suspicious_check( $quick_scan, $deep_scan );
-		}
-
-		return true;
-	}
-
-	/**
-	 * Setter injection method for Malware_Scan instance.
-	 *
-	 * @param  Malware_Scan $malware_scan  The Malware_Scan instance to set.
-	 */
-	public function set_malware_scan( Malware_Scan $malware_scan ) {
-		if ( class_exists( Malware_Scan::class ) ) {
-			$this->malware_scan = $malware_scan;
-		}
-	}
-
 	/**
 	 * Set the Abandoned_Plugin object.
 	 *
@@ -477,15 +364,7 @@ class Scan extends Component {
 		} else {
 			$file_change_check = true;
 		}
-		// Similar to is_any_active(...) method from the controller.
-		if ( $this->is_pro ) {
-			// Pro version. Check all parent types.
-			return $file_change_check || ( isset( $scan_settings['check_known_vuln'] ) && $scan_settings['check_known_vuln'] )
-				|| ( isset( $scan_settings['scan_malware'] ) && $scan_settings['scan_malware'] );
-		} else {
-			// Free version.
-			return $file_change_check || ( isset( $scan_settings['check_abandoned_plugin'] ) && $scan_settings['check_abandoned_plugin'] );
-		}
+		return $file_change_check || ( isset( $scan_settings['check_abandoned_plugin'] ) && $scan_settings['check_abandoned_plugin'] );
 	}
 
 	/**
@@ -554,177 +433,12 @@ class Scan extends Component {
 	private function delete_interim_data() {
 		delete_site_option( Gather_Fact::CACHE_CORE );
 		delete_site_option( Gather_Fact::CACHE_CONTENT );
-		delete_site_option( Malware_Scan::YARA_RULES );
 		delete_site_option( Core_Integrity::CACHE_CHECKSUMS );
 		delete_site_option( Plugin_Integrity::PLUGIN_SLUGS );
 		delete_site_option( Plugin_Integrity::PLUGIN_PREMIUM_SLUGS );
 		delete_site_option( self::PLUGINS_ACTIONED );
 		$this->maybe_track_failed_checksum();
 	}
-
-	/**
-	 * Display styles on the Plugins page.
-	 */
-	public function show_plugin_admin_styles() {
-		$custom_css = '.vulnerability-indent{ padding-left: 26px; }
-		.plugins .plugin-update-tr .plugin-update.plugin-vulnerability{box-shadow: inset 0 0px 0 rgb(0 0 0 / 10%);
-		border-bottom: rgb(0 0 0 / 10%) solid 1px;}';
-		wp_add_inline_style( 'defender-menu', $custom_css );
-	}
-
-	/**
-	 * Display update information for a plugin.
-	 *
-	 * @param  string $file  Plugin basename.
-	 * @param  array  $plugin_data  Plugin information.
-	 *
-	 * @return void
-	 */
-	public function attach_plugin_vulnerability_warning( $file, $plugin_data ) {
-		/**
-		 * WP Plugin list table instance.
-		 *
-		 * @var WP_Plugins_List_Table $wp_list_table
-		 */
-		$wp_list_table = _get_list_table(
-			'WP_Plugins_List_Table',
-			array( 'screen' => get_current_screen() )
-		);
-		$bugs          = $this->vulnerability_details[ $file ]['bugs'];
-		if ( ! is_array( $bugs ) || array() === $bugs ) {
-			return;
-		}
-		$last_fixed_in = '0';
-		// Check if there have been updates since the last scan.
-		$exist_update = true;
-		if ( isset( $plugin_data['Version'] ) && '' !== $plugin_data['Version'] ) {
-			// The current plugin version.
-			$current_version = $plugin_data['Version'];
-			foreach ( $bugs as $bug_details ) {
-				// If the fixed version is existed then get the latest one.
-				if ( isset( $bug_details['fixed_in'] ) && '' !== $bug_details['fixed_in']
-					&& version_compare( $bug_details['fixed_in'], $last_fixed_in, '>' )
-				) {
-					$last_fixed_in = $bug_details['fixed_in'];
-				}
-			}
-			if ( version_compare( $last_fixed_in, $current_version, '>' ) ) {
-				$exist_update = false;
-			}
-		}
-		// If there were updates, do not display notice.
-		if ( $exist_update ) {
-			return;
-		}
-		if ( ( ! isset( $plugin_data['slug'] ) || '' === $plugin_data['slug'] ) && isset( $this->vulnerability_details[ $file ]['base_slug'] ) ) {
-			$plugin_data['slug'] = $this->vulnerability_details[ $file ]['base_slug'];
-		}
-
-		if ( is_network_admin() || ! is_multisite() ) {
-			if ( is_network_admin() ) {
-				$active_class = is_plugin_active_for_network( $file ) ? ' active' : '';
-			} else {
-				$active_class = is_plugin_active( $file ) ? ' active' : '';
-			}
-
-			printf(
-				'<tr class="plugin-update-tr%s" id="vulnerability-%s" data-slug="%s" data-plugin="%s"><td colspan="%s" class="plugin-update colspanchange plugin-vulnerability"><div class="update-message notice inline %s notice-alt"><p>',
-				esc_attr( $active_class ),
-				esc_attr( $plugin_data['slug'] ),
-				esc_attr( $plugin_data['slug'] ),
-				esc_attr( $file ),
-				esc_attr( $wp_list_table->get_column_count() ),
-				'notice-error'
-			);
-
-			$notice = sprintf(
-			/* translators: %s - Plugin name. */
-				esc_html__(
-					'%s has detected a vulnerability in this plugin that may cause harm to your site.',
-					'defender-security'
-				),
-				'<b>' . esc_html__( 'Defender Pro', 'defender-security' ) . '</b>'
-			);
-			if ( ( is_array( $bugs ) || $bugs instanceof Countable ? count( $bugs ) : 0 ) > 1 ) {
-				$notice .= '<hr/>';
-				$lines   = array();
-				foreach ( $bugs as $bug ) {
-					$lines[] = '<span class="vulnerability-indent"></span>' . $bug['title'];
-				}
-				$notice .= implode( '<br/>', $lines );
-				$notice .= '<hr/><span class="vulnerability-indent"></span>';
-				if ( '0' !== $last_fixed_in ) {
-					$notice .= sprintf(
-					/* translators: %s - Version number. */
-						esc_html__(
-							'The vulnerability has been fixed in version %s. We recommend that you update this plugin accordingly.',
-							'defender-security'
-						),
-						$last_fixed_in
-					);
-				} else {
-					$notice .= esc_html__(
-						'Important! We recommend that you deactivate this plugin until the vulnerability has been fixed.',
-						'defender-security'
-					);
-				}
-			} else {
-				$notice .= '<br/><span class="vulnerability-indent"></span>' . $bugs[0]['title'] . '<br/><span class="vulnerability-indent"></span>';
-				$notice .= '0' === $last_fixed_in
-					? esc_html__(
-						'We recommend that you deactivate this plugin until the vulnerability has been fixed.',
-						'defender-security'
-					)
-					: sprintf(
-					/* translators: 1: Version number. */
-						esc_html__(
-							'The vulnerability has been fixed in version %s. We recommend that you update this plugin accordingly.',
-							'defender-security'
-						),
-						$last_fixed_in
-					);
-			}
-
-			printf( wp_kses_post( $notice ) );
-		}
-	}
-
-	/**
-	 * Display warnings.
-	 *
-	 * @since 2.6.2
-	 */
-	public function display_vulnerability_warnings() {
-		if ( ! current_user_can( 'update_plugins' ) ) {
-			return;
-		}
-
-		$last = Scan_Model::get_last();
-		if ( is_object( $last ) && ! is_wp_error( $last ) ) {
-			$vulnerability_issues = $last->get_issues( Scan_Item::TYPE_VULNERABILITY );
-			if ( ! is_array( $vulnerability_issues ) || array() === $vulnerability_issues ) {
-				return;
-			}
-
-			add_action( 'admin_print_styles-plugins.php', array( $this, 'show_plugin_admin_styles' ) );
-			// Vulnerability list.
-			foreach ( $vulnerability_issues as $vulnerability_obj ) {
-				$plugin_slug = $vulnerability_obj->raw_data['slug'];
-				// Get the details so that you can apply them later for each plugin.
-				$this->vulnerability_details[ $plugin_slug ] = $vulnerability_obj->raw_data;
-				add_action(
-					"after_plugin_row_$plugin_slug",
-					array(
-						$this,
-						'attach_plugin_vulnerability_warning',
-					),
-					100,
-					2
-				);
-			}
-		}
-	}
-
 	/**
 	 * Clear completed action scheduler logs.
 	 *
@@ -829,7 +543,7 @@ class Scan extends Component {
 	}
 
 	/**
-	 * Gey intentions.
+	 * Get intentions.
 	 *
 	 * @since 4.11.0
 	 * @return array
@@ -840,7 +554,6 @@ class Scan extends Component {
 			'ignore',
 			'delete',
 			'unignore',
-			'quarantine',
 		);
 	}
 
@@ -860,8 +573,6 @@ class Scan extends Component {
 		if ( $this->settings->integrity_check && $this->settings->check_plugins ) {
 			$is_plugin_used = true;
 		} elseif ( $this->settings->check_abandoned_plugin ) {
-			$is_plugin_used = true;
-		} elseif ( $this->is_pro && ( $this->settings->check_known_vuln || $this->settings->scan_malware ) ) {
 			$is_plugin_used = true;
 		}
 

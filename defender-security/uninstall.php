@@ -13,8 +13,9 @@ function defender_drop_custom_tables() {
 	global $wpdb;
 
 	$wpdb->hide_errors();
-
-	defender_drop_custom_fk_constraint( $wpdb->prefix . 'defender_quarantine' );
+	$fk_checks = $wpdb->get_var( 'SELECT @@FOREIGN_KEY_CHECKS' );
+	$fk_checks = null === $fk_checks ? 1 : (int) $fk_checks;
+	$wpdb->query( 'SET FOREIGN_KEY_CHECKS = 0' );
 
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}defender_email_log" );
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}defender_scan_item" );
@@ -24,30 +25,7 @@ function defender_drop_custom_tables() {
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}defender_audit_log" );
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}defender_unlockout" );
 	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}defender_antibot" );
-	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}defender_quarantine" );
-}
-
-/**
- * Drop custom tables.
- *
- * @since 4.0.0
- */
-function defender_drop_custom_fk_constraint( string $table_name ): void {
-	global $wpdb;
-
-	$results = $wpdb->get_results(
-		"SELECT CONSTRAINT_NAME
-		FROM information_schema.TABLE_CONSTRAINTS
-		WHERE CONSTRAINT_SCHEMA = '{$wpdb->dbname}'
-		AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-		AND TABLE_NAME = '{$table_name}'"
-	);
-
-	if ( $results ) {
-		foreach ( $results as $fk ) {
-			$wpdb->query( "ALTER TABLE {$table_name} DROP FOREIGN KEY {$fk->CONSTRAINT_NAME}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		}
-	}
+	$wpdb->query( 'SET FOREIGN_KEY_CHECKS = ' . $fk_checks );
 }
 
 require_once __DIR__ . DIRECTORY_SEPARATOR . 'wp-defender.php';
@@ -113,15 +91,10 @@ if ( $uninstall_settings || $uninstall_data ) {
 	}
 }
 
-if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
-	// Quarantine.
-	// All decision making logic added inside the quarantine component core method on_uninstall.
-	wd_di()->get( \WP_Defender\Controller\Quarantine::class )->remove_data();
-}
-
 // Complete cleaning.
 if ( $uninstall_settings && $uninstall_data ) {
 	delete_site_option( 'wd_nofresh_install' );
+	delete_site_option( 'wd_pro_tables_created' );
 	\WP_Defender\Component\Feature_Modal::delete_modal_key();
 	\WP_Defender\Controller\Data_Tracking::delete_modal_key();
 	wd_di()->get( \WP_Defender\Controller\Rate::class )->remove_data();
