@@ -389,15 +389,25 @@ class Vuln_Result extends Behavior {
 	 *
 	 * @param  array $data  The data containing information about vulnerabilities.
 	 *
-	 * @return array An array with vulnerability details including score and detailed description.
+	 * @return array An array with vulnerability details including score and detail items.
 	 */
 	public function get_details_as_array( array $data ): array {
 		$arr = array();
 		foreach ( $data['bugs'] as $bug ) {
-			$text  = $this->get_vulnerability_body( $bug );
+			$items = array(
+				esc_html__( 'Vulnerability type:', 'defender-security' ) . ' ' . $bug['vuln_type'],
+			);
+
+			if ( ! isset( $bug['fixed_in'] ) || '' === $bug['fixed_in'] ) {
+				$items[] = esc_html__( 'No Update Available', 'defender-security' );
+			} else {
+				$items[] = esc_html__( 'This bug has been fixed in version:', 'defender-security' ) . ' ' . $bug['fixed_in'];
+			}
+
 			$arr[] = array(
-				'score'  => $bug['cvss_score'],
-				'detail' => str_replace( PHP_EOL, '<br/>', $text ),
+				'score' => $bug['cvss_score'],
+				'title' => '#' . $bug['title'],
+				'items' => $items,
 			);
 		}
 

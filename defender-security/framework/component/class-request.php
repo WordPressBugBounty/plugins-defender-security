@@ -8,7 +8,6 @@
 namespace Calotes\Component;
 
 use Calotes\Base\Model;
-use Calotes\Helper\HTTP;
 
 /**
  * Parse and validate request data.
@@ -27,9 +26,13 @@ class Request {
 	 */
 	public function __construct() {
 		if ( 'POST' === defender_get_data_from_request( 'REQUEST_METHOD', 's' ) ) {
-			$this->data = HTTP::post( 'data', '' );
+			$this->data = defender_get_data_from_request( 'data', 'p' );
 		} else {
-			$this->data = HTTP::get( 'data', '' );
+			$this->data = defender_get_data_from_request( 'data', 'g' );
+		}
+		// defender_get_data_from_request( 'data', … ) JSON-decodes; empty/malformed yields null. Central assigns get_data() to $_POST — must stay array (PHP 8+).
+		if ( ! is_array( $this->data ) ) {
+			$this->data = array();
 		}
 	}
 

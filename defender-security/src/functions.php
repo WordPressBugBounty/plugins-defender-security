@@ -10,7 +10,9 @@ use WP_Defender\Component\Crypt;
 use WP_Defender\Component\Two_Fa;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\User_Agent;
+use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Controller\Two_Factor;
+use WP_Defender\Integrations\Dashboard_Whitelabel;
 use WP_Defender\Model\Setting\Main_Setting;
 use WP_Defender\Helper\Request;
 
@@ -285,6 +287,7 @@ function defender_noreply_email( string $filter_tag = '' ) {
 }
 
 /**
+ * Todo: remove if we don't need Vue.js.
  * Get data of the whitelabel feature from WPMUDEV Dashboard:
  * hide_branding, hide_doc_link, footer_text, hero_image, change_footer.
  *
@@ -297,8 +300,8 @@ function defender_white_label_status() {
 	$custom_image = apply_filters( 'wpmudev_branding_hero_image', '' );
 	$custom_image = is_string( $custom_image ) ? $custom_image : (string) $custom_image;
 	$custom_image = trim( $custom_image );
-	$whitelabled  = apply_filters( 'wpmudev_branding_hide_branding', false );
-	$whitelabled  = is_bool( $whitelabled ) ? $whitelabled : (bool) $whitelabled;
+	$whitelabeled = apply_filters( 'wpmudev_branding_hide_branding', false );
+	$whitelabeled = is_bool( $whitelabeled ) ? $whitelabeled : (bool) $whitelabeled;
 
 	return array(
 		'hide_branding' => apply_filters( 'wpmudev_branding_hide_branding', false ),
@@ -306,9 +309,89 @@ function defender_white_label_status() {
 		'footer_text'   => apply_filters( 'wpmudev_branding_footer_text', $footer_text ),
 		'hero_image'    => $custom_image,
 		'change_footer' => apply_filters( 'wpmudev_branding_change_footer', false ),
-		'is_unbranded'  => '' === $custom_image && $whitelabled,
-		'is_rebranded'  => '' !== $custom_image && $whitelabled,
+		'is_unbranded'  => '' === $custom_image && $whitelabeled,
+		'is_rebranded'  => '' !== $custom_image && $whitelabeled,
 	);
+}
+
+/**
+ * Get data of the whitelabel feature, e.g. hide_branding, hide_doc_link, footer_text, hero_image, change_footer.
+ *
+ * @return array
+ * @since 6.0.0
+ */
+function defender_whitelabel_data(): array {
+	$data = array(
+		'is_enabled' => false,
+	);
+
+	if ( wd_di()->get( WPMUDEV::class )->is_whitelabel_enabled() ) {
+		/* translators: %s: heart icon */
+		$footer_text  = sprintf( esc_html__( 'Made with %s by WPMU DEV', 'defender-security' ), '<i class="sui-icon-heart"></i>' );
+		$custom_image = apply_filters( 'wpmudev_branding_hero_image', '' );
+		$custom_image = is_string( $custom_image ) ? $custom_image : (string) $custom_image;
+		$custom_image = trim( $custom_image );
+		$whitelabeled = apply_filters( 'wpmudev_branding_hide_branding', false );
+		$whitelabeled = is_bool( $whitelabeled ) ? $whitelabeled : (bool) $whitelabeled;
+		$whitelabel   = new Dashboard_Whitelabel();
+		$plugin_name  = $whitelabel->can_whitelabel() ? $whitelabel->get_plugin_name( Config_Hub_Helper::WDP_ID ) : false;
+
+		$plugin_icon_url   = '';
+		$plugin_icon_class = '';
+		$plugin_icon_type  = 'default';
+
+		if ( $whitelabel->can_whitelabel() ) {
+			$wl_settings        = WPMUDEV_Dashboard::$whitelabel->get_settings();
+			$pid                = Config_Hub_Helper::WDP_ID;
+			$labels_networkwide = (bool) ( $wl_settings['labels_networkwide'] ?? true );
+			$labels_subsites    = (array) ( $wl_settings['labels_subsites'] ?? array() );
+			$apply_labels       = ! is_multisite()
+									|| is_network_admin()
+									|| $labels_networkwide
+									|| in_array( get_current_blog_id(), $labels_subsites, false );
+
+			if ( $apply_labels && isset( $wl_settings['labels_config'][ $pid ] ) ) {
+				$cfg              = $wl_settings['labels_config'][ $pid ];
+				$plugin_icon_type = sanitize_key( $cfg['icon_type'] ?? 'default' );
+
+				switch ( $plugin_icon_type ) {
+					case 'dashicon':
+						$plugin_icon_class = sanitize_html_class( $cfg['icon_class'] ?? '' );
+						break;
+					case 'upload':
+						$thumb_id = (int) ( $cfg['thumb_id'] ?? 0 );
+						if ( $thumb_id ) {
+							$url             = wp_get_attachment_image_url( $thumb_id, 'thumbnail', true );
+							$plugin_icon_url = $url ?: '';
+						}
+						break;
+					case 'link':
+						$plugin_icon_url = esc_url_raw( $cfg['icon_url'] ?? '' );
+						break;
+					case 'none':
+						$plugin_icon_url = null;
+						break;
+				}
+			}
+		}
+
+		$data = array(
+			'is_enabled'        => true,
+			'hide_branding'     => apply_filters( 'wpmudev_branding_hide_branding', false ),
+			'hide_doc_link'     => apply_filters( 'wpmudev_branding_hide_doc_link', false ),
+			'footer_text'       => apply_filters( 'wpmudev_branding_footer_text', $footer_text ),
+			'hero_image'        => $custom_image,
+			'change_footer'     => apply_filters( 'wpmudev_branding_change_footer', false ),
+			'is_unbranded'      => '' === $custom_image && $whitelabeled,
+			'is_rebranded'      => '' !== $custom_image && $whitelabeled,
+			'plugin_name'       => is_string( $plugin_name ) && '' !== trim( $plugin_name ) ? $plugin_name : '',
+			'plugin_icon_url'   => $plugin_icon_url,
+			'plugin_icon_class' => $plugin_icon_class,
+			'plugin_icon_type'  => $plugin_icon_type,
+		);
+	}
+
+	return $data;
 }
 
 /**

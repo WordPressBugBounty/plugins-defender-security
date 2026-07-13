@@ -268,7 +268,7 @@ class Mask_Login extends Setting {
 	 * @return string The name of the Mask Login Area module.
 	 */
 	public static function get_module_name(): string {
-		return esc_html__( 'Mask Login Area', 'defender-security' );
+		return esc_html__( 'Hide Login URL', 'defender-security' );
 	}
 
 	/**

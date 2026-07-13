@@ -12,6 +12,7 @@ use Calotes\Base\Model;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Component\User_Agent;
 use WP_Defender\Component\Table_Lockout;
+use WP_Defender\Model\Setting\Blacklist_Lockout;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 
 /**
@@ -150,6 +151,9 @@ class Lockout_Log extends DB {
 		if ( isset( $filters['ip'] ) && '' !== $filters['ip'] ) {
 			$orm->where( 'ip', 'like', '%' . $filters['ip'] . '%' );
 		}
+		if ( isset( $filters['user_agent'] ) && '' !== $filters['user_agent'] ) {
+			$orm->where( 'user_agent', 'like', '%' . $filters['user_agent'] . '%' );
+		}
 		if ( isset( $filters['type'] ) && '' !== $filters['type'] ) {
 			$orm->where( 'type', $filters['type'] );
 		}
@@ -204,12 +208,12 @@ class Lockout_Log extends DB {
 			$orm->where( 'ip', 'like', "%$ip%" );
 		}
 
-		if ( isset( $filters['ban_status'] ) && '' !== trim( $filters['ban_status'] ) ) {
-			$ban_status_where = self::ban_status_where( $filters['ban_status'] );
+		if ( isset( $filters['user_agent'] ) && '' !== trim( $filters['user_agent'] ) ) {
+			$orm->where( 'user_agent', 'like', '%' . $filters['user_agent'] . '%' );
+		}
 
-			if ( 3 === count( $ban_status_where ) ) {
-				$orm->where( ...$ban_status_where );
-			}
+		if ( isset( $filters['ban_status'] ) && '' !== trim( $filters['ban_status'] ) ) {
+			self::apply_ban_status_filter( $orm, array_merge( $filters, array( 'type' => $type ) ) );
 		}
 
 		return $orm->count();
@@ -543,6 +547,25 @@ class Lockout_Log extends DB {
 	}
 
 	/**
+	 * Get logs by an array of IDs.
+	 *
+	 * @param  int[] $ids  Array of log IDs.
+	 *
+	 * @return array
+	 */
+	public static function find_by_ids( array $ids ): array {
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$orm = self::get_orm();
+
+		return $orm->get_repository( self::class )
+					->where( 'id', 'in', $ids )
+					->get();
+	}
+
+	/**
 	 * Delete current log.
 	 */
 	public function delete() {
@@ -562,24 +585,34 @@ class Lockout_Log extends DB {
 	 */
 	private static function apply_ban_status_filter( $orm, $filters ) {
 		$ban_status = $filters['ban_status'];
-		$type       = $filters['type'] ?? 'all';
+		$type       = $filters['type'] ?? '';
+		$ua_types   = self::get_ua_lockout_types();
 
-		// Define lockout type categories.
-		$ua_types = self::get_ua_lockout_types();
+		if ( in_array( $type, $ua_types, true ) ) {
+			$where = self::ban_status_where( $ban_status );
+			if ( 3 === count( $where ) ) {
+				$orm->where( ...$where );
+			}
+			return;
+		}
 
-		if ( 'all' === $type || '' === $type ) {
-			// For 'all' type, only show UA types with ban_status filtering.
-			$ban_status_where = self::ban_status_where( $ban_status );
-			if ( 3 === count( $ban_status_where ) ) {
-				$orm->where( 'type', 'in', $ua_types );
-				$orm->where( ...$ban_status_where );
+		$table_lockout = wd_di()->get( Table_Lockout::class );
+		$bl_model      = wd_di()->get( Blacklist_Lockout::class );
+
+		if ( $table_lockout::STATUS_BAN === $ban_status ) {
+			$list = $bl_model->get_list( 'blocklist' );
+			// Empty blocklist means no IPs are banned — force zero results.
+			$orm->where( 'ip', 'in', array() === $list ? array( '' ) : $list );
+		} elseif ( $table_lockout::STATUS_NOT_BAN === $ban_status ) {
+			$list = $bl_model->get_list( 'blocklist' );
+			// Empty blocklist means all IPs are "not banned" — no filter needed.
+			if ( array() !== $list ) {
+				$orm->where( 'ip', 'not in', $list );
 			}
-		} elseif ( in_array( $type, $ua_types, true ) ) {
-			// For UA-specific types, apply UA filtering.
-			$ban_status_where = self::ban_status_where( $ban_status );
-			if ( 3 === count( $ban_status_where ) ) {
-				$orm->where( ...$ban_status_where );
-			}
+		} elseif ( $table_lockout::STATUS_ALLOWLIST === $ban_status ) {
+			$list = $bl_model->get_list( 'allowlist' );
+			// Empty allowlist means no IPs are allowlisted — force zero results.
+			$orm->where( 'ip', 'in', array() === $list ? array( '' ) : $list );
 		}
 	}
 
@@ -629,18 +662,12 @@ class Lockout_Log extends DB {
 	 * @since 3.11.0
 	 */
 	public static function format_logs( array $logs ): array {
-		$data     = array();
-		$ua_model = wd_di()->get( User_Agent_Lockout::class );
+		$data = array();
 		foreach ( $logs as $item ) {
-			$ip_model = Lockout_Ip::get( $item->ip );
-
 			// Escape object properties received from end user.
 			$item->log   = sanitize_textarea_field( $item->log );
 			$item->tried = sanitize_textarea_field( $item->tried );
-
-			$arr_ip_statuses = $ip_model->get_access_status();
-
-			$log = $item->export();
+			$log         = $item->export();
 
 			// Escape array keys received from end user.
 			$log['log']   = sanitize_textarea_field( $log['log'] );
@@ -650,49 +677,8 @@ class Lockout_Log extends DB {
 			$log['format_date']     = $item->get_date( $item->date );
 			$log['tag']             = self::get_log_tag( $item->type );
 			$log['container_class'] = self::get_log_container_class( $item->type );
-			if ( self::LOCKOUT_UA === $item->type ) {
-				if ( User_Agent::REASON_BAD_POST === $item->tried ) {
-					$log['description'] = esc_html__(
-						'Lockout occurred due to attempted access with empty User-Agent and Referer headers. By default, IP addresses that send POST requests with empty User-Agent and Referer headers will be automatically banned. You can disable this option in the User Agent Banning settings, or you can unban the locked out IP address below.',
-						'defender-security'
-					);
-					$log['type_label']  = esc_html__( 'Type', 'defender-security' );
-					$log['type_value']  = esc_html__( 'Empty Headers', 'defender-security' );
-					$arr_statuses       = $arr_ip_statuses;
-				} else {
-					$log['description'] = sprintf(
-					/* translators: 1. Log. 2. User agent. */
-						esc_html__(
-							'%1$s: %2$s. This user agent is considered bad bots and may harm your site.',
-							'defender-security'
-						),
-						sanitize_textarea_field( $item->log ),
-						'<strong>' . sanitize_textarea_field( $item->user_agent ) . '</strong>'
-					);
-					$log['type_label']       = esc_html__( 'User Agent name', 'defender-security' );
-					$log['type_value']       = sanitize_textarea_field( $item->user_agent );
-					$log['access_status_ip'] = $arr_ip_statuses;
-					$arr_statuses            = $ua_model->get_access_status( $item->user_agent );
-				}
-			} else {
+			if ( self::LOCKOUT_UA !== $item->type ) {
 				$log['description'] = sanitize_textarea_field( $item->log );
-				$log['type_label']  = esc_html__( 'Type', 'defender-security' );
-				$log['type_value']  = str_replace( '_', ' ', $item->type );
-				$arr_statuses       = $arr_ip_statuses;
-
-				if ( 'malicious_bot' === $item->type ) {
-					$log['access_status_ua'] = $ua_model->get_access_status( $item->user_agent );
-				}
-			}
-			// There may be several statuses.
-			$log['access_status'] = $arr_statuses;
-
-			// For UA lockout types, show UA status; for others show IP status.
-			if ( in_array( $item->type, self::get_ua_lockout_types(), true ) ) {
-				$ua_statuses               = $ua_model->get_access_status( $item->user_agent );
-				$log['access_status_text'] = $ip_model->get_access_status_text( $ua_statuses[0] ?? 'na' );
-			} else {
-				$log['access_status_text'] = $ip_model->get_access_status_text( $arr_statuses[0] );
 			}
 			$data[] = $log;
 		}

@@ -32,9 +32,8 @@ class Expert_Services extends Controller {
 	 * Only enqueues assets if the page is active.
 	 */
 	public function enqueue_assets(): void {
-		if ( $this->is_page_active() ) {
-			wp_enqueue_script( 'def-expert-services' );
-			$this->enqueue_main_assets();
+		if ( ! $this->is_page_active() ) {
+			return;
 		}
 	}
 

@@ -78,7 +78,6 @@ class Captcha extends Event {
 		$this->is_woo_activated        = $this->woo->is_activated();
 		$this->buddypress              = wd_di()->get( Buddypress::class );
 		$this->is_buddypress_activated = $this->buddypress->is_activated();
-		add_filter( 'wp_defender_advanced_tools_data', array( $this, 'script_data' ) );
 
 		if ( $this->model->is_active() // No need the check by Woo and Buddypress are activated because we use this below.
 			&& $this->service->enable_any_location( $this->is_woo_activated, $this->is_buddypress_activated ) && ! $this->service->exclude_captcha_for_requests() ) {
@@ -313,19 +312,6 @@ class Captcha extends Event {
 	}
 
 	/**
-	 * Provide data to the frontend via localized script.
-	 *
-	 * @param array $data Data collection is ready to passed.
-	 *
-	 * @return array Modified data array with added this controller data.
-	 */
-	public function script_data( array $data ): array {
-		$data['captcha'] = $this->data_frontend();
-
-		return $data;
-	}
-
-	/**
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
@@ -379,58 +365,11 @@ class Captcha extends Event {
 	 * @defender_route
 	 */
 	public function save_settings( Request $request ): Response {
-		$data     = $request->get_data_by_model( $this->model );
-		$old_data = $this->model->get_active_captcha_data( $data['provider'], $data['active_type'] );
+		$data = $request->get_data_by_model( $this->model );
 		$this->model->import( $data );
 		if ( Captcha_Model::TURNSTILE === $this->model->provider ) {
 			$this->model->active_type = Captcha_Model::TURNSTILE;
 		}
-		$new_data   = $this->model->get_active_captcha_data();
-		$old_key    = $old_data['key'] ?? '';
-		$old_secret = $old_data['secret'] ?? '';
-		$key        = $new_data['key'] ?? '';
-		$secret     = $new_data['secret'] ?? '';
-		$provider   = $this->service->get_provider();
-		$is_valid   = ( '' === $secret && '' === $key ) || ( '' !== $secret && '' !== $key );
-		if ( ( $old_key !== $key || $old_secret !== $secret ) && '' !== $secret && '' !== $key ) {
-			$valid_token = $request->get_data(
-				array(
-					'token' => array(
-						'type' => 'string',
-					),
-				)
-			);
-			$token       = $valid_token['token'] ?? '';
-			if ( '' === $token ) {
-				$is_valid = false;
-			} else {
-				$response = $provider->verify_response_token(
-					$token,
-					$provider->get_verify_url(),
-					array(
-						'secret' => $secret,
-					)
-				);
-				$is_valid = isset( $response['success'] ) && true === $response['success'];
-			}
-		}
-		if ( ! $is_valid ) {
-			return new Response(
-				false, // Merge stored data to avoid errors.
-				array_merge(
-					array(
-						'message'    => sprintf(
-						/* translators: Provider label. */
-							__( 'Please make sure your %s API keys are correct and that Preview Widget verification is successful.', 'defender-security' ),
-							Captcha_Model::TURNSTILE === $this->model->provider ? __( 'Cloudflare', 'defender-security' ) : __( 'reCAPTCHA', 'defender-security' )
-						),
-						'error_keys' => array( 'invalid-secret' ),
-					),
-					$this->data_frontend()
-				)
-			);
-		}
-
 		if ( $this->model->validate() ) {
 			$this->model->save();
 			Config_Hub_Helper::set_clear_active_flag();
@@ -448,13 +387,76 @@ class Captcha extends Event {
 		}
 
 		return new Response(
-			false, // Merge stored data to avoid errors.
+			false,
+			// Merge stored data to avoid errors.
 			array_merge(
 				array(
 					'message'    => $this->model->get_formatted_errors(),
 					'error_keys' => $this->model->get_error_keys(),
 				),
 				$this->data_frontend()
+			)
+		);
+	}
+
+	/**
+	 * Verify a CAPTCHA response token.
+	 *
+	 * @param Request $request The request object containing token and key data.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function verify_response_token( Request $request ): Response {
+		$data = $request->get_data(
+			array(
+				'token' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'key'   => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+			)
+		);
+
+		$token = $data['token'] ?? '';
+		$key   = $data['key'] ?? '';
+		if ( '' === $token || '' === $key ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Missing CAPTCHA verification data.', 'defender-security' ),
+				)
+			);
+		}
+
+		$provider = $this->service->get_provider();
+		$response = $provider->verify_response_token(
+			$token,
+			$provider->get_verify_url(),
+			array(
+				'secret' => $key,
+			)
+		);
+
+		$success = (bool) ( $response['success'] ?? false );
+		if ( $success ) {
+			$data_key = Captcha_Model::TURNSTILE === $this->model->provider
+				? 'data_turnstile'
+				: 'data_' . $this->model->active_type;
+
+			$data                     = $this->model->{$data_key};
+			$data['verified']         = true;
+			$this->model->{$data_key} = $data;
+			$this->model->save();
+		}
+
+		return new Response(
+			$success,
+			array(
+				'success' => $success,
 			)
 		);
 	}

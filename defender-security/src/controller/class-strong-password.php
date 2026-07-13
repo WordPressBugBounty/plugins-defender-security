@@ -7,6 +7,7 @@
 
 namespace WP_Defender\Controller;
 
+use Countable;
 use WP_Defender\Event;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
@@ -56,7 +57,6 @@ class Strong_Password extends Event {
 		$this->service = wd_di()->get( Service::class );
 		$this->helper  = wd_di()->get( Password_Protection::class );
 		$this->woo     = wd_di()->get( Woocommerce::class );
-		add_filter( 'wp_defender_advanced_tools_data', array( $this, 'script_data' ) );
 		$this->register_routes();
 		if ( $this->model->is_active() ) {
 			$this->setup_hooks();
@@ -122,19 +122,6 @@ class Strong_Password extends Event {
 				);
 			}
 		}
-	}
-
-	/**
-	 * Provide data to the frontend via localized script.
-	 *
-	 * @param  array $data  Data collection is ready to passed.
-	 *
-	 * @return array Modified data array with added this controller data.
-	 */
-	public function script_data( array $data ): array {
-		$data['strong_password'] = $this->data_frontend();
-
-		return $data;
 	}
 
 	/**
@@ -259,6 +246,31 @@ class Strong_Password extends Event {
 	public function export_strings(): array {
 		return array(
 			$this->model->is_active() ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
+		);
+	}
+
+	/**
+	 * Generates configuration strings based on the provided configuration.
+	 *
+	 * @param  mixed $config  The configuration data.
+	 *
+	 * @return array Returns an array of configuration strings.
+	 */
+	public function config_strings( $config ): array {
+		$is_enabled = isset( $config['enabled'] ) ? (bool) $config['enabled'] : false;
+		if (
+			! $is_enabled ||
+			! isset( $config['user_roles'] ) ||
+			! is_array( $config['user_roles'] ) ||
+			array() === $config['user_roles']
+		) {
+			return array( esc_html__( 'Inactive', 'defender-security' ) );
+		}
+
+		return array(
+			$is_enabled && ( is_array( $config['user_roles'] ) || $config['user_roles'] instanceof Countable ? count( $config['user_roles'] ) : 0 ) > 0
+				? esc_html__( 'Active', 'defender-security' )
+				: esc_html__( 'Inactive', 'defender-security' ),
 		);
 	}
 

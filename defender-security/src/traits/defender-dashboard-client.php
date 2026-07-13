@@ -21,7 +21,7 @@ trait Defender_Dashboard_Client {
 	 * @return bool
 	 */
 	public function is_pro(): bool {
-		return method_exists( $this, 'get_apikey' ) && $this->get_apikey() !== false;
+		return class_exists( '\WPMUDEV_Dashboard' ) && method_exists( $this, 'get_apikey' ) && $this->get_apikey() !== false;
 	}
 
 	/**
@@ -49,7 +49,11 @@ trait Defender_Dashboard_Client {
 	 * @since 2.6.3
 	 */
 	public function is_wpmu_dev_admin(): bool {
-		if ( $this->is_dash_activated() && method_exists( 'WPMUDEV_Dashboard_Site', 'allowed_user' ) ) {
+		if (
+			'dashboard' === $this->resolve_connection_mode() &&
+			is_object( WPMUDEV_Dashboard::$site ) &&
+			method_exists( WPMUDEV_Dashboard::$site, 'allowed_user' )
+		) {
 			return WPMUDEV_Dashboard::$site->allowed_user( get_current_user_id() );
 		}
 
@@ -57,19 +61,44 @@ trait Defender_Dashboard_Client {
 	}
 
 	/**
-	 * Bring the plugin menu title.
+	 * Returns whether the current install is a Pro version.
+	 *
+	 * @return bool
+	 */
+	protected function is_pro_install(): bool {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		$is_pro = file_exists( $this->get_abs_plugin_path_by_slug( WP_DEFENDER_PRO_PATH ) )
+					&& is_plugin_active( WP_DEFENDER_PRO_PATH );
+
+		return $is_pro;
+	}
+
+	/**
+	 * Returns the page title.
+	 *
+	 * @return string Page title.
+	 */
+	public function get_page_title(): string {
+		return $this->is_pro_install()
+			? esc_html__( 'Defender Pro', 'defender-security' )
+			: esc_html__( 'Defender', 'defender-security' );
+	}
+
+	/**
+	 * Returns the sidebar menu title, including a "Pro" badge span when on a Pro install.
 	 *
 	 * @return string Menu title.
 	 */
 	public function get_menu_title(): string {
-		// Check if it's Pro but user logged the WPMU DEV Dashboard out.
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		$menu_title = file_exists( $this->get_abs_plugin_path_by_slug( WP_DEFENDER_PRO_PATH ) )
-						&& is_plugin_active( WP_DEFENDER_PRO_PATH )
-			? esc_html__( 'Defender Pro', 'defender-security' )
-			: esc_html__( 'Defender', 'defender-security' );
+		if ( $this->is_pro_install() ) {
+			return sprintf(
+				'%1$s<span class="defender-admin-menu-pro-tag">%2$s</span>',
+				esc_html__( 'Defender', 'defender-security' ),
+				esc_html__( 'Pro', 'defender-security' )
+			);
+		}
 
-		return $menu_title;
+		return esc_html__( 'Defender', 'defender-security' );
 	}
 
 	/**
@@ -80,10 +109,8 @@ trait Defender_Dashboard_Client {
 	public function get_menu_icon(): string {
 		ob_start();
 		?>
-		<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-			<path fill-rule="evenodd" clip-rule="evenodd"
-					d="M9.99999 2.08899L3 4.21792V9.99502H9.99912V18.001H10C13.47 18.001 17 13.9231 17 11.0045V9.99501H9.99999V2.08899ZM10 0L1 2.73862V11.0045C1 15.1125 5.49 20 10 20C14.51 20 19 15.1225 19 11.0045V2.73862L10 0Z"
-					fill="#F0F6FC"/>
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<path d="M7.44 1.12125L2.94 2.43125C2.09 2.68125 1.5 3.46125 1.5 4.35125V8.66125C1.5 11.5312 4.72 14.9612 8 14.9612C11.28 14.9612 14.5 11.5312 14.5 8.66125V4.35125C14.5 3.46125 13.91 2.68125 13.06 2.43125L8.56 1.12125C8.2 1.01125 7.81 1.01125 7.44 1.12125ZM13.06 8.66125C13.06 10.6912 10.53 13.5612 8 13.5612V7.96125H2.94V3.90125L8 2.43125V7.96125H13.06V8.66125Z" fill="#F0F6FC"/>
 		</svg>
 		<?php
 		$svg = ob_get_clean();
@@ -142,7 +169,7 @@ trait Defender_Dashboard_Client {
 	 * @return bool
 	 */
 	public function is_disabled_hub_option(): bool {
-		return ! $this->is_dash_activated() || ! $this->is_site_connected_to_hub();
+		return 'none' === $this->resolve_connection_mode();
 	}
 
 	/**
@@ -161,12 +188,40 @@ trait Defender_Dashboard_Client {
 		}
 	}
 	/**
-	 * Checks if the Hub connector is connected.
+	 * Checks if the Hub connector module (HCM) is connected.
 	 *
 	 * @return bool True if connected, false otherwise.
 	 */
-	public static function get_status(): bool {
-		return API::get()->is_logged_in();
+	public static function get_hcm_status(): bool {
+		return class_exists( 'WPMUDEV\Hub\Connector\API' ) && API::get()->is_logged_in();
+	}
+
+	/**
+	 * Checks if the Dashboard plugin has a usable Hub connection.
+	 *
+	 * @return bool
+	 */
+	protected function is_dashboard_connected(): bool {
+		return $this->is_dash_activated()
+			&& is_object( WPMUDEV_Dashboard::$api )
+			&& WPMUDEV_Dashboard::$api->has_key()
+			&& (int) WPMUDEV_Dashboard::$api->get_site_id() > 0;
+	}
+
+	/**
+	 * Resolve the active Hub connection mode for this request.
+	 *
+	 * @return string 'dashboard' | 'hub_connector' | 'none'
+	 * @since 6.0.0
+	 */
+	public function resolve_connection_mode(): string {
+		if ( $this->is_dashboard_connected() ) {
+			return 'dashboard';
+		} elseif ( self::get_hcm_status() ) {
+			return 'hub_connector';
+		}
+
+		return 'none';
 	}
 
 	/**
@@ -175,14 +230,7 @@ trait Defender_Dashboard_Client {
 	 * @return bool
 	 */
 	public function hub_connector_connected(): bool {
-		if ( $this->is_dash_activated() ) {
-			$dash_api  = WPMUDEV_Dashboard::$api;
-			$connected = (bool) $dash_api->has_key();
-		} else {
-			$connected = self::get_status();
-		}
-
-		return $connected;
+		return 'none' !== $this->resolve_connection_mode();
 	}
 
 	/**
@@ -191,10 +239,12 @@ trait Defender_Dashboard_Client {
 	 * @return string
 	 */
 	public function get_api_key(): string {
-		if ( $this->is_dash_activated() ) {
+		if ( 'dashboard' === $this->resolve_connection_mode() ) {
 			$api_key = WPMUDEV_Dashboard::$api->get_key();
-		} else {
+		} elseif ( class_exists( 'WPMUDEV\Hub\Connector\API' ) ) {
 			$api_key = API::get()->get_api_key();
+		} else {
+			$api_key = '';
 		}
 
 		return $api_key;
@@ -206,9 +256,9 @@ trait Defender_Dashboard_Client {
 	 * @return string
 	 */
 	public function get_membership_type() {
-		if ( $this->is_dash_activated() ) {
+		if ( 'dashboard' === $this->resolve_connection_mode() ) {
 			return WPMUDEV_Dashboard::$api->get_membership_status();
-		} elseif ( self::get_status() ) {
+		} elseif ( self::get_hcm_status() ) {
 			return Data::get()->membership_type();
 		}
 		return 'free';
@@ -238,6 +288,6 @@ trait Defender_Dashboard_Client {
 	 * @return bool
 	 */
 	public function is_site_connected_to_hub_via_hcm_or_dash(): bool {
-		return $this->hub_connector_connected() || self::get_status();
+		return $this->hub_connector_connected() || self::get_hcm_status();
 	}
 }

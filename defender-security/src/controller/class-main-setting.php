@@ -12,13 +12,17 @@ use WP_Defender\Event;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Behavior\WPMUDEV;
+use WP_Defender\Controller\Notification;
 use WP_Defender\Component\Backup_Settings;
 use WP_Defender\Component\Config\Config_Adapter;
+use WP_Defender\Component\Config\Local_Config_Store;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Traits\Defender_Dashboard_Client;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Setting\Main_Setting as Model_Main_Setting;
 use WP_Filesystem_Base;
+use WP_Defender\Controller\Security_Headers;
+use WP_Defender\Controller\Firewall;
 
 /**
  * Methods for handling main settings.
@@ -55,6 +59,13 @@ class Main_Setting extends Event {
 	protected $wpmudev;
 
 	/**
+	 * Local configs store.
+	 *
+	 * @var Local_Config_Store
+	 */
+	protected $local_store;
+
+	/**
 	 * The intention/nonce action of the current request.
 	 *
 	 * @since 4.0.0
@@ -74,9 +85,10 @@ class Main_Setting extends Event {
 		);
 
 		// Internal cache.
-		$this->model   = new Model_Main_Setting();
-		$this->service = wd_di()->get( Backup_Settings::class );
-		$this->wpmudev = wd_di()->get( WPMUDEV::class );
+		$this->model       = new Model_Main_Setting();
+		$this->service     = wd_di()->get( Backup_Settings::class );
+		$this->wpmudev     = wd_di()->get( WPMUDEV::class );
+		$this->local_store = new Local_Config_Store( $this->service );
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->register_routes();
 
@@ -93,6 +105,15 @@ class Main_Setting extends Event {
 			time() + HOUR_IN_SECONDS
 		);
 		add_action( 'wd_settings_update', array( $this, 'intercept_settings_update' ), 10, 2 );
+		// Initialize Security Headers so its routes are registered on every request,
+		// including AJAX calls from the Security Policies tab.
+		wd_di()->get( Security_Headers::class );
+		// Initialize Firewall so its routes (sync_ip_header, save_settings, empty_logs, etc.)
+		// are registered on AJAX requests originating from the Tools tab.
+		// Guarded to AJAX only to prevent a duplicate admin menu entry on normal page loads.
+		if ( wp_doing_ajax() ) {
+			wd_di()->get( Firewall::class );
+		}
 	}
 
 	/**
@@ -128,8 +149,69 @@ class Main_Setting extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script( 'def-settings', 'settings', $this->data_frontend() );
-		wp_enqueue_script( 'def-settings' );
+
+		$handle = 'defender-ui-settings';
+		wp_enqueue_script(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/js/settings-ui.js',
+			array( 'def-vue', 'def-manifest', 'def-core-ui', 'defender', 'wp-i18n' ),
+			DEFENDER_VERSION,
+			true
+		);
+		wp_set_script_translations( $handle, 'wpdef' );
+
+		$data   = $this->data_frontend();
+		$routes = $data['routes'] ?? array();
+		$nonces = $data['nonces'] ?? array();
+		unset( $data['routes'], $data['nonces'] );
+
+		// Include Security Headers data for the Security Policies tab.
+		$sh_controller = wd_di()->get( Security_Headers::class );
+		$sh_data       = $sh_controller->data_frontend();
+		$sh_routes     = $sh_data['routes'] ?? array();
+		$sh_nonces     = $sh_data['nonces'] ?? array();
+		unset( $sh_data['routes'], $sh_data['nonces'] );
+
+		// Namespace security headers routes/nonces to avoid key collisions.
+		foreach ( $sh_routes as $key => $route ) {
+			$routes[ 'security_headers_' . $key ] = $route;
+		}
+		foreach ( $sh_nonces as $key => $nonce ) {
+			$nonces[ 'security_headers_' . $key ] = $nonce;
+		}
+
+		// Include Module data for the Tools tab.
+		$scan_controller              = wd_di()->get( Scan::class );
+		$firewall_controller          = wd_di()->get( Firewall::class );
+		$blocklist_monitor_controller = wd_di()->get( Blocklist_Monitor::class );
+		$notification_controller      = wd_di()->get( Notification::class );
+		$recipients_controller        = wd_di()->get( Recipients::class );
+		wp_localize_script(
+			$handle,
+			'defenderUIData',
+			array_merge(
+				$this->get_shared_data(),
+				// Specific data.
+				array(
+					'settings'          => array_merge( $data, array( 'security_headers' => $sh_data ) ),
+					'scan'              => $scan_controller->data_frontend(),
+					'firewall'          => $firewall_controller->data_frontend(),
+					'blocklist_monitor' => $blocklist_monitor_controller->data_frontend(),
+					'notification'      => $notification_controller->data_frontend(),
+					'recipients'        => $recipients_controller->data_frontend(),
+					'routes'            => $routes,
+					'nonces'            => $nonces,
+				)
+			)
+		);
+
+		wp_enqueue_style(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			array(),
+			DEFENDER_VERSION
+		);
+
 		$this->enqueue_main_assets();
 	}
 
@@ -184,7 +266,10 @@ class Main_Setting extends Event {
 	 * @defender_route
 	 */
 	public function reset_settings(): Response {
-		wd_di()->get( Advanced_Tools::class )->remove_settings();
+		$preserve_settings = 'preserve' === $this->get_model()->uninstall_settings;
+
+		wd_di()->get( Login_Access::class )->remove_settings();
+		wd_di()->get( Blocklist_Monitor::class )->remove_settings();
 		wd_di()->get( Dashboard::class )->remove_settings();
 		wd_di()->get( Security_Tweaks::class )->remove_settings();
 		wd_di()->get( Scan::class )->remove_settings();
@@ -194,10 +279,18 @@ class Main_Setting extends Event {
 		wd_di()->get( Mask_Login::class )->remove_settings();
 		wd_di()->get( Notification::class )->remove_settings();
 		wd_di()->get( Two_Factor::class )->remove_settings();
+		wd_di()->get( Blocklist_Monitor::class )->remove_settings();
+		wd_di()->get( Data_Tracking::class )->remove_settings();
+		wd_di()->get( \WP_Defender\Controller\Setup_Wizard::class )->remove_settings();
+		wd_di()->get( \WP_Defender\Controller\Activity_Log::class )->remove_settings();
+
 		$this->set_intention( 'Data Reset' );
 		// Track first until settings are removed.
 		$this->track_opt( false );
 		$this->remove_settings();
+		if ( ! $preserve_settings ) {
+			update_site_option( Scan::FIRST_SCAN_STARTED, '0' );
+		}
 		// Indicate that it is not a new installation.
 		defender_no_fresh_install();
 
@@ -241,24 +334,6 @@ class Main_Setting extends Event {
 	}
 
 	/**
-	 * Disconnect site from HUB.
-	 *
-	 * @defender_route
-	 * @return Response
-	 */
-	public function disconnect_site(): Response {
-		$this->logout();
-
-		return new Response(
-			true,
-			array(
-				'message'    => esc_html__( 'Site disconnected successfully!', 'defender-security' ),
-				'auto_close' => true,
-			)
-		);
-	}
-
-	/**
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
@@ -267,14 +342,7 @@ class Main_Setting extends Event {
 		$model = $this->get_model();
 
 		$this->service->maybe_create_default_config();
-		$configs = $this->get_configs_and_update_status();
-
-		foreach ( $configs as &$config ) {
-			// Unset the data as we don't need it.
-			if ( isset( $config['configs'] ) ) {
-				unset( $config['configs'] );
-			}
-		}
+		$configs = $this->local_store->get_frontend_configs();
 
 		$link           = $this->wpmudev->is_member()
 			? 'https://wpmudev.com/translate/projects/wpdef/'
@@ -342,27 +410,7 @@ class Main_Setting extends Event {
 	 * @return bool Returns true if the importer data is valid, false otherwise.
 	 */
 	private function validate_importer( $importer ): bool {
-		if ( $this->service->verify_config_data( $importer ) ) {
-			// Validate content. This is the current data, we use this for verify the schema.
-			$sample = $this->service->gather_data();
-			foreach ( $importer['configs'] as $slug => $module ) {
-				// This is not in the sample, file is invalid.
-				if ( ! isset( $sample[ $slug ] ) ) {
-					return false;
-				}
-
-				$keys        = array_keys( $sample[ $slug ] );
-				$import_keys = array_keys( $module );
-				$diff        = array_diff( $import_keys, $keys );
-				if ( count( $diff ) ) {
-					return false;
-				}
-
-				return true;
-			}
-		}
-
-		return false;
+		return $this->service->verify_config_data( $importer );
 	}
 
 	/**
@@ -391,16 +439,6 @@ class Main_Setting extends Event {
 			);
 		}
 
-		// If it's old config structure then we upgrade configs to new format.
-		if (
-			isset( $importer['configs'] ) &&
-			is_array( $importer['configs'] ) &&
-			array() !== $importer['configs'] &&
-			! $this->service->check_for_new_structure( $importer['configs'] )
-		) {
-			$adapter             = wd_di()->get( Config_Adapter::class );
-			$importer['configs'] = $adapter->upgrade( $importer['configs'] );
-		}
 
 		if ( ! $this->validate_importer( $importer ) ) {
 			return new Response(
@@ -415,35 +453,68 @@ class Main_Setting extends Event {
 		}
 
 		// Do not use wp_strip_all_tags() to prevent XSS attack.
-		$name    = sanitize_text_field( $importer['name'] );
-		$configs = array(
-			'name'         => $name,
-			'immortal'     => false,
-			'is_removable' => true,
+		$name = sanitize_text_field( $importer['name'] );
+		$this->local_store->add_imported( $importer );
+
+		// Detect Pro-only modules that were skipped during validation
+		// to inform Free users that some settings were not imported.
+		$response_data = array(
+			'message' => sprintf(
+				/* translators: %s: Config name. */
+				esc_html__(
+					'%s config has been uploaded successfully – you can now apply it to this site.',
+					'defender-security'
+				),
+				'<strong>' . $name . '</strong>'
+			),
+			'configs' => $this->local_store->get_frontend_configs(),
 		);
 
-		$configs['configs']     = $importer['configs'];
-		$configs['description'] = isset( $importer['description'] ) && is_string( $importer['description'] ) && '' !== $importer['description']
-		? sanitize_textarea_field( $importer['description'] )
-		: '';
-		$configs['strings']     = $this->service->import_module_strings( $importer );
-		$key                    = 'wp_defender_config_import_' . time();
-		update_site_option( $key, $configs );
-		$this->service->index_key( $key );
+		if ( ! $this->wpmudev->is_pro() ) {
+			$sample = $this->service->gather_data();
+			$pro_modules = array();
+
+			foreach ( $importer['configs'] as $slug => $module ) {
+				// Modules present in the imported config but NOT in Free's sample data are Pro-only.
+				if ( ! isset( $sample[ $slug ] ) ) {
+					$pro_modules[] = $slug;
+				}
+			}
+
+			if ( ! empty( $pro_modules ) ) {
+				$module_names = array_map(
+					function ( $slug ) {
+						$names = array(
+							'audit'             => esc_html__( 'Audit Logs', 'defender-security' ),
+							'waf'               => esc_html__( 'Web Application Firewall (WAF)', 'defender-security' ),
+							'blocklist_monitor' => esc_html__( 'Blocklist Monitor', 'defender-security' ),
+							'pwned_passwords'   => esc_html__( 'Pwned Passwords', 'defender-security' ),
+							'force_strong_password' => esc_html__( 'Strong Passwords', 'defender-security' ),
+							'session_protection' => esc_html__( 'Session Protection', 'defender-security' ),
+							'two_factor'        => esc_html__( 'Two-Factor Authentication', 'defender-security' ),
+							'mask_login'        => esc_html__( 'Hide Login URL', 'defender-security' ),
+							'security_headers'  => esc_html__( 'Security Policies', 'defender-security' ),
+						);
+
+						return $names[ $slug ] ?? $slug;
+					},
+					$pro_modules
+				);
+
+				$response_data['message'] .= ' ' . sprintf(
+					/* translators: %s: Comma-separated list of Pro-only feature names. */
+					esc_html__(
+						'This config included features not available in the Free version: %s. Only the available settings were imported.',
+						'defender-security'
+					),
+					implode( ', ', $module_names )
+				);
+			}
+		}
 
 		return new Response(
 			true,
-			array(
-				'message' => sprintf(
-				/* translators: %s: Config name. */
-					esc_html__(
-						'%s config has been uploaded successfully – you can now apply it to this site.',
-						'defender-security'
-					),
-					'<strong>' . $name . '</strong>'
-				),
-				'configs' => Config_Hub_Helper::get_fresh_frontend_configs( $this->service ),
-			)
+			$response_data
 		);
 	}
 
@@ -466,54 +537,29 @@ class Main_Setting extends Event {
 				)
 			);
 		}
-		$name     = sanitize_text_field( $name );
-		$desc     = isset( $data['desc'] ) && is_string( $data['desc'] ) && '' !== trim( $data['desc'] ) ? wp_kses_post( $data['desc'] ) : '';
-		$key      = 'wp_defender_config_' . time();
-		$settings = $this->service->parse_data_for_import();
-		$data     = array_merge(
+		$name = sanitize_text_field( $name );
+		$desc = '';
+		if ( isset( $data['desc'] ) && is_string( $data['desc'] ) && '' !== trim( $data['desc'] ) ) {
+			$desc = wp_kses_post( $data['desc'] );
+		} elseif ( isset( $data['description'] ) && is_string( $data['description'] ) && '' !== trim( $data['description'] ) ) {
+			$desc = wp_kses_post( $data['description'] );
+		}
+		$note_added_time = isset( $data['note_added_time'] ) && is_scalar( $data['note_added_time'] )
+			? sanitize_text_field( (string) $data['note_added_time'] )
+			: '';
+		$this->local_store->create_from_current( $name, $desc, $note_added_time );
+
+		return new Response(
+			true,
 			array(
-				'name'         => $name,
-				'immortal'     => false,
-				'description'  => $desc,
-				'is_removable' => true,
-			),
-			$settings
-		);
-
-		// Add config to HUB.
-		$hub_id = Config_Hub_Helper::add_configs_to_hub( $data );
-
-		if ( $hub_id ) {
-			$data['hub_id'] = $hub_id;
-		}
-
-		unset( $data['labels'] );
-
-		if ( update_site_option( $key, $data ) ) {
-			$this->service->index_key( $key );
-
-			return new Response(
-				true,
-				array(
-					'message' => sprintf(
+				'message' => sprintf(
 					/* translators: %s: Config name. */
-						esc_html__( '%s config saved successfully.', 'defender-security' ),
-						'<strong>' . $name . '</strong>'
-					),
-					'configs' => Config_Hub_Helper::get_fresh_frontend_configs( $this->service ),
-				)
-			);
-		} else {
-			return new Response(
-				false,
-				array(
-					'message' => esc_html__(
-						'An error occurred while saving your config. Please try it again.',
-						'defender-security'
-					),
-				)
-			);
-		}
+					esc_html__( '%s config saved successfully.', 'defender-security' ),
+					'<strong>' . $name . '</strong>'
+				),
+				'configs' => $this->local_store->get_frontend_configs(),
+			)
+		);
 	}
 
 	/**
@@ -533,8 +579,11 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$config = get_site_option( $key );
-		if ( false === $config ) {
+		$config = $this->local_store->get_full_for_key( $key );
+		if ( null === $config ) {
+			$config = $this->prepare_config_for_download( $key );
+		}
+		if ( null === $config ) {
 			return new Response(
 				false,
 				array(
@@ -542,17 +591,140 @@ class Main_Setting extends Event {
 				)
 			);
 		}
-		$sample = $this->service->gather_data();
-		foreach ( $sample as $slug => $data ) {
-			foreach ( $data as $k => $val ) {
-				if ( ! isset( $config['configs'][ $slug ][ $k ] ) ) {
-					$config['configs'][ $slug ][ $k ] = null;
-				}
-			}
-		}
+
 		$filename = 'wp-defender-config-' . sanitize_file_name( $config['name'] ) . '.json';
-		header( 'Content-disposition: attachment; filename=' . $filename );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
 		echo wp_json_encode( $config, JSON_PRETTY_PRINT );
+		exit();
+	}
+
+	/**
+	 * Download multiple configs as a zip file.
+	 *
+	 * @return Response|void
+	 * @defender_route
+	 */
+	public function download_configs_zip() {
+		$keys_raw = defender_get_data_from_request( 'keys', 'g' );
+		if ( ! is_string( $keys_raw ) || '' === trim( $keys_raw ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+				)
+			);
+		}
+
+		$decoded = json_decode( wp_unslash( $keys_raw ), true );
+		$keys    = is_array( $decoded ) ? $decoded : explode( ',', $keys_raw );
+		$keys    = array_values(
+			array_filter(
+				array_map(
+					static function ( $key ) {
+						return is_string( $key ) ? trim( $key ) : '';
+					},
+					$keys
+				),
+				'boolval'
+			)
+		);
+
+		if ( array() === $keys ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+				)
+			);
+		}
+
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Zip archive is not supported on this server.', 'defender-security' ),
+				)
+			);
+		}
+
+		$tmp_zip_path = wp_tempnam( 'wp-defender-configs-' . time() . '.zip' );
+		if ( false === $tmp_zip_path ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Could not prepare zip file.', 'defender-security' ),
+				)
+			);
+		}
+
+		$cleanup_tmp_zip = static function () use ( $tmp_zip_path ) {
+			if ( file_exists( $tmp_zip_path ) ) {
+				wp_delete_file( $tmp_zip_path );
+			}
+		};
+
+		$zip = new \ZipArchive();
+		if ( true !== $zip->open( $tmp_zip_path, \ZipArchive::OVERWRITE ) ) {
+			$cleanup_tmp_zip();
+
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Could not create zip file.', 'defender-security' ),
+				)
+			);
+		}
+
+		$has_entries = false;
+
+		foreach ( $keys as $key ) {
+			$config = $this->local_store->get_full_for_key( $key );
+			if ( null === $config ) {
+				$config = $this->prepare_config_for_download( $key );
+			}
+			if ( null === $config ) {
+				continue;
+			}
+
+			$file_name = $this->make_unique_zip_entry_name(
+				'wp-defender-config-' . sanitize_file_name( $config['name'] ),
+				$key,
+				$zip
+			);
+			if ( false === $zip->addFromString( $file_name, wp_json_encode( $config, JSON_PRETTY_PRINT ) ) ) {
+				$zip->close();
+				$cleanup_tmp_zip();
+
+				return new Response(
+					false,
+					array(
+						'message' => esc_html__( 'Could not prepare zip file.', 'defender-security' ),
+					)
+				);
+			}
+
+			$has_entries = true;
+		}
+
+		$zip->close();
+
+		if ( ! $has_entries ) {
+			$cleanup_tmp_zip();
+
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'No valid configs found to export.', 'defender-security' ),
+				)
+			);
+		}
+
+		$download_name = 'wp-defender-configs-' . gmdate( 'Ymd-His' ) . '.zip';
+		header( 'Content-Type: application/zip' );
+		header( 'Content-Disposition: attachment; filename="' . $download_name . '"' );
+		header( 'Content-Length: ' . filesize( $tmp_zip_path ) );
+		readfile( $tmp_zip_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+		$cleanup_tmp_zip();
 		exit();
 	}
 
@@ -576,8 +748,11 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$config = get_site_option( $key );
-		if ( false === $config ) {
+		$config = $this->local_store->get_full_for_key( $key );
+		if ( null === $config ) {
+			$config = get_site_option( $key );
+		}
+		if ( false === $config || null === $config ) {
 			return new Response(
 				false,
 				array(
@@ -591,6 +766,7 @@ class Main_Setting extends Event {
 			return $this->apply_config_recommendations_error_message();
 		}
 
+		$this->local_store->apply( $key );
 		$this->service->make_config_active( $key );
 		// Track.
 		$this->track_feature(
@@ -602,7 +778,7 @@ class Main_Setting extends Event {
 		);
 
 		$message = sprintf(
-		/* translators: %s: Config name. */
+			/* translators: %s: Config name. */
 			esc_html__(
 				'%s config has been applied successfully.',
 				'defender-security'
@@ -617,7 +793,7 @@ class Main_Setting extends Event {
 				$login_url = $settings_mask_login->get_new_login_url();
 			}
 			$message .= '<br/>' . sprintf(
-			/* translators: %s: Login link. */
+				/* translators: %s: Login link. */
 				esc_html__(
 					'Due to currently applied security recommendations, you will now need to %s.',
 					'defender-security'
@@ -642,7 +818,7 @@ class Main_Setting extends Event {
 
 		$return['message']    = $message;
 		$return['auto_close'] = true;
-		$return['configs']    = Config_Hub_Helper::get_fresh_frontend_configs( $this->service );
+		$return['configs']    = $this->local_store->get_frontend_configs();
 
 		return new Response( true, $return );
 	}
@@ -658,8 +834,15 @@ class Main_Setting extends Event {
 	public function update_config( Request $request ) {
 		$data        = $request->get_data();
 		$key         = trim( $data['key'] );
+		$key         = $this->resolve_config_key( $key );
 		$name        = trim( $data['name'] );
-		$description = trim( $data['desc'] );
+		$description = isset( $data['desc'] ) ? trim( (string) $data['desc'] ) : '';
+		if ( '' === $description && isset( $data['description'] ) ) {
+			$description = trim( (string) $data['description'] );
+		}
+		$note_added_time = isset( $data['note_added_time'] ) && is_scalar( $data['note_added_time'] )
+			? sanitize_text_field( (string) $data['note_added_time'] )
+			: null;
 		if ( '' === $name || '' === $key ) {
 			return new Response(
 				false,
@@ -669,8 +852,11 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$config = get_site_option( $key );
-		if ( false === $config ) {
+		$config = $this->local_store->get_one( $key );
+		if ( null === $config ) {
+			$config = get_site_option( $key );
+		}
+		if ( false === $config || null === $config ) {
 			return new Response(
 				false,
 				array(
@@ -679,20 +865,15 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$old_config            = $config;
-		$config['name']        = sanitize_text_field( $name );
-		$config['description'] = sanitize_textarea_field( $description );
-
-		// Check data has been changed or not.
-		if (
-			$old_config['name'] === $config['name'] &&
-			$old_config['description'] === $config['description']
-		) {
-			// Data is not changed, so not need to run update query.
-			$option_updated = true;
-		} else {
+		$option_updated = $this->local_store->update_metadata( $key, $name, $description, $note_added_time );
+		if ( ! $option_updated ) {
+			$old_config            = $config;
+			$config['name']        = sanitize_text_field( $name );
+			$config['description'] = sanitize_textarea_field( $description );
+			if ( null !== $note_added_time ) {
+				$config['note_added_time'] = $note_added_time;
+			}
 			$option_updated = update_site_option( $key, $config );
-			Config_Hub_Helper::update_on_hub( $config );
 		}
 
 		if ( $option_updated ) {
@@ -700,12 +881,12 @@ class Main_Setting extends Event {
 				true,
 				array(
 					'message'    => sprintf(
-					/* translators: %s: Config name. */
+						/* translators: %s: Config name. */
 						esc_html__( '%s config saved successfully.', 'defender-security' ),
 						'<strong>' . $name . '</strong>'
 					),
 					'auto_close' => true,
-					'configs'    => Config_Hub_Helper::get_fresh_frontend_configs( $this->service ),
+					'configs'    => $this->local_store->get_frontend_configs(),
 				)
 			);
 		} else {
@@ -722,6 +903,98 @@ class Main_Setting extends Event {
 	}
 
 	/**
+	 * Sync config metadata list.
+	 *
+	 * This method updates name/description/note timestamp for provided configs
+	 * without changing config payload values.
+	 *
+	 * @param  Request $request  The request object containing configs metadata list.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function sync_configs_metadata( Request $request ): Response {
+		// Defense in depth: central routing already validates nonce and access.
+		if ( ! $this->check_permission() ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'You shall not pass.', 'defender-security' ),
+				)
+			);
+		}
+
+		$data = $request->get_data();
+		if ( ! isset( $data['configs'] ) || ! is_array( $data['configs'] ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+				)
+			);
+		}
+
+		$stored_configs = $this->local_store->get_all();
+		foreach ( $data['configs'] as $item ) {
+			if ( ! is_array( $item ) ) {
+				return new Response(
+					false,
+					array(
+						'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+					)
+				);
+			}
+
+			$key = '';
+			if ( isset( $item['key'] ) && is_string( $item['key'] ) ) {
+				$key = trim( $item['key'] );
+			} elseif ( isset( $item['id'] ) && is_string( $item['id'] ) ) {
+				$key = trim( $item['id'] );
+			}
+			$key = $this->resolve_config_key( $key, $stored_configs );
+
+			if (
+				'' === $key ||
+				0 !== strpos( $key, 'wp_defender_config' ) ||
+				! isset( $stored_configs[ $key ] )
+			) {
+				return new Response(
+					false,
+					array(
+						'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+					)
+				);
+			}
+
+			$config = $this->local_store->get_one( $key );
+			if ( null === $config ) {
+				continue;
+			}
+
+			$name            = isset( $item['name'] ) ? (string) $item['name'] : null;
+			$description     = null;
+			$note_added_time = null;
+			if ( isset( $item['description'] ) && is_string( $item['description'] ) ) {
+				$description = $item['description'];
+			} elseif ( isset( $item['desc'] ) && is_string( $item['desc'] ) ) {
+				$description = $item['desc'];
+			}
+			if ( isset( $item['note_added_time'] ) && is_scalar( $item['note_added_time'] ) ) {
+				$note_added_time = (string) $item['note_added_time'];
+			}
+			$this->local_store->update_metadata( $key, $name, $description, $note_added_time );
+		}
+
+		return new Response(
+			true,
+			array(
+				'message' => esc_html__( 'Configs synced successfully.', 'defender-security' ),
+				'configs' => $this->local_store->get_frontend_configs(),
+			)
+		);
+	}
+
+	/**
 	 * Delete config.
 	 *
 	 * @param  Request $request  The request object containing config key.
@@ -732,6 +1005,7 @@ class Main_Setting extends Event {
 	public function delete_config( Request $request ) {
 		$data = $request->get_data();
 		$key  = trim( $data['key'] );
+		$key  = $this->resolve_config_key( $key, $this->local_store->get_all() );
 		if ( '' === $key ) {
 			return new Response(
 				false,
@@ -741,7 +1015,10 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$config = get_site_option( $key );
+		$config = $this->local_store->get_one( $key );
+		if ( null === $config ) {
+			$config = get_site_option( $key );
+		}
 		if ( isset( $config['is_removable'] ) && false === (bool) $config['is_removable'] ) {
 			return new Response(
 				false,
@@ -751,21 +1028,29 @@ class Main_Setting extends Event {
 			);
 		}
 
-		// Remove from HUB.
-		if ( isset( $config['hub_id'] ) ) {
-			Config_Hub_Helper::delete_configs_from_hub( (int) $config['hub_id'] );
+		if ( $this->local_store->delete_one( $key ) ) {
+			return new Response(
+				true,
+				array(
+					'message'    => esc_html__( 'Config removed successfully.', 'defender-security' ),
+					'auto_close' => true,
+					'configs'    => $this->local_store->get_frontend_configs(),
+				)
+			);
 		}
 
 		if ( 0 === strpos( $key, 'wp_defender_config' ) ) {
 			delete_site_option( $key );
+			$this->service->remove_index( $key );
 			$this->service->clear_keys();
+			delete_site_transient( Config_Hub_Helper::CONFIGS_TRANSIENT_KEY );
 
 			return new Response(
 				true,
 				array(
 					'message'    => esc_html__( 'Config removed successfully.', 'defender-security' ),
 					'auto_close' => true,
-					'configs'    => Config_Hub_Helper::get_fresh_frontend_configs( $this->service ),
+					'configs'    => $this->local_store->get_frontend_configs(),
 				)
 			);
 		}
@@ -774,6 +1059,83 @@ class Main_Setting extends Event {
 			false,
 			array(
 				'message' => esc_html__( 'Invalid config', 'defender-security' ),
+			)
+		);
+	}
+
+	/**
+	 * Syncs configs list by keeping only the provided config keys.
+	 *
+	 * This method is intentionally separate from `delete_config` for backward compatibility.
+	 *
+	 * @param  Request $request  The request object containing the list of configs to keep.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function sync_configs_list( Request $request ): Response {
+		// Defense in depth: central routing already enforces nonce and private access checks.
+		if ( ! $this->check_permission() ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'You shall not pass.', 'defender-security' ),
+				)
+			);
+		}
+
+		$data = $request->get_data();
+		if ( ! isset( $data['configs'] ) || ! is_array( $data['configs'] ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+				)
+			);
+		}
+
+		$stored_configs = $this->local_store->get_all();
+		$keep_keys      = array();
+		foreach ( $data['configs'] as $item ) {
+			if ( ! is_array( $item ) ) {
+				return new Response(
+					false,
+					array(
+						'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+					)
+				);
+			}
+			$key = '';
+			if ( isset( $item['key'] ) && is_string( $item['key'] ) ) {
+				$key = trim( $item['key'] );
+			} elseif ( isset( $item['id'] ) && is_string( $item['id'] ) ) {
+				$key = trim( $item['id'] );
+			}
+
+			if (
+				'' === $key ||
+				0 !== strpos( $key, 'wp_defender_config' ) ||
+				! isset( $stored_configs[ $key ] )
+			) {
+				return new Response(
+					false,
+					array(
+						'message' => esc_html__( 'Invalid config list', 'defender-security' ),
+					)
+				);
+			}
+
+			$keep_keys[ $key ] = true;
+		}
+
+		$this->local_store->sync_keep_list( array_keys( $keep_keys ) );
+
+		return new Response(
+			true,
+			array(
+				'message'    => esc_html__( 'Config list synced successfully.', 'defender-security' ),
+				'auto_close' => true,
+				'configs'    => $this->local_store->get_frontend_configs(),
 			)
 		);
 	}
@@ -788,31 +1150,36 @@ class Main_Setting extends Event {
 	}
 
 	/**
-	 * Update config status and return them.
+	 * Resolves a config key from an incoming identifier.
 	 *
-	 * @return array
+	 * Supports direct option keys and numeric Hub IDs.
+	 *
+	 * @param  string     $incoming_key    Incoming key/id.
+	 * @param  array|null $stored_configs  Optional preloaded configs map.
+	 *
+	 * @return string
 	 */
-	private function get_configs_and_update_status() {
-		$configs   = Config_Hub_Helper::get_configs( $this->service );
-		$is_remove = Config_Hub_Helper::check_remove_active_flag();
-
-		// Loop to update strings of configs.
-		foreach ( $configs as $key => &$config ) {
-			if ( ! is_array( $config ) ) {
-				continue;
-			}
-
-			$config['strings'] = $this->service->import_module_strings( $config );
-
-			if ( $is_remove ) {
-				$config['is_active'] = false;
-			}
-
-			// Update config data.
-			update_site_option( $key, $config );
+	private function resolve_config_key( string $incoming_key, ?array $stored_configs = null ): string {
+		$key = trim( $incoming_key );
+		if ( '' === $key ) {
+			return '';
 		}
 
-		return $configs;
+		if ( 0 === strpos( $key, 'wp_defender_config' ) ) {
+			return $key;
+		}
+
+		$configs = is_array( $stored_configs ) ? $stored_configs : $this->local_store->get_all();
+		foreach ( $configs as $config_key => $config ) {
+			if ( ! is_array( $config ) || ! isset( $config['hub_id'] ) ) {
+				continue;
+			}
+			if ( (string) $config['hub_id'] === $key ) {
+				return (string) $config_key;
+			}
+		}
+
+		return $key;
 	}
 
 	/**
@@ -822,7 +1189,7 @@ class Main_Setting extends Event {
 	 */
 	private function apply_config_recommendations_error_message(): Response {
 		$message = sprintf(
-		/* translators: 1: Recommendations tab, 2: wp-config.php file, 3: Documentation. */
+			/* translators: 1: Recommendations tab, 2: wp-config.php file, 3: Documentation. */
 			esc_html__(
 				'There was an issue with applying some of the tweaks from the %1$s tab because we cannot make changes to your %2$s file. Please see our %3$s to apply the changes manually.',
 				'defender-security'
@@ -836,9 +1203,72 @@ class Main_Setting extends Event {
 			false,
 			array(
 				'message' => $message,
-				'configs' => Config_Hub_Helper::get_fresh_frontend_configs( $this->service ),
+				'configs' => $this->local_store->get_frontend_configs(),
 			)
 		);
+	}
+
+	/**
+	 * Prepares a config payload for download.
+	 *
+	 * @param  string $key  Config option key.
+	 *
+	 * @return array|null
+	 */
+	private function prepare_config_for_download( string $key ): ?array {
+		$config = get_site_option( $key );
+		if ( false === $config || ! is_array( $config ) ) {
+			return null;
+		}
+
+		$sample = $this->service->gather_data();
+		foreach ( $sample as $slug => $data ) {
+			foreach ( $data as $k => $val ) {
+				if ( ! isset( $config['configs'][ $slug ][ $k ] ) ) {
+					$config['configs'][ $slug ][ $k ] = null;
+				}
+			}
+		}
+
+		return $config;
+	}
+
+	/**
+	 * Creates a unique JSON filename for a zip entry.
+	 *
+	 * @param  string      $base_name  Base file name without extension.
+	 * @param  string      $key  Config option key.
+	 * @param  \ZipArchive $zip  Active zip archive.
+	 *
+	 * @return string
+	 */
+	private function make_unique_zip_entry_name( string $base_name, string $key, \ZipArchive $zip ): string {
+		$base_name = trim( $base_name );
+		if ( '' === $base_name ) {
+			$base_name = 'wp-defender-config';
+		}
+
+		$try_name = $base_name . '.json';
+		if ( false === $zip->locateName( $try_name ) ) {
+			return $try_name;
+		}
+
+		$key_suffix = sanitize_file_name( str_replace( 'wp_defender_config_', '', $key ) );
+		if ( '' !== $key_suffix ) {
+			$try_name = $base_name . '-' . $key_suffix . '.json';
+			if ( false === $zip->locateName( $try_name ) ) {
+				return $try_name;
+			}
+		}
+
+		$index = 2;
+		while ( true ) {
+			$try_name = $base_name . '-' . $index . '.json';
+			if ( false === $zip->locateName( $try_name ) ) {
+				return $try_name;
+			}
+			++$index;
+		}
 	}
 
 	/**

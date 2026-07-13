@@ -71,6 +71,7 @@ class Main_Setting extends Setting {
 	 * @var string
 	 * @sanitize_text_field
 	 * @defender_property
+	 * @rule in[keep,remove]
 	 */
 	public $uninstall_quarantine = 'keep';
 

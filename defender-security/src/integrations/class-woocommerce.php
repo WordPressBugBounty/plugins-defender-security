@@ -88,8 +88,8 @@ class Woocommerce {
 	public static function get_forms(): array {
 		return array(
 			self::WOO_LOGIN_FORM         => esc_html__( 'Login', 'defender-security' ),
-			self::WOO_REGISTER_FORM      => esc_html__( 'Registration', 'defender-security' ),
 			self::WOO_LOST_PASSWORD_FORM => esc_html__( 'Lost Password', 'defender-security' ),
+			self::WOO_REGISTER_FORM      => esc_html__( 'Registration', 'defender-security' ),
 			self::WOO_CHECKOUT_FORM      => esc_html__( 'Checkout', 'defender-security' ),
 		);
 	}

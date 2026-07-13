@@ -205,19 +205,9 @@
 				// Callback function works only in frontend.
 				if ( ! $( 'body' ).hasClass( 'wp-admin' ) ) {
 					parameters['callback'] = function( token ) {
-						form.off();
-						restoreEvents( form );
-						form.find( 'button, input:submit' ).off().each( function() {
-							restoreEvents( $( this ) );
-						} );
 						if ( targetObject && targetEvent ) {
 							targetObject.trigger( targetEvent );
 						}
-						form.find( 'button, input:submit' ).each( function() {
-							storeEvents( $( this ) );
-						} );
-						storeEvents( form );
-						storeOnSubmit( form, grecaptcha_index );
 						grecaptcha.reset( grecaptcha_index );
 					};
 				}

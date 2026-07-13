@@ -27,6 +27,13 @@ class Global_Ip extends Controller {
 	use Formats;
 
 	/**
+	 * Module slug for identifying Custom IP sync auto-enable after Hub connection.
+	 *
+	 * @const string
+	 */
+	public const MODULE_SLUG = 'custom-ip-sync';
+
+	/**
 	 * The slug identifier for this controller.
 	 *
 	 * @var string
@@ -81,6 +88,31 @@ class Global_Ip extends Controller {
 			add_action( 'wd_blacklist_this_ip', array( $this, 'blacklist_an_ip' ) );
 		}
 		add_action( 'init', array( $this->service, 'handle_expired_membership' ) );
+
+		// admin_init priority 20 runs after Hub_Connector sets the transient (priority 10);
+		// the other two hooks cover async-sync cases.
+		add_action( 'admin_init', array( $this, 'maybe_hcm_connection_attempt' ), 20 );
+		add_action( 'wpdef_hub_connector_synced', array( $this, 'maybe_hcm_connection_attempt' ) );
+		add_action( 'wpmudev_hub_connector_first_sync_completed', array( $this, 'maybe_hcm_connection_attempt' ) );
+	}
+
+	/**
+	 * Auto-enable Custom IP list sync after Hub connection if user triggered from Custom Rules page.
+	 *
+	 * @return void
+	 */
+	public function maybe_hcm_connection_attempt(): void {
+		$data        = get_site_transient( Hub_Connector::TRANSIENT_KEY );
+		$module_slug = $data['module_slug'] ?? '';
+
+		if ( self::MODULE_SLUG !== $module_slug || ! self::get_hcm_status() ) {
+			return;
+		}
+
+		delete_site_transient( Hub_Connector::TRANSIENT_KEY );
+
+		$this->model->blocklist_autosync = true;
+		$this->model->save();
 	}
 
 	/**
@@ -118,6 +150,7 @@ class Global_Ip extends Controller {
 
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
+			$this->model->enabled = $this->model->allow_self_unlock || $this->model->blocklist_autosync;
 			$this->model->save();
 			Config_Hub_Helper::set_clear_active_flag();
 			if ( 'central_ip' === $message_type ) {
@@ -154,8 +187,8 @@ class Global_Ip extends Controller {
 	 * Only enqueues assets if the page is active.
 	 */
 	public function enqueue_assets() {
-		if ( $this->is_page_active() ) {
-			wp_localize_script( 'def-iplockout', 'global_ip', $this->data_frontend() );
+		if ( ! $this->is_page_active() ) {
+			return;
 		}
 	}
 

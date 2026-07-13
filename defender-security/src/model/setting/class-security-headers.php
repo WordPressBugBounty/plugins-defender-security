@@ -358,6 +358,6 @@ class Security_Headers extends Setting {
 	 * @return string
 	 */
 	public static function get_module_name(): string {
-		return esc_html__( 'Security Headers', 'defender-security' );
+		return esc_html__( 'Security Policy', 'defender-security' );
 	}
 }

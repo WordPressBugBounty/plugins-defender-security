@@ -387,6 +387,7 @@ class Rate extends Component {
 	 * 5) IP lockouts,
 	 * 6) default one after 7 days installed.
 	 * Note: items #1-5 are without waiting for 7 days.
+	 * No uses in v6.0 but it'll will be implemented in the future.
 	 *
 	 * @return array
 	 */
@@ -434,6 +435,29 @@ class Rate extends Component {
 		$res['slug'] = '7_days_installed';
 
 		return $res;
+	}
+
+	/**
+	 * Display the rating notice on the Issues page if all malware scans are resolved.
+	 *
+	 * @param int $count_scan_issues Count of Scan issues.
+	 *
+	 * @return bool
+	 * @since 6.0
+	 */
+	public static function is_displayed_in_redesigned_version( int $count_scan_issues ): bool {
+		if ( self::was_rate_request() ) {
+			return false;
+		}
+		// Check by required page.
+		if ( 'wdf-scan' !== defender_get_current_page() ) {
+			return false;
+		}
+		if ( self::was_postponed_request() ) {
+			return false;
+		}
+
+		return 0 === $count_scan_issues;
 	}
 
 	/**

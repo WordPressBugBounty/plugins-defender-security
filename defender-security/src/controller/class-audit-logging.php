@@ -35,7 +35,7 @@ class Audit_Logging extends Event {
 	 */
 	public function __construct() {
 		$this->register_page(
-			esc_html( Model_Audit_Logging::get_module_name() ),
+			esc_html__( 'Audit Log', 'defender-security' ),
 			$this->slug,
 			array( $this, 'main_view' ),
 			$this->parent_slug
@@ -52,13 +52,39 @@ class Audit_Logging extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script( 'def-audit', 'audit', $this->data_frontend() );
-		wp_enqueue_script( 'def-audit' );
+
+		$handle = 'defender-ui-audit-logging';
+		wp_enqueue_script(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/js/audit-logging-ui.js',
+			array( 'def-vue', 'def-manifest', 'def-core-ui', 'defender', 'wp-i18n' ),
+			DEFENDER_VERSION,
+			true
+		);
+
+		wp_localize_script(
+			$handle,
+			'defenderUIData',
+			array_merge(
+				$this->get_shared_data(),
+				$this->data_frontend()
+			)
+		);
+
+		wp_enqueue_style(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			array(),
+			DEFENDER_VERSION
+		);
+
 		$this->enqueue_main_assets();
 	}
 
 	/**
 	 * Render the root element for frontend.
+	 *
+	 * @return void
 	 */
 	public function main_view(): void {
 		$this->render( 'main' );
@@ -118,7 +144,26 @@ class Audit_Logging extends Event {
 	 * @return array
 	 */
 	public function data_frontend(): array {
-		return array();
+		return array(
+			'auditLogging' => array_merge(
+				array(
+					'model'       => $this->model->export(),
+					'logs'        => array(),
+					'events_type' => array(),
+					'summary'     => array(
+						'count_7_days' => 0,
+						'report'       => '',
+					),
+					'paging'      => array(
+						'paged'       => 1,
+						'total_pages' => 1,
+						'count'       => 0,
+					),
+				),
+				$this->dump_routes_and_nonces()
+			),
+			'antibot'      => wd_di()->get( \WP_Defender\Controller\Antibot_Global_Firewall::class )->data_frontend(),
+		);
 	}
 
 	/**
@@ -127,7 +172,13 @@ class Audit_Logging extends Event {
 	 * @return array
 	 */
 	public function to_array(): array {
-		return array();
+		return array_merge(
+			array(
+				'enabled' => false,
+				'report'  => false,
+			),
+			$this->dump_routes_and_nonces()
+		);
 	}
 
 	/**

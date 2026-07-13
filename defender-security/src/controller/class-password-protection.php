@@ -50,7 +50,6 @@ class Password_Protection extends Event {
 		$this->service     = wd_di()->get( \WP_Defender\Component\Password_Protection::class );
 		$default_values    = $this->model->get_default_values();
 		$this->default_msg = $default_values['message'];
-		add_filter( 'wp_defender_advanced_tools_data', array( $this, 'script_data' ) );
 		$this->register_routes();
 		if ( $this->model->is_active() ) {
 			// Update site url on sub-site when MaskLogin is disabled.
@@ -211,19 +210,6 @@ class Password_Protection extends Event {
 		}
 
 		return new \WP_Defender\Model\Setting\Password_Protection();
-	}
-
-	/**
-	 * Provide data to the frontend via localized script.
-	 *
-	 * @param  array $data  Data collection is ready to passed.
-	 *
-	 * @return array Modified data array with added this controller data.
-	 */
-	public function script_data( array $data ): array {
-		$data['password_protection'] = $this->data_frontend();
-
-		return $data;
 	}
 
 	/**

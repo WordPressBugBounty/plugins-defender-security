@@ -97,7 +97,7 @@ class WP_Version extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Update WordPress to latest version', 'defender-security' );
+		return wp_strip_all_tags( 'Update WordPress', 'wpdef' );
 	}
 
 	/**
@@ -107,12 +107,13 @@ class WP_Version extends Abstract_Security_Tweaks {
 	 */
 	public function get_error_reason(): string {
 		return sprintf(
-			/* translators: %s: WP Version */
+			/* translators: 1. Open tag. 2. Close tag. */
 			esc_html__(
-				'Your current WordPress version is out of date, which means you could be missing out on the latest security patches in v%s',
+				'%1$sWordPress is out of date%2$s and may expose details hackers can use.',
 				'defender-security'
 			),
-			$this->get_latest_version()
+			'<strong>',
+			'</strong>',
 		);
 	}
 
@@ -126,16 +127,18 @@ class WP_Version extends Abstract_Security_Tweaks {
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
 			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__( 'You are using the latest version of WordPress, great job!', 'defender-security' ),
+			'successReason'    => wp_strip_all_tags( 'WordPress is up to date.', 'wpdef' ),
 			'misc'             => array(
-				'latest_wp'       => $this->get_latest_version(),
-				'core_update_url' => network_admin_url( 'update-core.php' ),
+				'latest_wp'          => $this->get_latest_version(),
+				'core_update_url'    => network_admin_url( 'update-core.php' ),
+				'show_revert_button' => false,
+				'show_action_button' => false,
 			),
-			'bulk_description' => esc_html__(
-				'Your current WordPress version is out of date, which means you could be missing out on the latest update. We will upgrade WordPress version to the latest.',
-				'defender-security'
+			'bulk_description' => wp_strip_all_tags(
+				'Outdated WordPress installs can leave your site vulnerable. Update WordPress to the latest version to help protect your site and keep security up to date.',
+				'wpdef'
 			),
-			'bulk_title'       => esc_html__( 'WordPress Version', 'defender-security' ),
+			'bulk_title'       => $this->get_label(),
 		);
 	}
 }

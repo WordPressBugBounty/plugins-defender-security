@@ -71,11 +71,20 @@ class Backup_Settings extends Component {
 	private $is_pro;
 
 	/**
+	 * Indicates whether the site has a HUB API key (true for both free and pro with Hub connected).
+	 *
+	 * @var bool
+	 */
+	private $has_hub_api_key;
+
+	/**
 	 * Constructor for the Backup_Settings class.
 	 * It initializes the class and sets whether the current installation is a pro version.
 	 */
 	public function __construct() {
-		$this->is_pro = ( new WPMUDEV() )->is_pro();
+		$wpmudev               = new WPMUDEV();
+		$this->is_pro          = $wpmudev->is_pro();
+		$this->has_hub_api_key = false !== $wpmudev->get_apikey();
 	}
 
 	/**
@@ -120,8 +129,6 @@ class Backup_Settings extends Component {
 		$settings           = new Model_Security_Tweaks();
 		$tweak_notification = new Tweak_Reminder();
 		$security_tweaks    = array(
-			'notification_repeat' => $tweak_notification->configs['reminder'],
-			'subscribers'         => $this->change_subscriber_format( $tweak_notification ),
 			'notification'        => $tweak_notification->status,
 			'data'                => $settings->data,
 			'fixed'               => $settings->fixed,
@@ -165,6 +172,7 @@ class Backup_Settings extends Component {
 			'email_content_error'           => $scan_notification->configs['template']['error']['body'],
 		);
 			$audit['enabled'] = false;
+
 		$settings_firewall    = new Model_Firewall();
 		$settings_ll          = new Model_Login_Lockout();
 		$settings_nl          = new Model_Notfound_Lockout();
@@ -247,7 +255,15 @@ class Backup_Settings extends Component {
 		if ( isset( $audit ) ) {
 			$ret['audit'] = $audit;
 		}
+		if ( $this->has_hub_api_key ) {
+			$blocklist_monitor_class             = wd_di()->get( Blocklist_Monitor::class );
+			$status                              = (string) $blocklist_monitor_class->get_status();
+			$ret['blocklist_monitor']['enabled'] = '1' === $status;
+			$ret['blocklist_monitor']['status']  = $status;
+		} else {
 			$ret['blocklist_monitor']['enabled'] = false;
+			$ret['blocklist_monitor']['status']  = '-1';
+		}
 		// For Pwned passwords.
 		$pwned_password_model                     = wd_di()->get( Model_Password_Protection::class );
 		$ret['pwned_passwords']['enabled']        = $pwned_password_model->is_active();
@@ -259,7 +275,12 @@ class Backup_Settings extends Component {
 		$ret['force_strong_password']['user_roles'] = $strong_password_model->user_roles;
 		$ret['force_strong_password']['message']    = $strong_password_model->get_message();
 		// For Session Protection.
-		$ret['session_protection']['enabled'] = false;
+		$session_protection_model                     = wd_di()->get( Session_Protection_Model::class );
+		$ret['session_protection']['enabled']         = $session_protection_model->enabled;
+		$ret['session_protection']['user_roles']      = $session_protection_model->user_roles;
+		$ret['session_protection']['lock_properties'] = $session_protection_model->lock_properties;
+		$ret['session_protection']['idle_timeout']    = $session_protection_model->idle_timeout;
+		$ret['session_protection']['login_duration']  = $session_protection_model->login_duration;
 		// It's better to add Tweaks as the last key to eliminate unexpected behavior with possible user logout.
 		$ret['security_tweaks'] = $security_tweaks;
 
@@ -547,24 +568,39 @@ class Backup_Settings extends Component {
 				'user_roles' => $user_roles,
 				'message'    => ( new Strong_Password_Model() )->get_message(),
 			),
+			'session_protection'    => array(
+				'enabled'         => false,
+				'idle_timeout'    => 1,
+				'login_duration'  => ( new Session_Protection_Model() )->get_default_duration(),
+				'user_roles'      => $user_roles,
+				'lock_properties' => array(),
+			),
 		);
-			$data['audit']['enabled']             = false;
-			$data['blocklist_monitor']['enabled'] = false;
+			$data['audit']['enabled'] = false;
+		if ( $this->has_hub_api_key ) {
+			$data['blocklist_monitor'] = array(
+				// @since 2.7.0 Enable.
+				'enabled' => true,
+				'status'  => '1',
+			);
+		} else {
+			$data['blocklist_monitor'] = array(
+				'enabled' => false,
+				'status'  => '-1',
+			);
+		}
 		// It's better to add Tweaks as the last key to eliminate unexpected behavior with possible user logout.
 		$data['security_tweaks'] = array(
-			'notification_repeat' => 'weekly',
-			'subscribers'         => $default_recipients,
-			'notification'        => 'enabled',
-			'automate'            => true,
-			'data'                => array(),
+			'notification' => 'disabled',
+			'data'         => array(),
 			// @since 2.7.0 Specific values for 4 fixed, 0 ignored and 8 actioned tweaks. 12 tweaks in total.
-			'fixed'               => array(
+			'fixed'        => array(
 				'disable-xml-rpc',
 				'login-duration',
 				'disable-trackback',
 				'prevent-enum-users',
 			),
-			'issues'              => array(
+			'issues'       => array(
 				'php-version',
 				'wp-version',
 				'prevent-php-executed',
@@ -574,7 +610,7 @@ class Backup_Settings extends Component {
 				'disable-file-editor',
 				'hide-error',
 			),
-			'ignore'              => array(),
+			'ignore'       => array(),
 		);
 
 		$configs['configs']      = $data;
@@ -583,6 +619,7 @@ class Backup_Settings extends Component {
 		$configs['description']  = esc_html__( 'Recommended default protection for every site', 'defender-security' );
 		$configs['immortal']     = true;
 		$configs['is_removable'] = true;
+		$configs['version']      = 2;
 		update_site_option( $key, $configs );
 		$this->index_key( $key );
 	}
@@ -870,12 +907,24 @@ class Backup_Settings extends Component {
 					}
 
 					$audit_report->save();
+					/**
+					 * If 'blocklist_monitor' module is activated, 'enabled' set as true.
+					 */
+				} elseif (
+					'blocklist_monitor' === $module
+					&& $this->has_hub_api_key
+				) {
+					// No need to import data. Just change status.
+					$blocklist_status = $module_data['status'] ?? '-1';
+					( new Blocklist_Monitor() )->change_status( $blocklist_status );
 				} elseif (
 					'pwned_passwords' === $module
 					&& isset( $module_data['custom_message'] )
 				) {
 					$controller->import_data( $module_data );
 				} elseif ( 'force_strong_password' === $module ) {
+					$controller->import_data( $module_data );
+				} elseif ( 'session_protection' === $module ) {
 					$controller->import_data( $module_data );
 				} elseif ( 'two_factor' === $module ) {
 					$controller->import_data( $module_data );
@@ -900,44 +949,7 @@ class Backup_Settings extends Component {
 					if ( is_array( $module_data ) && array() !== $module_data && isset( $module_data['notification'] ) ) {
 						$tweak_notification = new Tweak_Reminder();
 						if ( $tweak_notification->status !== $module_data['notification'] ) {
-							$tweak_notification->status = $module_data['notification'];
-						}
-
-						if ( isset( $module_data['notification_repeat'] ) ) {
-							// Temporary check for older versions.
-							if ( is_bool( $module_data['notification_repeat'] ) ) {
-								$tweak_notification->configs['reminder'] = $module_data['notification_repeat']
-									? 'daily'
-									: 'weekly';
-							} elseif (
-								is_string( $module_data['notification_repeat'] )
-								&& in_array(
-									$module_data['notification_repeat'],
-									array(
-										'daily',
-										'weekly',
-										'monthly',
-									),
-									true
-								)
-							) {
-								$tweak_notification->configs['reminder'] = $module_data['notification_repeat'];
-							} else {
-								$tweak_notification->configs['reminder'] = 'weekly';
-							}
-						} else {
-							$tweak_notification->configs['reminder'] = 'weekly';
-						}
-						if ( isset( $module_data['subscribers'] ) && is_array( $module_data['subscribers'] ) && array() !== $module_data['subscribers'] ) {
-							// Reset all recipients before.
-							$tweak_notification->in_house_recipients  = array();
-							$tweak_notification->out_house_recipients = array();
-							foreach ( $module_data['subscribers'] as $key => $subscribers ) {
-								$tweak_notification->$key = $subscribers;
-							}
-						}
-						if ( isset( $module_data['last_sent'] ) ) {
-							$tweak_notification->last_sent = $module_data['last_sent'];
+								$tweak_notification->status = 'disabled';
 						}
 						$tweak_notification->save();
 					}
@@ -1042,7 +1054,8 @@ class Backup_Settings extends Component {
 	 * @return bool Returns true if the new structure is used, otherwise false.
 	 */
 	public function check_for_new_structure( array $configs ): bool {
-		return array_key_exists( 'subscribers', $configs['security_tweaks'] );
+		return isset( $configs['version'] ) ||
+			( isset( $configs['security_tweaks'] ) && array_key_exists( 'enabled_user_enums', $configs['security_tweaks'] ) );
 	}
 
 	/**
@@ -1076,13 +1089,8 @@ class Backup_Settings extends Component {
 		}
 
 		foreach ( $data['configs'] as $key => $config ) {
-			if (
-				'security_tweaks' === $key
-				&& 'enabled' === $config['notification']
-				&& 1 === ( is_array( $data['strings']['security_tweaks'] )
-							|| $data['strings']['security_tweaks'] instanceof Countable ? count( $data['strings']['security_tweaks'] ) : 0 )
-			) {
-				$data['strings']['security_tweaks'][] = esc_html__( 'Email notifications active', 'defender-security' );
+			if ( 'security_tweaks' === $key ) {
+				$data['strings']['security_tweaks'] = wd_di()->get( Controller_Security_Tweaks::class )->config_strings( $config );
 			} elseif ( 'scan' === $key ) {
 				$data['strings']['scan'] = wd_di()->get( Controller_Scan::class )->config_strings( $config );
 			} elseif ( 'iplockout' === $key ) {
@@ -1097,7 +1105,18 @@ class Backup_Settings extends Component {
 				$data['strings']['blocklist_monitor'] = $this->format_blocklist_monitor_strings( $config );
 			} elseif ( 'pwned_passwords' === $key ) {
 				$data['strings']['pwned_passwords'] = wd_di()->get( Controller_Password_Protection::class )->config_strings( $config );
+			} elseif ( 'mask_login' === $key ) {
+				$data['strings']['mask_login'] = wd_di()->get( Controller_Mask_Login::class )->config_strings( $config );
+			} elseif ( 'security_headers' === $key ) {
+				$config                              = is_array( $config ) ? $config : array();
+				$data['strings']['security_headers'] = wd_di()->get( Security_Headers::class )->config_strings( $config );
+			} elseif ( 'two_factor' === $key ) {
+				// Two-Factor is available on both Free and Pro.
+				$data['strings']['two_factor'] = wd_di()->get( Two_Factor::class )->config_strings( $config );
+			} elseif ( 'force_strong_password' === $key ) {
+				$data['strings']['force_strong_password'] = wd_di()->get( Strong_Password_Controller::class )->config_strings( $config );
 			}
+			// todo: display session_protection strings.
 		}
 
 		return $data['strings'];
@@ -1112,6 +1131,7 @@ class Backup_Settings extends Component {
 	 */
 	public function create_default_module_strings( array $configs ): array {
 		$strings = array();
+
 		foreach ( $configs as $key => $config ) {
 			if ( 'security_tweaks' === $key ) {
 				$strings['security_tweaks'] = wd_di()->get( Controller_Security_Tweaks::class )->config_strings( $config );
@@ -1124,18 +1144,17 @@ class Backup_Settings extends Component {
 			} elseif ( 'two_factor' === $key ) {
 				$strings['two_factor'][] = esc_html__( 'Inactive', 'defender-security' );
 			} elseif ( 'mask_login' === $key ) {
-				$strings['mask_login'][] = esc_html__( 'Inactive', 'defender-security' );
+				$strings['mask_login'] = wd_di()->get( Controller_Mask_Login::class )->config_strings( $config );
 			} elseif ( 'security_headers' === $key ) {
-				$strings['security_headers'][] = esc_html__( 'Active', 'defender-security' );
+				$strings['security_headers'] = wd_di()->get( Security_Headers::class )->config_strings( $config );
 			} elseif ( 'blocklist_monitor' === $key ) {
 				$strings['blocklist_monitor'] = wd_di()->get( Blocklist_Monitor::class )->config_strings( $config );
 			} elseif ( 'pwned_passwords' === $key ) {
 				$strings['pwned_passwords'][] = esc_html__( 'Inactive', 'defender-security' );
 			} elseif ( 'force_strong_password' === $key ) {
 				$strings['force_strong_password'][] = esc_html__( 'Inactive', 'defender-security' );
-			} elseif ( 'session_protection' === $key ) {
-				$strings['session_protection'][] = esc_html__( 'Inactive', 'defender-security' );
 			}
+			// todo: display session_protection strings.
 		}
 
 		return $strings;
@@ -1167,7 +1186,13 @@ class Backup_Settings extends Component {
 	 */
 	private function get_prev_settings(): array {
 		$arr = array();
+		if ( $this->has_hub_api_key ) {
+			$status         = (string) wd_di()->get( Blocklist_Monitor::class )->get_status();
+			$arr['enabled'] = '1' === $status;
+			$arr['status']  = $status;
+		} else {
 			$arr['enabled'] = false;
+		}
 
 		return array(
 			// Different keys.
@@ -1194,9 +1219,9 @@ class Backup_Settings extends Component {
 	private function module_to_name( string $module ): string {
 		switch ( $module ) {
 			case 'security_tweaks':
-				return esc_html__( 'Security Recommendations', 'defender-security' );
+				return esc_html__( 'Hardening', 'defender-security' );
 			case 'scan':
-				return esc_html__( 'Malware Scanning', 'defender-security' );
+				return esc_html__( 'Issue', 'defender-security' );
 			case 'audit':
 				return Model_Audit_Logging::get_module_name();
 			case 'iplockout':
@@ -1331,13 +1356,13 @@ class Backup_Settings extends Component {
 	 * @return array
 	 */
 	private function format_blocklist_monitor_strings( array $config ): array {
-			$monitor = array(
-				sprintf(
-				/* translators: %s: Html for Pro-tag. */
-					esc_html__( 'Inactive %s', 'defender-security' ),
-					'<span class="sui-tag sui-tag-pro">Pro</span>'
-				),
-			);
+		if ( $this->has_hub_api_key ) {
+			$monitor = isset( $config['status'] ) && '1' === (string) $config['status']
+				? array( esc_html__( 'Blocklist Monitor active', 'defender-security' ) )
+				: array( esc_html__( 'Blocklist Monitor inactive', 'defender-security' ) );
+		} else {
+			$monitor = array( esc_html__( 'Blocklist Monitor inactive', 'defender-security' ) );
+		}
 
 		return $monitor;
 	}

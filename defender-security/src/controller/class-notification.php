@@ -15,7 +15,10 @@ use Calotes\Component\Request;
 use WP_Defender\Traits\Formats;
 use Calotes\Component\Response;
 use WP_Defender\Component\Network_Cron_Manager;
+use WP_Defender\Model\Notification\Audit_Report;
 use WP_Defender\Model\Notification\Malware_Report;
+use WP_Defender\Model\Notification\Tweak_Reminder;
+use WP_Defender\Model\Notification\Firewall_Report;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Notification as Model_Notification;
 
@@ -58,34 +61,13 @@ class Notification extends Event {
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
-		$this->register_page(
-			esc_html__( 'Notifications', 'defender-security' ),
-			$this->slug,
-			array( $this, 'main_view' ),
-			$this->parent_slug
-		);
 		$this->register_routes();
 		$this->service = wd_di()->get( \WP_Defender\Component\Notification::class );
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		// We use custom ajax endpoint here as the nonce would fail with other user.
-		add_action( 'wp_ajax_' . self::SLUG_SUBSCRIBE, array( $this, 'verify_subscriber' ) );
-		add_action( 'wp_ajax_nopriv_' . self::SLUG_SUBSCRIBE, array( $this, 'verify_subscriber' ) );
 		add_action( 'wp_ajax_' . self::SLUG_UNSUBSCRIBE, array( $this, 'unsubscribe_and_send_email' ) );
 		add_action( 'wp_ajax_nopriv_' . self::SLUG_UNSUBSCRIBE, array( $this, 'unsubscribe_and_send_email' ) );
 		add_action( 'defender_notify', array( $this, 'send_notify' ), 10, 2 );
-		/**
-		 * Network Cron Manager
-		 *
-		 * @var Network_Cron_Manager $network_cron_manager
-		 */
-		$network_cron_manager = wd_di()->get( Network_Cron_Manager::class );
-		$timestamp            = gmmktime( wp_date( 'H' ), 0, 0 );
-		$network_cron_manager->register_callback(
-			'wdf_maybe_send_report',
-			array( $this->service, 'maybe_dispatch_report' ),
-			30 * MINUTE_IN_SECONDS,
-			$timestamp
-		);
 		add_action( 'admin_notices', array( $this, 'show_actions_with_subscription' ) );
 	}
 
@@ -187,6 +169,75 @@ class Notification extends Event {
 	}
 
 	/**
+	 * Updates a WordPress user profile for an in-house recipient.
+	 *
+	 * @param  Request $request  The request object.
+	 *
+	 * @return Response The response object.
+	 * @defender_route
+	 */
+	public function update_user_profile( Request $request ): Response {
+		$data = $request->get_data(
+			array(
+				'id'           => array(
+					'type'     => 'int',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'first_name'   => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'last_name'    => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'display_name' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+			)
+		);
+
+		$user_id      = absint( $data['id'] ?? 0 );
+		$display_name = trim( (string) ( $data['display_name'] ?? '' ) );
+
+		if ( 0 === $user_id || '' === $display_name ) {
+			return new Response( false, array( 'message' => esc_html__( 'Invalid user data.', 'defender-security' ) ) );
+		}
+
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return new Response( false, array( 'message' => esc_html__( 'You are not allowed to edit this user.', 'defender-security' ) ) );
+		}
+
+		if ( ! get_user_by( 'id', $user_id ) ) {
+			return new Response( false, array( 'message' => esc_html__( 'User not found.', 'defender-security' ) ) );
+		}
+
+		$result = wp_update_user(
+			array(
+				'ID'           => $user_id,
+				'first_name'   => trim( (string) ( $data['first_name'] ?? '' ) ),
+				'last_name'    => trim( (string) ( $data['last_name'] ?? '' ) ),
+				'display_name' => $display_name,
+			)
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return new Response( false, array( 'message' => $result->get_error_message() ) );
+		}
+
+		return new Response(
+			true,
+			array(
+				'id'           => $user_id,
+				'first_name'   => trim( (string) ( $data['first_name'] ?? '' ) ),
+				'last_name'    => trim( (string) ( $data['last_name'] ?? '' ) ),
+				'display_name' => $display_name,
+			)
+		);
+	}
+
+	/**
 	 * Unsubscribe process.
 	 */
 	public function unsubscribe_and_send_email() {
@@ -271,7 +322,12 @@ class Notification extends Event {
 		$data['configs'] = $model->type_casting( $data['configs'] );
 
 		$model->import( $data );
-		$model->status = Model_Notification::STATUS_ACTIVE;
+		// Ensure the model is activated. The save route is called when the user explicitly
+		// saves settings, so the notification must be active after saving. If the imported
+		// data already carries an active status this is a no-op; otherwise we activate it.
+		if ( \WP_Defender\Model\Notification::STATUS_ACTIVE !== $model->status ) {
+			$model->status = \WP_Defender\Model\Notification::STATUS_ACTIVE;
+		}
 		if ( $model->validate() ) {
 			if ( 0 === $model->last_sent ) {
 				// This means that the notification or report never sent, we will use the moment that it get activate.
@@ -320,18 +376,13 @@ class Notification extends Event {
 	public function save_bulk( Request $request ): Response {
 		$data = $request->get_data(
 			array(
-				'reports'       => array(
-					'type'     => 'array',
-					'sanitize' => 'sanitize_textarea_field',
-				),
-				'notifications' => array(
+				'items' => array(
 					'type'     => 'array',
 					'sanitize' => 'sanitize_textarea_field',
 				),
 			)
 		);
-		$this->save_reports( $data['reports'] );
-		$this->save_notifications( $data['notifications'] );
+		$this->save_items( $data['items'] );
 		Config_Hub_Helper::set_clear_active_flag();
 
 		return new Response(
@@ -349,97 +400,128 @@ class Notification extends Event {
 	}
 
 	/**
-	 * Process bulk reports saving.
+	 * Sync the shared reports schedule to notification models that persist their own next-run timestamp.
 	 *
-	 * @param  array $data  Data to save.
+	 * @param  Request $request  The request object.
 	 *
-	 * @throws Exception Emits Exception in case of an error.
+	 * @defender_route
+	 * @return Response
 	 */
-	private function save_reports( $data ) {
-		foreach ( $data['configs'] as $datum ) {
-			$slug  = $datum['slug'];
-			$model = $this->service->find_module_by_slug( $slug );
-			if ( ! is_object( $model ) ) {
-				continue;
-			}
+	public function sync_report_schedule( Request $request ): Response {
+		$data = $request->get_data(
+			array(
+				'frequency' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'day'       => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'day_n'     => array(
+					'type'     => 'int',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'time'      => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+			)
+		);
 
-			$import = array(
-				// Saving after Bulk-Update must always change the status to Active.
-				'status'               => Model_Notification::STATUS_ACTIVE,
-				'configs'              => $model->type_casting( $datum ),
-				'in_house_recipients'  => $data['in_house_recipients'],
-				'out_house_recipients' => $data['out_house_recipients'],
-			);
-			// since 2.7.0.
-			if ( Malware_Report::SLUG !== $slug ) {
-				$import['frequency'] = $data['frequency'];
-				$import['day_n']     = (int) $data['day_n'];
-				$import['day']       = $data['day'];
-				$import['time']      = $data['time'];
-			}
-			foreach ( $import['out_house_recipients'] as $key => $val ) {
-				if ( ! filter_var( $val['email'], FILTER_VALIDATE_EMAIL ) ) {
-					unset( $import['out_house_recipients'][ $key ] );
-				}
-			}
-			$model->import( $import );
-			if ( $model->validate() ) {
-				if ( 0 === $model->last_sent ) {
-					$model->last_sent = time();
-				}
-				$model->save();
-				$this->service->send_subscription_confirm_email( $model );
-				// Track.
-				if ( $this->is_tracking_active() ) {
-					$track_data = array(
-						'Notification type'     => $model->title,
-						'Notification schedule' => 'tweak-reminder' === $slug
-							? ucfirst( $data['configs']['reminder'] )
-							: ucfirst( $data['frequency'] ),
-					);
-					$this->track_feature( 'def_notification_activated', $track_data );
-				}
-			}
+		$report_classes = array(
+			Firewall_Report::class,
+			Audit_Report::class,
+			Malware_Report::class,
+			Tweak_Reminder::class,
+		);
+
+		foreach ( $report_classes as $report_class ) {
+			$model            = wd_di()->get( $report_class );
+			$model->frequency = $data['frequency'];
+			$model->day       = $data['day'];
+			$model->day_n     = (int) $data['day_n'];
+			$model->time      = $data['time'];
+
+			$model->save();
 		}
+
+		Config_Hub_Helper::set_clear_active_flag();
+
+		return new Response( true, $this->data_frontend() );
 	}
 
 	/**
-	 * Saves the notifications based on the provided data.
+	 * Process bulk saving of reports or notifications.
 	 *
-	 * @param  array $data  The data containing the configurations for the notifications.
+	 * @param  array $data       Data to save.
 	 *
-	 * @return void
 	 * @throws Exception Emits Exception in case of an error.
 	 */
-	private function save_notifications( $data ) {
-		foreach ( $data['configs'] as $datum ) {
+	private function save_items( array $data ): void {
+		$in_house_recipients  = $data['in_house_recipients'] ?? array();
+		$out_house_recipients = $data['out_house_recipients'] ?? array();
+
+		foreach ( $data as $datum ) {
+			if ( ! is_array( $datum ) || ! isset( $datum['slug'] ) ) {
+				continue;
+			}
+
 			$slug  = $datum['slug'];
 			$model = $this->service->find_module_by_slug( $slug );
 			if ( ! is_object( $model ) ) {
 				continue;
 			}
+
 			$import = array(
-				// Saving after Bulk-Update must always change the status to Active.
-				'status'               => Model_Notification::STATUS_ACTIVE,
+				'status'               => $model->status,
 				'configs'              => $model->type_casting( $datum ),
-				'in_house_recipients'  => $data['in_house_recipients'],
-				'out_house_recipients' => $data['out_house_recipients'],
+				'in_house_recipients'  => $datum['in_house_recipients'] ?? $in_house_recipients,
+				'out_house_recipients' => $datum['out_house_recipients'] ?? $out_house_recipients,
 			);
+			// since 2.7.0.
+			if ( isset( $datum['is_report'] ) && (bool) $datum['is_report'] && Malware_Report::SLUG !== $slug ) {
+				$import['frequency'] = $datum['frequency'] ?? $model->frequency;
+				$import['day_n']     = (int) ( $datum['day_n'] ?? $model->day_n );
+				$import['day']       = $datum['day'] ?? $model->day;
+				$import['time']      = $datum['time'] ?? $model->time;
+			}
 			foreach ( $import['out_house_recipients'] as $key => $val ) {
 				if ( ! filter_var( $val['email'], FILTER_VALIDATE_EMAIL ) ) {
 					unset( $import['out_house_recipients'][ $key ] );
 				}
 			}
+			$prev_in_house_emails  = array_column( $model->in_house_recipients, null, 'email' );
+			$prev_out_house_emails = array_column( $model->out_house_recipients, null, 'email' );
+
 			$model->import( $import );
 			if ( $model->validate() ) {
 				if ( 0 === $model->last_sent ) {
 					$model->last_sent = time();
 				}
 				$model->save();
-				$this->service->send_subscription_confirm_email( $model );
+
+				$new_in_house_emails  = array_column( $import['in_house_recipients'], 'email' );
+				$new_out_house_emails = array_column( $import['out_house_recipients'], 'email' );
+				foreach ( $prev_in_house_emails as $email => $recipient ) {
+					if ( ! in_array( $email, $new_in_house_emails, true ) ) {
+						$this->service->send_unsubscribe_email( $model, $email, true, $recipient['name'] ?? '' );
+					}
+				}
+				foreach ( $prev_out_house_emails as $email => $recipient ) {
+					if ( ! in_array( $email, $new_out_house_emails, true ) ) {
+						$this->service->send_unsubscribe_email( $model, $email, false, $recipient['name'] ?? '' );
+					}
+				}
 				// Track.
 				if ( $this->is_tracking_active() ) {
-					$this->track_feature( 'def_notification_activated', array( 'Notification type' => $model->title ) );
+					$track_data = array( 'Notification type' => $model->title );
+					if ( isset( $datum['is_report'] ) && (bool) $datum['is_report'] ) {
+						$track_data['Notification schedule'] = 'tweak-reminder' === $slug
+							? ucfirst( $datum['reminder'] ?? '' )
+							: ucfirst( $datum['frequency'] ?? '' );
+					}
+					$this->track_feature( 'def_notification_activated', $track_data );
 				}
 			}
 		}
@@ -569,76 +651,6 @@ class Notification extends Event {
 	}
 
 	/**
-	 * This is a receiver to process subscribe confirmation from email.
-	 */
-	public function verify_subscriber() {
-		$hash    = HTTP::get( 'hash', '' );
-		$slug    = HTTP::get( 'uid', '' );
-		$inhouse = HTTP::get( 'inhouse', '0' );
-
-		if ( '1' === $inhouse && ! is_user_logged_in() ) {
-			// This is in-house, so we need to redirect.
-			auth_redirect();
-		}
-		if ( ! is_string( $hash ) || '' === trim( $hash ) || ! is_string( $slug ) || '' === trim( $slug ) ) {
-			wp_die( esc_html__( 'You shall not pass.', 'defender-security' ) );
-		}
-		$m = $this->service->find_module_by_slug( $slug );
-		if ( ! is_object( $m ) ) {
-			wp_die( esc_html__( 'You shall not pass.', 'defender-security' ) );
-		}
-		if ( '1' === $inhouse ) {
-			$processed = false;
-			foreach ( $m->in_house_recipients as &$recipient ) {
-				if ( Model_Notification::USER_SUBSCRIBED === $recipient['status'] ) {
-					continue;
-				}
-
-				$email = $recipient['email'];
-				$name  = $recipient['name'];
-				if ( hash_equals( $hash, hash( 'sha256', $email . AUTH_SALT ) )
-					&& $email === $this->get_current_user_email() ) {
-					$recipient['status'] = Model_Notification::USER_SUBSCRIBED;
-					$this->service->send_subscribed_email( $email, $m, $name );
-					$processed = true;
-				}
-			}
-		} else {
-			foreach ( $m->out_house_recipients as &$recipient ) {
-				if ( Model_Notification::USER_SUBSCRIBED === $recipient['status'] ) {
-					continue;
-				}
-
-				$email = $recipient['email'];
-				$name  = $recipient['name'];
-				if ( hash_equals( $hash, hash( 'sha256', $email . AUTH_SALT ) ) ) {
-					$recipient['status'] = Model_Notification::USER_SUBSCRIBED;
-					$this->service->send_subscribed_email( $email, $m, $name );
-				}
-			}
-		}
-		$m->save();
-		if ( '1' === $inhouse ) {
-			if ( $processed ) {
-				wp_safe_redirect(
-					add_query_arg(
-						array(
-							'slug'    => $m->slug,
-							'context' => 'subscribed',
-						),
-						get_edit_profile_url()
-					)
-				);
-			} else {
-				wp_safe_redirect( home_url() );
-			}
-		} else {
-			wp_safe_redirect( home_url() );
-		}
-		exit;
-	}
-
-	/**
 	 * Enqueues scripts and styles for this page.
 	 * Only enqueues assets if the page is active.
 	 */
@@ -646,20 +658,7 @@ class Notification extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script(
-			'def-notification',
-			'notification',
-			array_merge( $this->data_frontend(), $this->dump_routes_and_nonces() )
-		);
-		wp_enqueue_script( 'def-notification' );
-		$this->enqueue_main_assets();
-		wp_enqueue_style(
-			'def-select2',
-			defender_asset_url( '/assets/css/select2.min.css' ),
-			array(),
-			DEFENDER_VERSION,
-			true
-		);
+		// todo: add changes when the design is ready.
 	}
 
 	/**
@@ -785,32 +784,21 @@ class Notification extends Event {
 	}
 
 	/**
+	 * Todo: add changes when the design is ready.
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
-		return array(
-			'notifications'          => $this->service->get_modules(),
-			'inactive_notifications' => $this->service->get_inactive_modules(),
-			'active_count'           => $this->service->count_active(),
-			'next_run'               => $this->service->get_next_run(),
-			'misc'                   => array(
-				'days_of_week'      => $this->get_days_of_week(),
-				'times_of_day'      => $this->get_times(),
-				'timezone_text'     => sprintf(
-				/* translators: 1. Timezone. 2. Time. */
-					esc_html__(
-						'Your timezone is set to %1$s, so your current time is %2$s.',
-						'defender-security'
-					),
-					'<strong>' . wp_timezone_string() . '</strong>',
-					'<strong>' . wp_date( 'H:i', time() ) . '</strong>'
-				),
-				'default_recipient' => $this->get_default_recipient(),
+		return array_merge(
+			array(
+				'alert_model'   => $this->service->get_alert_model(),
+				'reports_model' => $this->service->get_reports_model(),
+				'active_count'  => $this->service->count_active(),
+				'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
+				'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
-			'hub_connector'          => wd_di()->get( Hub_Connector::class )->data_frontend(),
-			'antibot'                => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
+			$this->dump_routes_and_nonces()
 		);
 	}
 
@@ -902,7 +890,7 @@ class Notification extends Event {
 			$subscriber['id'] = $data['id'];
 		}
 		// Resend invite email now.
-		$sent = $this->service->send_email( $subscriber, $model );
+		$sent = $this->service->send_email( $subscriber, $model->export() );
 
 		if ( $sent ) {
 			return new Response( true, array( 'message' => esc_html__( 'Invitation sent successfully.', 'defender-security' ) ) );
@@ -925,5 +913,49 @@ class Notification extends Event {
 		$user_roles = $this->service->get_user_roles();
 
 		wp_send_json_success( $user_roles );
+	}
+
+	/**
+	 * Sends a single invite email listing all notification modules the recipient was added to.
+	 *
+	 * @param  Request $request  Request with 'email' and 'name'.
+	 * @defender_route
+	 * @return Response
+	 */
+	public function send_invite_all_email( Request $request ): Response {
+		$data       = $request->get_data(
+			array(
+				'email' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_email',
+				),
+				'name'  => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'id'    => array( 'type' => 'integer' ),
+			)
+		);
+		$email      = $data['email'] ?? '';
+		$name       = $data['name'] ?? '';
+		$subscriber = array(
+			'email' => $email,
+			'name'  => $name,
+		);
+		if ( isset( $data['id'] ) && is_int( $data['id'] ) && 0 < $data['id'] ) {
+			$subscriber['id'] = $data['id'];
+		}
+		$active_slugs = array_column( $this->service->get_modules(), 'slug' );
+		$modules      = array_values(
+			array_filter(
+				$this->service->get_modules_as_objects(),
+				static function ( $module ) use ( $active_slugs ) {
+					return in_array( $module->slug, $active_slugs, true );
+				}
+			)
+		);
+		$sent         = $this->service->send_invite_all_email( $subscriber, $modules );
+
+		return new Response( $sent, array() );
 	}
 }

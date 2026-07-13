@@ -98,7 +98,11 @@ abstract class Provider implements Interface_Provider {
 		if ( isset( $data['threshold'] ) ) {
 			$this->threshold = (float) $data['threshold'];
 		}
-		$this->language = $this->model->language;
+		if ( 'turnstile' === $this->model->provider ) {
+			$this->language = $this->model->data_turnstile['language'] ?? 'auto';
+		} else {
+			$this->language = $this->model->language;
+		}
 	}
 
 	/**

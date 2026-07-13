@@ -119,6 +119,12 @@ trait Formats {
 	 * @return false|string
 	 */
 	public function get_date( $date ) {
+		if ( ! filter_var( $date, FILTER_VALIDATE_INT ) ) {
+			$date = strtotime( $date );
+		}
+		if ( false === $date ) {
+			return 'n/a';
+		}
 		if ( strtotime( '-24 hours' ) > $date ) {
 			return $this->format_date_time( $date );
 		} else {
@@ -143,6 +149,20 @@ trait Formats {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Converts a date string to a local timestamp.
+	 *
+	 * @param string $date        The date string to convert.
+	 * @param bool   $end_of_day  Whether to use the end of the day.
+	 *
+	 * @return int The local timestamp.
+	 */
+	public function date_string_to_timestamp( string $date, bool $end_of_day = false ): int {
+		$dt = new DateTime( $date, wp_timezone() );
+		$end_of_day ? $dt->setTime( 23, 59, 59 ) : $dt->setTime( 0, 0, 0 );
+		return $dt->getTimestamp();
 	}
 
 	/**

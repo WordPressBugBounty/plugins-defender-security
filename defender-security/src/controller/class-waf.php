@@ -15,6 +15,15 @@ use WP_Defender\Behavior\WPMUDEV;
  * Handles the settings, data, and other functionality related to the Web Application Firewall (WAF).
  */
 class WAF extends Controller {
+	/**
+	 * Option key storing the last known WAF status for change detection.
+	 */
+	private const LAST_STATUS_OPTION = 'defender_waf_last_known_status';
+
+	/**
+	 * Transient key set for 5 minutes when WAF status changes, used to drive the sync notice.
+	 */
+	private const STATUS_CHANGED_TRANSIENT = 'defender_waf_status_changed';
 
 	/**
 	 * The slug identifier for this controller.
@@ -34,40 +43,7 @@ class WAF extends Controller {
 	 */
 	public function __construct() {
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
-
-		// Return the constructor and do not register WAF page if Whitelable is enabled.
-		if ( $this->wpmudev->is_whitelabel_enabled() ) {
-			return;
-		}
-
-		$this->register_page(
-			esc_html__( 'WAF', 'defender-security' ),
-			$this->slug,
-			array( $this, 'main_view' ),
-			$this->parent_slug
-		);
-		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->register_routes();
-	}
-
-	/**
-	 * Enqueues scripts and styles for this page.
-	 * Only enqueues assets if the page is active.
-	 */
-	public function enqueue_assets() {
-		if ( ! $this->is_page_active() ) {
-			return;
-		}
-		wp_localize_script( 'def-waf', 'waf', $this->data_frontend() );
-		wp_enqueue_script( 'def-waf' );
-		$this->enqueue_main_assets();
-	}
-
-	/**
-	 * Renders the main view for this page.
-	 */
-	public function main_view() {
-		$this->render( 'main' );
 	}
 
 	/**
@@ -99,6 +75,8 @@ class WAF extends Controller {
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data() {
+		delete_option( self::LAST_STATUS_OPTION );
+		delete_transient( self::STATUS_CHANGED_TRANSIENT );
 	}
 
 	/**
@@ -107,7 +85,47 @@ class WAF extends Controller {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
-		return array();
+		$current_status = $this->get_waf_status();
+		return array(
+			'site_id'          => $this->wpmudev->get_site_id(),
+			'status'           => $current_status,
+			'show_sync_notice' => $this->get_show_sync_notice( $current_status ),
+		);
+	}
+
+	/**
+	 * Retrieves the WAF status for a given site.
+	 *
+	 * @return bool Returns false on failure, true if WAF is enabled.
+	 */
+	public function get_waf_status(): bool {
+		$status = defender_get_hosting_feature_state( 'waf' );
+		return '' !== $status && true === (bool) $status;
+	}
+
+	/**
+	 * Detects whether WAF status has recently changed and returns whether the sync notice should be shown.
+	 *
+	 * Sets a 5-minute transient on first detection of a status change so the notice persists across page loads.
+	 *
+	 * @param  bool $current_status  Current WAF enabled/disabled state.
+	 * @return bool True if the sync notice should be displayed.
+	 */
+	private function get_show_sync_notice( bool $current_status ): bool {
+		$stored = get_option( self::LAST_STATUS_OPTION, null );
+
+		if ( null === $stored ) {
+			update_option( self::LAST_STATUS_OPTION, $current_status );
+			return false;
+		}
+
+		if ( (bool) $stored !== $current_status ) {
+			update_option( self::LAST_STATUS_OPTION, $current_status );
+			set_transient( self::STATUS_CHANGED_TRANSIENT, true, 5 * MINUTE_IN_SECONDS );
+			return true;
+		}
+
+		return (bool) get_transient( self::STATUS_CHANGED_TRANSIENT );
 	}
 
 	/**
@@ -124,6 +142,12 @@ class WAF extends Controller {
 	 * @return array An array of strings.
 	 */
 	public function export_strings(): array {
-		return array();
+		return array(
+			sprintf(
+				/* translators: %s: Html for Pro-tag. */
+				esc_html__( 'Inactive %s', 'defender-security' ),
+				'<span class="sui-tag sui-tag-pro">Pro</span>'
+			),
+		);
 	}
 }

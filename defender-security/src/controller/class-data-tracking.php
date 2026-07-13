@@ -79,9 +79,17 @@ class Data_Tracking extends Event {
 	 * @defender_route
 	 */
 	public function close_track_modal(): Response {
+		$model_settings = wd_di()->get( Main_Setting::class );
+
+		if ( true === $model_settings->usage_tracking ) {
+			$model_settings->toggle_tracking( false );
+			Config_Hub_Helper::set_clear_active_flag();
+			$this->track_opt_toggle( false, 'Tracking modal' );
+		}
+
 		// Track.
 		$this->track_feature( 'def_tracking_modal', array( 'Modal Action' => 'closed' ) );
-		self::delete_modal_key();
+		self::dismiss_modal_key();
 
 		return new Response( true, array() );
 	}
@@ -105,9 +113,18 @@ class Data_Tracking extends Event {
 			$this->track_feature( 'def_tracking_modal', array( 'Modal Action' => 'cta_clicked' ) );
 		}
 		// Hide the modal.
-		self::delete_modal_key();
+		self::dismiss_modal_key();
 
 		return new Response( true, array() );
+	}
+
+	/**
+	 * Marks the tracking notice as dismissed without resetting initialization state.
+	 *
+	 * @return void
+	 */
+	public static function dismiss_modal_key(): void {
+		update_site_option( self::TRACKING_SLUG, false );
 	}
 
 	/**
@@ -140,6 +157,7 @@ class Data_Tracking extends Event {
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data() {
+		self::delete_modal_key();
 	}
 
 	/**
@@ -174,6 +192,7 @@ class Data_Tracking extends Event {
 	 * Removes settings for all submodules.
 	 */
 	public function remove_settings(): void {
+		self::delete_modal_key();
 	}
 
 	/**
@@ -183,5 +202,47 @@ class Data_Tracking extends Event {
 	 */
 	public function data_frontend(): array {
 		return array();
+	}
+
+	/**
+	 * Returns whether the dashboard share usage notice should be displayed.
+	 *
+	 * @return bool
+	 */
+	public function should_show_dashboard_notice(): bool {
+		if ( ! get_site_option( self::TRACKING_SLUG ) ) {
+			return false;
+		}
+
+		return ! wd_di()->get( Main_Setting::class )->usage_tracking;
+	}
+
+	/**
+	 * Returns dashboard notice data and routes for the share usage bubble.
+	 *
+	 * @return array
+	 */
+	public function get_dashboard_notice_data(): array {
+		$result = $this->dump_routes_and_nonces();
+
+		return array(
+			'shareUsageNotice' => array(
+				'isVisible' => $this->should_show_dashboard_notice(),
+			),
+			'routes'           => $result['routes'],
+			'nonces'           => $result['nonces'],
+		);
+	}
+
+	/**
+	 * Marks the share usage dashboard notice as already shown.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function mark_track_notice_displayed(): Response {
+		self::dismiss_modal_key();
+
+		return new Response( true, array() );
 	}
 }

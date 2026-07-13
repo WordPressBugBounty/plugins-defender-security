@@ -72,6 +72,8 @@ class Antibot_Global_Firewall extends Event {
 		$this->service = $service;
 		$this->wpmudev = $wpmudev;
 
+		add_action( 'admin_init', array( $this, 'maybe_hcm_connection_attempt' ), 20 );
+		add_action( 'wpdef_hub_connector_synced', array( $this, 'maybe_hcm_connection_attempt' ) );
 		add_action( 'wpmudev_hub_connector_first_sync_completed', array( $this, 'maybe_hcm_connection_attempt' ) );
 
 		/**
@@ -180,7 +182,7 @@ class Antibot_Global_Firewall extends Event {
 			$referrer       = wp_get_referer();
 			if ( $referrer && strpos( $referrer, 'page=wp-defender' ) !== false ) {
 				$update_message = sprintf(
-					/* translators: 1: Bold open tag, 2: Bold close tag */
+					/* translators: 1: Module name. */
 					__( '%s is now enabled.', 'defender-security' ),
 					'<strong>' . Antibot_Global_Firewall_Setting::get_module_name() . '</strong>'
 				);
@@ -228,8 +230,8 @@ class Antibot_Global_Firewall extends Event {
 	 * @return void
 	 */
 	public function enqueue_assets() {
-		if ( $this->is_page_active() ) {
-			wp_localize_script( 'def-iplockout', 'antibot', $this->data_frontend() );
+		if ( ! $this->is_page_active() ) {
+			return;
 		}
 	}
 
@@ -269,6 +271,7 @@ class Antibot_Global_Firewall extends Event {
 						&& ! defender_is_unlimited_hosting(),
 					'sync_schedule'             => __( 'Twice Daily', 'defender-security' ),
 					'ips_count'                 => $this->service->get_blocklisted_ip_count(),
+					'blocklist_stats_full'      => $this->service->get_cached_blocklist_stats_data(),
 					'frontend_is_enabled'       => $this->service->frontend_is_enabled(),
 					'frontend_mode'             => $this->service->frontend_mode(),
 					'is_active'                 => $this->service->is_active(),
@@ -332,7 +335,7 @@ class Antibot_Global_Firewall extends Event {
 		$data        = get_site_transient( Hub_Connector::TRANSIENT_KEY );
 		$module_slug = $data['module_slug'] ?? '';
 
-		if ( Antibot_Global_Firewall_Setting::get_module_slug() === $module_slug && self::get_status() ) {
+		if ( Antibot_Global_Firewall_Setting::get_module_slug() === $module_slug && self::get_hcm_status() ) {
 			delete_site_transient( Hub_Connector::TRANSIENT_KEY );
 
 			if ( 'plugin' === $this->service->get_managed_by() ) {
@@ -385,6 +388,7 @@ class Antibot_Global_Firewall extends Event {
 		delete_site_option( Antibot_Global_Firewall_Component::GLOBAL_NOTICE_TIME_OPTION );
 		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_KEY . '_' . Antibot_Global_Firewall_Setting::MODE_BASIC );
 		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_KEY . '_' . Antibot_Global_Firewall_Setting::MODE_STRICT );
+		delete_site_transient( Antibot_Global_Firewall_Component::BLOCKLIST_STATS_FULL_KEY );
 		delete_site_transient( Antibot_Global_Firewall_Component::IS_SWITCHING_TO_PLUGIN_IN_PROGRESS );
 	}
 
@@ -450,7 +454,7 @@ class Antibot_Global_Firewall extends Event {
 				),
 				'email'   => array(
 					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
+					'sanitize' => 'sanitize_email',
 				),
 				'service' => array(
 					'type'     => 'string',
@@ -462,15 +466,37 @@ class Antibot_Global_Firewall extends Event {
 				),
 			)
 		);
+
+		$reporter_email = isset( $data['email'] ) ? trim( $data['email'] ) : '';
+		if ( '' === $reporter_email || ! is_email( $reporter_email ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'A valid email address is required.', 'defender-security' ),
+				)
+			);
+		}
+
 		// Logging.
 		$message = sprintf(
 			'IP: %s, email: %s, service: %s, reason: %s',
 			$data['ip'],
-			$data['email'],
+			$reporter_email,
 			$data['service'],
 			$data['reason']
 		);
 		$this->service->log_ip_message( $message );
+
+		// Track the request. Forced so it operates independently of tracking consent.
+		$this->forced_track(
+			'def_request_trusted_ip',
+			array(
+				'IP Address' => $data['ip'],
+				'User Email' => $reporter_email,
+				'Service'    => $data['service'],
+				'Reason'     => $data['reason'],
+			)
+		);
 
 		return new Response( true, array() );
 	}
@@ -507,15 +533,24 @@ class Antibot_Global_Firewall extends Event {
 		$bl_service = wd_di()->get( Blacklist_Lockout::class );
 		$gi_service = wd_di()->get( Global_IP::class );
 
+		$ip = $data['ip'];
+
+		$is_ip_allowed = $bl_service->is_ip_whitelisted( $ip )
+			|| $bl_service->is_country_whitelist( $ip )
+			|| ( $gi_service->is_global_ip_enabled() && $gi_service->is_ip_allowed( $ip ) );
+
+		// Fetch the latest Custom IP blocklist from the Hub so we don't rely on stale cached data.
+		$gi_service->fetch_global_ip_list();
+
 		return new Response(
 			true,
 			array(
 				'success'     => true,
 				'show_notice' => false,
 				'message'     => __( 'The IP address is searched successfully.', 'defender-security' ),
-				'local'       => $bl_service->is_blacklist( $data['ip'] ),
-				'central'     => $gi_service->is_global_ip_enabled() && $gi_service->is_ip_blocked( $data['ip'] ),
-				'antibot'     => $this->service->is_ip_blocked( $data['ip'] ),
+				'local'       => ! $is_ip_allowed && $bl_service->is_blacklist( $data['ip'] ),
+				'central'     => ! $is_ip_allowed && $gi_service->is_global_ip_enabled() && $gi_service->is_ip_blocked( $data['ip'] ),
+				'antibot'     => ! $is_ip_allowed && $this->service->is_ip_blocked( $ip ),
 			)
 		);
 	}
@@ -546,15 +581,17 @@ class Antibot_Global_Firewall extends Event {
 				)
 			);
 		}
-		$collection = 'allowlist';
+		$collection      = 'allowlist';
+		$model           = wd_di()->get( \WP_Defender\Model\Setting\Blacklist_Lockout::class );
+		$already_in_list = $model->is_ip_in_list( $ip, $collection );
+
 		// Add to Local allowlist.
-		$model = wd_di()->get( \WP_Defender\Model\Setting\Blacklist_Lockout::class );
-		if ( ! $model->is_ip_in_list( $ip, $collection ) ) {
+		if ( ! $already_in_list ) {
 			$model->add_to_list( $ip, $collection );
 		}
 		// Add to Custom IP allowlist.
 		$global_ip_service = wd_di()->get( Global_IP::class );
-		if ( $global_ip_service->can_central_ip_autosync() ) {
+		if ( ! $already_in_list && $global_ip_service->can_central_ip_autosync() ) {
 			$data = array(
 				'allow_list' => array( $ip ),
 			);
@@ -570,20 +607,38 @@ class Antibot_Global_Firewall extends Event {
 			}
 		}
 
+		$manage_link_open  = '<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist#tab-ip-allowlist' ) . '">';
+		$manage_link_close = '</a>';
+
+		if ( $already_in_list ) {
+			$message = sprintf(
+				/* translators: 1: IP address. 2: Opening anchor tag. 3: Closing anchor tag. */
+				esc_html__(
+					'IP %1$s is already in your Site\'s allowlist. You can manage it in %2$sIP Lockouts%3$s.',
+					'defender-security'
+				),
+				$ip,
+				$manage_link_open,
+				$manage_link_close
+			);
+		} else {
+			$message = sprintf(
+				/* translators: 1: IP address. 2: Opening anchor tag. 3: Closing anchor tag. */
+				esc_html__(
+					'IP %1$s has been added to your Site\'s allowlist. You can manage it in %2$sIP Lockouts%3$s.',
+					'defender-security'
+				),
+				$ip,
+				$manage_link_open,
+				$manage_link_close
+			);
+		}
+
 		return new Response(
 			true,
 			array(
-				'message'  => sprintf(
-					/* translators: 1: IP address. 2: Opening anchor tag. 3: Closing anchor tag. */
-					esc_html__(
-						'IP %1$s has been added to your Site\'s allowlist. You can manage it in %2$sIP Lockouts%3$s.',
-						'defender-security'
-					),
-					$ip,
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist#tab-ip-allowlist' ) . '">',
-					'</a>'
-				),
-				'interval' => 5,
+				'message'         => $message,
+				'already_in_list' => $already_in_list,
 			)
 		);
 	}

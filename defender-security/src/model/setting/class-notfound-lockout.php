@@ -131,7 +131,7 @@ class Notfound_Lockout extends Setting {
 	public function get_default_values(): array {
 		return array(
 			'message'   => esc_html__(
-				'You have been locked out due to too many attempts to access a file that doesn`t exist.',
+				'You have been locked out due to too many 404 requests.',
 				'defender-security'
 			),
 			'whitelist' => ".css\n.js\n.map\n/cdn-cgi/challenge-platform/",

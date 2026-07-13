@@ -108,7 +108,7 @@ class Apache {
 			$ht_access_path = ABSPATH . '.htaccess';
 			// Create a htaccess-file if it doesn't exist.
 			if ( ! is_file( $ht_access_path )
-				&& false === (bool) file_put_contents( $ht_access_path, '', LOCK_EX ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+				&& false === file_put_contents( $ht_access_path, '', LOCK_EX ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 			) {
 				return $this->get_error_by_file_path( $ht_access_path );
 			}
@@ -294,6 +294,25 @@ class Apache {
 	}
 
 	/**
+	 * Get LiteSpeed .htaccess rules for display in the browser, independent of the current server detection.
+	 *
+	 * @return string
+	 */
+	public function get_litespeed_rules_for_instruction(): string {
+		if ( 'prevent-php-executed' !== $this->type ) {
+			return '';
+		}
+
+		$rules  = '## WP Defender - Protect PHP Executed ##' . PHP_EOL;
+		$rules .= '<Files *.php>' . PHP_EOL;
+		$rules .= 'Require all denied' . PHP_EOL;
+		$rules .= '</Files>' . PHP_EOL;
+		$rules .= '## WP Defender - End ##' . PHP_EOL;
+
+		return $rules;
+	}
+
+	/**
 	 * Get Apache rule depending on the version for instruction on browser.
 	 *
 	 * @return string
@@ -432,7 +451,7 @@ class Apache {
 		}
 		// Create a htaccess-file if it doesn't exist.
 		if ( ! is_file( $ht_access_path )
-			&& false === (bool) file_put_contents( $ht_access_path, '', LOCK_EX ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			&& false === file_put_contents( $ht_access_path, '', LOCK_EX ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 		) {
 			return $this->get_error_by_file_path( $ht_access_path );
 		}
@@ -472,7 +491,7 @@ class Apache {
 		}
 		// Create a htaccess-file if it doesn't exist.
 		if ( ! is_file( $ht_access_path )
-			&& false === (bool) file_put_contents( $ht_access_path, '', LOCK_EX ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+			&& false === file_put_contents( $ht_access_path, '', LOCK_EX ) // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 		) {
 			return $this->get_error_by_file_path( $ht_access_path );
 		}

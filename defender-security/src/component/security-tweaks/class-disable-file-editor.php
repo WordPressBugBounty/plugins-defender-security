@@ -16,6 +16,7 @@ use WP_Defender\Component\Security_Tweak as Security_Tweak_Component;
  */
 class Disable_File_Editor extends Abstract_Security_Tweaks {
 
+
 	/**
 	 * Slug identifier for the component.
 	 *
@@ -48,15 +49,15 @@ class Disable_File_Editor extends Abstract_Security_Tweaks {
 	/**
 	 * Set data in wp-config.php.
 	 *
-	 * @param  bool $value  The value to set for DISALLOW_FILE_EDIT.
+	 * @param bool $value The value to set for DISALLOW_FILE_EDIT.
 	 *
 	 * @return bool|WP_Error
 	 */
 	private function set_file_edit_data( $value ) {
 		$sec_tweak_component = new Security_Tweak_Component();
 		$obj_file            = 'flywheel' === Server::get_current_server()
-			? $sec_tweak_component->advanced_check_file()
-			: $sec_tweak_component->file();
+		? $sec_tweak_component->advanced_check_file()
+		: $sec_tweak_component->file();
 		if ( false === $obj_file ) {
 			return new WP_Error(
 				'defender_file_not_writable',
@@ -84,7 +85,8 @@ class Disable_File_Editor extends Abstract_Security_Tweaks {
 				if ( 'true' === $value && ! preg_match(
 					"/^define\(\s*['|\"]{$file_edit}['|\"],(.*)\);\s*\/\/\s*Added\s*by\s*Defender.?.*/i",
 					$line
-				) ) {
+				)
+				) {
 					return new WP_Error(
 						'defender_file_not_writable',
 						$sec_tweak_component->show_hosting_notice_with_code( $file_edit, $file_edit_line )
@@ -114,12 +116,12 @@ class Disable_File_Editor extends Abstract_Security_Tweaks {
 		}
 
 		return $line_found
-			? $sec_tweak_component->write( $lines )
-			: new WP_Error(
-				'defender_line_not_found',
-				esc_html__( 'Error writing to file.', 'defender-security' ),
-				404
-			);
+		? $sec_tweak_component->write( $lines )
+		: new WP_Error(
+			'defender_line_not_found',
+			esc_html__( 'Error writing to file.', 'defender-security' ),
+			404
+		);
 	}
 
 	/**
@@ -173,7 +175,7 @@ class Disable_File_Editor extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Disable the file editor', 'defender-security' );
+		return esc_html__( 'Turn off file editor', 'defender-security' );
 	}
 
 	/**
@@ -182,7 +184,12 @@ class Disable_File_Editor extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'The file editor is currently enabled.', 'defender-security' );
+		return wp_kses(
+			__( '<strong>File editor is turned on</strong> and may allow malicious code changes.', 'defender-security' ),
+			array(
+				'strong' => array(),
+			)
+		);
 	}
 
 	/**
@@ -195,13 +202,13 @@ class Disable_File_Editor extends Abstract_Security_Tweaks {
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
 			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__( 'You\'ve disabled the file editor, winning.', 'defender-security' ),
-			'misc'             => array(),
-			'bulk_description' => esc_html__(
-				'The file editor is currently active, this means anyone with access to your login information can further edit your plugin and theme files and inject malicious code. We will disable file editor for you.',
-				'defender-security'
+			'successReason'    => wp_strip_all_tags( __( 'File editor is turned off.', 'defender-security' ) ),
+			'misc'             => array(
+				'show_revert_button' => true,
+				'show_action_button' => true,
 			),
-			'bulk_title'       => esc_html__( 'File Editor', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'WordPress includes a built-in file editor for theme and plugin files. Turn off file editor to help prevent unauthorized code changes if an attacker gains access.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'File Editor', 'defender-security' ) ),
 		);
 	}
 }

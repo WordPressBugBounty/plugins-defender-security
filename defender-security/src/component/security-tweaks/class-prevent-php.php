@@ -72,7 +72,7 @@ class Prevent_PHP extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Prevent PHP Execution', 'defender-security' );
+		return wp_strip_all_tags( __( 'Prevent PHP execution', 'defender-security' ) );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Prevent_PHP extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'PHP execution is currently allowed in all directories.', 'defender-security' );
+		return '';
 	}
 
 	/**
@@ -93,19 +93,17 @@ class Prevent_PHP extends Abstract_Security_Tweaks {
 		return array(
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
-			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__( 'You\'ve disabled PHP execution, good stuff.', 'defender-security' ),
+
+			'successReason'    => wp_strip_all_tags( __( "You've disabled PHP execution, good stuff.", 'defender-security' ) ),
 			'misc'             => array(
-				'active_server'  => Server::get_current_server(),
-				'apache_rules'   => Server::create( 'apache' )->from( $this->slug )->get_rules_for_instruction(),
-				'nginx_rules'    => Server::create( 'nginx' )->from( $this->slug )->get_rules(),
-				'wp_content_dir' => WP_CONTENT_DIR,
+				'active_server'   => Server::get_current_server(),
+				'apache_rules'    => Server::create( 'apache' )->from( $this->slug )->get_rules_for_instruction(),
+				'litespeed_rules' => Server::create( 'litespeed' )->from( $this->slug )->get_litespeed_rules_for_instruction(),
+				'nginx_rules'     => Server::create( 'nginx' )->from( $this->slug )->get_rules(),
+				'wp_content_dir'  => WP_CONTENT_DIR,
 			),
-			'bulk_description' => esc_html__(
-				'By default, a plugin/theme vulnerability could allow a PHP file to get uploaded into your site\'s directories and in turn execute harmful scripts that can wreak havoc on your website. We will disable PHP execution for you.',
-				'defender-security'
-			),
-			'bulk_title'       => esc_html__( 'PHP Execution', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'A plugin or theme vulnerability can allow harmful PHP files to run in your site directories. Prevent PHP execution where it isn’t needed to help block malicious files and reduce risk.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'PHP Execution', 'defender-security' ) ),
 		);
 	}
 }

@@ -141,7 +141,7 @@ class Disable_Trackback extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Disable trackbacks and pingbacks', 'defender-security' );
+		return esc_html__( 'Turn off Trackbacks/pingbacks', 'defender-security' );
 	}
 
 	/**
@@ -150,7 +150,13 @@ class Disable_Trackback extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'Trackbacks and pingbacks are currently enabled.', 'defender-security' );
+		return wp_kses(
+			__( '<strong>Trackbacks/pingbacks is turned on</strong> <br /> and may expose your site to DDoS attacks and spam.', 'defender-security' ),
+			array(
+				'strong' => array(),
+				'br'     => array(),
+			)
+		);
 	}
 
 	/**
@@ -163,13 +169,13 @@ class Disable_Trackback extends Abstract_Security_Tweaks {
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
 			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__( 'Trackbacks and pingbacks are disabled, nice work!', 'defender-security' ),
-			'misc'             => array(),
-			'bulk_description' => esc_html__(
-				'Trackbacks and pingbacks can lead to DDos attacks and tons of spam comments. If you don’t require this feature, we recommend turning it off.',
-				'defender-security'
+			'successReason'    => wp_strip_all_tags( __( 'Trackbacks/pingbacks is turned off.', 'defender-security' ) ),
+			'misc'             => array(
+				'show_revert_button' => true,
+				'show_action_button' => true,
 			),
-			'bulk_title'       => esc_html__( 'Trackbacks and pingbacks', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'Pingbacks notify your site when another website links to it. Turn off Trackbacks/pingbacks to help reduce spam, limit unwanted requests, and protect your site from abuse.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'Trackbacks and pingbacks', 'defender-security' ) ),
 		);
 	}
 }

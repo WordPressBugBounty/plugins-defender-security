@@ -26,10 +26,11 @@ class Audit extends Component {
 	 * @param  string $user_id  User ID to filter logs.
 	 * @param  string $ip  IP address to filter logs.
 	 * @param  int    $paged  Pagination page number.
+	 * @param  int    $per_page  Number of logs per page.
 	 *
 	 * @return array
 	 */
-	public function fetch( $date_from, $date_to, $events = array(), $user_id = '', $ip = '', $paged = 1 ) {
+	public function fetch( $date_from, $date_to, $events = array(), $user_id = '', $ip = '', $paged = 1, $per_page = 10 ) {
 		return array();
 	}
 

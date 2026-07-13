@@ -52,7 +52,26 @@ class Admin {
 	public function add_global_styles() {
 		echo '<style>
 			#toplevel_page_wp-defender ul.wp-submenu li a[href="admin.php?page=wdf-ip-lockout"] { display: flex; justify-content: space-between; align-items: center; }
+			#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu { background-color: #4763E4 !important; }
+			#adminmenu .toplevel_page_wp-defender div.wp-menu-image.svg { width: 16px; height: 16px; margin-top: 10px; margin-left: 10px; background-size: 16px auto; }
 		</style>';
+		if ( ! $this->is_wp_org_version ) {
+			echo '<style>
+			#adminmenu .defender-admin-menu-pro-tag {
+				display: inline-block;
+				padding: 0;
+				color: inherit;
+				border: 1px solid currentColor;
+				border-radius: 9px;
+				line-height: 16px;
+				font-size: 11px;
+				height: 16px;
+				width: 28px;
+				text-align: center;
+				margin-left: 5px;
+			}
+			</style>';
+		}
 	}
 
 	/**
@@ -78,13 +97,23 @@ class Admin {
 			// For submenu callout.
 			add_action( 'admin_head', array( $this, 'retarget_submenu_callout' ) );
 			if ( ! wd_di()->get( WPMUDEV::class )->is_wpmu_hosting() ) {
+				$upsell_menu_title = sprintf(
+					'<span class="defender-upsell-label">%1$s<span class="defender-upsell-pro-tag">%2$s</span></span><svg class="defender-upsell-arrow" width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.225625 8.7625C0.0881251 8.62917 0.013125 8.47083 0.000624999 8.2875C-0.00770833 8.10417 0.0672918 7.93125 0.225625 7.76875L5.86313 2.125L7.16313 0.93125C7.31313 0.789584 7.47146 0.722917 7.63812 0.73125C7.80479 0.739583 7.94854 0.804167 8.06938 0.925C8.19021 1.04583 8.25062 1.18958 8.25062 1.35625C8.25479 1.52292 8.18812 1.67708 8.05062 1.81875L6.85063 3.11875L1.21313 8.75C1.05896 8.90417 0.890209 8.97917 0.706875 8.975C0.527709 8.975 0.367292 8.90417 0.225625 8.7625ZM7.61938 4.4625L7.76312 1.24375L4.43188 1.3625H2.30687C2.11521 1.3625 1.94854 1.29792 1.80688 1.16875C1.66521 1.03542 1.59438 0.875 1.59438 0.6875C1.59438 0.5 1.66104 0.339584 1.79438 0.20625C1.93188 0.0687502 2.10688 0 2.31938 0H8.25688C8.48188 0 8.66104 0.0687502 8.79437 0.20625C8.92771 0.34375 8.99438 0.520834 8.99438 0.7375V6.66875C8.99438 6.87292 8.92563 7.04583 8.78813 7.1875C8.65063 7.325 8.48812 7.39375 8.30062 7.39375C8.10896 7.39375 7.94646 7.325 7.81313 7.1875C7.68396 7.04583 7.61938 6.87708 7.61938 6.68125V4.4625Z" fill="white"/></svg>',
+					esc_html__( 'Upgrade', 'defender-security' ),
+					esc_html__( 'Pro', 'defender-security' )
+				);
 				add_submenu_page(
 					'wp-defender',
-					esc_html__( 'Get Defender Pro', 'defender-security' ),
-					esc_html__( 'Get Defender Pro', 'defender-security' ),
+					esc_html__( 'Upgrade to Pro', 'defender-security' ),
+					$upsell_menu_title,
 					is_multisite() ? 'manage_network_options' : 'manage_options',
-					$this->get_link( 'upsell', 'defender_submenu_upsell' )
+					$this->get_link( 'upsell', 'defender_new-submenu_upsell' )
 				);
+				global $submenu;
+				if ( ! empty( $submenu['wp-defender'] ) ) {
+					$last                               = array_key_last( $submenu['wp-defender'] );
+					$submenu['wp-defender'][ $last ][4] = 'defender-menu-upsell'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+				}
 			}
 		}
 
@@ -158,19 +187,54 @@ class Admin {
 	public function retarget_submenu_callout(): void {
 		?>
 		<style>
-			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"],
-			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]:hover,
-			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]:active,
-			#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]:focus {
-				background: #8D00B1;
+			#adminmenu .wp-submenu li.defender-menu-upsell > a,
+			#adminmenu .wp-submenu li.defender-menu-upsell > a:hover,
+			#adminmenu .wp-submenu li.defender-menu-upsell > a:active,
+			#adminmenu .wp-submenu li.defender-menu-upsell > a:focus {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				height: 32px;
+				padding: 7px 12px;
+				box-sizing: border-box;
+				background: #571EE7;
 				color: #ffffff;
-				font-weight: 500;
+				font-size: 14px;
+				font-weight: 400;
+				line-height: 18px;
 			}
 
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"],
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:hover,
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:active,
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li:last-child > a[href^="https://wpmudev.com/"]:focus,
+			#adminmenu .wp-submenu li.defender-menu-upsell > a .defender-upsell-label {
+				display: inline-flex;
+				align-items: center;
+			}
+
+			#adminmenu .wp-submenu li.defender-menu-upsell > a .defender-upsell-pro-tag {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				margin-left: 6px;
+				padding: 0 5px;
+				border: 1px solid #ffffff;
+				border-radius: 9px;
+				width: 30px;
+				height: 18px;
+				box-sizing: border-box;
+				font-family: 'Roboto', Arial, sans-serif;
+				font-size: 12px;
+				font-weight: 400;
+				line-height: 20px;
+				letter-spacing: 0.1px;
+			}
+
+			#adminmenu .wp-submenu li.defender-menu-upsell > a .defender-upsell-arrow {
+				margin-right: 4px;
+			}
+
+			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a,
+			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:hover,
+			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:active,
+			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:focus,
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"],
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:hover,
 			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:active,
@@ -180,7 +244,7 @@ class Admin {
 		</style>
 		<script type='text/javascript'>
 			jQuery(function ($) {
-				$('#toplevel_page_wp-defender > ul > li:last-child > a[href^="https://wpmudev.com/"]').attr("target", "_blank");
+				$('#adminmenu li.defender-menu-upsell > a').attr("target", "_blank");
 			});
 		</script>
 		<?php

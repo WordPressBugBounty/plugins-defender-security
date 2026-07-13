@@ -12,9 +12,8 @@
 <p style="color: #1A1A1A; font-family: Roboto, Arial, sans-serif; font-size: 16px; font-weight: normal; line-height: 24px; margin: 0; padding: 0 0 28px; text-align: left; word-wrap: normal;">
 	<?php
 	/* translators: %s: Name. */
-	printf( esc_html__( 'Hi %s', 'defender-security' ), esc_html( $name ) )
+	printf( esc_html__( 'Hi %s,', 'defender-security' ), esc_html( $name ) );
 	?>
-	,
 </p>
 <p style="font-family: inherit; font-size: 16px; margin: 0 0 30px">
 	<?php

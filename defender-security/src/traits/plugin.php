@@ -480,10 +480,9 @@ trait Plugin {
 	 * @return array|WP_Error
 	 */
 	public function quarantine( string $parent_action, Scan_Item $scan_item ) {
-			return new WP_Error(
-				'DEFENDER_PRO_ONLY_FEATURE',
-				defender_quarantine_pro_only()
-			);
+		$quarantine_component = wd_di()->get( \WP_Defender\Component\Quarantine::class );
+
+		return $quarantine_component->quarantine_file( $scan_item, $parent_action );
 	}
 
 	/**
@@ -544,5 +543,73 @@ trait Plugin {
 		}
 
 		return $plugin_names;
+	}
+
+	/**
+	 * Data for the “update Defender” notification bubble (React).
+	 *
+	 * Uses the update_plugins site transient (WordPress.org for Free; WPMU DEV Dashboard merges
+	 * Pro updates into the same transient when that plugin is active).
+	 *
+	 * @return array{
+	 *     available:bool,
+	 *     newVersion:string,
+	 *     learnMoreUrl:string,
+	 *     updateUrl:string,
+	 *     canUpdate:bool
+	 * }
+	 */
+	public function get_plugin_update_notice_data(): array {
+		$basename = DEFENDER_PLUGIN_BASENAME;
+
+		$default_learn_more = defender_is_wp_org_version()
+			? 'https://wordpress.org/plugins/defender-security/'
+			: 'https://wpmudev.com/project/wp-defender/#changelog_all';
+
+		$learn_more_url = $default_learn_more;
+		$new_version    = '';
+		$has_update     = false;
+
+		$updates = get_site_transient( 'update_plugins' );
+		if ( is_object( $updates ) && isset( $updates->response[ $basename ] ) ) {
+			$pkg = $updates->response[ $basename ];
+			if ( is_object( $pkg ) ) {
+				$has_update  = true;
+				$new_version = isset( $pkg->new_version ) ? (string) $pkg->new_version : '';
+				if ( isset( $pkg->url ) && is_string( $pkg->url ) && '' !== $pkg->url ) {
+					$learn_more_url = $pkg->url;
+				}
+			} elseif ( is_array( $pkg ) ) {
+				$has_update  = true;
+				$new_version = isset( $pkg['new_version'] ) ? (string) $pkg['new_version'] : '';
+				if ( isset( $pkg['url'] ) && is_string( $pkg['url'] ) && '' !== $pkg['url'] ) {
+					$learn_more_url = $pkg['url'];
+				}
+			}
+		}
+
+		$can_update = $has_update && current_user_can( 'update_plugins' );
+		$update_url = '';
+		if ( $can_update ) {
+			// Build a plain URL for wp_localize_script (wp_nonce_url() HTML-escapes and breaks JSON).
+			$update_url = add_query_arg(
+				array(
+					'_wpnonce' => wp_create_nonce( 'upgrade-plugin_' . $basename ),
+					'action'   => 'upgrade-plugin',
+					'plugin'   => $basename,
+				),
+				self_admin_url( 'update.php' )
+			);
+		}
+
+		return array(
+			'available'      => $has_update,
+			'newVersion'     => $new_version,
+			'learnMoreUrl'   => esc_url_raw( $learn_more_url ),
+			'updateUrl'      => esc_url_raw( $update_url ),
+			'canUpdate'      => $can_update && '' !== $update_url,
+			'currentVersion' => DEFENDER_VERSION,
+			'releaseDate'    => defined( 'DEFENDER_RELEASE_DATE' ) ? DEFENDER_RELEASE_DATE : '',
+		);
 	}
 }

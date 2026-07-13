@@ -348,11 +348,11 @@ class User_Agent extends Component {
 		return array(
 			self::PYTHON_REQUESTS_KEY => array(
 				'label' => 'Python Script',
-				'desc'  => __( '( This will block all requests from python-requests/* agent )', 'defender-security' ),
+				'desc'  => __( '(blocks python-requests/* agent)', 'defender-security' ),
 			),
 			self::GO_HTTP_CLIENT_KEY  => array(
-				'label' => 'Go Http Clients',
-				'desc'  => __( '( This will block all requests from Go-http-client/* agent )', 'defender-security' ),
+				'label' => 'Go HTTP Clients',
+				'desc'  => __( '(blocks Go-http-client/* agent)', 'defender-security' ),
 			),
 		);
 	}

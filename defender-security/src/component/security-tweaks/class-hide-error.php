@@ -144,7 +144,7 @@ class Hide_Error extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Hide error reporting', 'defender-security' );
+		return esc_html__( 'Turn off error debugging', 'defender-security' );
 	}
 
 	/**
@@ -153,7 +153,12 @@ class Hide_Error extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'Error debugging is currently allowed.', 'defender-security' );
+		return wp_kses(
+			__( '<strong>Error debugging is turned on</strong> and may expose details hackers can use.', 'defender-security' ),
+			array(
+				'strong' => array(),
+			)
+		);
 	}
 
 	/**
@@ -166,16 +171,13 @@ class Hide_Error extends Abstract_Security_Tweaks {
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
 			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__(
-				'You\'ve disabled all error reporting, Houston will never report a problem.',
-				'defender-security'
+			'successReason'    => wp_strip_all_tags( __( 'Error reporting is turned off.', 'defender-security' ) ),
+			'misc'             => array(
+				'show_revert_button' => true,
+				'show_action_button' => true,
 			),
-			'misc'             => array(),
-			'bulk_description' => esc_html__(
-				'Error debugging feature is useful for active development, but on live sites provides hackers yet another way to find loopholes in your site\'s security. We will disable error reporting for you.',
-				'defender-security'
-			),
-			'bulk_title'       => esc_html__( 'Error Reporting', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'Turn off error debugging on live sites to help protect sensitive code details. When debugging is no longer needed, turn off error debugging to reduce the risk of exposing information attackers can use.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'Error Reporting', 'defender-security' ) ),
 		);
 	}
 }

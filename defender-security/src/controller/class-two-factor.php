@@ -100,13 +100,6 @@ class Two_Factor extends Event {
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
-		$this->register_page(
-			esc_html__( '2FA', 'defender-security' ),
-			$this->slug,
-			array( $this, 'main_view' ),
-			$this->parent_slug
-		);
-		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		$this->register_routes();
 		$this->service                     = wd_di()->get( Two_Fa_Component::class );
 		$this->model                       = wd_di()->get( Two_Fa::class );
@@ -464,7 +457,21 @@ class Two_Factor extends Event {
 
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 		$params['custom_graphic']      = '';
-		$params['custom_graphic_type'] = '';
+		$params['custom_graphic_type'] = $this->model->custom_graphic_type;
+		$custom_graphic                = '';
+		$custom_graphic_type           = $this->model->custom_graphic_type;
+		$custom_graphic_url            = trim( $this->model->custom_graphic_url );
+		$custom_graphic_link           = trim( $this->model->custom_graphic_link );
+		if ( $this->model->custom_graphic ) {
+			if ( Two_Fa::CUSTOM_GRAPHIC_TYPE_UPLOAD === $custom_graphic_type && '' !== $custom_graphic_url ) {
+				$custom_graphic = $custom_graphic_url;
+			} elseif ( Two_Fa::CUSTOM_GRAPHIC_TYPE_LINK === $custom_graphic_type && '' !== $custom_graphic_link ) {
+				$custom_graphic = $custom_graphic_link;
+			}
+		}
+
+		$params['custom_graphic']      = $custom_graphic;
+		$params['custom_graphic_type'] = $custom_graphic_type;
 
 		$collection = $this->dump_routes_and_nonces();
 		$routes     = $collection['routes'];
@@ -825,6 +832,7 @@ class Two_Factor extends Event {
 				array(
 					'jquery',
 					'wpdef_webauthn_common_script',
+					'wp-i18n',
 				),
 				DEFENDER_VERSION,
 				true
@@ -905,21 +913,6 @@ class Two_Factor extends Event {
 			false,
 			array( 'message' => $model->get_formatted_errors() )
 		);
-	}
-
-	/**
-	 * Enqueues scripts and styles for this page.
-	 * Only enqueues assets if the page is active.
-	 */
-	public function enqueue_assets() {
-		if ( ! $this->is_page_active() ) {
-			return;
-		}
-		wp_enqueue_script( 'clipboard' );
-		wp_enqueue_media();
-		wp_localize_script( 'def-2fa', 'two_fa', $this->data_frontend() );
-		wp_enqueue_script( 'def-2fa' );
-		$this->enqueue_main_assets();
 	}
 
 	/**
@@ -1025,13 +1018,6 @@ class Two_Factor extends Event {
 	}
 
 	/**
-	 * Renders the main view.
-	 */
-	public function main_view(): void {
-		$this->render( 'main' );
-	}
-
-	/**
 	 * Removes settings for all submodules.
 	 */
 	public function remove_settings(): void {
@@ -1113,6 +1099,7 @@ class Two_Factor extends Event {
 	}
 
 	/**
+	 * Todo: add changes when the design is ready.
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
@@ -1121,6 +1108,7 @@ class Two_Factor extends Event {
 		return array_merge(
 			array(
 				'model'               => $this->model->export(),
+				'defaults'            => $this->model->get_default_values(),
 				'all_roles'           => $this->get_all_editable_roles(),
 				'count'               => $this->service->count_users_with_enabled_2fa(),
 				'notices'             => $this->compatibility_notices,
@@ -1147,6 +1135,10 @@ class Two_Factor extends Event {
 		$model = new Two_Fa();
 
 		$model->import( $data );
+		/**
+		 * Sometime, the custom image broken on import. When that happen, we will revert to the default image.
+		 */
+		$model->custom_graphic_url = $this->service->get_custom_graphic_url( $model->custom_graphic_url );
 		if ( $model->validate() ) {
 			$model->save();
 		}

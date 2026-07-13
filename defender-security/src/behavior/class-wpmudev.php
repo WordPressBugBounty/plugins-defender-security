@@ -41,17 +41,8 @@ class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 	 * @return bool|string
 	 */
 	public function get_apikey() {
-		if ( ! class_exists( '\WPMUDEV_Dashboard' ) ) {
-			return false;
-		}
-
-		\WPMUDEV_Dashboard::instance();
-
-		$membership_status = \WPMUDEV_Dashboard::$api->get_membership_data();
-		$key               = \WPMUDEV_Dashboard::$api->get_key();
-
-		if ( isset( $membership_status['hub_site_id'] ) && $membership_status['hub_site_id'] && '' !== $key ) {
-			return $key;
+		if ( $this->is_site_connected_to_hub_via_hcm_or_dash() && '' !== $this->get_api_key() ) {
+			return $this->get_api_key();
 		}
 
 		return false;
@@ -76,6 +67,15 @@ class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 	 * @since 4.1.0
 	 */
 	public function hide_wpmu_dev_urls(): bool {
+		return false;
+	}
+
+	/**
+	 * Check if WPMUDEV Dashboard remote access is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_remote_access_enabled(): bool {
 		return false;
 	}
 

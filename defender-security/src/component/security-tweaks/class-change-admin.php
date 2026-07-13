@@ -94,22 +94,22 @@ class Change_Admin extends Abstract_Security_Tweaks {
 	 */
 	private function validate( $username ) {
 		if ( ! is_string( $username ) || '' === $username ) {
-			return new WP_Error( 'defender_invalid_username', esc_html__( 'The username can\'t be empty!', 'defender-security' ) );
+			return new WP_Error( 'defender_invalid_username', wp_strip_all_tags( __( 'The username can\'t be empty!', 'defender-security' ) ) );
 		}
 
 		if ( 'admin' === strtolower( $username ) ) {
 			return new WP_Error(
 				'defender_invalid_username',
-				esc_html__( 'You can\'t use admin as a username again!', 'defender-security' )
+				wp_strip_all_tags( __( 'You can\'t use admin as a username again!', 'defender-security' ) )
 			);
 		}
 
 		if ( ! validate_username( $username ) ) {
-			return new WP_Error( 'defender_invalid_username', esc_html__( 'The username is invalid!', 'defender-security' ) );
+			return new WP_Error( 'defender_invalid_username', wp_strip_all_tags( __( 'The username is invalid!', 'defender-security' ) ) );
 		}
 
 		if ( username_exists( $username ) ) {
-			return new WP_Error( 'defender_invalid_username', esc_html__( 'The username already exists!', 'defender-security' ) );
+			return new WP_Error( 'defender_invalid_username', wp_strip_all_tags( __( 'The username already exists!', 'defender-security' ) ) );
 		}
 
 		return true;
@@ -194,7 +194,7 @@ class Change_Admin extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Change default admin user account', 'defender-security' );
+		return esc_html__( 'Change admin account', 'defender-security' );
 	}
 
 	/**
@@ -203,7 +203,12 @@ class Change_Admin extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'You have a user account with the admin username.', 'defender-security' );
+		return wp_kses(
+			__( '<strong>Your account uses the default “admin” username,</strong> and may attract login attacks.', 'defender-security' ),
+			array(
+				'strong' => array(),
+			)
+		);
 	}
 
 	/**
@@ -212,20 +217,32 @@ class Change_Admin extends Abstract_Security_Tweaks {
 	 * @return array
 	 */
 	public function to_array(): array {
+		$admin_user   = $this->get_user_with_admin_username();
+		$current_user = wp_get_current_user();
+		$username     = $admin_user ? $admin_user->user_login : $current_user->user_login;
+		$error_reason = wp_kses(
+			sprintf(
+				/* translators: %s: Username. */
+				__( '<strong>Your account uses the default "%s" username,</strong> and may attract login attacks.', 'defender-security' ),
+				esc_html( $username )
+			),
+			array(
+				'strong' => array(),
+			)
+		);
+
 		return array(
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
-			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__(
-				'You don\'t have a user account with the default admin username, great!',
-				'defender-security'
+			'errorReason'      => $error_reason,
+			'successReason'    => wp_strip_all_tags( __( 'Username is up to date.', 'defender-security' ) ),
+			'misc'             => array(
+				'show_revert_button' => false,
+				'show_action_button' => true,
+				'admin_username'     => $username,
 			),
-			'misc'             => array( 'host' => defender_get_hostname() ),
-			'bulk_description' => esc_html__(
-				'Using the default admin username is widely considered bad practice and opens you up to the easitest form of entry to your website. We will create new admin username for you.',
-				'defender-security'
-			),
-			'bulk_title'       => esc_html__( 'Admin User', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'Brute force attacks often rely on common usernames and guessed passwords. Create a new admin username to make your site harder to target and help protect your login area.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'Admin User', 'defender-security' ) ),
 		);
 	}
 }

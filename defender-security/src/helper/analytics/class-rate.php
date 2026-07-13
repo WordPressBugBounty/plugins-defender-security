@@ -69,7 +69,7 @@ class Rate extends Event {
 	 *
 	 * @param string $notice_slug  Notice slug.
 	 * @param string $action       CTA clicked.
-	 * @param string $location     Page showing the notice.
+	 * @param string $location     Page showing the notice. 'Issues' is added since v6.0.
 	 *
 	 * @return void
 	 */

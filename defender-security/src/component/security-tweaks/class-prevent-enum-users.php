@@ -9,6 +9,7 @@
 namespace WP_Defender\Component\Security_Tweaks;
 
 use WP_Error;
+use WP_REST_Response;
 use WP_Sitemaps_Provider;
 use WP_Defender\Traits\Security_Tweaks_Option;
 
@@ -83,6 +84,8 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 		add_filter( 'wp_sitemaps_users_pre_url_list', array( $this, 'block_user_url_sitemap' ), 99, 0 );
 		add_filter( 'wp_sitemaps_add_provider', array( $this, 'block_user_provider_sitemap' ), 99, 2 );
 		add_filter( 'rest_authentication_errors', array( $this, 'block_rest_api_user_endpoint' ) );
+		add_filter( 'rest_endpoints', array( $this, 'block_rest_api_user_endpoints' ), 99 );
+		add_action( 'rest_api_init', array( $this, 'register_dynamic_post_type_filters' ) );
 
 		$query = defender_get_data_from_request( 'QUERY_STRING', 's' );
 		if ( ! is_string( $query ) || '' === $query ) {
@@ -137,7 +140,12 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'User enumeration is currently allowed.', 'defender-security' );
+		return wp_kses(
+			__( '<strong>User enumeration is currently allowed</strong> and may expose your site.', 'defender-security' ),
+			array(
+				'strong' => array(),
+			)
+		);
 	}
 
 	/**
@@ -146,17 +154,30 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 	 * @return array
 	 */
 	public function to_array(): array {
+		$enabled      = $this->get_enabled_user_enums();
+		$stop_rest    = in_array( 'enum-rest', $enabled, true );
+		$hide_user    = in_array( 'enum-oembed', $enabled, true );
+		$disable_maps = in_array( 'enum-sitemap', $enabled, true );
+		$all_enabled  = $stop_rest && $hide_user && $disable_maps;
+
+		$success_reason = $all_enabled
+			? wp_strip_all_tags( __( 'All recommendation settings are turned on.', 'defender-security' ) )
+			: wp_strip_all_tags( __( 'Custom recommendation settings are turned on.', 'defender-security' ) );
+
 		return array(
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
 			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => esc_html__( 'User enumeration is currently blocked, nice work!', 'defender-security' ),
-			'misc'             => array(),
-			'bulk_description' => esc_html__(
-				'To brute force your login,  hackers and bots can simply type the query string ?author=1, ?author=2 and so on, which will redirect the page to /author/username/ - bam, the bot now has your usernames to begin brute force attacks with. We can add a .htaccess file to your site to prevent the redirection.',
-				'defender-security'
+			'successReason'    => $success_reason,
+			'misc'             => array(
+				'show_revert_button'     => true,
+				'show_action_button'     => true,
+				'stop_rest_api'          => $stop_rest,
+				'hide_user_id'           => $hide_user,
+				'disable_author_sitemap' => $disable_maps,
 			),
-			'bulk_title'       => $this->get_label(),
+			'bulk_description' => wp_strip_all_tags( __( 'Author redirects can make usernames easier for bots to find. Prevent user enumeration to protect your login area and reduce brute force risk.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'Prevent user enumeration', 'defender-security' ) ),
 		);
 	}
 
@@ -290,5 +311,68 @@ class Prevent_Enum_Users extends Abstract_Security_Tweaks implements Security_Ke
 		}
 
 		return $errors;
+	}
+
+	/**
+	 * Block REST user endpoints for not logged-in access.
+	 *
+	 * @param array $endpoints The available endpoints.
+	 *
+	 * @return array
+	 */
+	public function block_rest_api_user_endpoints( $endpoints ) {
+		if ( is_user_logged_in() ) {
+			return $endpoints;
+		}
+		if ( ! in_array( 'enum-rest', $this->get_enabled_user_enums(), true ) ) {
+			return $endpoints;
+		}
+
+		$endpoints_to_remove = array(
+			'/wp/v2/users',
+			'/wp/v2/users/(?P<id>[\d]+)',
+		);
+
+		foreach ( $endpoints_to_remove as $route ) {
+			if ( isset( $endpoints[ $route ] ) ) {
+				unset( $endpoints[ $route ] );
+			}
+		}
+
+		return $endpoints;
+	}
+
+	/**
+	 * Dynamically register rest_prepare_{$post_type} filters for all REST-exposed post types.
+	 *
+	 * @return void
+	 */
+	public function register_dynamic_post_type_filters() {
+		// Optimization: If REST API protection is disabled in the settings, we don't log anything at all.
+		if ( ! in_array( 'enum-rest', $this->get_enabled_user_enums(), true ) ) {
+			return;
+		}
+
+		$post_types = get_post_types( array( 'show_in_rest' => true ) );
+
+		foreach ( $post_types as $post_type ) {
+			add_filter( "rest_prepare_{$post_type}", array( $this, 'strip_author_link' ), 10, 1 );
+		}
+	}
+
+	/**
+	 * Remove the 'author' relationship link from REST API responses for not logged-in access.
+	 *
+	 * @param WP_REST_Response $response The response object.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function strip_author_link( $response ) {
+		// This is a mandatory check because it is triggered at the moment of data transfer and knows for sure whether the user who sent the request is authorized.
+		if ( ! is_user_logged_in() ) {
+			$response->remove_link( 'author' );
+		}
+
+		return $response;
 	}
 }

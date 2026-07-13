@@ -83,14 +83,14 @@ trait File_Operations {
 	 */
 	private function get_file_meta( string $file ): array {
 		if ( ! file_exists( $file ) || ! is_readable( $file ) ) {
-			return array( 'n/a', 'n/a', true );
+			return array( null, null, true );
 		}
 
 		$file_created_at = filemtime( $file );
-		$file_created_at = $file_created_at ? $this->format_date_time( $file_created_at ) : 'n/a';
+		$file_created_at = $file_created_at ? wp_date( 'M j, Y', $file_created_at ) : null;
 
 		$file_size = filesize( $file );
-		$file_size = $file_size ? $this->format_bytes_into_readable( $file_size ) : 'n/a';
+		$file_size = $file_size ? $this->format_bytes_into_readable( $file_size ) : null;
 
 		return array( $file_created_at, $file_size, false );
 	}

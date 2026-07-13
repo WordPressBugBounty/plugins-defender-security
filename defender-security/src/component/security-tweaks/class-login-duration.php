@@ -176,7 +176,7 @@ class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Co
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Manage Login Duration', 'defender-security' );
+		return esc_html__( 'Manage login Duration', 'defender-security' );
 	}
 
 	/**
@@ -187,8 +187,8 @@ class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Co
 	public function get_error_reason(): string {
 		return sprintf(
 			/* translators: %d: Number of days. */
-			esc_html__( 'Your current login duration is the default %d days.', 'defender-security' ),
-			self::DEFAULT_DAYS
+			esc_html__( 'Your login duration is %d days.', 'defender-security' ),
+			$this->get_tweak_duration()
 		);
 	}
 
@@ -206,15 +206,20 @@ class Login_Duration extends Abstract_Security_Tweaks implements Security_Key_Co
 			'errorReason'      => $this->get_error_reason(),
 			'successReason'    => sprintf(
 			/* translators: %d: Number of days. */
-				esc_html__( 'You\'ve adjusted the default login duration to %d days.', 'defender-security' ),
+				wp_strip_all_tags( __( 'Login duration is set to %d days.', 'defender-security' ) ),
 				$duration
 			),
-			'misc'             => array( 'duration' => $duration ),
-			'bulk_description' => esc_html__(
-				'Users who select the \'remember me\' option will stay logged in for 14 days.It’s good practice to reduce this default time to reduce the risk of someone gaining access to your automatically logged in account. We’ll set the login duration to 7 days.',
-				'defender-security'
+			'misc'             => array(
+				'duration'           => $duration,
+				'show_action_button' => true,
+				'show_revert_button' => true,
 			),
-			'bulk_title'       => esc_html__( 'Login Duration', 'defender-security' ),
+			'bulk_description' => sprintf(
+			/* translators: %d: WordPress default login days. */
+				wp_strip_all_tags( __( "\"Remember Me\" can keep users logged in for %d days by default. Manage login duration to limit long running sessions and help protect accounts that don't need frequent backend access.", 'defender-security' ) ),
+				self::DEFAULT_DAYS
+			),
+			'bulk_title'       => wp_strip_all_tags( __( 'Login Duration', 'defender-security' ) ),
 		);
 	}
 }

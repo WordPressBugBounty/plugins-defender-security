@@ -72,6 +72,13 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	private bool $is_autogenerate_keys = true;
 
 	/**
+	 * Flag set when the user explicitly reverts this tweak via the Edit button.
+	 *
+	 * @var bool
+	 */
+	private bool $is_reverted = false;
+
+	/**
 	 * Constructor for Security_Key.
 	 */
 	public function __construct() {
@@ -86,6 +93,10 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return bool|void
 	 */
 	public function check() {
+		if ( $this->is_reverted ) {
+			return false;
+		}
+
 		if ( ! $this->is_salts_exist() ) {
 			return false;
 		}
@@ -106,6 +117,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 		$options                 = get_site_option( 'defender_security_tweaks_' . $this->slug );
 		$this->reminder_date     = $options['reminder_date'] ?? 0;
 		$this->reminder_duration = isset( $options['reminder_duration'] ) && '' !== $options['reminder_duration'] ? $options['reminder_duration'] : $this->default_days;
+		$this->is_reverted       = ! empty( $options['is_reverted'] );
 
 		$last_modified = $this->get_wp_config_last_modified_time();
 		if ( false === $last_modified ) {
@@ -166,6 +178,11 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return bool
 	 */
 	public function revert(): bool {
+		$values                = get_site_option( 'defender_security_tweaks_' . $this->slug, array() );
+		$values['is_reverted'] = true;
+		update_site_option( 'defender_security_tweaks_' . $this->slug, $values );
+		$this->is_reverted = true;
+
 		return true;
 	}
 
@@ -242,7 +259,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Update old security keys', 'defender-security' );
+		return esc_html__( 'Update security keys', 'defender-security' );
 	}
 
 	/**
@@ -251,28 +268,36 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		$get_last_modified_days = $this->get_last_modified_days();
-
-		if ( 'unknown' === $get_last_modified_days ) {
-			$error_message = esc_html__(
-				'We can\'t tell how old your security keys are, perhaps it\'s time to update them?',
-				'defender-security'
-			);
-		}
 		if ( ! $this->is_salts_exist() ) {
-			$error_message = esc_html__(
-				'One or more security salts aren\'t defined in wp-config.php. Time to regenerate them!',
-				'defender-security'
-			);
-		} else {
-			$error_message = sprintf(
-			/* translators: %s: number of days */
-				esc_html__( 'Your current security keys are %s days old. Time to update them!', 'defender-security' ),
-				$get_last_modified_days
+			return wp_kses(
+				__( '<strong>Your security keys are outdated</strong> <br /> and one or more security salts are missing in wp-config.php.', 'defender-security' ),
+				array(
+					'strong' => array(),
+					'br'     => array(),
+				)
 			);
 		}
 
-		return $error_message;
+		$days = $this->get_last_modified_days();
+		if ( 'unknown' === $days ) {
+			return wp_kses(
+				__( '<strong>Your security keys are outdated</strong> <br /> and we can\'t tell how old they are.', 'defender-security' ),
+				array(
+					'strong' => array(),
+					'br'     => array(),
+				)
+			);
+		}
+
+		return wp_kses(
+			sprintf(
+				/* translators: %s: number of days */
+				__( '<strong>Your security keys are outdated.</strong>', 'defender-security' ),
+			),
+			array(
+				'strong' => array(),
+			)
+		);
 	}
 
 	/**
@@ -281,23 +306,34 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	 * @return array
 	 */
 	public function to_array(): array {
+		$auto_regenerate   = $this->get_is_autogenerate_keys();
+		$auto_status       = $auto_regenerate
+			? __( 'Auto-regenerate is turned on.', 'defender-security' )
+			: __( 'Auto-regenerate is turned off.', 'defender-security' );
+		$saved_duration    = $this->get_option( 'reminder_duration' );
+		$reminder_duration = ( is_string( $saved_duration ) && '' !== $saved_duration )
+			? $saved_duration
+			: $this->default_days;
+
 		return array(
 			'slug'             => $this->slug,
 			'title'            => $this->get_label(),
 			'errorReason'      => $this->get_error_reason(),
-			'successReason'    => sprintf(
-			/* translators: %s: number of days */
-				esc_html__( 'Your security keys are less than %s days old, nice work.', 'defender-security' ),
-				$this->get_last_modified_days()
+			'successReason'    => wp_strip_all_tags(
+				sprintf(
+					/* translators: %1$s: reminder duration, %2$s: auto-regenerate status */
+					__( 'Security keys regenerate every %1$s. %2$s', 'defender-security' ),
+					$reminder_duration,
+					$auto_status
+				)
 			),
 			'misc'             => array(
-				'reminder' => $this->reminder_duration,
+				'show_revert_button' => true,
+				'reminder'           => $reminder_duration,
+				'show_action_button' => true,
 			),
-			'bulk_description' => esc_html__(
-				'Your current security keys are unknown days old. Time to update them! We will update the frequency to 60 days.',
-				'defender-security'
-			),
-			'bulk_title'       => esc_html__( 'Security Keys', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'WordPress security keys help protect user sessions and cookies. Update security keys with strong, unique values to improve encryption and reduce the risk of unauthorized access.', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'Security Keys', 'defender-security' ) ),
 		);
 	}
 
@@ -529,6 +565,8 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 		$values                  = get_site_option( 'defender_security_tweaks_' . $this->slug, array() );
 		$this->last_modified     = defender_get_current_time();
 		$values['last_modified'] = defender_get_current_time();
+		unset( $values['is_reverted'] );
+		$this->is_reverted = false;
 		update_site_option( 'defender_security_tweaks_' . $this->slug, $values );
 		$this->log( 'Security keys are updated.', Security_Tweak::LOG_FILE_NAME );
 		if ( is_multisite() && ! headers_sent() ) {

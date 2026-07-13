@@ -9,7 +9,6 @@ namespace WP_Defender\Controller;
 
 use DateTime;
 use Exception;
-use Countable;
 use Valitron\Validator;
 use Calotes\Helper\HTTP;
 use WP_Defender\Controller;
@@ -65,6 +64,11 @@ class Firewall_Logs extends Controller {
 	const AKISMET_BLOCKED_IPS = 'defender_akismet_blocked_ips';
 
 	/**
+	 * Default number of items per page.
+	 */
+	public const DEFAULT_PER_PAGE = 10;
+
+	/**
 	 * Constructor for the class.
 	 *
 	 * @param  Antibot_Global_Firewall_Client $antibot_client  The client for interacting with the Block list API service.
@@ -102,141 +106,69 @@ class Firewall_Logs extends Controller {
 	 * @return Response The response object with the result of the bulk action.
 	 * @defender_route
 	 */
-	public function bulk( Request $request ) {
+	public function bulk( Request $request ): Response {
 		$data = $request->get_data(
 			array(
 				'action' => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
-				'ids'    => array(
+				'ips'    => array(
 					'type' => 'array',
 				),
 			)
 		);
-		$ids  = $data['ids'];
-		$ips  = array();
-		$logs = array();
-		if ( is_array( $ids ) || $ids instanceof Countable ? count( $ids ) : 0 ) {
-			foreach ( $ids as $id ) {
-				$model = Lockout_Log::find_by_id( $id );
-				if ( is_object( $model ) ) {
-					$bl = wd_di()->get( Blacklist_Lockout::class );
-					switch ( $data['action'] ) {
-						case 'ban':
-							$bl->remove_from_list( $model->ip, 'allowlist' );
-							$bl->add_to_list( $model->ip, 'blocklist' );
-							$ips[ $model->ip ] = $model->ip;
-							$logs[]            = $model;
-							break;
-						case 'allowlist':
-							$bl->remove_from_list( $model->ip, 'blocklist' );
-							$bl->add_to_list( $model->ip, 'allowlist' );
-							$ips[ $model->ip ] = $model->ip;
-							$logs[]            = $model;
-							break;
-						case 'delete':
-							$ips[ $model->ip ] = $model->ip;
-							$model->delete();
-							break;
-						default:
-							break;
-					}
-				}
-			}
-		}
 
-		if ( count( $logs ) > 0 ) {
-			$logs = Lockout_Log::format_logs( $logs );
-		}
+		$ips = implode( PHP_EOL, array_filter( array_map( 'sanitize_text_field', (array) $data['ips'] ), 'boolval' ) );
+		$bl  = wd_di()->get( Blacklist_Lockout::class );
 
 		switch ( $data['action'] ) {
-			case 'allowlist':
-				$messages = sprintf(
-				/* translators: 1: IP Address(es). 2: URL for Defender > Firewall > IP Banning. */
-					esc_html__(
-						'IP %1$s has been added to your allowlist. You can control your allowlist in %2$s.',
-						'defender-security'
-					),
-					implode( ', ', $ips ),
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist#tab-ip-allowlist' ) . '">' . esc_html__( 'IP Lockouts', 'defender-security' ) . '</a>'
-				);
-				break;
 			case 'ban':
-				$messages = sprintf(
-				/* translators: 1: IP Address(es). 2: URL for Defender > Firewall > IP Banning. */
-					esc_html__(
-						'IP %1$s has been added to your blocklist. You can control your blocklist in %2$s.',
-						'defender-security'
-					),
-					implode( ', ', $ips ),
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist' ) . '">' . esc_html__( 'IP Lockouts', 'defender-security' ) . '</a>'
-				);
+				$bl->ip_blacklist = $ips;
 				break;
-			case 'delete':
-				$messages = sprintf(
-				/* translators: %s: IP Address(es) */
-					esc_html__( 'IP %s has been deleted', 'defender-security' ),
-					implode( ', ', $ips )
-				);
+			case 'allowlist':
+				$bl->ip_whitelist = $ips;
 				break;
 			default:
-				$messages = '';
 				break;
 		}
+
+		$bl->save();
 
 		return new Response(
 			true,
 			array(
-				'message' => $messages,
-				'logs'    => $logs,
+				'banning' => $bl->export(),
 			)
 		);
 	}
 
 	/**
-	 * Export logs to CSV
+	 * Export all logs matching the current filter to CSV.
 	 *
 	 * @return void
 	 * @defender_route
-	 * @throws Exception On failure.
 	 */
 	public function export_as_csv(): void {
-		$date_from = HTTP::get( 'date_from', strtotime( '-7 days midnight' ) );
-		$date_to   = HTTP::get( 'date_to', strtotime( 'tomorrow' ) );
-		$filters   = array(
-			'from'       => $date_from,
-			'to'         => $date_to,
-			'type'       => HTTP::get( 'term', '' ),
-			'ip'         => HTTP::get( 'ip', '' ),
-			'ban_status' => HTTP::get( 'ban_status', '' ),
-		);
-
-		if ( 'all' === $filters['type'] ) {
-			$filters['type'] = '';
-		}
-
-		if ( 'all' === $filters['ban_status'] ) {
-			$filters['ban_status'] = '';
-		}
-		// User can export the number of logs that are set.
-		$per_page = (int) defender_get_data_from_request( 'per_page', 'g' );
-		if ( 0 === $per_page ) {
-			$per_page = 20;
-		}
-		if ( - 1 === $per_page ) {
-			$per_page = false;
-		}
-
-		$paged = (int) defender_get_data_from_request( 'paged', 'g' );
-		if ( 0 === $paged ) {
-			$paged = 1;
-		}
-
-		$sort        = HTTP::get( 'sort', Table_Lockout::SORT_DESC );
+		$date_from   = (int) HTTP::get( 'date_from', strtotime( '-7 days midnight' ) );
+		$date_to     = (int) HTTP::get( 'date_to', strtotime( 'tomorrow' ) );
+		$ip          = sanitize_text_field( (string) HTTP::get( 'ip', '' ) );
+		$user_agent  = sanitize_text_field( (string) HTTP::get( 'user_agent', '' ) );
+		$type        = sanitize_text_field( (string) HTTP::get( 'type', '' ) );
+		$ban_status  = sanitize_text_field( (string) HTTP::get( 'ban_status', '' ) );
+		$sort        = sanitize_text_field( (string) HTTP::get( 'sort', Table_Lockout::SORT_DESC ) );
 		$sort_params = wd_di()->get( Table_Lockout::class )->resolve_sort( $sort );
 
-		$logs = Lockout_Log::query_logs( $filters, $paged, $sort_params['order_by'], $sort_params['order'], $per_page );
+		$filters = array(
+			'from'       => $date_from,
+			'to'         => $date_to,
+			'ip'         => $ip,
+			'user_agent' => $user_agent,
+			'type'       => 'all' === $type ? '' : $type,
+			'ban_status' => 'all' === $ban_status ? '' : $ban_status,
+		);
+
+		$logs = Lockout_Log::query_logs( $filters, 1, $sort_params['order_by'], $sort_params['order'], -1 );
 
 		$tl_component = new Table_Lockout();
 
@@ -299,102 +231,32 @@ class Firewall_Logs extends Controller {
 	public function toggle_ip_to_list( Request $request ): Response {
 		$data = $request->get_data(
 			array(
-				'ip'         => array(
+				'list' => array(
 					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
+					'sanitize' => 'sanitize_textarea_field',
 				),
-				'list'       => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'ban_status' => array(
+				'type' => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
 			)
 		);
 
-		$ip         = $data['ip'];
 		$collection = $data['list'];
+		$list_type  = $data['type'];
 
 		$model = wd_di()->get( Blacklist_Lockout::class );
-		if ( $model->is_ip_in_list( $ip, $collection ) ) {
-			$model->remove_from_list( $ip, $collection );
-			/* translators: 1: IP address, 2: IP address list, 3: IP address list, 4: URL for Defender > Firewall > IP Banning. */
-			$message = esc_html__(
-				'IP %1$s has been removed from your %2$s. You can control your %3$s in %4$s.',
-				'defender-security'
-			);
-		} else {
-			$model->add_to_list( $ip, $collection );
-
-			$global_ip_service = wd_di()->get( Global_IP::class );
-			if ( $global_ip_service->can_blocklist_autosync() ) {
-				$global_ip_data = array(
-					'block_list' => array( $ip ),
-				);
-				$global_ip_service->add_to_global_ip_list( $global_ip_data );
-			}
-
-			/* translators: 1: IP address. 2: IP address list. 3: IP address list. 4: URL for Defender > Firewall > IP Banning. */
-			$message = esc_html__(
-				'IP %1$s has been added to your %2$s. You can control your %3$s in %4$s.',
-				'defender-security'
-			);
+		if ( 'blacklist' === $list_type ) {
+			$model->ip_blacklist = $collection;
+		} elseif ( 'whitelist' === $list_type ) {
+			$model->ip_whitelist = $collection;
 		}
-		$filter_data = $request->get_data(
-			array(
-				'date_from' => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'date_to'   => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'ip_filter' => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'type'      => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'paged'     => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'per_page'  => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-			)
-		);
-		$logs        = Lockout_Log::get_logs_and_format(
-			array(
-				'from' => $filter_data['date_from'],
-				'to'   => $filter_data['date_to'],
-				'ip'   => $filter_data['ip_filter'],
-				// If this is all, then we set to null to exclude it from the filter.
-				'type' => 'all' === $filter_data['type'] ? '' : $filter_data['type'],
-			),
-			$filter_data['paged'],
-			'id',
-			'desc',
-			$filter_data['per_page']
-		);
+		$model->save();
 
 		return new Response(
 			true,
 			array(
-				'message' => sprintf(
-					$message,
-					$data['ip'] ?? '-',
-					$data['list'],
-					$data['list'],
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=blocklist' ) . '">' . esc_html__( 'IP Lockouts', 'defender-security' ) . '</a>'
-				),
-				'logs'    => $logs,
+				'banning' => $model->export(),
 			)
 		);
 	}
@@ -410,113 +272,32 @@ class Firewall_Logs extends Controller {
 	public function toggle_ua_to_list( Request $request ): Response {
 		$data = $request->get_data(
 			array(
-				'ua'       => array(
+				'list' => array(
 					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
+					'sanitize' => 'sanitize_textarea_field',
 				),
-				'list'     => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'scenario' => array(
+				'type' => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
 			)
 		);
 
-		$ua         = $data['ua'];
 		$collection = $data['list'];
-		$action     = $data['scenario'];
+		$list_type  = $data['type'];
 
 		$model = wd_di()->get( User_Agent_Lockout::class );
-
-		if ( 'remove' === $action && $model->is_ua_in_list( $ua, $collection ) ) {
-			$model->remove_from_list( $ua, $collection );
-			/* translators: 1: User agent. 2: User agent list. 3: User agent list. 4: URL for Defender > Firewall > User Agent Banning. */
-			$message = esc_html__(
-				'User agent %1$s has been removed from your %2$s. You can control your %3$s in %4$s.',
-				'defender-security'
-			);
-		} elseif ( 'add' === $action ) {
-
-			/**
-			 * Possible scenario on regex blocklist. For e.g. UA term `run` present in allowlist & `r.n` regex in blocklist then remove `run` to block `run` user agent using regex `r.n`.
-			 */
-			if ( 'blocklist' === $collection && $model->is_ua_in_list( $ua, 'allowlist' ) ) {
-				$model->remove_from_list( $ua, 'allowlist' );
-			}
-
-			if ( ! $model->is_ua_in_list( $ua, $collection ) ) {
-				$model->add_to_list( $ua, $collection );
-			}
-			/* translators: 1: User agent. 2: User agent list. 3: User agent list. 4: URL for Defender > Firewall > User Agent Banning. */
-			$message = esc_html__(
-				'User agent %1$s has been added to your %2$s. You can control your %3$s in %4$s.',
-				'defender-security'
-			);
-		} else {
-			return new Response(
-				false,
-				array( 'message' => esc_html__( 'Wrong result.', 'defender-security' ) )
-			);
+		if ( 'blacklist' === $list_type ) {
+			$model->blacklist = $collection;
+		} elseif ( 'whitelist' === $list_type ) {
+			$model->whitelist = $collection;
 		}
-
-		$filter_data = $request->get_data(
-			array(
-				'date_from' => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'date_to'   => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'ip_filter' => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'type'      => array(
-					'type'     => 'string',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'paged'     => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-				'per_page'  => array(
-					'type'     => 'int',
-					'sanitize' => 'sanitize_text_field',
-				),
-			)
-		);
-		$logs        = Lockout_Log::get_logs_and_format(
-			array(
-				'from' => $filter_data['date_from'],
-				'to'   => $filter_data['date_to'],
-				'ip'   => $filter_data['ip_filter'],
-				// If this is all, then we set to null to exclude it from the filter.
-				'type' => 'all' === $filter_data['type'] ? '' : $filter_data['type'],
-			),
-			$filter_data['paged'],
-			'id',
-			'desc',
-			$filter_data['per_page']
-		);
+		$model->save();
 
 		return new Response(
 			true,
 			array(
-				'message'                 => sprintf(
-					$message,
-					'<strong>' . $data['ua'] . '</strong>',
-					$data['list'],
-					$data['list'],
-					'<a href="' . network_admin_url( 'admin.php?page=wdf-ip-lockout&view=ua-lockout' ) . '">' . esc_html__( 'User Agent Banning', 'defender-security' ) . '</a>'
-				),
-				'logs'                    => $logs,
-				// Include blocklist preset values for the frontend.
-				'blocklist_preset_values' => $model->blocklist_preset_values,
+				'uaLockout' => $model->export(),
 			)
 		);
 	}
@@ -545,6 +326,10 @@ class Firewall_Logs extends Controller {
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
+				'user_agent' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
 				'type'       => array(
 					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
@@ -559,6 +344,10 @@ class Firewall_Logs extends Controller {
 				),
 				'ban_status' => array(
 					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+				'per_page'   => array(
+					'type'     => 'int',
 					'sanitize' => 'sanitize_text_field',
 				),
 			)
@@ -580,13 +369,15 @@ class Firewall_Logs extends Controller {
 				'from'       => $data['date_from'],
 				'to'         => $data['date_to'],
 				'ip'         => $data['ip'],
+				'user_agent' => $data['user_agent'] ?? '',
 				// If this is all, then we set to null to exclude it from the filter.
 				'type'       => 'all' === $data['type'] ? '' : $data['type'],
 				'ban_status' => 'all' === $data['ban_status'] ? '' : $data['ban_status'],
 			),
 			$data['paged'],
 			$sort_params['order'],
-			$sort_params['order_by']
+			$sort_params['order_by'],
+			$data['per_page'] ?? 0
 		);
 
 		return new Response( true, $result );
@@ -600,11 +391,6 @@ class Firewall_Logs extends Controller {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script(
-			'def-iplockout',
-			'lockout_logs',
-			array_merge( $this->data_frontend(), $this->dump_routes_and_nonces() )
-		);
 	}
 
 	/**
@@ -613,18 +399,29 @@ class Firewall_Logs extends Controller {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
-		$type = defender_get_data_from_request( 'type', 'g' );
+		$type       = defender_get_data_from_request( 'type', 'g' );
+		$ip         = defender_get_data_from_request( 'ip', 'g' );
+		$user_agent = defender_get_data_from_request( 'user_agent', 'g' );
 
-		$def_filters  = array( 'misc' => wd_di()->get( Table_Lockout::class )->get_filters() );
 		$init_filters = array(
 			'from'       => strtotime( '-30 days' ),
 			'to'         => time(),
 			'type'       => $type,
-			'ip'         => '',
+			'ip'         => $ip,
+			'user_agent' => $user_agent,
 			'ban_status' => '',
 		);
+		$def_filters  = array(
+			'misc'           => wd_di()->get( Table_Lockout::class )->get_filters(),
+			'default_filter' => $init_filters,
+			'per_page'       => self::DEFAULT_PER_PAGE,
+		);
 
-		return array_merge( $this->retrieve_logs( $init_filters, 1 ), $def_filters );
+		return array_merge(
+			$this->retrieve_logs( $init_filters ),
+			$def_filters,
+			$this->dump_routes_and_nonces()
+		);
 	}
 
 	/**
@@ -639,6 +436,7 @@ class Firewall_Logs extends Controller {
 	 * @param  int    $paged  The page number of the logs to retrieve. Default is 1.
 	 * @param  string $order  The order of the logs. Default is 'desc'.
 	 * @param  string $order_by  The field to order the logs by. Default is 'id'.
+	 * @param  int    $per_page  Number of logs per page. 0 falls back to the default of 10.
 	 *
 	 * @return array An array containing the following keys:
 	 *               - 'count': The total count of logs.
@@ -646,18 +444,16 @@ class Firewall_Logs extends Controller {
 	 *               - 'per_page': The number of logs per page.
 	 *               - 'total_pages': The total number of pages.
 	 */
-	private function retrieve_logs( $filters, $paged = 1, $order = 'desc', $order_by = 'id' ): array {
-		// User can set the number of logs to retrieve per page.
-		$per_page = (int) defender_get_data_from_request( 'per_page', 'p' );
+	private function retrieve_logs( $filters, $paged = 1, $order = 'desc', $order_by = 'id', $per_page = 0 ): array {
+		$per_page = (int) $per_page;
 		if ( 0 === $per_page ) {
-			$per_page = 20;
+			$per_page = self::DEFAULT_PER_PAGE;
 		}
 		$conditions = array( 'ban_status' => $filters['ban_status'] );
 
 		$count = Lockout_Log::count( $filters['from'], $filters['to'], $filters['type'], $filters['ip'], $conditions );
 		$logs  = Lockout_Log::get_logs_and_format( $filters, $paged, $order_by, $order, $per_page );
 		return array(
-			'count'       => $count,
 			'logs'        => $logs,
 			'per_page'    => $per_page,
 			'total_pages' => ceil( $count / $per_page ),

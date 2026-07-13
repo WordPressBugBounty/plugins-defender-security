@@ -16,6 +16,7 @@ use WP_Defender\Component\Notification;
 use WP_Defender\Model\Setting\Login_Lockout;
 use WP_Defender\Controller\Blocklist_Monitor;
 use WP_Defender\Model\Setting\Notfound_Lockout;
+use WP_Defender\Model\Setting\User_Agent_Lockout;
 
 /**
  * Handles the scheduling and sending of firewall-related notifications.
@@ -44,7 +45,7 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 */
 	protected function before_load(): void {
 		$default = array(
-			'title'                => esc_html__( 'Firewall - Notification', 'defender-security' ),
+			'title'                => esc_html__( 'Firewall - Alert', 'defender-security' ),
 			'slug'                 => self::SLUG,
 			'status'               => self::STATUS_DISABLED,
 			'description'          => esc_html__(
@@ -57,12 +58,10 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 			'type'                 => 'notification',
 			'dry_run'              => false,
 			'configs'              => array(
-				'login_lockout' => false,
-				'nf_lockout'    => false,
-				'ua_lockout'    => false,
-				'limit'         => false,
 				'threshold'     => 3,
 				'cool_off'      => 24,
+				'login_lockout' => true,
+				'nf_lockout'    => true,
 			),
 		);
 		$this->import( $default );
@@ -80,16 +79,25 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 			return false;
 		}
 		// Check 'Login Protection Lockout'.
-		if ( Lockout_Log::AUTH_LOCK === $model->type && true === $this->configs['login_lockout'] ) {
-			return true;
+		if ( Lockout_Log::AUTH_LOCK === $model->type ) {
+			if ( true === wd_di()->get( Login_Lockout::class )->enabled ) {
+				return true;
+			}
+			return false;
 		}
 		// Check '404 Protection Lockout'.
-		if ( Lockout_Log::LOCKOUT_404 === $model->type && true === $this->configs['nf_lockout'] ) {
-			return true;
+		if ( in_array( $model->type, Lockout_Log::get_404_lockout_types(), true ) ) {
+			if ( true === wd_di()->get( Notfound_Lockout::class )->enabled ) {
+				return true;
+			}
+			return false;
 		}
 		// Check 'User Agent Lockout'.
-		if ( Lockout_Log::LOCKOUT_UA === $model->type && true === $this->configs['ua_lockout'] ) {
-			return true;
+		if ( Lockout_Log::LOCKOUT_UA === $model->type ) {
+			if ( true === wd_di()->get( User_Agent_Lockout::class )->enabled ) {
+				return true;
+			}
+			return false;
 		}
 
 		return false;
@@ -103,146 +111,247 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 * @return void
 	 */
 	public function send( Lockout_Log $model ): void {
-		if (
-			true === filter_var( $this->configs['login_lockout'], FILTER_VALIDATE_BOOLEAN )
-			&& Lockout_Log::AUTH_LOCK === $model->type
-		) {
-			$template = 'login-lockout';
-		} elseif (
-			true === filter_var( $this->configs['ua_lockout'], FILTER_VALIDATE_BOOLEAN )
-			&& Lockout_Log::LOCKOUT_UA === $model->type
-		) {
-			$template = 'ua-lockout';
-		} else {
-			$template = 'lockout-404';
+		if ( ! $this->check_options( $model ) ) {
+			return;
 		}
 
-		$service = wd_di()->get( Notification::class );
+		$template         = $this->get_template( $model );
+		$service          = wd_di()->get( Notification::class );
+		$network_site_url = network_site_url();
+		$email_data       = $this->get_email_data( $model, $template, $network_site_url );
+		$headers          = wd_di()->get( Mail::class )->get_headers(
+			defender_noreply_email( 'wd_lockout_noreply_email' ),
+			self::SLUG
+		);
 		foreach ( $this->in_house_recipients as $user ) {
 			if ( self::USER_SUBSCRIBED !== $user['status'] ) {
 				continue;
 			}
-			$this->send_to_user( $user['email'], $user['name'], $model, $template, $service );
+			$this->send_to_user( $user['email'], $user['name'], $email_data, $headers, $service );
 		}
 
 		foreach ( $this->out_house_recipients as $user ) {
 			if ( self::USER_SUBSCRIBED !== $user['status'] ) {
 				continue;
 			}
-			$this->send_to_user( $user['email'], $user['name'], $model, $template, $service );
+			$this->send_to_user( $user['email'], $user['name'], $email_data, $headers, $service );
 		}
+	}
+
+	/**
+	 * Gets the email template for the lockout log.
+	 *
+	 * @param  Lockout_Log $model  The lockout log model.
+	 *
+	 * @return string The email template key.
+	 */
+	private function get_template( Lockout_Log $model ): string {
+		if ( Lockout_Log::AUTH_LOCK === $model->type ) {
+			return 'login-lockout';
+		}
+
+		if ( Lockout_Log::LOCKOUT_UA === $model->type ) {
+			return 'ua-lockout';
+		}
+
+		return 'lockout-404';
 	}
 
 	/**
 	 * Constructs and sends the email to the specified recipient.
 	 *
-	 * @param  string      $email  The recipient's email address.
-	 * @param  string      $name  The recipient's name.
-	 * @param  Lockout_Log $model  The lockout log model.
-	 * @param  string      $template  The email template to use.
-	 * @param  object      $service  The notification service object.
+	 * @param  string $email      The recipient's email address.
+	 * @param  string $name       The recipient's name.
+	 * @param  array  $email_data Pre-computed email subject and body text.
+	 * @param  array  $headers    Pre-computed mail headers.
+	 * @param  object $service    The notification service object.
 	 *
 	 * @return void
 	 */
 	private function send_to_user(
 		string $email,
 		string $name,
-		Lockout_Log $model,
-		string $template,
+		array $email_data,
+		array $headers,
 		object $service
 	): void {
-		// Check if this meet the threshold.
-		if ( true === $this->configs['limit'] ) {
-			$count = Email_Track::count(
-				$this->slug,
-				$email,
-				strtotime( '-' . $this->configs['cool_off'] . ' hours' ),
-				time()
-			);
-			if ( $count >= $this->configs['threshold'] ) {
-				// No send.
-				return;
-			}
-		}
-		$network_site_url = network_site_url();
-		if ( 'login-lockout' === $template ) {
-			/* translators: %s: Site URL. */
-			$subject = sprintf( esc_html__( 'Login lockout alert for %s', 'defender-security' ), $network_site_url );
-			// If the log is made from the 2FA module, then we get the settings from it, otherwise from Login_Lockout.
-			$settings = wd_di()->get( Login_Lockout::class );
-			if ( false !== strpos( $model->log, '2fa attempts' ) ) {
-				$component     = wd_di()->get( Two_Fa::class );
-				$attempt_limit = $component->get_attempt_limit();
-				$time_limit    = $component->get_time_limit() . esc_html__( ' seconds', 'defender-security' );
-				$type          = '2fa';
-			} else {
-				$attempt_limit = $settings->attempt;
-				$time_limit    = $settings->duration . ' ' . $settings->duration_unit;
-				$type          = 'login';
-			}
-			// $text & $string will be escaped at src\view\email\login-lockout.php.
-			/* translators: 1: IP address, 2: Site URL, 3: Total attempt from an IP, 4. Lockout type, 5: Translation string. */
-			$text = __(
-				'The host %1$s has been locked out of %2$s due to more than %3$s failed %4$s attempts. %5$s',
-				'defender-security'
-			);
-			if ( 'permanent' === $settings->lockout_type ) {
-				$string = esc_html__( 'Accordingly, the host has been permanently banned.', 'defender-security' );
-			} else {
-				$string = sprintf(
-				/* translators: %s: Duration. */
-					esc_html__( 'They have been locked out for %s.', 'defender-security' ),
-					'<strong>' . esc_html( $time_limit ) . '</strong>'
-				);
-			}
-			$text = sprintf(
-				$text,
-				'<strong>' . $model->ip . '</strong>',
-				'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
-				'<strong>' . $attempt_limit . '</strong>',
-				$type,
-				$string
-			);
-		} elseif ( 'ua-lockout' === $template ) {
-			$subject = sprintf(
-			/* translators: %s: Site URL. */
-				esc_html__( 'User Agent lockout alert for %s', 'defender-security' ),
-				$network_site_url
-			);
-			$text = sprintf(
-			/* translators: 1: User agent, 2: Site URL */
-				__( 'The %1$s has been locked out of %2$s.', 'defender-security' ),
-				'<strong>' . $model->user_agent . '</strong>',
-				'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
-			);
-		} else {
-			/* translators: %s: Site URL. */
-			$subject  = sprintf( esc_html__( '404 lockout alert for %s', 'defender-security' ), $network_site_url );
-			$settings = wd_di()->get( Notfound_Lockout::class );
-			/* translators: 1: IP address, 2: Site URL, 3: Total attempt from an IP, 4: Tried, 5. Translation string. */
-			$text = __(
-				'The host %1$s has been locked out of %2$s due to more than %3$s 404 requests for the file %4$s. %5$s',
-				'defender-security'
-			);
-			if ( 'permanent' === $settings->lockout_type ) {
-				$string = esc_html__( 'Accordingly, the host has been permanently banned.', 'defender-security' );
-			} else {
-				$string = sprintf(
-					/* translators: %s: Duration. */
-					__( 'They have been locked out for %s.', 'defender-security' ),
-					'<strong>' . esc_html( $settings->duration . ' ' . $settings->duration_unit ) . '</strong>'
-				);
-			}
-			$text = sprintf(
-				$text,
-				'<strong>' . $model->ip . '</strong>',
-				'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
-				'<strong>' . $settings->attempt . '</strong>',
-				'<strong>' . $model->tried . '</strong>',
-				$string
-			);
+		if ( $this->is_email_limit_reached( $email ) ) {
+			return;
 		}
 
+		$content = $this->render_email_content( $name, $email_data['text'], $email, $service );
+
+		$ret = wp_mail( $email, $email_data['subject'], $content, $headers );
+		if ( $ret ) {
+			$this->save_log( $email );
+		}
+	}
+
+	/**
+	 * Checks whether the recipient has reached the email notification limit.
+	 *
+	 * @param  string $email  The recipient's email address.
+	 *
+	 * @return bool True when the email limit has been reached.
+	 */
+	private function is_email_limit_reached( string $email ): bool {
+		$count = Email_Track::count(
+			$this->slug,
+			$email,
+			strtotime( '-' . $this->configs['cool_off'] . ' hours' ),
+			time()
+		);
+
+		return $count >= $this->configs['threshold'];
+	}
+
+	/**
+	 * Gets email subject and body text for a lockout template.
+	 *
+	 * @param  Lockout_Log $model  The lockout log model.
+	 * @param  string      $template  The email template to use.
+	 * @param  string      $network_site_url  The network site URL.
+	 *
+	 * @return array Email subject and body text.
+	 */
+	private function get_email_data( Lockout_Log $model, string $template, string $network_site_url ): array {
+
+		if ( 'login-lockout' === $template ) {
+			return $this->get_login_lockout_email_data( $model, $network_site_url );
+		}
+
+		if ( 'ua-lockout' === $template ) {
+			return $this->get_ua_lockout_email_data( $model, $network_site_url );
+		}
+
+		return $this->get_404_lockout_email_data( $model, $network_site_url );
+	}
+
+	/**
+	 * Gets email data for login lockouts.
+	 *
+	 * @param  Lockout_Log $model  The lockout log model.
+	 * @param  string      $network_site_url  The network site URL.
+	 *
+	 * @return array Email subject and body text.
+	 */
+	private function get_login_lockout_email_data( Lockout_Log $model, string $network_site_url ): array {
+		/* translators: %s: Site URL. */
+		$subject = sprintf( esc_html__( 'Login lockout alert for %s', 'defender-security' ), $network_site_url );
+		// If the log is made from the 2FA module, then we get the settings from it, otherwise from Login_Lockout.
+		$settings = wd_di()->get( Login_Lockout::class );
+		if ( false !== strpos( $model->log, '2fa attempts' ) ) {
+			$component     = wd_di()->get( Two_Fa::class );
+			$attempt_limit = $component->get_attempt_limit();
+			$time_limit    = $component->get_time_limit() . esc_html__( ' seconds', 'defender-security' );
+			$type          = '2fa';
+		} else {
+			$attempt_limit = $settings->attempt;
+			$time_limit    = $settings->duration . ' ' . $settings->duration_unit;
+			$type          = 'login';
+		}
+		// $text & $string will be escaped at src\view\email\login-lockout.php.
+		/* translators: 1: IP address, 2: Site URL, 3: Total attempt from an IP, 4. Lockout type, 5: Translation string. */
+		$text = __(
+			'The host %1$s has been locked out of %2$s due to more than %3$s failed %4$s attempts. %5$s',
+			'defender-security'
+		);
+		$text = sprintf(
+			$text,
+			'<strong>' . $model->ip . '</strong>',
+			'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
+			'<strong>' . $attempt_limit . '</strong>',
+			$type,
+			$this->get_lockout_duration_text( $settings->lockout_type, $time_limit )
+		);
+
+		return compact( 'subject', 'text' );
+	}
+
+	/**
+	 * Gets email data for user agent lockouts.
+	 *
+	 * @param  Lockout_Log $model  The lockout log model.
+	 * @param  string      $network_site_url  The network site URL.
+	 *
+	 * @return array Email subject and body text.
+	 */
+	private function get_ua_lockout_email_data( Lockout_Log $model, string $network_site_url ): array {
+		$subject = sprintf(
+			/* translators: %s: Site URL. */
+			esc_html__( 'User Agent lockout alert for %s', 'defender-security' ),
+			$network_site_url
+		);
+		$text = sprintf(
+			/* translators: 1: User agent, 2: Site URL */
+			__( 'The %1$s has been locked out of %2$s.', 'defender-security' ),
+			'<strong>' . $model->user_agent . '</strong>',
+			'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
+		);
+
+		return compact( 'subject', 'text' );
+	}
+
+	/**
+	 * Gets email data for 404 lockouts.
+	 *
+	 * @param  Lockout_Log $model  The lockout log model.
+	 * @param  string      $network_site_url  The network site URL.
+	 *
+	 * @return array Email subject and body text.
+	 */
+	private function get_404_lockout_email_data( Lockout_Log $model, string $network_site_url ): array {
+		/* translators: %s: Site URL. */
+		$subject  = sprintf( esc_html__( '404 lockout alert for %s', 'defender-security' ), $network_site_url );
+		$settings = wd_di()->get( Notfound_Lockout::class );
+		/* translators: 1: IP address, 2: Site URL, 3: Total attempt from an IP, 4: Tried, 5. Translation string. */
+		$text = __(
+			'The host %1$s has been locked out of %2$s due to more than %3$s 404 requests for the file %4$s. %5$s',
+			'defender-security'
+		);
+		$text = sprintf(
+			$text,
+			'<strong>' . $model->ip . '</strong>',
+			'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
+			'<strong>' . $settings->attempt . '</strong>',
+			'<strong>' . $model->tried . '</strong>',
+			$this->get_lockout_duration_text( $settings->lockout_type, $settings->duration . ' ' . $settings->duration_unit )
+		);
+
+		return compact( 'subject', 'text' );
+	}
+
+	/**
+	 * Gets the lockout duration text used in notification emails.
+	 *
+	 * @param  string $lockout_type  The lockout type.
+	 * @param  string $duration  The lockout duration.
+	 *
+	 * @return string The lockout duration text.
+	 */
+	private function get_lockout_duration_text( string $lockout_type, string $duration ): string {
+		if ( 'permanent' === $lockout_type ) {
+			return esc_html__( 'Accordingly, the host has been permanently banned.', 'defender-security' );
+		}
+
+		return sprintf(
+			/* translators: %s: Duration. */
+			esc_html__( 'They have been locked out for %s.', 'defender-security' ),
+			'<strong>' . esc_html( $duration ) . '</strong>'
+		);
+	}
+
+	/**
+	 * Renders the complete email content.
+	 *
+	 * @param  string $name  The recipient's name.
+	 * @param  string $text  The email body text.
+	 * @param  string $email  The recipient's email address.
+	 * @param  object $service  The notification service object.
+	 *
+	 * @return string The rendered email content.
+	 */
+	private function render_email_content( string $name, string $text, string $email, object $service ): string {
 		$logs_url = network_admin_url( 'admin.php?page=wdf-ip-lockout&view=logs' );
 		// Need for activated Mask Login feature.
 		$logs_url = apply_filters( 'report_email_logs_link', $logs_url, $email );
@@ -259,7 +368,8 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 			false
 		);
 		$unsubscribe_link = $service->create_unsubscribe_url( $this->slug, $email );
-		$content          = $controller->render_partial(
+
+		return $controller->render_partial(
 			'email/index',
 			array(
 				'title'            => esc_html__( 'Firewall', 'defender-security' ),
@@ -268,16 +378,6 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 			),
 			false
 		);
-
-		$headers = wd_di()->get( Mail::class )->get_headers(
-			defender_noreply_email( 'wd_lockout_noreply_email' ),
-			self::SLUG
-		);
-
-		$ret = wp_mail( $email, $subject, $content, $headers );
-		if ( $ret ) {
-			$this->save_log( $email );
-		}
 	}
 
 	/**
@@ -287,12 +387,12 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 */
 	public function labels(): array {
 		return array(
-			'notification'               => esc_html__( 'Firewall - Notification', 'defender-security' ),
+			'notification'               => esc_html__( 'Firewall - Alert', 'defender-security' ),
 			'login_lockout_notification' => esc_html__( 'Login Protection Lockout', 'defender-security' ),
 			'ip_lockout_notification'    => esc_html__( '404 Detection Lockout', 'defender-security' ),
 			'ua_lockout_notification'    => esc_html__( 'User Agent Lockout', 'defender-security' ),
 			'notification_subscribers'   => esc_html__( 'Recipients', 'defender-security' ),
-			'cooldown_enabled'           => esc_html__( 'Limit email notifications for repeat lockouts', 'defender-security' ),
+			'cooldown_enabled'           => esc_html__( 'Limit email alerts for repeat lockouts', 'defender-security' ),
 			'cooldown_number_lockout'    => esc_html__( 'Repeat Lockouts Threshold', 'defender-security' ),
 			'cooldown_period'            => esc_html__( 'Repeat Lockouts Period', 'defender-security' ),
 		);
@@ -307,11 +407,42 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 * @since 3.1.0
 	 */
 	public function type_casting( array $configs ): array {
-		$configs['login_lockout'] = (bool) $configs['login_lockout'];
-		$configs['nf_lockout']    = (bool) $configs['nf_lockout'];
-		$configs['ua_lockout']    = isset( $configs['ua_lockout'] ) ? (bool) $configs['ua_lockout'] : false;
-		$configs['limit']         = (bool) $configs['limit'];
+		if ( ! isset( $configs['threshold'] ) ) {
+			$configs['threshold'] = $this->configs['threshold'] ?? 3;
+		}
+		if ( ! isset( $configs['cool_off'] ) ) {
+			$configs['cool_off'] = $this->configs['cool_off'] ?? 24;
+		}
 
 		return $configs;
+	}
+
+	/**
+	 * Returns lockout notification flags for the Hub.
+	 *
+	 * @return array
+	 */
+	public function get_hub_data(): array {
+		if ( self::STATUS_ACTIVE !== $this->status ) {
+			return array(
+				'login_lockout' => false,
+				'404_lockout'   => false,
+				'ua_lockout'    => false,
+			);
+		}
+
+		return array(
+			'login_lockout' => wd_di()->get( Login_Lockout::class )->enabled,
+			'404_lockout'   => wd_di()->get( Notfound_Lockout::class )->enabled,
+			'ua_lockout'    => wd_di()->get( User_Agent_Lockout::class )->enabled,
+		);
+	}
+
+	/**
+	 * Normalizes firewall notification data after loading.
+	 */
+	protected function after_load(): void {
+		parent::after_load();
+		$this->title = esc_html__( 'Firewall alert', 'defender-security' );
 	}
 }

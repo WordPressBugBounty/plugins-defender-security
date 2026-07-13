@@ -126,6 +126,12 @@ class Scan_Item extends DB {
 		parent::import( $data );
 		// Add behaviors.
 		switch ( $this->type ) {
+			case self::TYPE_SUSPICIOUS:
+				$this->attach_behavior( Malware_Result::class, Malware_Result::class );
+				break;
+			case self::TYPE_VULNERABILITY:
+				$this->attach_behavior( Vuln_Result::class, Vuln_Result::class );
+				break;
 			case self::TYPE_PLUGIN_CLOSED:
 			case self::TYPE_PLUGIN_OUTDATED:
 				$this->attach_behavior( Abandoned_Result::class, Abandoned_Result::class );
@@ -142,6 +148,8 @@ class Scan_Item extends DB {
 	 */
 	public static function get_all_scan_types(): array {
 		return array(
+			self::TYPE_VULNERABILITY,
+			self::TYPE_SUSPICIOUS,
 			self::TYPE_INTEGRITY,
 			self::TYPE_PLUGIN_CHECK,
 			self::TYPE_PLUGIN_CLOSED,

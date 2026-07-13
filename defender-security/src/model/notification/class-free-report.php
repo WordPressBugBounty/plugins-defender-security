@@ -20,7 +20,7 @@ abstract class Free_Report extends \WP_Defender\Model\Notification {
 	protected function base_defaults(): array {
 		return array(
 			'status'               => self::STATUS_DISABLED,
-			'in_house_recipients'  => $this->get_default_user(),
+			'in_house_recipients'  => array(),
 			'out_house_recipients' => array(),
 			'type'                 => 'report',
 			'frequency'            => 'weekly',

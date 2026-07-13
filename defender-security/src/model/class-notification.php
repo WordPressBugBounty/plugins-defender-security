@@ -170,13 +170,15 @@ abstract class Notification extends Setting {
 
 		$user_id = get_current_user_id();
 
+		$email = $this->get_current_user_email( $user_id );
+
 		return array(
-			array(
+			$email => array(
 				'name'   => $this->get_user_display( $user_id ),
 				'id'     => $user_id,
-				'email'  => $this->get_current_user_email( $user_id ),
+				'email'  => $email,
 				'role'   => $this->get_current_user_role( $user_id ),
-				'avatar' => get_avatar_url( $this->get_current_user_email( $user_id ) ),
+				'avatar' => get_avatar_url( $email ),
 				'status' => self::USER_SUBSCRIBED,
 			),
 		);
@@ -249,11 +251,12 @@ abstract class Notification extends Setting {
 		}
 
 		// Est should be set as the last send. Create now timestamp.
-		$now            = new DateTime( 'now', wp_timezone() );
-		$interval       = DateInterval::createFromDateString( (string) $est->getOffset() . 'seconds' );
-		[ $hour, $min ] = explode( ':', $this->time );
-		$hour           = (int) $hour;
-		$min            = (int) $min;
+		$now              = new DateTime( 'now', wp_timezone() );
+		$interval         = DateInterval::createFromDateString( (string) $est->getOffset() . 'seconds' );
+		$time_parts       = array_pad( explode( ':', (string) $this->time ), 2, 0 );
+		[ $hour, $min ]   = $time_parts;
+		$hour             = (int) $hour;
+		$min              = (int) $min;
 		switch ( $this->frequency ) {
 			case 'daily':
 				// Set the time.
@@ -266,6 +269,9 @@ abstract class Notification extends Setting {
 				}
 				break;
 			case 'weekly':
+				if ( empty( $this->day ) ) {
+					break;
+				}
 				$est->modify( 'this ' . $this->day );
 				$est->add( $interval );
 				$est->setTime( $hour, $min, 0 );
@@ -277,14 +283,16 @@ abstract class Notification extends Setting {
 			case 'monthly':
 				// We will need to check if the date is passed today, if not, use this, if yes, then queue for next month.
 				$est->setDate( (int) $est->format( 'Y' ), (int) $est->format( 'm' ), 1 );
-				if ( 31 === $this->day_n ) {
-					$this->day_n = (int) $est->format( 't' );
-				}
-				$est->add( new DateInterval( 'P' . ( $this->day_n - 1 ) . 'D' ) );
+				// Clamp day_n to a valid day in the current month.
+				$day_n = max( 1, min( $this->day_n, (int) $est->format( 't' ) ) );
+				$est->add( new DateInterval( 'P' . ( $day_n - 1 ) . 'D' ) );
 				$est->setTime( $hour, $min, 0 );
 				while ( $est->getTimestamp() < $now->getTimestamp() ) {
-					// Already over, move to next month.
-					$est->modify( 'next month' );
+					// Already over, move to first day of next month.
+					$est->modify( 'first day of next month' );
+					// Re-clamp for the new month's length.
+					$day_n = max( 1, min( $this->day_n, (int) $est->format( 't' ) ) );
+					$est->add( new DateInterval( 'P' . ( $day_n - 1 ) . 'D' ) );
 					$est->setTime( $hour, $min, 0 );
 				}
 				break;
@@ -450,17 +458,41 @@ abstract class Notification extends Setting {
 			$user_data = get_userdata( $id );
 
 			if ( $user_data instanceof WP_User ) {
-				$in_house_recipients[] = array(
+				$in_house_recipients[ $user_data->user_email ] = array(
 					'name'   => $user_data->display_name,
 					'id'     => $user_data->ID,
 					'email'  => $user_data->user_email,
 					'role'   => $this->get_first_user_role( $user_data ),
 					'avatar' => get_avatar_url( $id ),
-					'status' => $recipient['status'],
+					'status' => $recipient['status'] ?? '',
 				);
 			}
 		}
 
-		$this->in_house_recipients = $in_house_recipients;
+		$this->in_house_recipients  = $in_house_recipients;
+		$this->out_house_recipients = $this->get_email_indexed_recipients( $this->out_house_recipients );
+	}
+
+	/**
+	 * Indexes recipients by email.
+	 *
+	 * @param  array $recipients  Recipients list.
+	 *
+	 * @return array
+	 */
+	private function get_email_indexed_recipients( array $recipients ): array {
+		$email_indexed_recipients = array();
+
+		foreach ( $recipients as $recipient ) {
+			if ( empty( $recipient['email'] ) ) {
+				continue;
+			}
+
+			$email                              = trim( $recipient['email'] );
+			$recipient['email']                 = $email;
+			$email_indexed_recipients[ $email ] = $recipient;
+		}
+
+		return $email_indexed_recipients;
 	}
 }

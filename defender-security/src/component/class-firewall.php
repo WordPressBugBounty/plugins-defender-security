@@ -86,8 +86,14 @@ class Firewall extends Component {
 			return false;
 		}
 
-		$wpmu_dev         = new WPMUDEV();
-		$is_remote_access = $wpmu_dev->get_apikey() &&
+		$wpmu_dev = new WPMUDEV();
+
+		// Remote staff access needs Dashboard mode.
+		if ( 'dashboard' !== $wpmu_dev->resolve_connection_mode() ) {
+			return false;
+		}
+
+		$is_remote_access = is_object( WPMUDEV_Dashboard::$api ) &&
 							true === WPMUDEV_Dashboard::$api->remote_access_details( 'enabled' );
 
 		if ( $is_remote_access ) {

@@ -21,7 +21,7 @@ class Table_Lockout extends Component {
 
 	public const STATUS_BAN = 'ban', STATUS_NOT_BAN = 'not_ban', STATUS_ALLOWLIST = 'allowlist';
 	public const SORT_DESC  = 'latest', SORT_ASC = 'oldest', SORT_BY_IP = 'ip', SORT_BY_UA = 'user_agent';
-	public const LIMIT_20   = '20', LIMIT_50 = '50', LIMIT_100 = '100', LIMIT_ALL = '-1';
+	public const LIMIT_10   = '10', LIMIT_20   = '20', LIMIT_50 = '50', LIMIT_100 = '100', LIMIT_ALL = '-1';
 
 	/**
 	 * Retrieves the status text for a given IP address.
@@ -60,7 +60,7 @@ class Table_Lockout extends Component {
 	 */
 	private function get_types(): array {
 		return array(
-			'all'                                        => esc_html__( 'All', 'defender-security' ),
+			'all'                                        => esc_html__( 'Any', 'defender-security' ),
 			Lockout_Log::AUTH_FAIL                       => esc_html__( 'Failed login attempts', 'defender-security' ),
 			Lockout_Log::AUTH_LOCK                       => esc_html__( 'Login lockout', 'defender-security' ),
 			Lockout_Log::ERROR_404                       => esc_html__( '404 error', 'defender-security' ),
@@ -88,7 +88,7 @@ class Table_Lockout extends Component {
 	 */
 	private function ban_status(): array {
 		return array(
-			'all'                  => esc_html__( 'All', 'defender-security' ),
+			'all'                  => esc_html__( 'Any', 'defender-security' ),
 			self::STATUS_NOT_BAN   => esc_html__( 'Not Banned', 'defender-security' ),
 			self::STATUS_BAN       => esc_html__( 'Banned', 'defender-security' ),
 			self::STATUS_ALLOWLIST => esc_html__( 'Allowlisted', 'defender-security' ),
@@ -129,6 +129,7 @@ class Table_Lockout extends Component {
 	 */
 	private function limit_per_page(): array {
 		return array(
+			self::LIMIT_10  => '10',
 			self::LIMIT_20  => '20',
 			self::LIMIT_50  => '50',
 			self::LIMIT_100 => '100',

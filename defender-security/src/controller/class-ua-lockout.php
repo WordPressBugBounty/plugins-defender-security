@@ -12,6 +12,7 @@ use WP_Defender\Event;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Traits\Setting;
+use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\User_Agent as User_Agent_Service;
@@ -77,7 +78,6 @@ class UA_Lockout extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script( 'def-iplockout', 'ua_lockout', $this->data_frontend() );
 	}
 
 	/**
@@ -272,6 +272,11 @@ class UA_Lockout extends Event {
 			'blocklist_presets'       => User_Agent_Service::get_blocklist_presets(),
 			'script_presets'          => User_Agent_Service::get_script_presets(),
 			'has_empty_disallow_line' => $has_empty_disallow,
+			'lockouts_last_24_hours'  => Lockout_Log::count(
+				strtotime( '-24 hours' ),
+				time(),
+				Lockout_Log::LOCKOUT_UA
+			),
 		);
 
 		return array_merge(
@@ -392,16 +397,25 @@ class UA_Lockout extends Event {
 			)
 		);
 
-		$attached_id = $data['id'];
-		if ( ! is_object( get_post( $attached_id ) ) ) {
-			return new Response(
-				false,
-				array( 'message' => esc_html__( 'Your file is invalid!', 'defender-security' ) )
-			);
+		$file        = '';
+		$attached_id = $data['id'] ?? 0;
+		if ( 0 < $attached_id ) {
+			if ( ! is_object( get_post( $attached_id ) ) ) {
+				return new Response(
+					false,
+					array( 'message' => esc_html__( 'Your file is invalid!', 'defender-security' ) )
+				);
+			}
+
+			$file = get_attached_file( $attached_id );
+		} else {
+			$file_data = defender_get_data_from_request( 'file', 'f' );
+			if ( is_array( $file_data ) && isset( $file_data['tmp_name'] ) && is_uploaded_file( $file_data['tmp_name'] ) ) {
+				$file = $file_data['tmp_name'];
+			}
 		}
 
-		$file = get_attached_file( $attached_id );
-		if ( ! is_file( $file ) ) {
+		if ( ! is_string( $file ) || '' === $file || ! is_file( $file ) ) {
 			return new Response(
 				false,
 				array( 'message' => esc_html__( 'Your file is invalid!', 'defender-security' ) )
@@ -425,9 +439,12 @@ class UA_Lockout extends Event {
 
 		return new Response(
 			true,
-			array(
-				'message'  => esc_html__( 'Your blocklist and allowlist have been successfully imported.', 'defender-security' ),
-				'interval' => 1,
+			array_merge(
+				array(
+					'message'    => esc_html__( 'Your blocklist and allowlist have been successfully imported.', 'defender-security' ),
+					'auto_close' => true,
+				),
+				$this->data_frontend()
 			)
 		);
 	}

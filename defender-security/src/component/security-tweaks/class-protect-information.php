@@ -78,7 +78,7 @@ class Protect_Information extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Prevent Information Disclosure', 'defender-security' );
+		return wp_strip_all_tags( __( 'Prevent info disclosure', 'defender-security' ) );
 	}
 
 	/**
@@ -87,7 +87,7 @@ class Protect_Information extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_error_reason(): string {
-		return esc_html__( 'You don\'t have information disclosure protection active.', 'defender-security' );
+		return '';
 	}
 
 	/**
@@ -100,20 +100,18 @@ class Protect_Information extends Abstract_Security_Tweaks {
 			'slug'            => $this->slug,
 			'title'           => $this->get_label(),
 			'errorReason'     => $this->get_error_reason(),
-			'successReason'   => esc_html__(
-				'You\'ve automatically enabled information disclosure protection.',
-				'defender-security'
-			),
+			'successReason'   => wp_strip_all_tags( __( 'Sensitive files are locked.', 'defender-security' ) ),
 			'misc'            => array(
-				'active_server' => Server::get_current_server(),
-				'apache_rules'  => Server::create( 'apache' )->from( $this->slug )->get_rules_for_instruction(),
-				'nginx_rules'   => Server::create( 'nginx' )->from( $this->slug )->get_rules(),
+				'active_server'      => Server::get_current_server(),
+				'apache_rules'       => Server::create( 'apache' )->from( $this->slug )->get_rules_for_instruction(),
+				'litespeed_rules'    => Server::create( 'litespeed' )->from( $this->slug )->get_rules_for_instruction(),
+				'nginx_rules'        => Server::create( 'nginx' )->from( $this->slug )->get_rules(),
+				'show_action_button' => true,
 			),
-			'blk_description' => esc_html__(
-				'Often servers are incorrectly configured, and can allow an attacker to get access to sensitive files like your config, .htaccess and backup files. We will automatically add an .htaccess file to your root folder to action this fix.',
-				'defender-security'
+			'bulk_description' => wp_strip_all_tags(
+				__( 'Misconfigured servers can expose sensitive files, including config files, .htaccess files, and backups. Prevent info disclosure to protect private site details and reduce the risk of unauthorized access.', 'defender-security' )
 			),
-			'bulk_title'      => esc_html__( 'Information Disclosure', 'defender-security' ),
+			'bulk_title'      => wp_strip_all_tags( __( 'Information Disclosure', 'defender-security' ) ),
 		);
 	}
 }

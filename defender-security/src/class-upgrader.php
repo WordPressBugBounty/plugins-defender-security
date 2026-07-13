@@ -339,6 +339,7 @@ class Upgrader {
 		$db_version = get_site_option( 'wd_db_version' );
 		if ( ! is_string( $db_version ) || '' === $db_version ) {
 			self::cache_event_time( 'plugin_installed' );
+			$this->create_database_tables_common();
 			update_site_option( 'wd_db_version', DEFENDER_DB_VERSION );
 			update_site_option( Feature_Modal::FEATURE_SLUG, true );
 
@@ -476,6 +477,9 @@ class Upgrader {
 		}
 		if ( version_compare( $db_version, '5.7.0', '<' ) ) {
 			$this->upgrade_5_7_0();
+		}
+		if ( version_compare( $db_version, '6.0.0', '<' ) ) {
+			$this->upgrade_6_0_0();
 		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
@@ -1622,6 +1626,8 @@ Your temporary password is {{passcode}}. To finish logging in, copy and paste th
 	 * @return void
 	 */
 	private function upgrade_4_0_0(): void {
+		$bootstrap = wd_di()->get( Bootstrap::class );
+		$bootstrap->create_table_quarantine();
 	}
 
 	/**
@@ -1932,11 +1938,43 @@ To complete your login, copy and paste the temporary password into the Password 
 	}
 
 	/**
+	 * Change lockout log mentions from fake_bot to malicious_bot. Also move BotTrap settings.
+	 *
+	 * @return void
+	 */
+	private function change_to_malicious_bot(): void {
+		global $wpdb;
+
+		$table_name = $wpdb->base_prefix . 'defender_lockout_log';
+
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"UPDATE $table_name SET type = %s, log = %s WHERE type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'malicious_bot',
+				'Lockout occurred: Bot ignored robots.txt rules.',
+				'bot_trap'
+			)
+		);
+		// Clear schedule as the name has changed to 'wpdef_rotate_malicious_bot_secret_hash'.
+		wp_clear_scheduled_hook( 'wpdef_rotate_bot_trap_secret_hash' );
+		// Move the BotTrap settings to new Malicious Bot settings.
+		$settings = wd_di()->get( User_Agent_Lockout::class );
+		if ( isset( $settings->bot_trap_enabled ) ) {
+			$settings->malicious_bot_enabled               = $settings->bot_trap_enabled;
+			$settings->malicious_bot_lockout_type          = $settings->bot_trap_lockout_type;
+			$settings->malicious_bot_lockout_duration      = $settings->bot_trap_lockout_duration;
+			$settings->malicious_bot_lockout_duration_unit = $settings->bot_trap_lockout_duration_unit;
+			$settings->save();
+		}
+	}
+
+	/**
 	 * Upgrade to 5.6.0.
 	 *
 	 * @return void
 	 */
 	private function upgrade_5_6_0(): void {
+		$this->change_to_malicious_bot();
 		// Add the "What's new" modal.
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 	}
@@ -1955,5 +1993,140 @@ To complete your login, copy and paste the temporary password into the Password 
 		$this->force_nf_lockout_exclusions();
 		// Remove the prev Breadcrumbs.
 		wd_di()->get( \WP_Defender\Component\Breadcrumbs::class )->delete_previous_meta();
+	}
+
+	/**
+	 * Migrates the uninstall settings from v5.11 to v6.0.
+	 *
+	 * During the upgrade:
+	 * - If at least one of the three options is set to Preserve/Keep,
+	 *   all three options are set to Preserve/Keep.
+	 */
+	private function combine_all_preserve_settings_to_one() {
+		$main_settings = wd_di()->get( \WP_Defender\Model\Setting\Main_Setting::class );
+
+		if (
+			'preserve' === $main_settings->uninstall_settings ||
+			'keep' === $main_settings->uninstall_data ||
+			'keep' === $main_settings->uninstall_quarantine
+		) {
+			$main_settings->uninstall_settings   = 'preserve';
+			$main_settings->uninstall_data       = 'keep';
+			$main_settings->uninstall_quarantine = 'keep';
+			$main_settings->save();
+		}
+	}
+
+	/**
+	 * Since with version 6.0.0, two nested options:
+	 * - Scan core files
+	 * - Scan plugin files,
+	 * are hidden, and automatically take the value of the parent "File change detection" option.
+	 */
+	private function combine_all_file_change_detection_settings_to_one() {
+		$scan_settings = wd_di()->get( Scan_Settings::class );
+		if ( $scan_settings->integrity_check ) {
+			$scan_settings->check_core    = true;
+			$scan_settings->check_plugins = true;
+		} else {
+			$scan_settings->check_core    = false;
+			$scan_settings->check_plugins = false;
+		}
+		$scan_settings->save();
+	}
+
+	/**
+	 * Upgrade to 6.0.0: Ensure quarantine table exists for Free HC users and other changes.
+	 * The quarantine feature is now available in the free version.
+	 *
+	 * @return void
+	 */
+	private function upgrade_6_0_0(): void {
+		$bootstrap = wd_di()->get( Bootstrap::class );
+		$bootstrap->create_table_quarantine();
+		$this->combine_all_preserve_settings_to_one();
+		$this->combine_all_file_change_detection_settings_to_one();
+		$this->update_issues_report_email_template();
+		$this->migrate_tweak_reminder_schedule();
+		$this->migrate_two_fa_force_auth_roles();
+		// Add the "What's new" modal.
+		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+	}
+
+	/**
+	 * Clear force_auth_roles when user_roles is empty.
+	 *
+	 * @return void
+	 */
+	private function migrate_two_fa_force_auth_roles(): void {
+		$model = wd_di()->get( Two_Fa_Settings::class );
+		if ( count( $model->user_roles ) === 0 ) {
+			$model->force_auth       = false;
+			$model->force_auth_roles = array();
+			$model->save();
+		}
+	}
+
+	/**
+	 * Migrate the Hardening report (Tweak Reminder) schedule from 5.11 to 6.0.0.
+	 *
+	 * In 5.11, this report was saved with type 'notification' and its frequency was kept in
+	 * `configs['reminder']`. In 6.0.0, it's saved with type 'report' and uses new, dedicated
+	 * fields instead: `frequency`, `day`, `day_n`, `time`, `est_timestamp`.
+	 *
+	 * Without this migration, a site updated from 5.11 keeps the old type 'notification', so the
+	 * new scheduling code can't calculate a valid next-send date and the report email gets sent
+	 * on every cron run instead of on the configured schedule.
+	 *
+	 * @return void
+	 */
+	private function migrate_tweak_reminder_schedule(): void {
+		$model = wd_di()->get( Tweak_Reminder::class );
+		if ( 'notification' !== $model->type ) {
+			return;
+		}
+
+		$model->type = 'report';
+		if ( isset( $model->configs['reminder'] ) && in_array( $model->configs['reminder'], array( 'daily', 'weekly', 'monthly' ), true ) ) {
+			$model->frequency = $model->configs['reminder'];
+		}
+		if ( null === $model->day || '' === $model->day ) {
+			$model->day = 'sunday';
+		}
+		if ( null === $model->time || '' === $model->time ) {
+			$model->time = '4:00';
+		}
+		$model->save();
+	}
+
+	/**
+	 * Update Issues Report email subject and body to match the new copy.
+	 *
+	 * @return void
+	 */
+	private function update_issues_report_email_template(): void {
+		$models = array(
+			wd_di()->get( Malware_Notification::class ),
+			wd_di()->get( Malware_Report::class ),
+		);
+
+		$default_subject = esc_html__( 'Issues Report for {SITE_URL}: {ISSUES_COUNT} issue(s) found.', 'defender-security' );
+		$default_body    = esc_html__(
+			'Hi {USER_NAME},
+
+A scan of {SITE_URL} identified {ISSUES_COUNT} issue(s). The issue(s) found is/are listed below.
+
+{ISSUES_LIST}',
+			'defender-security'
+		);
+
+		foreach ( $models as $model ) {
+			if ( ! isset( $model->configs['template']['found'] ) ) {
+				continue;
+			}
+			$model->configs['template']['found']['subject'] = $default_subject;
+			$model->configs['template']['found']['body']    = $default_body;
+			$model->save();
+		}
 	}
 }

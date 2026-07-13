@@ -38,7 +38,10 @@ class Plugin_Integrity extends Behavior {
 		$data = $this->owner->raw_data;
 		$file = $data['file'];
 		list( $file_created_at, $file_size, $deleted ) = $this->get_file_meta( $file );
-			$quarantine_data = array( 'is_quarantinable' => false );
+
+		if ( class_exists( 'WP_Defender\Component\Quarantine' ) ) {
+			$quarantine_data = wd_di()->get( \WP_Defender\Component\Quarantine::class )->scan_item_data( $this->owner );
+		}
 
 		return array_merge(
 			array(

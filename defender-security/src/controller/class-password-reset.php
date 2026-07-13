@@ -52,7 +52,6 @@ class Password_Reset extends Event {
 		$this->service     = wd_di()->get( \WP_Defender\Component\Password_Protection::class );
 		$default_values    = $this->model->get_default_values();
 		$this->default_msg = $default_values['message'];
-		add_filter( 'wp_defender_advanced_tools_data', array( $this, 'script_data' ) );
 		$this->register_routes();
 		if ( $this->model->is_active() ) {
 			// Update site url on sub-site when MaskLogin is disabled.
@@ -198,19 +197,6 @@ class Password_Reset extends Event {
 		}
 
 		$this->service->handle_password_updated( $user );
-	}
-
-	/**
-	 * Provide data to the frontend via localized script.
-	 *
-	 * @param  array $data  Data collection is ready to passed.
-	 *
-	 * @return array Modified data array with added this controller data.
-	 */
-	public function script_data( array $data ): array {
-		$data['password_reset'] = $this->data_frontend();
-
-		return $data;
 	}
 
 	/**

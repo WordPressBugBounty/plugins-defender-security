@@ -21,6 +21,7 @@ use WP_Defender\Model\Scan as Model_Scan;
 use WP_Defender\Behavior\Scan\Core_Integrity;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Component\Scan as Scan_Component;
+use WP_Defender\Component\Rate as Rate_Component;
 use WP_Defender\Model\Setting\Scan as Scan_Settings;
 use WP_Defender\Model\Notification\Malware_Report;
 use WP_Defender\Component\Config\Config_Hub_Helper;
@@ -38,6 +39,19 @@ class Scan extends Event {
 	use Scan_Upsell;
 
 	public const SCAN_LOG = 'scan.log';
+
+	/**
+	 * Records whether a scan has been started on this installation.
+	 *
+	 * @var string
+	 */
+	public const FIRST_SCAN_STARTED = 'wp_defender_first_scan_started';
+
+	/**
+	 * Default number of issue items per page on the Scan Issues UI.
+	 */
+	public const DEFAULT_PER_PAGE = 10;
+
 	/**
 	 * The slug identifier for this controller.
 	 *
@@ -58,6 +72,19 @@ class Scan extends Event {
 	 * @var Scan_Component
 	 */
 	protected $service;
+	/**
+	 * Quarantine controller.
+	 *
+	 * @var Quarantine
+	 */
+	private $quarantine_controller;
+
+	/**
+	 * Is the Hub API key available?
+	 *
+	 * @var bool
+	 */
+	private $is_apikey;
 
 	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
@@ -70,8 +97,12 @@ class Scan extends Event {
 			$this->parent_slug
 		);
 
-		$this->model   = new Scan_Settings();
-		$this->service = wd_di()->get( Scan_Component::class );
+		$this->model                 = new Scan_Settings();
+		$this->service               = wd_di()->get( Scan_Component::class );
+		$this->quarantine_controller = wd_di()->get( Quarantine::class );
+		$wpmudev                     = wd_di()->get( WPMUDEV::class );
+
+		$this->is_apikey = false !== $wpmudev->get_apikey();
 
 		$this->register_routes();
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
@@ -80,6 +111,17 @@ class Scan extends Event {
 		add_action( 'defender/async_scan', array( $this, 'process' ) );
 		// Clean up data after successful core update.
 		add_action( '_core_updated_successfully', array( $this, 'clean_up_data' ) );
+
+		global $pagenow;
+		// since 2.6.2.
+		if (
+			is_admin() &&
+			'plugins.php' === $pagenow &&
+			apply_filters( 'wd_display_vulnerability_warnings', true ) &&
+			$this->is_apikey
+		) {
+			$this->service->display_vulnerability_warnings();
+		}
 
 		/**
 		 * Schedule a time to clear completed action scheduler logs.
@@ -107,7 +149,7 @@ class Scan extends Event {
 	 * @return string The title of the page.
 	 */
 	public function get_title(): string {
-		return esc_html__( 'Malware Scanning', 'defender-security' );
+		return esc_html__( 'Issues', 'defender-security' );
 	}
 
 	/**
@@ -122,13 +164,30 @@ class Scan extends Event {
 	/**
 	 * Start a scan.
 	 *
+	 * @param  Request $request  Request object.
+	 *
 	 * @return Response
 	 * @defender_route
 	 * @defender_redirect
 	 */
-	public function start(): Response {
+	public function start( Request $request ): Response {
+		$data      = $request->get_data(
+			array(
+				'scan_type' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_key',
+				),
+			)
+		);
+		$scan_type = in_array( $data['scan_type'] ?? '', array( 'deep', 'malware' ), true )
+			? $data['scan_type']
+			: 'malware';
+
 		$model = Model_Scan::create();
 		if ( is_object( $model ) && ! is_wp_error( $model ) ) {
+			update_site_option( self::FIRST_SCAN_STARTED, '1' );
+			set_transient( 'defender_scan_triggered_by_' . $model->id, get_current_user_id(), HOUR_IN_SECONDS );
+			Model_Scan::set_scan_type( $scan_type );
 			$this->log( 'Initial ping self', self::SCAN_LOG );
 			$this->run_scan_mechanisms_from( 'scan' );
 
@@ -138,6 +197,7 @@ class Scan extends Event {
 					'status'      => $model->status,
 					'status_text' => $model->get_status_text(),
 					'percent'     => 0,
+					'scan_type'   => $scan_type,
 				)
 			);
 		}
@@ -189,31 +249,48 @@ class Scan extends Event {
 	 * @defender_redirect
 	 */
 	public function status(): Response {
+		$scan_type = Model_Scan::get_scan_type();
 		$idle_scan = wd_di()->get( Model_Scan::class )->get_idle();
 
 		if ( is_object( $idle_scan ) ) {
 			$this->service->update_idle_scan_status();
+			$response              = $idle_scan->to_array();
+			$response['scan_type'] = $scan_type;
 
-			return new Response( false, $idle_scan->to_array() );
+			return new Response( true, $response );
 		}
 
 		$checksum_issue = get_site_option( Core_Integrity::ISSUE_CHECKSUMS, 'false' );
 		$checksum_scan  = Model_Scan::get_core_check();
 		if ( 'false' !== $checksum_issue && is_object( $checksum_scan ) ) {
 			$this->service->update_idle_scan_status_by_checksum_issue( $checksum_scan );
+			$response              = $checksum_scan->to_array();
+			$response['scan_type'] = $scan_type;
 
-			return new Response( false, $checksum_scan->to_array() );
+			return new Response( true, $response );
 		}
 
 		$scan = Model_Scan::get_active();
 		if ( is_object( $scan ) ) {
+			$response              = $scan->to_array();
+			$response['scan_type'] = $scan_type;
 
-			return new Response( false, $scan->to_array() );
+			return new Response( true, $response );
 		}
+
 		$scan = Model_Scan::get_last();
 		if ( is_object( $scan ) && ! is_wp_error( $scan ) ) {
-			$response            = $scan->to_array();
-			$response['message'] = __( 'Malware scan completed successfully!', 'defender-security' );
+			$response              = array_merge( $scan->to_array(), $this->get_last_scan_time_data( $scan ) );
+			$response['message']   = __( 'Malware scan completed successfully!', 'defender-security' );
+			$response['scan_type'] = $scan_type;
+			if ( 'deep' === $scan_type ) {
+				$security_tweaks             = wd_di()->get( \WP_Defender\Controller\Security_Tweaks::class )->dashboard_widget();
+				$response['hardening_count'] = (int) ( $security_tweaks['summary']['issues_count'] ?? 0 );
+			}
+			if ( isset( $this->quarantine_controller ) ) {
+				$response['quarantine'] = $this->quarantine_controller->data_frontend()['list'] ?? array();
+			}
+
 			return new Response( true, $response );
 		}
 
@@ -235,6 +312,7 @@ class Scan extends Event {
 	public function cancel(): Response {
 		$component = wd_di()->get( Scan_Component::class );
 		$component->cancel_a_scan();
+		Model_Scan::clear_scan_type();
 		$last = Model_Scan::get_last();
 		if ( is_object( $last ) && ! is_wp_error( $last ) ) {
 			$last = $last->to_array();
@@ -265,6 +343,7 @@ class Scan extends Event {
 				'ignore'     => 'Ignore',
 				'delete'     => 'Delete',
 				'unignore'   => 'Unignore',
+				'quarantine' => 'Safe Repair & Quarantine',
 			);
 
 			$resolution_method = $intention_desc[ $intention ];
@@ -283,6 +362,14 @@ class Scan extends Event {
 				if ( isset( $raw_data['type'] ) && 'modified' === $raw_data['type'] ) {
 					$threat_type = 'plugin file modified';
 				}
+			} elseif ( Scan_Item::TYPE_VULNERABILITY === $scan_item->type ) {
+				$threat_type = 'Vulnerability';
+
+				if ( 'resolve' === $intention ) {
+					$resolution_method = 'Update';
+				}
+			} elseif ( Scan_Item::TYPE_SUSPICIOUS === $scan_item->type ) {
+				$threat_type = 'Suspicious function';
 			} elseif (
 				in_array(
 					$scan_item->type,
@@ -347,6 +434,8 @@ class Scan extends Event {
 			if ( is_object( $item ) && $item->has_method( $intention ) ) {
 				if ( 'resolve' === $intention ) {
 					$result = $item->resolve();
+				} elseif ( 'quarantine' === $intention ) {
+					$result = $item->quarantine( $data['parent_action'], $item->owner );
 				} elseif ( 'delete' === $intention ) {
 					$result = $item->delete();
 				} elseif ( 'ignore' === $intention ) {
@@ -389,6 +478,10 @@ class Scan extends Event {
 
 				if ( $scan instanceof Model_Scan ) {
 					$result['scan'] = $scan->to_array();
+
+					if ( 'quarantine' === $intention && isset( $this->quarantine_controller ) ) {
+						$result['quarantine'] = $this->quarantine_controller->data_frontend()['list'] ?? array();
+					}
 
 					$success = true;
 					if ( isset( $result['success'] ) && false === $result['success'] ) {
@@ -511,22 +604,46 @@ class Scan extends Event {
 	 */
 	public function save_settings( Request $request ): Response {
 		$data = $request->get_data_by_model( $this->model );
-		// Case#1: enable all child options, if parent and all child options are disabled, so that there is no notice when saving.
-		if (
-			! $data['integrity_check']
-			&& ! $data['check_core']
-			&& ! $data['check_plugins']
-		) {
-			$data['check_core']    = true;
-			$data['check_plugins'] = true;
+		// Prepare for the state's change.
+		$old_integrity_check_state = $this->model->integrity_check;
+		// Case#1: inherit the parent's state to nested options.
+		if ( $old_integrity_check_state !== $data['integrity_check'] ) {
+			$data['check_core']    = $data['integrity_check'];
+			$data['check_plugins'] = $data['integrity_check'];
 		}
+		// Case#2: Suspicious code is activated BUT File change detection is deactivated then show the notice.
+		if ( $data['scan_malware'] && ! $data['integrity_check'] ) {
+			$response = array(
+				'type_notice' => 'info',
+				'message'     => sprintf(
+					/* translators: 1. Open tag. 2. Close tag. 3. Open tag. 4. Close tag. */
+					esc_html__(
+						'To reduce false-positive results, we recommend enabling %1$sFile change detection%2$s options for all scan types while the %3$sSuspicious code%4$s option is enabled.',
+						'defender-security'
+					),
+					'<strong>',
+					'</strong>',
+					'<strong>',
+					'</strong>'
+				),
+			);
+		} else {
 			$response = array(
 				'message'    => esc_html__( 'Your settings have been updated.', 'defender-security' ),
 				'auto_close' => true,
 			);
+		}
+		$before_import_schedule = $this->model->quarantine_expire_schedule;
 
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
+			if ( class_exists( 'WP_Defender\Component\Quarantine' ) ) {
+				$quarantine_component = wd_di()->get( Quarantine_Component::class );
+				$quarantine_component->reschedule_file_expiry_cron(
+					$before_import_schedule,
+					$data['quarantine_expire_schedule']
+				);
+			}
 			// Todo: need to disable Malware_Notification if all scan settings are deactivated?
 			$this->model->save();
 			Config_Hub_Helper::set_clear_active_flag();
@@ -564,7 +681,7 @@ class Scan extends Event {
 					'sanitize' => 'sanitize_text_field',
 				),
 				'type'     => array(
-					'type'     => 'string',
+					'type'     => 'array',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'per_page' => array(
@@ -591,17 +708,155 @@ class Scan extends Event {
 		}
 
 		$scan   = Model_Scan::get_last();
-		$issues = $scan->to_array( $data['per_page'], $data['paged'], $data['type'] );
+		$issues = $scan->to_array( $data['per_page'], $data['paged'], $this->normalize_issue_types( $data['type'] ), $data['scenario'] );
 
-		return new Response(
-			true,
-			array(
-				'issue'   => $issues['issues_items'],
-				'ignored' => $issues['ignored_items'],
-				'paging'  => $issues['paging'],
-				'count'   => $issues['count'],
-			)
+		$response = array(
+			'issue'   => $issues['issues_items'],
+			'ignored' => $issues['ignored_items'],
+			'paging'  => $issues['paging'],
+			'count'   => $issues['count'],
 		);
+
+		if ( class_exists( 'WP_Defender\Controller\Quarantine' ) ) {
+			$response['quarantine'] = $this->quarantine_controller->data_frontend()['list'] ?? array();
+		}
+
+		return new Response( true, $response );
+	}
+
+	/**
+	 * Normalize issue type filters from the legacy and redesign payloads.
+	 *
+	 * @param  array|string $types  Requested issue type(s).
+	 *
+	 * @return array|string
+	 */
+	private function normalize_issue_types( $types ) {
+		$type_aliases = array(
+			'core'                => Scan_Item::TYPE_INTEGRITY,
+			'plugin'              => Scan_Item::TYPE_PLUGIN_CHECK,
+			'suspicious'          => Scan_Item::TYPE_SUSPICIOUS,
+			'known_vulnerability' => Scan_Item::TYPE_VULNERABILITY,
+			'plugin_closed'       => Scan_Item::TYPE_PLUGIN_CLOSED,
+			'plugin_outdated'     => Scan_Item::TYPE_PLUGIN_OUTDATED,
+		);
+
+		$types = is_array( $types ) ? $types : array( $types );
+		$types = array_filter(
+			array_map(
+				static function ( $type ) use ( $type_aliases ) {
+					return $type_aliases[ $type ] ?? $type;
+				},
+				$types
+			),
+			'boolval'
+		);
+		$types = array_values( array_unique( $types ) );
+
+		if ( 1 === count( $types ) ) {
+			return $types[0];
+		}
+
+		return $types;
+	}
+
+	/**
+	 * Get relative and exact display times for the last completed scan.
+	 *
+	 * @param  Model_Scan|null $last  Last completed scan.
+	 *
+	 * @return array
+	 */
+	private function get_last_scan_time_data( $last ): array {
+		if ( ! is_object( $last ) || empty( $last->date_start ) ) {
+			return array(
+				'last_scan'      => '',
+				'last_scan_time' => '',
+			);
+		}
+
+		$last_scan_timestamp = strtotime( $last->date_start . ' UTC' );
+		$time_difference     = time() - $last_scan_timestamp;
+		$data                = array(
+			'last_scan' => sprintf(
+				/* translators: %s: human-readable time difference, e.g. "5 minutes" */
+				__( '%s ago', 'defender-security' ),
+				human_time_diff( $last_scan_timestamp )
+			),
+		);
+
+		if ( $time_difference < DAY_IN_SECONDS ) {
+			$data['last_scan_time'] = wp_date( 'g:i A', $last_scan_timestamp );
+		} elseif ( $time_difference < YEAR_IN_SECONDS ) {
+			$data['last_scan_time'] = wp_date( 'D, j M g:i A', $last_scan_timestamp );
+		} else {
+			$data['last_scan_time'] = wp_date( 'j M Y, g:i A', $last_scan_timestamp );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Returns scan result data for the frontend on page load.
+	 *
+	 * @return array
+	 */
+	public function get_initial_scan_data(): array {
+		$scan     = Model_Scan::get_active();
+		$last     = Model_Scan::get_last();
+		$per_page = self::DEFAULT_PER_PAGE;
+		$paged    = 1;
+
+		if ( ! is_object( $scan ) && ! is_object( $last ) ) {
+			$scan_data = null;
+		} else {
+			// If an active scan exists AND there's a previous completed scan,
+			// merge the active scan's progress with the last scan's issue data.
+			// This ensures that during a page refresh while scanning, users still
+			// see the previous scan results while the new scan is in progress.
+			if ( is_object( $scan ) && is_object( $last ) ) {
+				$scan_data = $scan->to_array( $per_page, $paged );
+				$last_data = $last->to_array( $per_page, $paged );
+				// Preserve previous scan's issue data.
+				$scan_data['issues_items']  = $last_data['issues_items'] ?? array();
+				$scan_data['ignored_items'] = $last_data['ignored_items'] ?? array();
+				$scan_data['count']         = $last_data['count'] ?? array();
+				$scan_data['paging']        = $last_data['paging'] ?? array();
+			} elseif ( is_object( $scan ) ) {
+				$scan_data = $scan->to_array( $per_page, $paged );
+			} else {
+				$scan_data = $last->to_array( $per_page, $paged );
+			}
+		}
+
+		$first_scan_started = get_site_option( self::FIRST_SCAN_STARTED, null );
+		if ( null === $first_scan_started ) {
+			// Existing installations backward compatibility.
+			$first_scan_started = is_object( $scan ) || is_object( $last );
+		} else {
+			$first_scan_started = '1' === (string) $first_scan_started;
+		}
+
+		$data = array(
+			'scan'                  => $scan_data,
+			'has_first_scan_started' => $first_scan_started,
+		);
+
+		// Always expose the last completed scan time at the outer level so the
+		// dashboard can show it even while a new scan is actively running.
+		$data = array_merge( $data, $this->get_last_scan_time_data( $last ) );
+
+		if ( isset( $this->quarantine_controller ) ) {
+			$data['quarantine'] = array(
+				'list' => $this->quarantine_controller->data_frontend()['list'] ?? array(),
+			);
+		}
+		// Display Rate notice. Without the rating's type.
+		$data['isRatingDisplayed'] = defender_is_wp_org_version()
+			&& is_array( $scan_data ) && isset( $data['scan']['issues_items'] )
+			&& Rate_Component::is_displayed_in_redesigned_version( count( $data['scan']['issues_items'] ) );
+
+		return array( 'scan' => $data );
 	}
 
 	/**
@@ -621,9 +876,56 @@ class Scan extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script( 'def-scan', 'scan', $this->data_frontend() );
-		wp_enqueue_script( 'def-scan' );
-		wp_enqueue_script( 'clipboard' );
+
+		$handle = 'defender-ui-scan';
+		wp_enqueue_script(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/js/scan-ui.js',
+			array( 'def-vue', 'def-manifest', 'def-core-ui', 'defender', 'wp-i18n' ),
+			DEFENDER_VERSION,
+			true
+		);
+		wp_set_script_translations( $handle, 'wpdef' );
+
+		$scan_routes_data       = $this->dump_routes_and_nonces();
+		$quarantine_routes_data = $this->quarantine_controller->dump_routes_and_nonces();
+		if ( defender_is_wp_org_version() ) {
+			$rate_routes_nonces = wd_di()->get( \WP_Defender\Controller\Rate::class )->dump_routes_and_nonces();
+			$rate_routes        = $rate_routes_nonces['routes'];
+			$rate_nonces        = $rate_routes_nonces['nonces'];
+		} else {
+			$rate_routes = array();
+			$rate_nonces = array();
+		}
+
+		wp_localize_script(
+			$handle,
+			'defenderUIData',
+			array_merge(
+				$this->get_shared_data(),
+				array(
+					'routes' => array_merge(
+						$scan_routes_data['routes'],
+						$quarantine_routes_data['routes'],
+						$rate_routes
+					),
+					'nonces' => array_merge(
+						$scan_routes_data['nonces'],
+						$quarantine_routes_data['nonces'],
+						$rate_nonces
+					),
+				),
+				$this->get_initial_scan_data()
+			)
+		);
+
+		wp_enqueue_style(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			array(),
+			DEFENDER_VERSION
+		);
+
 		$this->enqueue_main_assets();
 	}
 
@@ -664,7 +966,9 @@ class Scan extends Event {
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data(): void {
+		delete_site_option( self::FIRST_SCAN_STARTED );
 		delete_site_option( Model_Scan::IGNORE_INDEXER );
+		delete_site_option( Model_Scan::OPTION_SCAN_TYPE );
 		delete_site_option( Core_Integrity::ISSUE_CHECKSUMS );
 		delete_site_transient( Plugin_Integrity::$org_slugs );
 		delete_site_transient( Plugin_Integrity::$org_responses );
@@ -694,12 +998,14 @@ class Scan extends Event {
 		);
 
 		// Todo: add logic for deactivated scan settings. Maybe display some notice.
-		$data = array(
+		$data               = array(
 			'scan'          => $scan,
 			'settings'      => $settings->export(),
 			'report'        => $report_text,
 			'active_tools'  => array(
 				'integrity_check'        => $settings->integrity_check,
+				'check_known_vuln'       => $settings->check_known_vuln,
+				'scan_malware'           => $settings->scan_malware,
 				'check_abandoned_plugin' => $settings->check_abandoned_plugin,
 			),
 			'notification'  => $report->to_string(),
@@ -711,6 +1017,7 @@ class Scan extends Event {
 			'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
 			'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 		);
+		$data['quarantine'] = $this->quarantine_controller->data_frontend();
 
 		return array_merge( $data, $this->dump_routes_and_nonces() );
 	}
@@ -738,20 +1045,47 @@ class Scan extends Event {
 	}
 
 	/**
+	 * Checks if any scan is active.
+	 *
+	 * @param  bool $is_apikey  Indicates if the API key is available for HC features.
+	 *
+	 * @return bool True if any scan is active, false otherwise.
+	 */
+	private function is_any_active( bool $is_apikey ): bool {
+		$settings          = new Scan_Settings();
+		$file_change_check = $settings->is_checked_any_file_change_types();
+
+		if ( $is_apikey ) {
+			// HC version. Check all parent types.
+			return $file_change_check || $settings->check_known_vuln || $settings->scan_malware;
+		} else {
+			// Without HC access:
+			// Check the 'File change detection' type because only it's available with nested types.
+			// Check the Abandoned plugin type.
+			return $file_change_check || $settings->check_abandoned_plugin;
+		}
+	}
+
+	/**
 	 * Exports strings.
 	 *
 	 * @return array An array of strings.
 	 */
 	public function export_strings(): array {
 		$strings = array();
+		if ( $this->is_any_active( $this->is_apikey ) ) {
+			$strings[] = esc_html__( 'Active', 'defender-security' );
+		} else {
 			$strings[] = esc_html__( 'Inactive', 'defender-security' );
+		}
+
 		$scan_notification = new Malware_Notification();
 		if ( 'enabled' === $scan_notification->status ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
-				esc_html__( 'Email report inactive %s', 'defender-security' ),
+				esc_html__( 'Scheduled scan inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
 
@@ -777,7 +1111,7 @@ class Scan extends Event {
 		if ( ! ( property_exists( $this, 'is_pro' ) ? $this->is_pro : wd_di()->get( WPMUDEV::class )->is_pro() ) ) {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
-				esc_html__( 'Email report inactive %s', 'defender-security' ),
+				esc_html__( 'Scheduled scan inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
 		}

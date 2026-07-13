@@ -38,6 +38,8 @@ class Antibot_Global_Firewall extends Component {
 
 	public const BLOCKLIST_STATS_KEY = 'wpdef_antibot_global_firewall_stats';
 
+	public const BLOCKLIST_STATS_FULL_KEY = 'wpdef_antibot_global_firewall_stats_full';
+
 	public const BLOCKLIST_STATS_FAILURE_KEY = 'wpdef_antibot_global_firewall_stats_failure';
 
 	public const FAILURE_CACHE_TTL = HOUR_IN_SECONDS;
@@ -623,9 +625,11 @@ class Antibot_Global_Firewall extends Component {
 		$mode        = $this->frontend_mode();
 		$stats_key   = self::BLOCKLIST_STATS_KEY . '_' . $mode;
 		$cached_data = get_site_transient( $stats_key );
-		if ( false !== $cached_data ) {
+		$cached_full = get_site_transient( self::BLOCKLIST_STATS_FULL_KEY );
+		if ( false !== $cached_data && is_array( $cached_full ) ) {
 			return (int) $cached_data;
 		}
+		$cached_count = false !== $cached_data ? (int) $cached_data : 0;
 
 		// Check if we're in a backoff period due to previous failures.
 		$failure_key  = self::BLOCKLIST_STATS_FAILURE_KEY;
@@ -639,7 +643,7 @@ class Antibot_Global_Firewall extends Component {
 				$backoff = min( pow( 5, $fail_count ), self::MAX_BACKOFF_TIME );
 				if ( $fail_time > ( defender_get_current_time() - $backoff ) ) {
 					$this->log( 'AntiBot Global Firewall: Skipping API call due to backoff (failures: ' . $fail_count . ')', Firewall::FIREWALL_LOG );
-					return 0;
+					return $cached_count;
 				}
 			}
 		}
@@ -649,23 +653,39 @@ class Antibot_Global_Firewall extends Component {
 		if ( is_wp_error( $blocklist_stats ) ) {
 			$this->log( 'AntiBot Global Firewall Error: ' . $blocklist_stats->get_error_message(), Firewall::FIREWALL_LOG );
 			$this->record_stats_failure( $failure_key, $failure_data );
-			return 0;
+			return $cached_count;
 		}
 
 		$blocklisted_ips_key = Antibot_Global_Firewall_Setting::MODE_BASIC === $mode ? 'blocked_ips' : 'strict_blocked_ips';
 		if ( ! isset( $blocklist_stats[ $blocklisted_ips_key ] ) || ! is_int( $blocklist_stats[ $blocklisted_ips_key ] ) || 0 >= $blocklist_stats[ $blocklisted_ips_key ] ) {
 			$this->log( 'AntiBot Global Firewall Error: Stats missing for mode: ' . $mode, Firewall::FIREWALL_LOG );
 			$this->record_stats_failure( $failure_key, $failure_data );
-			return 0;
+			return $cached_count;
 		}
 
 		// Success - clear any failure tracking.
 		delete_site_transient( $failure_key );
 
+		set_site_transient( self::BLOCKLIST_STATS_FULL_KEY, $blocklist_stats, 12 * HOUR_IN_SECONDS );
+
 		$blocklisted_ips = $blocklist_stats[ $blocklisted_ips_key ];
 		set_site_transient( $stats_key, $blocklisted_ips, 12 * HOUR_IN_SECONDS );
 
 		return $blocklisted_ips;
+	}
+
+	/**
+	 * Cached full GET /stats `data` (BLOCKLIST_STATS_FULL_KEY).
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function get_cached_blocklist_stats_data(): array {
+		if ( ! $this->is_site_connected_to_hub_via_hcm_or_dash() ) {
+			return array();
+		}
+		$full = get_site_transient( self::BLOCKLIST_STATS_FULL_KEY );
+
+		return is_array( $full ) ? $full : array();
 	}
 
 	/**
@@ -772,6 +792,7 @@ class Antibot_Global_Firewall extends Component {
 			$this->download_and_store_blocklist();
 
 			delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $mode );
+			delete_site_transient( self::BLOCKLIST_STATS_FULL_KEY );
 		} else {
 			if ( ! $this->wpmudev->is_wpmu_hosting() ) {
 				return false;
@@ -797,6 +818,7 @@ class Antibot_Global_Firewall extends Component {
 			}
 
 			delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $mode );
+			delete_site_transient( self::BLOCKLIST_STATS_FULL_KEY );
 		}
 
 		return $this->frontend_mode();
@@ -814,7 +836,8 @@ class Antibot_Global_Firewall extends Component {
 		// Skip if there is nothing to clean up. No local DB records and no cached stats transients.
 		$has_db_records   = $this->model->has_records();
 		$has_stats_cached = false !== get_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_mode() )
-			|| false !== get_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_hosting_mode() );
+			|| false !== get_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_hosting_mode() )
+			|| false !== get_site_transient( self::BLOCKLIST_STATS_FULL_KEY );
 		if ( ! $has_db_records && ! $has_stats_cached ) {
 			return;
 		}
@@ -822,6 +845,7 @@ class Antibot_Global_Firewall extends Component {
 		$this->delete_blocklist();
 		delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_mode() );
 		delete_site_transient( self::BLOCKLIST_STATS_KEY . '_' . $this->get_hosting_mode() );
+		delete_site_transient( self::BLOCKLIST_STATS_FULL_KEY );
 		$this->log( 'Antibot table cleared due to site disconnection.', self::LOG_FILE_NAME );
 	}
 

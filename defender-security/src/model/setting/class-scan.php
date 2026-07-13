@@ -7,10 +7,7 @@
 
 namespace WP_Defender\Model\Setting;
 
-use DateTime;
-use Exception;
 use Calotes\Model\Setting;
-use function wp_timezone;
 
 /**
  * Model for scan settings.
@@ -54,7 +51,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @var bool
 	 */
-	public $scan_malware = false;
+	public $scan_malware = true;
 
 	/**
 	 * Check if any plugins or themes have a known vulnerability.
@@ -62,7 +59,7 @@ class Scan extends Setting {
 	 * @defender_property
 	 * @var bool
 	 */
-	public $check_known_vuln = false;
+	public $check_known_vuln = true;
 
 	/**
 	 * If a file is smaller than this, we wil include it to the test.
@@ -208,7 +205,10 @@ class Scan extends Setting {
 	 * @return bool
 	 */
 	private function is_enabled_any_scan_type(): bool {
-		return $this->integrity_check || $this->check_abandoned_plugin;
+		return $this->integrity_check
+			|| $this->check_known_vuln
+			|| $this->scan_malware
+			|| $this->check_abandoned_plugin;
 	}
 
 	/**

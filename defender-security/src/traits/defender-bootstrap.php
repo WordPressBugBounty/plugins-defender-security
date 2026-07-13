@@ -21,6 +21,8 @@ use WP_Defender\Controller\Onboard;
 use WP_Defender\Controller\Webauthn;
 use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Captcha;
+use WP_Defender\Controller\Recipients;
+use WP_Defender\Controller\Quarantine;
 use WP_Defender\Controller\Mask_Login;
 use WP_Defender\Controller\Two_Factor;
 use WP_Defender\Component\Hub_Connector;
@@ -28,8 +30,9 @@ use WP_Defender\Controller\Main_Setting;
 use WP_Defender\Controller\Notification;
 use WP_Defender\Controller\Audit_Logging;
 use WP_Defender\Controller\Data_Tracking;
-use WP_Defender\Controller\Advanced_Tools;
+use WP_Defender\Controller\Login_Access;
 use WP_Defender\Controller\Password_Reset;
+use WP_Defender\Controller\Setup_Wizard;
 use WP_Defender\Controller\Strong_Password;
 use WP_Defender\Controller\Expert_Services;
 use WP_Defender\Controller\Security_Tweaks;
@@ -50,12 +53,27 @@ use WP_Defender\Upgrader;
 trait Defender_Bootstrap {
 
 	/**
+	 * Table name for quarantine.
+	 *
+	 * @var string
+	 */
+	private $quarantine_table = 'defender_quarantine';
+
+	/**
+	 * Table name for scan item.
+	 *
+	 * @var string
+	 */
+	private $scan_item_table = 'defender_scan_item';
+
+	/**
 	 * Activation.
 	 */
 	private function activation_hook_common(): void {
 		Upgrader::date_activated();
 		$this->create_database_tables_common();
 		$this->on_activation();
+		$this->set_activation_redirect_flag();
 		// Create a file with a random key if it doesn't exist.
 		( new Crypt() )->create_key_file();
 		// If this is a plugin reactivating, then track it. No need the check by 'wd_nofresh_install' key because the option is disabled by default.
@@ -148,7 +166,7 @@ SQL;
 			UNIQUE KEY ip (ip)
 		   ) {$charset_collate};
 SQL;
-			$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**
@@ -244,6 +262,95 @@ SQL;
 		$this->create_table_unlockout();
 		// Create Blocklist table.
 		$this->create_table_blocklist();
+		// Create Quarantine table.
+		$this->create_table_quarantine();
+	}
+
+	/**
+	 * Check if all quarantine-dependent tables use the InnoDB storage engine.
+	 *
+	 * @return bool True if all dependent tables are InnoDB, false otherwise.
+	 */
+	private function is_quarantine_dependent_tables_innodb(): bool {
+		global $wpdb;
+
+		$tables      = array( $wpdb->users, $wpdb->base_prefix . $this->scan_item_table );
+		$total_table = count( $tables );
+
+		return $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT COUNT(`ENGINE`) = %d FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND `ENGINE` = %s AND TABLE_NAME IN ( '{$wpdb->users}', '{$wpdb->base_prefix}defender_scan_item' );",
+				$total_table,
+				$wpdb->dbname,
+				'innodb',
+			)
+		) === '1';
+	}
+
+	/**
+	 * Creates the quarantine table if it doesn't exist.
+	 * Uses InnoDB foreign key constraints when the dependent tables support it,
+	 * otherwise falls back to plain KEY indexes.
+	 *
+	 * @return void
+	 */
+	public function create_table_quarantine(): void {
+		global $wpdb;
+
+		$quarantine_table = $wpdb->base_prefix . $this->quarantine_table;
+		$scan_item_table  = $wpdb->base_prefix . $this->scan_item_table;
+		$charset_collate  = $wpdb->get_charset_collate();
+		$unique_id        = uniqid( $wpdb->prefix );
+
+		$common_columns = <<<'SQL'
+		`id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+		`defender_scan_item_id` int UNSIGNED DEFAULT NULL,
+		`file_hash` char(53) NOT NULL,
+		`file_full_path` text NOT NULL,
+		`file_original_name` tinytext NOT NULL,
+		`file_extension` varchar(16) DEFAULT NULL,
+		`file_mime_type` varchar(64) DEFAULT NULL,
+		`file_rw_permission` smallint UNSIGNED DEFAULT NULL,
+		`file_owner` varchar(255) DEFAULT NULL,
+		`file_group` varchar(255) DEFAULT NULL,
+		`file_version` varchar(32) DEFAULT NULL,
+		`file_category` tinyint UNSIGNED DEFAULT 0,
+		`file_modified_time` datetime NOT NULL,
+		`source_slug` varchar(255) NOT NULL,
+		`created_time` datetime NOT NULL,
+		`created_by` bigint UNSIGNED DEFAULT NULL,
+		PRIMARY KEY (`id`)
+		SQL;
+
+		// Define key names.
+		$scan_item_key  = "{$unique_id}_defender_scan_item_id";
+		$created_by_key = "{$unique_id}_created_by";
+
+		// Build the SQL statement based on the storage engine.
+		if ( $this->is_quarantine_dependent_tables_innodb() ) {
+			$sql = <<<SQL
+			CREATE TABLE IF NOT EXISTS `{$quarantine_table}` (
+				$common_columns,
+				CONSTRAINT `{$scan_item_key}`
+				FOREIGN KEY (`defender_scan_item_id`) REFERENCES {$scan_item_table}(`id`)
+				ON UPDATE CASCADE ON DELETE SET NULL,
+				CONSTRAINT `{$created_by_key}`
+				FOREIGN KEY (`created_by`) REFERENCES {$wpdb->users}(`ID`)
+				ON UPDATE CASCADE ON DELETE SET NULL
+			) {$charset_collate};
+			SQL;
+		} else {
+			$sql = <<<SQL
+			CREATE TABLE IF NOT EXISTS `{$quarantine_table}` (
+				$common_columns,
+				KEY `{$scan_item_key}` (`defender_scan_item_id`),
+				KEY `{$created_by_key}` (`created_by`)
+			) {$charset_collate};
+			SQL;
+		}
+
+		// Execute the SQL query.
+		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -252,6 +359,13 @@ SQL;
 	 * @return bool
 	 */
 	private function is_onboarding(): bool {
+		// Temporary switch for setup-wizard showcase phase:
+		// keep legacy onboarding disabled until new flow integration.
+		$enable_legacy_onboarding = (bool) apply_filters( 'wpdef_enable_legacy_onboarding', false );
+		if ( ! $enable_legacy_onboarding ) {
+			return false;
+		}
+
 		/**
 		 * Display Onboarding if:
 		 * it's a fresh install and there were no requests from the Hub before,
@@ -274,33 +388,42 @@ SQL;
 		// Init main ORM.
 		Array_Cache::set( 'orm', new Mapper() );
 
-		if ( $this->is_onboarding() ) {
-			// If it's cli we should start this normally.
-			Array_Cache::set( 'onboard', wd_di()->get( Onboard::class ) );
-		} else {
-			// Initialize the main controllers of every module.
-			wd_di()->get( Dashboard::class );
-		}
-		wd_di()->get( Security_Tweaks::class );
+		// New setup wizard is rendered directly inside Dashboard React UI.
+		// Keep legacy onboarding initialization commented for rollback/reference.
+		// if ( $this->is_onboarding() ) {
+		// If it's cli we should start this normally.
+		// Array_Cache::set( 'onboard', wd_di()->get( Onboard::class) );
+		// } else {
+		// Initialize the main controllers of every module.
+		// wd_di()->get( Dashboard::class );
+		// }
+		wd_di()->get( Setup_Wizard::class );
+		wd_di()->get( \WP_Defender\Controller\Activity_Log::class );
+		wd_di()->get( Dashboard::class );
 		wd_di()->get( Scan::class );
+		wd_di()->get( Security_Tweaks::class );
 		wd_di()->get( Audit_Logging::class );
 		wd_di()->get( Firewall_Controller::class );
+		wd_di()->get( Login_Access::class );
+		// Initialize Mask Login globally so runtime protections hook into wp-login/wp-admin requests.
+		wd_di()->get( Mask_Login::class );
 		wd_di()->get( WAF::class );
 		wd_di()->get( Two_Factor::class );
-		wd_di()->get( Advanced_Tools::class );
 		wd_di()->get( Mask_Login::class );
-		wd_di()->get( Security_Headers::class );
+		// wd_di()->get( Security_Headers::class );
 		wd_di()->get( Captcha::class );
 		wd_di()->get( Notification::class );
+		wd_di()->get( Recipients::class );
 		wd_di()->get( Main_Setting::class );
 		wd_di()->get( Blocklist_Monitor::class );
 		wd_di()->get( Password_Protection::class );
 		wd_di()->get( Password_Reset::class );
 		wd_di()->get( Webauthn::class );
-		wd_di()->get( Expert_Services::class );
+		// wd_di()->get( Expert_Services::class );
 		wd_di()->get( Hub_Connector_Controller::class );
 		wd_di()->get( Strong_Password::class );
 		wd_di()->get( Session_Protection::class );
+		wd_di()->get( Quarantine::class );
 		wd_di()->get( Data_Tracking::class );
 		if ( defender_is_wp_org_version() ) {
 			wd_di()->get( Rate_Controller::class );
@@ -334,11 +457,34 @@ SQL;
 	 */
 	private function register_styles(): void {
 		wp_enqueue_style( 'defender-menu', WP_DEFENDER_BASE_URL . 'assets/css/defender-icon.css', array(), DEFENDER_VERSION );
+		wp_add_inline_style(
+			'defender-menu',
+			'#toplevel_page_wp-defender .wd-issue-indicator-sidebar {
+				position: relative;
+				background-color: transparent !important;
+				width: 8px;
+				min-width: unset;
+				padding: 0;
+				margin-left: 4px;
+			}
+			#toplevel_page_wp-defender .wd-issue-indicator-sidebar::after {
+				content: "";
+				position: absolute;
+				width: 8px;
+				height: 8px;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				border-radius: 50%;
+				background: #d63638;
+			}'
+		);
 
 		$css_files = array(
-			'defender'  => WP_DEFENDER_BASE_URL . 'assets/css/styles.css',
-			'def-sui'   => WP_DEFENDER_BASE_URL . 'assets/css/shared-ui.css',
-			'def-admin' => WP_DEFENDER_BASE_URL . 'assets/css/admin.css',
+			'defender'     => WP_DEFENDER_BASE_URL . 'assets/css/styles.css',
+			'def-sui'      => WP_DEFENDER_BASE_URL . 'assets/css/shared-ui.css',
+			'def-admin'    => WP_DEFENDER_BASE_URL . 'assets/css/admin.css',
+			'def-showcase' => WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
 		);
 
 		foreach ( $css_files as $slug => $file ) {
@@ -353,7 +499,7 @@ SQL;
 	 */
 	private function register_scripts(): void {
 		$base_url     = WP_DEFENDER_BASE_URL;
-		$dependencies = array( 'def-vue', 'def-manifest', 'defender', 'wp-i18n' );
+		$dependencies = array( 'def-vue', 'def-manifest', 'def-core-ui', 'defender', 'wp-i18n' );
 		$js_files     = array(
 			'wpmudev-sui'             => array(
 				$base_url . 'assets/js/shared-ui.js',
@@ -375,52 +521,17 @@ SQL;
 			'def-manifest'            => array(
 				$base_url . 'assets/js/manifest.js',
 			),
-			'def-dashboard'           => array(
-				$base_url . 'assets/app/dashboard.js',
+			'def-core-ui'             => array(
+				$base_url . 'assets/js/core-ui.js',
+				array( 'def-vue', 'def-manifest' ),
+			),
+			// React files.
+			'def-showcase'            => array(
+				$base_url . 'assets/js/showcase.js',
 				$dependencies,
 			),
-			'def-securitytweaks'      => array(
-				$base_url . 'assets/app/security-tweak.js',
-				array_merge( $dependencies, array( 'clipboard', 'wpmudev-sui' ) ),
-			),
-			'def-scan'                => array(
-				$base_url . 'assets/app/scan.js',
-				array_merge( $dependencies, array( 'clipboard', 'wpmudev-sui' ) ),
-			),
-			'def-audit'               => array(
-				$base_url . 'assets/app/audit.js',
-				$dependencies,
-			),
-			'def-iplockout'           => array(
-				$base_url . 'assets/app/ip-lockout.js',
-				array_merge( $dependencies, array( 'wpmudev-sui' ) ),
-			),
-			'def-advancedtools'       => array(
-				$base_url . 'assets/app/advanced-tools.js',
-				$dependencies,
-			),
-			'def-settings'            => array(
-				$base_url . 'assets/app/settings.js',
-				$dependencies,
-			),
-			'def-2fa'                 => array(
-				$base_url . 'assets/app/two-fa.js',
-				$dependencies,
-			),
-			'def-notification'        => array(
-				$base_url . 'assets/app/notification.js',
-				$dependencies,
-			),
-			'def-waf'                 => array(
-				$base_url . 'assets/app/waf.js',
-				$dependencies,
-			),
-			'def-onboard'             => array(
-				$base_url . 'assets/app/onboard.js',
-				$dependencies,
-			),
-			'def-expert-services'     => array(
-				$base_url . '/assets/app/expert-services.js',
+			'def-setup-wizard'        => array(
+				$base_url . 'assets/js/setup-wizard.js',
 				$dependencies,
 			),
 		);
@@ -529,6 +640,8 @@ SQL;
 	 * Trigger mandatory actions on activation.
 	 */
 	private function on_activation(): void {
+		update_site_option( Data_Tracking::TRACKING_SLUG, true );
+
 		add_action(
 			'admin_init',
 			function () {
@@ -547,6 +660,85 @@ SQL;
 	 */
 	public function cron_schedules( array $schedules ) {
 		return defender_cron_schedules( $schedules );
+	}
+
+	/**
+	 * Serves script translations from the single MO file our in-site translation
+	 * tools (e.g. WPMU DEV Hub's translation editor) produce, since those only
+	 * generate one MO/PO file per plugin rather than the per-script JSON files
+	 * `wp_set_script_translations()` normally expects.
+	 *
+	 * @param string|false $translations Translations as JSON, false if there are none.
+	 * @param string|false $file         Path to the translation file to load, false if there isn't one.
+	 * @param string       $handle       Name of the script to register a translation domain to.
+	 * @param string       $domain       The text domain.
+	 *
+	 * @return string|false
+	 */
+	public function provide_script_translations( $translations, $file, $handle, $domain ) {
+		if ( 'defender-security' !== $domain ) {
+			return $translations;
+		}
+
+		static $served = false;
+		static $cached_json = null;
+
+		if ( $served ) {
+			return wp_json_encode(
+				array(
+					'locale_data' => array(
+						'defender-security' => array(
+							'' => array(
+								'domain' => 'defender-security',
+							),
+						),
+					),
+				)
+			);
+		}
+
+		if ( null !== $cached_json ) {
+			return $cached_json;
+		}
+
+		$locale  = is_admin() ? get_user_locale() : get_locale();
+		$mo_file = WP_LANG_DIR . "/plugins/{$domain}-{$locale}.mo";
+
+		if ( ! file_exists( $mo_file ) ) {
+			return $translations;
+		}
+
+		$mo = new \MO();
+		if ( ! $mo->import_from_file( $mo_file ) ) {
+			return $translations;
+		}
+
+		$locale_data = array(
+			'' => array(
+				'domain' => $domain,
+				'lang'   => $locale,
+			),
+		);
+
+		if ( ! empty( $mo->headers['Plural-Forms'] ) ) {
+			$locale_data['']['plural-forms'] = $mo->headers['Plural-Forms'];
+		}
+
+		foreach ( $mo->entries as $msgid => $entry ) {
+			$locale_data[ $msgid ] = $entry->translations;
+		}
+
+		$cached_json = wp_json_encode(
+			array(
+				'locale_data' => array(
+					$domain => $locale_data,
+				),
+			)
+		);
+
+		$served = true;
+
+		return $cached_json;
 	}
 
 	/**
@@ -573,10 +765,12 @@ SQL;
 			},
 			9
 		);
+		// Serve script translations from the single MO file our in-site translation tools produce.
+		add_filter( 'pre_load_script_translations', array( $this, 'provide_script_translations' ), 10, 4 );
 		// Register the Hub Connector early to handle the auth callback during the admin init hook.
 		add_action( 'plugins_loaded', array( wd_di()->get( Hub_Connector::class ), 'init' ) );
 		// Register the Cross-Sell module.
-		add_action( 'init', array( wd_di()->get( \WP_Defender\Component\Cross_Sell::class ), 'init' ), 9 );
+		// add_action( 'init', array( wd_di()->get( \WP_Defender\Component\Cross_Sell::class ), 'init' ), 9 );
 		// Include admin class. Don't use is_admin().
 		add_action( 'admin_init', array( ( new Admin() ), 'init' ) );
 		// Initialize deactivation survey.
@@ -589,5 +783,57 @@ SQL;
 		add_action( 'init', array( ( new Rotation_Logger() ), 'init' ), 99 );
 		// Handle plugin deactivation.
 		add_action( 'deactivated_plugin', array( ( new HUB() ), 'intercept_deactivate' ) );
+	}
+
+	/**
+	 * Sets a one-time redirect flag after plugin activation.
+	 *
+	 * The actual redirect is executed later during `admin_init` to avoid exiting activation flow prematurely.
+	 *
+	 * @return void
+	 */
+	public function set_activation_redirect_flag(): void {
+		if ( defender_is_wp_cli() ) {
+			return;
+		}
+
+		update_site_option( 'wp_defender_activation_redirect', 1 );
+	}
+
+	/**
+	 * Redirects once to the Defender dashboard after activation.
+	 *
+	 * Safety checks:
+	 * - Redirect only when the activation flag exists.
+	 * - Skip AJAX, cron and WP-CLI contexts.
+	 * - Redirect only for users with proper admin capability.
+	 *
+	 * @return void
+	 */
+	public function maybe_redirect_after_activation(): void {
+		if ( ! (bool) get_site_option( 'wp_defender_activation_redirect' ) ) {
+			return;
+		}
+
+		delete_site_option( 'wp_defender_activation_redirect' );
+
+		if ( wp_doing_ajax() || wp_doing_cron() || defender_is_wp_cli() ) {
+			return;
+		}
+
+		$cap = is_multisite() ? 'manage_network_options' : 'manage_options';
+		if ( ! current_user_can( $cap ) ) {
+			return;
+		}
+
+		$url = add_query_arg(
+			array(
+				'page' => 'wp-defender',
+			),
+			is_multisite() ? network_admin_url( 'admin.php' ) : admin_url( 'admin.php' )
+		);
+
+		wp_safe_redirect( $url );
+		exit;
 	}
 }

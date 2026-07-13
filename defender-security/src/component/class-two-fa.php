@@ -218,6 +218,36 @@ class Two_Fa extends Component {
 	}
 
 	/**
+	 * Retrieves the custom graphic URL for 2FA, with fallback to a default image if necessary.
+	 *
+	 * @param  string $url  Optional. The custom URL to validate.
+	 *
+	 * @return string The URL to the graphic.
+	 */
+	public function get_custom_graphic_url( string $url = '' ): string {
+		if ( '' === $url ) {
+			// Nothing here, surely it will cause broken, fall back to default.
+			return defender_asset_url( '/assets/img/2factor-disabled.svg' );
+		} else {
+			// Image should be under wp-content/.., so we catch that part.
+			if ( preg_match( '/(\/wp-content\/.+)/', $url, $matches ) ) {
+				$rel_path = $matches[1];
+				$rel_path = ltrim( $rel_path, '/' );
+				$abs_path = ABSPATH . $rel_path;
+				if ( ! file_exists( $abs_path ) ) {
+					// Fallback.
+					return defender_asset_url( '/assets/img/2factor-disabled.svg' );
+				} else {
+					// Should replace with our site url.
+					return get_site_url( null, $rel_path );
+				}
+			}
+
+			return defender_asset_url( '/assets/img/2factor-disabled.svg' );
+		}
+	}
+
+	/**
 	 * Checks if 2FA is enabled for the current role of the specified user.
 	 *
 	 * @param  WP_User $user  The user to check.

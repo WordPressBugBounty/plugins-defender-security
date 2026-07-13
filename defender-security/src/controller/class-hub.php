@@ -66,6 +66,9 @@ class HUB extends Event {
 	 */
 	public function add_hub_endpoint( $actions ) {
 		$actions['defender_new_scan'] = array( $this, 'new_scan' );
+		$actions['defender_get_quarantined_files']    = array( $this, 'get_quarantined_files' );
+		$actions['defender_restore_quarantined_file'] = array( $this, 'restore_quarantined_file' );
+
 		$actions['defender_manage_lockout']        = array( $this, 'manage_lockout' );
 		$actions['defender_whitelist_ip']          = array( $this, 'whitelist_ip' );
 		$actions['defender_blacklist_ip']          = array( $this, 'blacklist_ip' );
@@ -118,6 +121,67 @@ class HUB extends Event {
 		);
 
 		$this->track_feature( $event, $data );
+	}
+
+	/**
+	 * Get recent quarantined files.
+	 */
+	public function get_quarantined_files(): void {
+		if ( ! class_exists( 'WP_Defender\Component\Quarantine' ) ) {
+			$result = array(
+				'message' => defender_quarantine_pro_only(),
+				'success' => false,
+			);
+
+			wp_send_json_error( $result );
+		}
+
+		$quarantine_obj = wd_di()->get( \WP_Defender\Component\Quarantine::class );
+
+		$quarantined_files = $quarantine_obj->hub_list();
+
+		wp_send_json_success(
+			array( 'quarantined_files' => $quarantined_files )
+		);
+	}
+
+	/**
+	 * Restores a quarantined file based on the provided parameters.
+	 *
+	 * @param  object $params  The parameters for restoring the quarantined file.
+	 *                     Requires the 'id' property to be set.
+	 *
+	 * @return void
+	 */
+	public function restore_quarantined_file( object $params ): void {
+		if ( ! class_exists( 'WP_Defender\Component\Quarantine' ) ) {
+			$result = array(
+				'message' => defender_quarantine_pro_only(),
+				'success' => false,
+			);
+
+			wp_send_json_error( $result );
+		}
+
+		if ( isset( $params->id ) ) {
+			$id = (int) $params->id;
+
+			$quarantine_obj = wd_di()->get( \WP_Defender\Component\Quarantine::class );
+
+			$result = $quarantine_obj->restore_file( $id );
+
+			if ( isset( $result['success'] ) && false === $result['success'] ) {
+				wp_send_json_error( $result );
+			}
+
+			wp_send_json_success( $result );
+		}
+
+		wp_send_json_error(
+			array(
+				'message' => esc_html__( 'Missing parameter: id.', 'defender-security' ),
+			)
+		);
 	}
 
 	/**
@@ -376,7 +440,11 @@ class HUB extends Event {
 		$model_sec_headers = wd_di()->get( \WP_Defender\Model\Setting\Security_Headers::class );
 		$scan_report       = wd_di()->get( Malware_Report::class );
 		$two_fa            = wd_di()->get( Two_Fa::class );
+		if ( class_exists( 'WP_Defender\Component\Quarantine' ) ) {
+			$quarantined_files = wd_di()->get( \WP_Defender\Component\Quarantine::class )->hub_list();
+		} else {
 			$quarantined_files = array();
+		}
 
 		$antibot_service = wd_di()->get( Antibot_Global_Firewall::class );
 
@@ -386,9 +454,10 @@ class HUB extends Event {
 				'next_scan' => $scan_report->get_next_run_for_hub(),
 			),
 			'report'            => array(
-				'malware_scan'  => $scan_report->get_next_run_as_string( true ),
-				'firewall'      => wd_di()->get( Firewall_Report::class )->get_next_run_as_string( true ),
-				'audit_logging' => wd_di()->get( Audit_Report::class )->get_next_run_as_string( true ),
+				'malware_scan'   => $scan_report->get_next_run_as_string( true ),
+				'firewall'       => wd_di()->get( Firewall_Report::class )->get_next_run_as_string( true ),
+				'audit_logging'  => wd_di()->get( Audit_Report::class )->get_next_run_as_string( true ),
+				'tweak_reminder' => wd_di()->get( Tweak_Reminder::class )->get_next_run_as_string( true ),
 			),
 			'security_tweaks'   => array(
 				'issues'       => $tweak_arr['count_issues'],

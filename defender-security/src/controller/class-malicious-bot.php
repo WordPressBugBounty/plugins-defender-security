@@ -207,6 +207,13 @@ class Malicious_Bot extends Controller {
 	}
 
 	/**
+	 * Rotate the malicious bot hash and refresh the related rules.
+	 */
+	public function rotate_hash() {
+		$this->service->rotate_hash();
+	}
+
+	/**
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data() {

@@ -12,6 +12,7 @@ use WP_Defender\Traits\IP;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Traits\Setting;
+use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\Blacklist_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Setting\Login_Lockout as Model_Login_Lockout;
@@ -118,7 +119,6 @@ class Login_Lockout extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script( 'def-iplockout', 'login_lockout', $this->data_frontend() );
 	}
 
 	/**
@@ -131,8 +131,9 @@ class Login_Lockout extends Event {
 			array(
 				'model' => $this->model->export(),
 				'misc'  => array(
-					'host'        => defender_get_hostname(),
-					'module_name' => Model_Login_Lockout::get_module_name(),
+					'host'         => defender_get_hostname(),
+					'module_name'  => Model_Login_Lockout::get_module_name(),
+					'lockouts_24h' => (int) Lockout_Log::count( strtotime( '-24 hours' ), time(), Lockout_Log::AUTH_LOCK ),
 				),
 			),
 			$this->dump_routes_and_nonces()

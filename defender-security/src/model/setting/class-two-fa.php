@@ -198,6 +198,9 @@ To complete your login, copy and paste the temporary password into the Password 
 			require_once ABSPATH . '/wp-admin/includes/user.php';
 		}
 		$this->user_roles = array_keys( get_editable_roles() );
+		if ( is_multisite() ) {
+			$this->user_roles[] = 'super_admin';
+		}
 		// Define some other defaults.
 		$this->custom_graphic_type = $default_values['custom_graphic_type'];
 		$this->custom_graphic_url  = $default_values['custom_graphic_url'];

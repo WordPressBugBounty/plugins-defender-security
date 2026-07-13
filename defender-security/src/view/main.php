@@ -7,3 +7,4 @@
 
 ?>
 <div id="defender"></div>
+<div id="wpmudev-defender-main"></div>

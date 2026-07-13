@@ -26,7 +26,7 @@ use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Two_Factor;
 use WP_Defender\Model\Scan as Model_Scan;
 use WP_Defender\Controller\Main_Setting;
-use WP_Defender\Controller\Advanced_Tools;
+use WP_Defender\Controller\Login_Access;
 use WP_Defender\Controller\Security_Tweaks;
 use WP_Defender\Model\Setting\Login_Lockout;
 use WP_Defender\Model\Setting\Password_Reset;
@@ -185,6 +185,11 @@ class Cli {
 				'type' => 'folder',
 				'path' => $this->get_abs_plugin_path_by_slug( $raw_data['slug'] ),
 			);
+		} elseif ( Scan_Item::TYPE_VULNERABILITY === $type ) {
+			return array(
+				'type' => 'folder',
+				'path' => $this->get_abs_plugin_path_by_slug( $raw_data['base_slug'] ),
+			);
 		} else {
 			return array(
 				'type' => 'file',
@@ -226,6 +231,12 @@ class Cli {
 				break;
 			case 'plugin_integrity':
 				$type = Scan_Item::TYPE_PLUGIN_CHECK;
+				break;
+			case 'vulnerability':
+				$type = Scan_Item::TYPE_VULNERABILITY;
+				break;
+			case 'suspicious_code':
+				$type = Scan_Item::TYPE_SUSPICIOUS;
 				break;
 			case 'plugin_outdated':
 				$type = Scan_Item::TYPE_PLUGIN_OUTDATED;
@@ -283,6 +294,36 @@ class Cli {
 							$resolved[] = $item;
 						} else {
 							return WP_CLI::error( $ret->get_error_message() );
+						}
+					} elseif ( Scan_Item::TYPE_SUSPICIOUS === $item->type ) {
+						// If this is content, we will try to delete them.
+						$whitelist  = array(
+							// wordfence waf.
+							ABSPATH . '/wordfence-waf.php',
+							// Any files inside plugins, if removed, can cause fatal error.
+							WP_CONTENT_DIR . '/plugins/',
+							// Any files inside themes.
+							$this->get_path_of_themes_dir(),
+						);
+						$path       = $item->raw_data['file'];
+						$can_delete = true;
+						$current    = '';
+						foreach ( $whitelist as $value ) {
+							$current = $value;
+							if ( strpos( $value, $path ) > 0 ) {
+								// Ignore this.
+								$can_delete = false;
+								break;
+							}
+						}
+						if ( false === $can_delete ) {
+							WP_CLI::log( sprintf( 'Ignore file %s as it is in %s', $path, $current ) );
+						} elseif ( wp_delete_file( $path ) ) {
+							WP_CLI::log( sprintf( 'Delete file %s', $path ) );
+							$model->remove_issue( $item->id );
+							$resolved[] = $item;
+						} else {
+							return WP_CLI::error( sprintf( "Can't delete file %s", $path ) );
 						}
 					}
 					// No result for Vulnerability, Outdated or Closed plugin types.
@@ -460,6 +501,9 @@ class Cli {
 				$content = file_get_contents( ABSPATH . 'wp-load.php' );
 				$wp_filesystem->put_contents( ABSPATH . 'wp-load.php', str_replace( '//this make different', '', $content ) );
 				break;
+			case 'scan:suspicious':
+				wp_delete_file( WP_CONTENT_DIR . '/false-positive.php' );
+				break;
 			default:
 				break;
 		}
@@ -624,7 +668,7 @@ class Cli {
 					$options
 				);
 				// Analog Settings > Reset Settings.
-				wd_di()->get( Advanced_Tools::class )->remove_settings();
+				wd_di()->get( Login_Access::class )->remove_settings();
 				wd_di()->get( Dashboard::class )->remove_settings();
 				wd_di()->get( Security_Tweaks::class )->remove_settings();
 				wd_di()->get( \WP_Defender\Controller\Scan::class )->remove_settings();

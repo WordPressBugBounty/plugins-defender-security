@@ -14,7 +14,6 @@ use WP_Defender\Traits\IP;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use Calotes\Helper\Array_Cache;
-use WP_Defender\Controller\Dashboard;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Setting\Antibot_Global_Firewall_Setting;
 use WP_Defender\Component\Mail;
@@ -98,7 +97,7 @@ class Firewall extends Event {
 	public function __construct() {
 		$this->wpmudev = wd_di()->get( WPMUDEV::class );
 
-		$title = esc_html__( 'Firewall', 'defender-security' );
+		$title = esc_html__( 'Firewalls', 'defender-security' );
 		$this->register_page(
 			$this->get_title( $title ),
 			$this->slug,
@@ -121,6 +120,8 @@ class Firewall extends Event {
 		wd_di()->get( UA_Lockout::class );
 		wd_di()->get( Global_Ip::class );
 		wd_di()->get( Antibot_Global_Firewall::class );
+		wd_di()->get( Malicious_Bot::class );
+		wd_di()->get( Fake_Bot_Detection::class );
 
 		// Integrate MainWP plugin.
 		wd_di()->get( Main_Wp::class );
@@ -201,22 +202,66 @@ class Firewall extends Event {
 	}
 
 	/**
-	 * This is for handling request from dashboard.
+	 * Sets up the preset firewall configuration.
 	 *
-	 * @defender_route
-	 * @return Response
+	 * @param bool $state The feature state.
+	 *
+	 * @return void
 	 */
-	public function dashboard_activation() {
-		$il = wd_di()->get( Login_Lockout_Model::class );
+	public function preset_firewall( bool $state ) {
+		// For every lockout.
+		$ll = wd_di()->get( Login_Lockout_Model::class );
 		$nf = wd_di()->get( Notfound_Lockout::class );
 		$ua = wd_di()->get( User_Agent_Lockout::class );
 
-		$il->enabled = true;
-		$il->save();
-		$nf->enabled = true;
+		$ll->enabled = $state;
+		$ll->save();
+		$nf->enabled = $state;
 		$nf->save();
-		$ua->enabled = true;
+
+		$old_malicious_bot_enabled = $ua->malicious_bot_enabled;
+		$old_fake_bots_enabled     = $ua->fake_bots_enabled;
+		$ua->enabled               = $state;
+		if ( $state ) {
+			$ua->malicious_bot_enabled = true;
+			$ua->fake_bots_enabled     = true;
+		} else {
+			$ua->malicious_bot_enabled = false;
+			$ua->fake_bots_enabled     = false;
+		}
 		$ua->save();
+
+		if ( $state && ! $old_malicious_bot_enabled ) {
+			wd_di()->get( Malicious_Bot::class )->rotate_hash();
+		} elseif ( ! $state ) {
+			if ( $old_malicious_bot_enabled ) {
+				wd_di()->get( Malicious_Bot::class )->remove_data();
+			}
+			if ( $old_fake_bots_enabled ) {
+				wd_di()->get( Fake_Bot_Detection::class )->remove_data();
+			}
+		}
+
+		Config_Hub_Helper::set_clear_active_flag();
+	}
+
+	/**
+	 * Enable/disable lockout modules.
+	 *
+	 * @param Request $request The request object.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function toggle_lockout_modules( Request $request ): Response {
+		$data = $request->get_data(
+			array(
+				'enabled' => array(
+					'type' => 'boolean',
+				),
+			)
+		);
+		$this->preset_firewall( $data['enabled'] );
 
 		return new Response( true, $this->to_array() );
 	}
@@ -350,18 +395,54 @@ class Firewall extends Event {
 	 * Enqueues scripts and styles for this page.
 	 * Only enqueues assets if the page is active.
 	 */
-	public function enqueue_assets() {
+	public function enqueue_assets(): void {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
 
+		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
 		wp_enqueue_media();
 
-		wp_localize_script( 'def-iplockout', 'iplockout', $this->data_frontend() );
-		wp_enqueue_script( 'def-iplockout' );
-		$this->enqueue_main_assets();
+		$handle = 'defender-ui-firewalls';
+		wp_enqueue_script(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/js/firewalls-ui.js',
+			array( 'def-vue', 'def-manifest', 'def-core-ui', 'defender', 'wp-i18n' ),
+			DEFENDER_VERSION,
+			true
+		);
+		wp_set_script_translations( $handle, 'wpdef' );
 
+		wp_localize_script(
+			$handle,
+			'defenderUIData',
+			array_merge(
+				$this->get_shared_data(),
+				$this->data_frontend()
+			)
+		);
+
+		wp_enqueue_style(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			array(),
+			DEFENDER_VERSION
+		);
+
+		$this->enqueue_main_assets();
+		// Keep this action for backward compatibility with existing hooks.
 		do_action( 'defender_ip_lockout_action_assets' );
+	}
+
+	/**
+	 * Add a Firewalls page marker class for scoped admin CSS overrides.
+	 *
+	 * @param  string $classes Current admin body classes.
+	 *
+	 * @return string
+	 */
+	public function admin_body_class( string $classes ): string {
+		return trim( $classes . ' wdf-firewalls-react-page' );
 	}
 
 	/**
@@ -618,12 +699,14 @@ class Firewall extends Event {
 			header( 'Expires: ' . wp_date( 'D, d M Y H:i:s', time() - 3600 ) . ' GMT' ); // Proxies.
 			header( 'Clear-Site-Data: "cache"' ); // Clear cache of the current request.
 
-			$global_ip_lockout = wd_di()->get( Global_Ip_Lockout::class );
-			$is_displayed      = Unlock_Me::is_displayed( $reason, $ips );
-			$is_displayed_agf  = $antibot_service->is_displayed( $ips );
-			$allow_self_unlock = $global_ip_lockout->allow_self_unlock;
-			$hide_btn_agf      = $is_displayed_agf && ! $allow_self_unlock;
-			$params = array(
+			$global_ip_lockout   = wd_di()->get( Global_Ip_Lockout::class );
+			$is_displayed        = Unlock_Me::is_displayed( $reason, $ips );
+			$is_displayed_agf    = $antibot_service->is_displayed( $ips );
+			$allow_self_unlock   = $global_ip_lockout->allow_self_unlock;
+			$hide_btn_agf        = $is_displayed_agf && ! $allow_self_unlock;
+			$malicious_bot       = wd_di()->get( Malicious_Bot::class );
+			$discourage_crawlers = ! $discourage_crawlers && $malicious_bot->is_hash_request() ? true : $discourage_crawlers;
+			$params              = array(
 				'message'             => ! $hide_btn_agf ? $message : '',
 				'remaining_time'      => $remaining_time,
 				'is_unlock_me'        => $is_displayed,
@@ -846,8 +929,14 @@ class Firewall extends Event {
 		( new Global_Ip() )->remove_data();
 		// Remove AntiBot Global Firewall data.
 		wd_di()->get( Antibot_Global_Firewall::class )->remove_data();
+		// Remove Malicious Bot data.
+		wd_di()->get( Malicious_Bot::class )->remove_data();
+		// Remove Fake Bot data.
+		wd_di()->get( Fake_Bot_Detection::class )->remove_data();
 		// Remove Firewall Logs data.
 		wd_di()->get( Firewall_Logs::class )->remove_data();
+		// Remove WAF data.
+		wd_di()->get( WAF::class )->remove_data();
 		// Clear Trusted Proxy data.
 		$trusted_proxy_preset = wd_di()->get( Trusted_Proxy_Preset::class );
 		foreach ( array_keys( Firewall_Service::trusted_proxy_presets() ) as $preset ) {
@@ -868,9 +957,9 @@ class Firewall extends Event {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
-		$summary_data         = $this->get_summary();
 		$user_ip              = $this->get_user_ip();
 		$http_ip_header_value = $this->get_user_ip_header();
+		$summary_data         = $this->get_summary();
 
 		$data = array(
 			'login'                 => array(
@@ -892,17 +981,18 @@ class Firewall extends Event {
 			'day'                   => $summary_data['lockout_today'],
 			'last_lockout'          => $summary_data['lockout_last'],
 			'settings'              => $this->model->export(),
-			'login_lockout'         => wd_di()->get( Login_Lockout_Model::class )->enabled,
-			'nf_lockout'            => wd_di()->get( Notfound_Lockout::class )->enabled,
-			'report'                => wd_di()->get( Firewall_Report::class )->to_string(),
-			'notification_lockout'  => 'enabled' === wd_di()->get( Firewall_Notification::class )->status,
-			'ua_lockout'            => wd_di()->get( User_Agent_Lockout::class )->enabled,
 			'user_ip'               => implode( ', ', $user_ip ),
 			'user_ip_header'        => $http_ip_header_value,
 			'trusted_proxy_presets' => Firewall_Service::trusted_proxy_presets(),
 			'global_ip'             => wd_di()->get( \WP_Defender\Controller\Global_Ip::class )->data_frontend(),
 			'hub_connector'         => wd_di()->get( Hub_Connector::class )->data_frontend(),
 			'antibot'               => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
+			'waf'                   => wd_di()->get( WAF::class )->data_frontend(),
+			'loginLockout'          => wd_di()->get( Login_Lockout::class )->data_frontend(),
+			'nfLockout'             => wd_di()->get( Nf_Lockout::class )->data_frontend(),
+			'uaLockout'             => wd_di()->get( UA_Lockout::class )->data_frontend(),
+			'banning'               => wd_di()->get( Blacklist::class )->data_frontend(),
+			'logs'                  => wd_di()->get( Firewall_Logs::class )->data_frontend(),
 		);
 
 		return array_merge( $data, $this->dump_routes_and_nonces() );
@@ -949,6 +1039,9 @@ class Firewall extends Event {
 		// Global IP lockout.
 		$strings[] = Global_Ip_Lockout::get_module_name() . ' '
 					. Global_Ip_Lockout::get_module_state( ( new Global_Ip_Lockout() )->enabled );
+		// AntiBot Global Firewall.
+		$strings[] = Antibot_Global_Firewall_Setting::get_module_name() . ' '
+					. Antibot_Global_Firewall_Setting::get_module_state( ( new Antibot_Global_Firewall_Setting() )->enabled );
 		// UA lockout.
 		$strings[] = User_Agent_Lockout::get_module_name() . ' '
 					. User_Agent_Lockout::get_module_state( ( new User_Agent_Lockout() )->enabled );
@@ -959,6 +1052,11 @@ class Firewall extends Event {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),
+				'<span class="sui-tag sui-tag-pro">Pro</span>'
+			);
+			$strings[] = sprintf(
+			/* translators: %s: Html for Pro-tag. */
+				esc_html__( 'Web Application Firewall (WAF) inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
 
@@ -989,6 +1087,11 @@ class Firewall extends Event {
 			$strings[] = Global_Ip_Lockout::get_module_name() . ' '
 						. Global_Ip_Lockout::get_module_state( (bool) $config['global_ip_list'] );
 		}
+		// AntiBot Global Firewall.
+		if ( isset( $config['antibot'] ) ) {
+			$strings[] = Antibot_Global_Firewall_Setting::get_module_name() . ' '
+						. Antibot_Global_Firewall_Setting::get_module_state( (bool) $config['antibot'] );
+		}
 		// UA lockout.
 		if ( isset( $config['ua_banning_enabled'] ) ) {
 			$strings[] = User_Agent_Lockout::get_module_name() . ' '
@@ -1001,6 +1104,11 @@ class Firewall extends Event {
 			$strings[] = sprintf(
 				/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Email report inactive %s', 'defender-security' ),
+				'<span class="sui-tag sui-tag-pro">Pro</span>'
+			);
+			$strings[] = sprintf(
+				/* translators: %s: Html for Pro-tag. */
+				esc_html__( 'Web Application Firewall (WAF) inactive %s', 'defender-security' ),
 				'<span class="sui-tag sui-tag-pro">Pro</span>'
 			);
 
@@ -1171,7 +1279,7 @@ class Firewall extends Event {
 	public function print_emoji_script(): void {
 		$allowed_pages = array(
 			$this->slug,
-			wd_di()->get( Dashboard::class )->slug,
+			wd_di()->get( \WP_Defender\Controller\Dashboard::class )->slug,
 		);
 
 		if ( in_array( HTTP::get( 'page' ), $allowed_pages, true ) ) {

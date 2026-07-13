@@ -23,6 +23,7 @@ use WP_Defender\Component\IP\Antibot_Global_Firewall;
 use WP_Defender\Component\Scan as Scan_Component;
 
 /**
+ * Todo: remove in the future.
  * This class is only used once, after the activation on a fresh install.
  * We will use this for activating & presets other module settings.
  */
@@ -66,11 +67,12 @@ class Onboard extends Event {
 	 */
 	protected function add_main_page() {
 		$this->register_page(
-			$this->get_menu_title(),
+			$this->get_page_title(),
 			$this->parent_slug,
 			array( $this, 'main_view' ),
 			null,
-			$this->get_menu_icon()
+			$this->get_menu_icon(),
+			$this->get_menu_title()
 		);
 	}
 
@@ -102,6 +104,9 @@ class Onboard extends Event {
 			$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
 
 			$this->maybe_tracking( 'Activate & Configure' );
+			if ( false !== $this->get_apikey() ) {
+				$this->preset_blacklist_monitor();
+			}
 			$this->preset_firewall();
 			$this->resolve_security_tweaks();
 			$this->preset_scanning();
@@ -153,6 +158,19 @@ class Onboard extends Event {
 			wp_send_json_success( $data );
 		}
 	}
+	/**
+	 * Enable blacklist status.
+	 */
+	private function preset_blacklist_monitor() {
+		$this->make_wpmu_request(
+			WPMUDEV::API_BLACKLIST,
+			array(),
+			array(
+				'method' => 'POST',
+			)
+		);
+	}
+
 
 	/**
 	 * Sets up the preset scanning configuration and creates a new scan.
@@ -222,6 +240,7 @@ class Onboard extends Event {
 		$modules = array(
 			'Firewall',
 			'Recommendations',
+			'Blocklist Monitor',
 		);
 			$modules[] = 'WP file scanning';
 
@@ -276,11 +295,6 @@ class Onboard extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-
-		wp_localize_script( 'def-onboard', 'onboard', $this->data_frontend() );
-		wp_enqueue_script( 'def-onboard' );
-		$this->enqueue_main_assets();
-		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
 	}
 
 	/**

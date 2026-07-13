@@ -53,7 +53,7 @@ class Password_Protection extends Setting {
 	public function get_default_values(): array {
 		return array(
 			'message' => esc_html__(
-				'You are required to change your password because the password you are using exists on database breach records.',
+				'This password has been exposed in a data breach and can’t be used. Choose a different password.',
 				'defender-security'
 			),
 		);

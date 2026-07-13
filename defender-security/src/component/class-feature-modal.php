@@ -21,8 +21,8 @@ class Feature_Modal extends Component {
 	/**
 	 * Feature data for the last active "What's new" modal.
 	 */
-	public const FEATURE_SLUG    = 'wd_show_feature_turnstile';
-	public const FEATURE_VERSION = '5.7.0';
+	public const FEATURE_SLUG    = 'wd_show_feature_redesign';
+	public const FEATURE_VERSION = '6.0.0';
 
 	/**
 	 * Get modals that are displayed on the Dashboard page.
@@ -39,11 +39,6 @@ class Feature_Modal extends Component {
 
 		return array(
 			'show_welcome_modal' => $is_displayed,
-			'welcome_modal'      => array(
-				'user_name' => esc_html( $current_user->display_name ),
-				'banner_1x' => defender_asset_url( '/assets/img/modal/welcome-modal.png' ),
-				'banner_2x' => defender_asset_url( '/assets/img/modal/welcome-modal@2x.png' ),
-			),
 		);
 	}
 
@@ -80,8 +75,8 @@ class Feature_Modal extends Component {
 			),
 			// The latest feature.
 			array(
-				'slug' => 'wd_show_feature_fake_bots',
-				'vers' => '5.6.0',
+				'slug' => 'wd_show_feature_turnstile',
+				'vers' => '5.7.0',
 			),
 			// The current feature.
 			array(

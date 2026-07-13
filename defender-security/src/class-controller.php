@@ -11,8 +11,11 @@ use ReflectionClass;
 use ReflectionMethod;
 use Calotes\Helper\HTTP;
 use WP_Defender\Traits\IO;
+use WP_Defender\Traits\Plugin;
 use WP_Defender\Traits\User;
 use WP_Defender\Traits\Permission;
+use WP_Defender\Component\Hub_Connector;
+use WP_Defender\Traits\Defender_Dashboard_Client;
 
 /**
  * The controller class.
@@ -22,6 +25,8 @@ abstract class Controller extends \Calotes\Base\Controller {
 	use IO;
 	use User;
 	use Permission;
+	use Plugin;
+	use Defender_Dashboard_Client;
 
 	/**
 	 * The slug identifier for this controller.
@@ -196,5 +201,50 @@ abstract class Controller extends \Calotes\Base\Controller {
 		return defined( 'DEFENDER_DEBUG' ) && true === constant( 'DEFENDER_DEBUG' )
 			? wp_slash( $route )
 			: $route;
+	}
+
+	/**
+	 * Shared data for all controllers (profile, hub connector, isPro, etc.).
+	 *
+	 * @return array
+	 */
+	protected function get_shared_data(): array {
+		$hub_profile_ui = Hub_Connector::get_profile_data_for_ui();
+		$profile_data   = is_array( $hub_profile_ui ) ? $hub_profile_ui : array();
+		$wpmudev        = wd_di()->get( \WP_Defender\Behavior\WPMUDEV::class );
+		$scan_api       = wd_di()->get( \WP_Defender\Controller\Scan::class )->dump_routes_and_nonces();
+
+		return array(
+			'defenderUrl'        => network_admin_url( 'admin.php?page=wp-defender' ),
+			'pluginUrl'          => WP_DEFENDER_BASE_URL,
+			'adminUrl'           => network_admin_url(),
+			'siteUrl'            => network_site_url(),
+			'profileData'        => $profile_data,
+			'hubConnector'       => wd_di()->get( \WP_Defender\Controller\Hub_Connector::class )->data_frontend(),
+			'isPro'              => $wpmudev->is_pro(),
+			'isWpOrg'            => defender_is_wp_org_version(),
+			'pluginUpdate'       => $this->get_plugin_update_notice_data(),
+			'whiteLabel'         => defender_whitelabel_data(),
+			'activityLog'        => wd_di()->get( \WP_Defender\Controller\Activity_Log::class )->data_frontend(),
+			'hubApiKey'          => array(
+				'available' => false !== $wpmudev->get_apikey(),
+			),
+			'hosted'             => $wpmudev->is_wpmu_hosting(),
+			'highContrastMode'   => defender_high_contrast(),
+			'isUnlimitedHosting' => defender_is_unlimited_hosting(),
+			'scanApi'            => array(
+				'routes' => $scan_api['routes'] ?? array(),
+				'nonces' => $scan_api['nonces'] ?? array(),
+			),
+		);
+	}
+
+	/**
+	 * Page-specific data for a concrete controller.
+	 *
+	 * @return array
+	 */
+	protected function get_page_data(): array {
+		return array();
 	}
 }

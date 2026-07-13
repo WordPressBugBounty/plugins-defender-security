@@ -186,28 +186,44 @@ class Captcha extends Setting {
 		$this->message           = $default_values['message'];
 		$this->language          = 'automatic';
 		$this->data_v2_checkbox  = array(
-			'key'    => '',
-			'secret' => '',
-			'size'   => 'normal',
-			'style'  => 'light',
+			'key'      => '',
+			'secret'   => '',
+			'verified' => false,
+			'size'     => 'normal',
+			'style'    => 'light',
 		);
 		$this->data_v2_invisible = array(
-			'key'    => '',
-			'secret' => '',
+			'key'      => '',
+			'secret'   => '',
+			'verified' => false,
 		);
 		$this->data_v3_recaptcha = array(
 			'key'       => '',
 			'secret'    => '',
+			'verified'  => false,
 			'threshold' => '0.5',
 		);
 		$this->data_turnstile    = array(
 			'key'      => '',
 			'secret'   => '',
+			'verified' => false,
 			'size'     => 'normal',
 			'style'    => 'auto',
 			'message'  => $default_values['turnstile_message'],
 			'language' => 'auto',
 		);
+	}
+
+	/**
+	 * Backfill new keys (e.g. 'verified') into data arrays loaded from settings saved by an older version.
+	 *
+	 * @return void
+	 */
+	protected function after_load(): void {
+		$this->data_v2_checkbox  = wp_parse_args( $this->data_v2_checkbox, array( 'verified' => false ) );
+		$this->data_v2_invisible = wp_parse_args( $this->data_v2_invisible, array( 'verified' => false ) );
+		$this->data_v3_recaptcha = wp_parse_args( $this->data_v3_recaptcha, array( 'verified' => false ) );
+		$this->data_turnstile    = wp_parse_args( $this->data_turnstile, array( 'verified' => false ) );
 	}
 
 	/**
@@ -362,55 +378,11 @@ class Captcha extends Setting {
 	}
 
 	/**
-	 * Validates the form after submission.
-	 *
-	 * @return void
-	 */
-	protected function after_validate(): void {
-		$provider_label = self::TURNSTILE === $this->provider ? __( 'Turnstile', 'defender-security' ) : __( 'reCAPTCHA', 'defender-security' );
-		// Case with multi errors.
-		if ( $this->is_unchecked_woo_locations() && $this->is_unchecked_buddypress_locations() ) {
-			// The text of the notation is only in the first key, but we add the number of keys depending on the disabled locations of the plugins.
-			/* translators: Provider label. */
-			$message = esc_html__(
-				'You have enabled %s for more than one plugin. Please select at least one form location for each plugin and click Save Changes again.',
-				'defender-security'
-			);
-
-			$this->errors['enable_woo']        = sprintf( $message, $provider_label );
-			$this->errors['enable_buddypress'] = '';
-		} else {
-			// Individual cases with plugins.
-			if ( $this->is_unchecked_woo_locations() ) {
-				/* translators: Provider label. */
-				$message = esc_html__(
-					'%s for WooCommerce is enabled, but no WooCommerce forms are selected. Please select at least one WooCommerce form location and then click Save Changes again.',
-					'defender-security'
-				);
-
-				$this->errors['enable_woo'] = sprintf( $message, $provider_label );
-			}
-			if ( $this->is_unchecked_buddypress_locations() ) {
-				/* translators: Provider label. */
-				$message = esc_html__(
-					'%s for BuddyPress is enabled, but no BuddyPress forms are selected. Please select at least one BuddyPress form location and then click Save Changes again.',
-					'defender-security'
-				);
-
-				$this->errors['enable_buddypress'] = sprintf( $message, $provider_label );
-			}
-		}
-	}
-
-	/**
 	 * Disable for logged in users or enable.
 	 *
 	 * @return bool
 	 */
 	public function display_for_known_users(): bool {
-		if ( self::TURNSTILE === $this->provider ) {
-			return true;
-		}
 		return ! ( $this->disable_for_known_users && is_user_logged_in() );
 	}
 

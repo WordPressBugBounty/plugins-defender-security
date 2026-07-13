@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles fake bot detection functionality (Free version stub).
+ * Handles fake bot detection functionality.
  *
  * @package WP_Defender\Controller
  */
@@ -8,26 +8,47 @@
 namespace WP_Defender\Controller;
 
 use WP_Defender\Controller;
+use WP_Defender\Component\Blacklist_Lockout;
+use WP_Defender\Component\Fake_Bot_Detection as Fake_Bot_Detection_Component;
+use WP_Defender\Traits\IP;
 
 /**
- * Stub class for fake bot detection functionality in the Free version.
- * This feature is only available in the Pro version.
+ * Handles operations to detect whether the current HTTP request comes from a legitimate bot.
  */
 class Fake_Bot_Detection extends Controller {
+	use IP;
+
+	/**
+	 * Service for handling logic.
+	 *
+	 * @var Fake_Bot_Detection_Component
+	 */
+	protected $service;
 
 	/**
 	 * Constructor for the Fake_Bot_Detection class.
-	 * Does nothing in the Free version.
+	 * Initializes the service and sets up necessary hooks.
 	 *
-	 * @param mixed $service Unused in Free version.
+	 * @param Fake_Bot_Detection_Component $service The service instance for fake bot functionality.
 	 */
-	public function __construct( $service = null ) {
+	public function __construct( Fake_Bot_Detection_Component $service ) {
+		$this->service = $service;
+
+		$service = wd_di()->get( Blacklist_Lockout::class );
+		$ip      = $this->get_user_ip();
+
+		if ( $this->service->is_enabled() && ! $service->are_ips_whitelisted( $ip ) ) {
+			add_action( 'init', array( $this->service, 'load_crawlers' ) );
+			add_action( 'init', array( $this->service, 'validate_legit_crawler' ) );
+		}
 	}
 
 	/**
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data() {
+		delete_site_transient( Fake_Bot_Detection_Component::CACHE_KEY );
+		$this->service->clear_fb_transients();
 	}
 
 	/**
@@ -52,6 +73,8 @@ class Fake_Bot_Detection extends Controller {
 	 * Imports data into the model.
 	 *
 	 * @param  array $data  Data to be imported into the model.
+	 *
+	 * @throws Exception If table is not defined.
 	 */
 	public function import_data( array $data ) {
 	}

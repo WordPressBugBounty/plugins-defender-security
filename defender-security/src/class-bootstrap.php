@@ -41,6 +41,7 @@ class Bootstrap {
 	 * Load all modules.
 	 */
 	public function init_modules(): void {
+		add_action( 'admin_init', array( $this, 'maybe_redirect_after_activation' ), 1 );
 		$this->init_modules_common();
 	}
 

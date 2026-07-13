@@ -12,6 +12,7 @@ use Exception;
 use WP_User_Query;
 use WPMUDEV_Dashboard;
 use WP_Defender\Model\Scan;
+use WPMUDEV\Hub\Connector\Data;
 use WP_Defender\Model\Notification;
 use WP_Defender\Controller\Firewall;
 use WP_Defender\Model\Setting\Two_Fa;
@@ -59,6 +60,12 @@ trait Defender_Hub_Client {
 	public function get_endpoint( $scenario ): string {
 		$base = $this->get_api_base_url();
 		switch ( $scenario ) {
+			case self::API_SCAN_KNOWN_VULN:
+				return $base . 'api/defender/v1/vulnerabilities';
+			case self::API_SCAN_SIGNATURE:
+				return $base . 'api/defender/v1/yara-signatures';
+			case self::API_BLACKLIST:
+				return $base . 'api/defender/v1/blacklist-monitoring?domain=' . network_site_url();
 			case self::API_GLOBAL_IP_LIST:
 				return $base . 'api/hub/v1/global-ip-list';
 			case self::API_PACKAGE_CONFIGS:
@@ -81,8 +88,16 @@ trait Defender_Hub_Client {
 	 * @return int|bool
 	 */
 	public function get_site_id() {
-		if ( false !== $this->get_apikey() ) {
+		if ( 'dashboard' === $this->resolve_connection_mode() ) {
 			return (int) WPMUDEV_Dashboard::$api->get_site_id();
+		}
+
+		// Ignore stale HCM site IDs after disconnect.
+		if ( self::get_hcm_status() && class_exists( 'WPMUDEV\Hub\Connector\Data' ) ) {
+			$site_id = Data::get()->hub_site_id();
+			if ( $site_id > 0 ) {
+				return $site_id;
+			}
 		}
 
 		return false;
@@ -546,24 +561,7 @@ trait Defender_Hub_Client {
 	 * @return array
 	 */
 	public function build_firewall_notification_hub_data(): array {
-		$firewall_notification = new Firewall_Notification();
-		if ( 'enabled' === $firewall_notification->status ) {
-			$login_lockout = $firewall_notification->configs['login_lockout'];
-			$nf_lockout    = $firewall_notification->configs['nf_lockout'];
-			$ua_lockout    = $firewall_notification->configs['ua_lockout'] ?? false;
-		} else {
-			$login_lockout = false;
-			$nf_lockout    = false;
-			$ua_lockout    = false;
-		}
-
-		return array(
-			'firewall' => array(
-				'login_lockout' => $login_lockout,
-				'404_lockout'   => $nf_lockout,
-				'ua_lockout'    => $ua_lockout,
-			),
-		);
+		return array( 'firewall' => ( new Firewall_Notification() )->get_hub_data() );
 	}
 
 	/**
@@ -627,6 +625,7 @@ trait Defender_Hub_Client {
 						'parent_integrity' => esc_html__( 'File change detection', 'defender-security' ),
 						'core_integrity'   => esc_html__( 'Scan core files', 'defender-security' ),
 						'plugin_integrity' => esc_html__( 'Scan plugin files', 'defender-security' ),
+						'vulnerability_db' => esc_html__( 'Known vulnerabilities', 'defender-security' ),
 						'file_suspicious'  => esc_html__( 'Suspicious code', 'defender-security' ),
 					),
 					'scan_page_url'          => network_admin_url( 'admin.php?page=wdf-scan' ),
@@ -670,7 +669,7 @@ trait Defender_Hub_Client {
 						),
 					),
 					'reports'                => $this->build_notification_hub_data(),
-					'notifications'          => $this->build_firewall_notification_hub_data(),
+					'notifications'          => array( 'firewall' => ( new Firewall_Notification() )->get_hub_data() ),
 					'quarantined_files'      => $quarantined_files,
 				)
 			),
@@ -724,7 +723,11 @@ trait Defender_Hub_Client {
 	 * @return array
 	 */
 	protected function build_quarantined_files_hub_data(): array {
+		if ( ! class_exists( 'WP_Defender\Component\Quarantine' ) ) {
 			return array();
+		}
+
+		return wd_di()->get( \WP_Defender\Component\Quarantine::class )->hub_list();
 	}
 
 	/**

@@ -27,11 +27,12 @@ class Turnstile extends Provider {
 		$data = wp_parse_args(
 			$data,
 			array(
-				'key'     => '',
-				'secret'  => '',
-				'style'   => '',
-				'size'    => 'normal',
-				'message' => '',
+				'key'      => '',
+				'secret'   => '',
+				'style'    => '',
+				'size'     => 'normal',
+				'message'  => '',
+				'language' => 'auto',
 			)
 		);
 

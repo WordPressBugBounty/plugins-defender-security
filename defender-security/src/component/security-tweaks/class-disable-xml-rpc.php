@@ -199,7 +199,7 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 	 * @return string
 	 */
 	public function get_label(): string {
-		return esc_html__( 'Disable XML-RPC', 'defender-security' );
+		return esc_html__( 'Turn off XML-RPC', 'defender-security' );
 	}
 
 	/**
@@ -218,7 +218,7 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 	 */
 	public function to_array(): array {
 		// The message to display if the XML-RPC feature is disabled.
-		$enabled = esc_html__( 'XML-RPC is disabled, great job!', 'defender-security' );
+		$enabled = wp_strip_all_tags( __( 'XML-RPC is turned off.', 'defender-security' ) );
 		// Determine if the XML-RPC feature is enabled on the server side.
 		$in_server = $this->is_tweak_enabled_in_server();
 		// Determine if the XML-RPC feature is enabled on the plugin side.
@@ -229,28 +229,21 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 			// If the site is hosted on WPMU DEV's hosting, construct the URL to the hosting settings page.
 			$url = 'https://wpmudev.com/hub2/site/' . $this->wpmudev->get_site_id() . '/hosting/tools#block-xml-rpc';
 
+			$hosting_settings_url = null;
+
 			// If the XML-RPC feature is enabled on the server side, construct the message to display.
 			if ( $in_server ) {
 				if ( $this->wpmudev->is_whitelabel_enabled() ) {
-					$enabled = esc_html__( 'You can manage the XML-RPC settings in the Hosting Settings.', 'defender-security' );
+					$enabled = wp_strip_all_tags( __( 'You can manage the XML-RPC settings in the Hosting Settings.', 'defender-security' ) );
 				} else {
-					$enabled = sprintf(
-						/* translators: %1$s: link to admin page, %2$s: closing link tag. */
-						esc_html__( 'You can manage XML-RPC settings from Hosting Settings by going to %1$sthis link%2$s.', 'defender-security' ),
-						'<a target="_blank" href="' . $url . '">',
-						'</a>'
-					);
+					$enabled              = ''; // React composes this string via createInterpolateElement using hosting_settings_url.
+					$hosting_settings_url = $url;
 				}
 			} elseif ( $this->wpmudev->is_whitelabel_enabled() ) {
-				$enabled = esc_html__( 'XML-RPC is currently disabled on plugin side.', 'defender-security' );
+				$enabled = wp_strip_all_tags( __( 'XML-RPC is currently disabled on plugin side.', 'defender-security' ) );
 			} else {
-				// If the XML-RPC feature is disabled on the plugin side but enabled on the server side, construct the message to display.
-				$enabled = sprintf(
-					/* translators: %1$s: link to admin page, %2$s: closing link tag. */
-					esc_html__( 'XML-RPC is currently disabled on plugin side, we suggest disabling it from server side by clicking on %1$sthis link%2$s.', 'defender-security' ),
-					'<a target="_blank" href="' . $url . '">',
-					'</a>'
-				);
+				$enabled              = wp_strip_all_tags( __( 'XML-RPC is currently disabled on plugin side, we suggest disabling it from server side by clicking on this link.', 'defender-security' ) );
+				$hosting_settings_url = $url;
 			}
 
 			// Return the summary data.
@@ -260,9 +253,11 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 				'errorReason'      => $this->get_error_reason(),
 				'successReason'    => $enabled,
 				'misc'             => array(
-					'show_revert_button' => $this->determine_status( $in_site, $in_server ) !== 2,
+					'show_revert_button'   => ! $in_server,
+					'hosting_settings_url' => $hosting_settings_url,
+					'show_action_button'   => true,
 				),
-				'bulk_description' => esc_html__( 'In the past, there were security concerns with XML-RPC so we recommend making sure this feature is fully disabled if you don’t need it active. We will disable XML-RPC for you.', 'defender-security' ),
+				'bulk_description' => wp_strip_all_tags( __( 'XML-RPC lets you publish to your WordPress site remotely using apps like the mobile app or services like IFTTT. If you don’t use remote publishing, turn off XML-RPC to help reduce security risk.', 'defender-security' ) ),
 				'bulk_title'       => 'XML-RPC',
 			);
 		}
@@ -274,8 +269,9 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 			'successReason'    => $enabled,
 			'misc'             => array(
 				'show_revert_button' => $in_site,
+				'show_action_button' => true,
 			),
-			'bulk_description' => esc_html__( 'In the past, there were security concerns with XML-RPC so we recommend making sure this feature is fully disabled if you don’t need it active. We will disable XML-RPC for you.', 'defender-security' ),
+			'bulk_description' => wp_strip_all_tags( __( 'XML-RPC lets you publish to your WordPress site remotely using apps like the mobile app or services like IFTTT. If you don’t use remote publishing, turn off XML-RPC to help reduce security risk.', 'defender-security' ) ),
 			'bulk_title'       => 'XML-RPC',
 		);
 	}

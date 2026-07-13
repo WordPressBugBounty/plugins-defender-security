@@ -58,7 +58,6 @@ class Mask_Login extends Event {
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
-		add_filter( 'wp_defender_advanced_tools_data', array( $this, 'script_data' ) );
 		// Internal cache, so we don't need to query many times.
 		$this->model   = wd_di()->get( Model_Mask_Login::class );
 		$this->service = wd_di()->get( Component_Mask_Login::class );
@@ -557,19 +556,6 @@ class Mask_Login extends Event {
 	}
 
 	/**
-	 * Provide data to the frontend via localized script.
-	 *
-	 * @param  array $data  Data collection is ready to passed.
-	 *
-	 * @return array Modified data array with added this controller data.
-	 */
-	public function script_data( array $data ): array {
-		$data['mask_login'] = $this->data_frontend();
-
-		return $data;
-	}
-
-	/**
 	 * Redirects the user to the admin URL if the given URL is the home URL.
 	 *
 	 * @param  string $url  The URL to be redirected.
@@ -861,7 +847,8 @@ class Mask_Login extends Event {
 	 */
 	public function export_strings(): array {
 		return array(
-			$this->get_model()->is_active() ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
+			\WP_Defender\Model\Setting\Mask_Login::get_module_name() . ' '
+			. ( $this->get_model()->enabled ? esc_html__( 'active', 'defender-security' ) : esc_html__( 'inactive', 'defender-security' ) ),
 		);
 	}
 
@@ -874,7 +861,8 @@ class Mask_Login extends Event {
 	 */
 	public function config_strings( array $config ): array {
 		return array(
-			$config['enabled'] ? esc_html__( 'Active', 'defender-security' ) : esc_html__( 'Inactive', 'defender-security' ),
+			\WP_Defender\Model\Setting\Mask_Login::get_module_name() . ' '
+			. ( $config['enabled'] ? esc_html__( 'active', 'defender-security' ) : esc_html__( 'inactive', 'defender-security' ) ),
 		);
 	}
 

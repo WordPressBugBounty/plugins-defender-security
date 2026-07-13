@@ -10,18 +10,23 @@ namespace WP_Defender\Controller;
 use WP_Defender\Event;
 use Calotes\Helper\HTTP;
 use Calotes\Helper\Route;
+use WP_Defender\Model\Setting\Login_Lockout;
+use WP_Defender\Model\Setting\Notfound_Lockout;
+use WP_Defender\Model\Setting\User_Agent_Lockout;
+use WP_Defender\Traits\Defender_Dashboard_Client;
 use WP_Defender\Traits\IO;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Traits\Formats;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Feature_Modal;
-use WP_Defender\Controller\Hub_Connector;
+use WP_Defender\Component\Hub_Connector as Hub_Connector_Component;
+use WP_Defender\Model\Setting\Audit_Logging as Audit_Logging_Settings;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
-use WP_Defender\Controller\Antibot_Global_Firewall;
 use WP_Defender\Model\Setting\Session_Protection;
+use WP_Defender\Controller\Session_Protection as Session_Protection_Controller;
 
 /**
  * Handles the main admin page.
@@ -30,6 +35,7 @@ class Dashboard extends Event {
 
 	use IO;
 	use Formats;
+	use Defender_Dashboard_Client;
 
 	/**
 	 * The slug identifier for this controller.
@@ -90,7 +96,7 @@ class Dashboard extends Event {
 		$count = wd_di()->get( \WP_Defender\Component\Scan::class )->indicator_issue_count();
 
 		$indicator = $count > 0
-			? ' <span class="update-plugins wd-issue-indicator-sidebar"><span class="plugin-count">' . $count . '</span></span>'
+			? ' <span class="update-plugins wd-issue-indicator-sidebar"></span>'
 			: null;
 		foreach ( $menu as $k => $item ) {
 			if ( 'wp-defender' === $item[2] ) {
@@ -107,11 +113,12 @@ class Dashboard extends Event {
 	 */
 	protected function add_main_page() {
 		$this->register_page(
-			$this->get_menu_title(),
+			$this->get_page_title(),
 			$this->parent_slug,
 			array( $this, 'main_view' ),
 			null,
-			$this->get_menu_icon()
+			$this->get_menu_icon(),
+			$this->get_menu_title()
 		);
 	}
 
@@ -123,6 +130,50 @@ class Dashboard extends Event {
 	}
 
 	/**
+	 * Page-specific data for a concrete controller.
+	 *
+	 * @return array
+	 */
+	protected function get_page_data(): array {
+		$security_tweaks = wd_di()->get( \WP_Defender\Controller\Security_Tweaks::class );
+		$security_tweaks->refresh_tweaks_status();
+		$security_tweaks_data = $security_tweaks->dashboard_widget();
+
+		$audit_model     = wd_di()->get( Audit_Logging_Settings::class );
+		$firewall        = wd_di()->get( Firewall::class )->get_summary();
+		// Different lockout types.
+		$enabled_login = wd_di()->get( Login_Lockout::class )->enabled;
+		$enabled_nf    = wd_di()->get( Notfound_Lockout::class )->enabled;
+		$enabled_ua    = wd_di()->get( User_Agent_Lockout::class )->enabled;
+
+		return array(
+			'hide_onboarding'    => ! wd_di()->get( HUB::class )->get_onboarding_status(),
+			'defenderSetupNonce' => wp_create_nonce( 'defender_quick_setup' ),
+			'securityTweaks'     => $security_tweaks_data['summary']['issues_count'],
+			'scanData'           => array(
+				'numberIssues' => wd_di()->get( \WP_Defender\Component\Scan::class )->indicator_issue_count(),
+				'settings'     => wd_di()->get( \WP_Defender\Model\Setting\Scan::class )->export(),
+				// Scan routes & nonces are set above.
+			),
+			'firewallData'       => array(
+				'enabledLocalFirewall' => $enabled_login || $enabled_nf || $enabled_ua,
+				'enabledLogin'         => $enabled_login,
+				'enabledNotFound'      => $enabled_nf,
+				'enabledUserAgent'     => $enabled_ua,
+				'loginLockoutMonth'    => $firewall['lockout_login_this_month'],
+				'nfLockoutMonth'       => $firewall['lockout_404_this_month'],
+				'uaLockoutMonth'       => $firewall['lockout_ua_this_month'],
+				'antibot'              => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
+			),
+			'site_id'            => wd_di()->get( WPMUDEV::class )->get_site_id(),
+			'auditData'          => array(
+				'enabled' => $audit_model->is_active(),
+			),
+			'sessionProtection'  => wd_di()->get( Session_Protection::class )->export(),
+		);
+	}
+
+	/**
 	 * Enqueues scripts and styles for this page.
 	 * Only enqueues assets if the page is active.
 	 */
@@ -130,13 +181,125 @@ class Dashboard extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		wp_localize_script(
-			'def-dashboard',
-			'dashboard',
-			array_merge( $this->data_frontend(), $this->dump_routes_and_nonces() )
+
+		$wizard_action = HTTP::get( 'wizard_action' );
+		$wizard_source = HTTP::get( 'source' );
+
+		// Fallback completion marker for setup wizard integrations rendered on dashboard.
+		// This prevents onboarding loops if client-side completion request fails.
+		if (
+			'setup_wizard' === $wizard_source
+			&& in_array( $wizard_action, array( 'view_results', 'close_wizard', 'finish_wizard' ), true )
+			&& current_user_can( 'manage_options' )
+		) {
+			update_site_option( 'wp_defender_shown_activator', true );
+		}
+
+		$show_onboarding       = \WP_Defender\Model\Onboard::maybe_show_onboarding();
+		$api_error             = HTTP::get( 'api_error' );
+		$hub_connection_source = HTTP::get( 'hub_connection_source' );
+		$hub_connect_recovery  = ! $show_onboarding
+			&& is_string( $api_error )
+			&& '' !== $api_error
+			&& 'profile_menu' !== $hub_connection_source
+			&& ! Hub_Connector_Component::is_logged_in()
+			&& ! Hub_Connector_Component::is_wpmudev_dashboard_connected();
+
+		if ( $show_onboarding || $hub_connect_recovery ) {
+			add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
+		}
+
+		$handle = 'defender-ui-dashboard';
+		wp_enqueue_script(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/js/dashboard-ui.js',
+			array( 'def-vue', 'def-manifest', 'def-core-ui', 'defender', 'wp-i18n' ),
+			DEFENDER_VERSION,
+			true
 		);
-		wp_enqueue_script( 'def-dashboard' );
+		wp_set_script_translations( $handle, 'wpdef' );
+
+		$setup_wizard_data = wd_di()->get( Setup_Wizard::class )->data_frontend();
+		$tracking_data     = wd_di()->get( Data_Tracking::class )->get_dashboard_notice_data();
+		$dashboard_data    = $this->dump_routes_and_nonces();
+		$firewall_data     = wd_di()->get( Firewall::class )->dump_routes_and_nonces();
+		$scan_data         = wd_di()->get( \WP_Defender\Controller\Scan::class )->dump_routes_and_nonces();
+		$routes            = array_merge(
+			$setup_wizard_data['routes'] ?? array(),
+			$tracking_data['routes'] ?? array(),
+			$dashboard_data['routes'] ?? array(),
+			$firewall_data['routes'] ?? array(),
+			$scan_data['routes'] ?? array(),
+		);
+		$nonces            = array_merge(
+			$setup_wizard_data['nonces'] ?? array(),
+			$tracking_data['nonces'] ?? array(),
+			$dashboard_data['nonces'] ?? array(),
+			$firewall_data['nonces'] ?? array(),
+			$scan_data['nonces'] ?? array(),
+		);
+		unset( $setup_wizard_data['routes'], $setup_wizard_data['nonces'] );
+		unset( $tracking_data['routes'], $tracking_data['nonces'] );
+		unset( $firewall_data['routes'], $firewall_data['nonces'] );
+		wp_localize_script(
+			$handle,
+			'defenderUIData',
+			array_merge(
+				$this->get_shared_data(),
+				$this->get_page_data(),
+				// Welcome modal's details.
+				wd_di()->get( Feature_Modal::class )->get_dashboard_modals(),
+				// Specific data.
+				array(
+					'showOnboarding' => $show_onboarding,
+					'routes'         => $routes,
+					'nonces'         => $nonces,
+				),
+				$setup_wizard_data,
+				$tracking_data,
+				wd_di()->get( \WP_Defender\Controller\Scan::class )->get_initial_scan_data()
+			)
+		);
+
+		wp_enqueue_style(
+			$handle,
+			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			array(),
+			DEFENDER_VERSION
+		);
+
 		$this->enqueue_main_assets();
+	}
+
+	/**
+	 * Adds onboarding body classes on dashboard when onboarding wizard is active.
+	 *
+	 * @param  string $classes  Existing admin body classes.
+	 *
+	 * @return string
+	 */
+	public function admin_body_class( $classes ): string {
+		$classes .= ' wdf-onboarding-active ';
+
+		return $classes;
+	}
+
+	/**
+	 * Returns the current hardening (security tweaks) issue count via AJAX.
+	 *
+	 * @return Response
+	 * @defender_route
+	 * @defender_redirect
+	 */
+	public function get_hardening_count(): Response {
+		$security_tweaks = wd_di()->get( \WP_Defender\Controller\Security_Tweaks::class )->dashboard_widget();
+
+		return new Response(
+			true,
+			array(
+				'count' => (int) ( $security_tweaks['summary']['issues_count'] ?? 0 ),
+			)
+		);
 	}
 
 	/**
@@ -225,6 +388,42 @@ class Dashboard extends Event {
 	}
 
 	/**
+	 * Toggle a dashboard feature by feature key.
+	 *
+	 * @param Request $request The current request data.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function toggle_feature( Request $request ): Response {
+		$data    = $request->get_data(
+			array(
+				'feature' => array(
+					'type'     => 'string',
+					'sanitize' => 'sanitize_text_field',
+				),
+			)
+		);
+		$feature = $data['feature'] ?? '';
+
+		$feature_controllers = array(
+			'antibot'            => Antibot_Global_Firewall::class,
+			'audit'              => Audit_Logging::class,
+			'session_protection' => Session_Protection_Controller::class,
+		);
+		if ( isset( $feature_controllers[ $feature ] ) ) {
+			return wd_di()->get( $feature_controllers[ $feature ] )->save_settings( $request );
+		}
+
+		return new Response(
+			false,
+			array(
+				'message' => esc_html__( 'Unsupported feature toggle request.', 'defender-security' ),
+			)
+		);
+	}
+
+	/**
 	 * Removes settings for all submodules.
 	 */
 	public function remove_settings() {
@@ -251,17 +450,18 @@ class Dashboard extends Event {
 			array(
 				'scan'              => wd_di()->get( Scan::class )->data_frontend(),
 				'firewall'          => $firewall->data_frontend(),
+				'blocklist_monitor' => wd_di()->get( Blocklist_Monitor::class )->data_frontend(),
 				'blacklist'         => array(
 					'nonces'    => $nonces,
 					'endpoints' => $endpoints,
 				),
 				'two_fa'            => wd_di()->get( Two_Factor::class )->data_frontend(),
 				'advanced_tools'    => array(
-					'mask_login'         => wd_di()->get( Mask_Login::class )->dashboard_widget(),
-					'security_headers'   => wd_di()->get( Security_Headers::class )->dashboard_widget(),
-					'pwned_passwords'    => wd_di()->get( Password_Protection::class )->dashboard_widget(),
-					'captcha'            => wd_di()->get( Captcha::class )->dashboard_widget(),
-					'strong_passwords'   => wd_di()->get( Strong_Password::class )->dashboard_widget(),
+					'mask_login'       => wd_di()->get( Mask_Login::class )->dashboard_widget(),
+					'security_headers' => wd_di()->get( Security_Headers::class )->dashboard_widget(),
+					'pwned_passwords'  => wd_di()->get( Password_Protection::class )->dashboard_widget(),
+					'captcha'          => wd_di()->get( Captcha::class )->dashboard_widget(),
+					'strong_passwords' => wd_di()->get( Strong_Password::class )->dashboard_widget(),
 				),
 				'security_tweaks'   => wd_di()->get( Security_Tweaks::class )->dashboard_widget(),
 				'notifications'     => wd_di()->get( Notification::class )->data_frontend(),
