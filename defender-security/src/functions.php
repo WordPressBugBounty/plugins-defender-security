@@ -362,7 +362,7 @@ function defender_whitelabel_data(): array {
 						$thumb_id = (int) ( $cfg['thumb_id'] ?? 0 );
 						if ( $thumb_id ) {
 							$url             = wp_get_attachment_image_url( $thumb_id, 'thumbnail', true );
-							$plugin_icon_url = $url ?: '';
+							$plugin_icon_url = $url ? $url : '';
 						}
 						break;
 					case 'link':

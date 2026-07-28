@@ -291,8 +291,10 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 
 		return wp_kses(
 			sprintf(
-				/* translators: %s: number of days */
-				__( '<strong>Your security keys are outdated.</strong>', 'defender-security' ),
+				/* translators: %1$s: opening strong tag, %2$s: closing strong tag */
+				__( '%1$sYour security keys are outdated.%2$s', 'defender-security' ),
+				'<strong>',
+				'</strong>'
 			),
 			array(
 				'strong' => array(),

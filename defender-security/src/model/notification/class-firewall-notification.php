@@ -195,10 +195,13 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 * @return bool True when the email limit has been reached.
 	 */
 	private function is_email_limit_reached( string $email ): bool {
-		$count = Email_Track::count(
+		// Handle cool_off period in minutes and hours.
+		// The minutes values are in fractional hours, e.g., 0.25 = 15 minutes, 0.5 = 30 minutes.
+		$cool_off_seconds = (int) round( (float) $this->configs['cool_off'] * HOUR_IN_SECONDS );
+		$count            = Email_Track::count(
 			$this->slug,
 			$email,
-			strtotime( '-' . $this->configs['cool_off'] . ' hours' ),
+			time() - $cool_off_seconds,
 			time()
 		);
 

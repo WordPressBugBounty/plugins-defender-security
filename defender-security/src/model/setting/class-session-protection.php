@@ -18,6 +18,11 @@ class Session_Protection extends Setting {
 	use User;
 
 	/**
+	 * Maximum allowed idle timeout in hours (~24.8 days, aligned with JS setTimeout 32-bit limit).
+	 */
+	public const MAX_IDLE_TIMEOUT_HOURS = 596;
+
+	/**
 	 * Feature status
 	 *
 	 * @defender_property
@@ -79,6 +84,32 @@ class Session_Protection extends Setting {
 	protected function before_load(): void {
 		$this->login_duration = $this->get_default_duration();
 		$this->user_roles     = array( 'administrator' );
+	}
+
+	/**
+	 * Clamps idle_timeout to MAX_IDLE_TIMEOUT_HOURS to guard against legacy values saved without a limit.
+	 *
+	 * @return void
+	 */
+	protected function after_load(): void {
+		if ( $this->idle_timeout > self::MAX_IDLE_TIMEOUT_HOURS ) {
+			$this->idle_timeout = self::MAX_IDLE_TIMEOUT_HOURS;
+		}
+	}
+
+	/**
+	 * Validates that idle_timeout does not exceed the allowed maximum.
+	 *
+	 * @return void
+	 */
+	protected function after_validate(): void {
+		if ( $this->idle_timeout > self::MAX_IDLE_TIMEOUT_HOURS ) {
+			$this->errors['idle_timeout'] = sprintf(
+				/* translators: %d: maximum allowed hours */
+				esc_html__( 'Idle timeout cannot exceed %d hours (30 days).', 'defender-security' ),
+				self::MAX_IDLE_TIMEOUT_HOURS
+			);
+		}
 	}
 
 	/**

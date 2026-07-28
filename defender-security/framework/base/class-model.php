@@ -234,7 +234,16 @@ abstract class Model extends Component {
 		} else {
 			foreach ( array_keys( $this->annotations ) as $property ) {
 				if ( isset( $data[ $property ] ) && $this->has_property( $property ) ) {
-					$this->$property = $data[ $property ];
+					$value = $data[ $property ];
+					$type  = $this->annotations[ $property ]['type'];
+					if ( false !== $type ) {
+						if ( 'boolean' === $type || 'bool' === $type ) {
+							$value = filter_var( $value, FILTER_VALIDATE_BOOLEAN );
+						} else {
+							settype( $value, $type );
+						}
+					}
+					$this->$property = $value;
 				}
 			}
 

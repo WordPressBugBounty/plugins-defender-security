@@ -235,11 +235,11 @@ class Lockout_Log extends DB {
 	 * Get all lockout types.
 	 */
 	public static function get_all_lockout_types(): array {
-		$arr   = self::get_404_lockout_types();
-		$arr[] = self::AUTH_LOCK;
-		$arr[] = self::LOCKOUT_UA;
-
-		return $arr;
+		return array_merge(
+			self::get_404_lockout_types(),
+			array( self::AUTH_LOCK ),
+			self::get_ua_lockout_types()
+		);
 	}
 
 	/**
@@ -275,7 +275,7 @@ class Lockout_Log extends DB {
 		$start = strtotime( '-7 days' );
 		$end   = time();
 
-		return self::count( $start, $end, self::LOCKOUT_UA );
+		return self::count( $start, $end, self::get_ua_lockout_types() );
 	}
 
 	/**
@@ -368,6 +368,35 @@ class Lockout_Log extends DB {
 	}
 
 	/**
+	 * Get log types that are attempts/errors (not lockout events).
+	 *
+	 * @return array
+	 */
+	public static function get_attempt_types(): array {
+		return array(
+			self::AUTH_FAIL,
+			self::ERROR_404,
+			self::ERROR_404_IGNORE,
+			self::ERROR_404_XSS,
+			self::ERROR_404_NON_EXISTENT_PLUGIN,
+			self::ERROR_404_NON_EXISTENT_THEME,
+		);
+	}
+
+	/**
+	 * Delete only lockout-type log records, preserving attempt/error entries.
+	 *
+	 * @return int|false Number of rows deleted or false on failure.
+	 */
+	public static function delete_lockout_records() {
+		$orm = self::get_orm();
+
+		return $orm->get_repository( self::class )
+					->where( 'type', 'not in', self::get_attempt_types() )
+					->delete_all();
+	}
+
+	/**
 	 * Remove logs based on timestamp and limit.
 	 *
 	 * @param  int $timestamp  The timestamp to filter logs by.
@@ -396,23 +425,26 @@ class Lockout_Log extends DB {
 		$first_this_week  = strtotime( '-7 days', $current_time );
 		$first_this_month = strtotime( '-30 days', $current_time );
 
+		$ua_types_sql  = "'" . implode( "', '", self::get_ua_lockout_types() ) . "'";
+		$types_404_sql = "'" . implode( "', '", self::get_404_lockout_types() ) . "'";
+
 		// Prepare columns.
 		$select = array(
 			'MAX(date) as lockout_last',
 			'COUNT(*) as lockout_this_month',
 			// 24 hours
 			"COUNT(IF(date > {$today_midnight}, 1, NULL)) as lockout_today",
-			"COUNT(IF(date > {$today_midnight} AND type IN ('" . self::LOCKOUT_404 . "', '" . self::LOCKOUT_404_XSS . "', '" . self::LOCKOUT_404_NON_EXISTENT_THEME . "', '" . self::LOCKOUT_404_NON_EXISTENT_PLUGIN . "'), 1, NULL)) as lockout_404_today",
+			"COUNT(IF(date > {$today_midnight} AND type IN ({$types_404_sql}), 1, NULL)) as lockout_404_today",
 			"COUNT(IF(date > {$today_midnight} AND type = '" . self::AUTH_LOCK . "', 1, NULL)) as lockout_login_today",
-			"COUNT(IF(date > {$today_midnight} AND type = '" . self::LOCKOUT_UA . "', 1, NULL)) as lockout_ua_today",
+			"COUNT(IF(date > {$today_midnight} AND type IN ({$ua_types_sql}), 1, NULL)) as lockout_ua_today",
 			// 7 days
-			"COUNT(IF(date > {$first_this_week} AND type IN ('" . self::LOCKOUT_404 . "', '" . self::LOCKOUT_404_XSS . "', '" . self::LOCKOUT_404_NON_EXISTENT_THEME . "', '" . self::LOCKOUT_404_NON_EXISTENT_PLUGIN . "'), 1, NULL)) as lockout_404_this_week",
+			"COUNT(IF(date > {$first_this_week} AND type IN ({$types_404_sql}), 1, NULL)) as lockout_404_this_week",
 			"COUNT(IF(date > {$first_this_week} AND type = '" . self::AUTH_LOCK . "', 1, NULL)) as lockout_login_this_week",
-			"COUNT(IF(date > {$first_this_week} AND type = '" . self::LOCKOUT_UA . "', 1, NULL)) as lockout_ua_this_week",
+			"COUNT(IF(date > {$first_this_week} AND type IN ({$ua_types_sql}), 1, NULL)) as lockout_ua_this_week",
 			// 30 days
-			"COUNT(IF(date > {$first_this_month} AND type IN ('" . self::LOCKOUT_404 . "', '" . self::LOCKOUT_404_XSS . "', '" . self::LOCKOUT_404_NON_EXISTENT_THEME . "', '" . self::LOCKOUT_404_NON_EXISTENT_PLUGIN . "'), 1, NULL)) as lockout_404_this_month",
+			"COUNT(IF(date > {$first_this_month} AND type IN ({$types_404_sql}), 1, NULL)) as lockout_404_this_month",
 			"COUNT(IF(date > {$first_this_month} AND type = '" . self::AUTH_LOCK . "', 1, NULL)) as lockout_login_this_month",
-			"COUNT(IF(date > {$first_this_month} AND type = '" . self::LOCKOUT_UA . "', 1, NULL)) as lockout_ua_this_month",
+			"COUNT(IF(date > {$first_this_month} AND type IN ({$ua_types_sql}), 1, NULL)) as lockout_ua_this_month",
 		);
 		$select = implode( ',', $select );
 
@@ -588,9 +620,13 @@ class Lockout_Log extends DB {
 		$type       = $filters['type'] ?? '';
 		$ua_types   = self::get_ua_lockout_types();
 
-		if ( in_array( $type, $ua_types, true ) ) {
-			$where = self::ban_status_where( $ban_status );
-			if ( 3 === count( $where ) ) {
+		$where = self::ban_status_where( $ban_status );
+
+		if ( 3 === count( $where ) ) {
+			if ( in_array( $type, $ua_types, true ) ) {
+				$orm->where( ...$where );
+			} elseif ( '' === $type ) {
+				$orm->where( 'type', 'in', $ua_types );
 				$orm->where( ...$where );
 			}
 			return;

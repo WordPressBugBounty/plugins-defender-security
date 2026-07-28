@@ -42,7 +42,6 @@ class Malicious_Bot extends Controller {
 			add_action( 'init', array( $this, 'init' ) );
 			add_action( 'wpdef_rotate_malicious_bot_secret_hash', array( $this->service, 'rotate_hash' ) );
 			add_filter( 'query_vars', array( $this, 'add_query_var' ) );
-			add_action( 'after_switch_theme', array( $this, 'flush_rewrite' ) );
 
 			$service = wd_di()->get( Blacklist_Lockout::class );
 			$ip      = $this->get_user_ip();

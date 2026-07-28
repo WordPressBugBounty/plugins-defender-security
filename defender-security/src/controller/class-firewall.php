@@ -529,7 +529,7 @@ class Firewall extends Event {
 				),
 			)
 		);
-		$maybe_email = $data['user_data'];
+		$maybe_email = ! empty( $data['user_data'] ) ? $data['user_data'] : '';
 		if ( ! is_string( $maybe_email ) || '' === trim( $maybe_email ) ) {
 			return new Response( false, array() );
 		}
@@ -1213,7 +1213,10 @@ class Firewall extends Event {
 	 * @since 3.3.0
 	 */
 	public function empty_lockouts() {
-		if ( Lockout_Ip::truncate() ) {
+		$ip_deleted  = Lockout_Ip::truncate();
+		$log_deleted = Lockout_Log::delete_lockout_records();
+
+		if ( $ip_deleted !== false && $log_deleted !== false ) {
 			$this->log( 'Deleted lockout records successfully.', self::FIREWALL_LOG );
 
 			return new Response(

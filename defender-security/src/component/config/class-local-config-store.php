@@ -267,7 +267,7 @@ class Local_Config_Store {
 			if ( ! is_array( $config ) ) {
 				continue;
 			}
-			$config['key'] = $key;
+			$config['key']     = $key;
 			$config['strings'] = $this->service->import_module_strings( $config );
 			if ( isset( $config['configs'] ) ) {
 				unset( $config['configs'] );

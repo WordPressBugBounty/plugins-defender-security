@@ -551,7 +551,7 @@ class Scan extends DB {
 			$scan_item_ignore_total = wd_di()->get( Scan_Item::class )
 				->get_types_total( $this->id, Scan_Item::STATUS_IGNORE );
 
-			$count_ignored = isset( $scan_item_ignore_total['all'] ) ?
+			$count_ignored          = isset( $scan_item_ignore_total['all'] ) ?
 				$scan_item_ignore_total['all'] : 0;
 			$count_ignored_filtered = (int) $this->count( $type, Scan_Item::STATUS_IGNORE );
 
@@ -769,6 +769,39 @@ class Scan extends DB {
 		$ret              = $model->save();
 
 		return $ret;
+	}
+
+	/**
+	 * Carry previously-ignored issues forward into this scan, without duplicating
+	 * any that were already re-detected as active in the current pass.
+	 *
+	 * @param  array|string $type       Scan item type(s) the issues belong to.
+	 * @param  array        $issues     Scan_Item objects (status ignore) to carry forward.
+	 * @param  string       $key_field  Field inside raw_data used to match issues, e.g. 'file' or 'slug'.
+	 */
+	public function carry_forward_ignored_issues( $type, array $issues, string $key_field ) {
+		if ( array() === $issues ) {
+			return;
+		}
+
+		$active_by_key = array();
+		foreach ( $this->get_issues( $type, Scan_Item::STATUS_ACTIVE ) as $active_item ) {
+			$key = $active_item->raw_data[ $key_field ] ?? null;
+			if ( null !== $key ) {
+				$active_by_key[ $key ] = $active_item;
+			}
+		}
+
+		foreach ( $issues as $issue ) {
+			$key = $issue->raw_data[ $key_field ] ?? null;
+			if ( null !== $key && isset( $active_by_key[ $key ] ) ) {
+				// Already re-detected as active in this scan; keep it ignored, don't duplicate.
+				$active_by_key[ $key ]->status = Scan_Item::STATUS_IGNORE;
+				$active_by_key[ $key ]->save();
+				continue;
+			}
+			$this->add_item( $issue->type, $issue->raw_data, Scan_Item::STATUS_IGNORE );
+		}
 	}
 
 	/**

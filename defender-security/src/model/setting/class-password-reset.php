@@ -61,8 +61,8 @@ class Password_Reset extends Setting {
 	 */
 	public function get_default_values(): array {
 		return array(
-			'message' => __(
-				"You are required to change your password to a new one to use this site.",
+			'message' => esc_html__(
+				'You are required to change your password to a new one to use this site.',
 				'defender-security'
 			),
 		);

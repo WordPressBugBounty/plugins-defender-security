@@ -450,7 +450,7 @@ class Backup_Settings extends Component {
 				'email_content_issue_not_found' => $default_scan_notification_values['content_issue_not_found'],
 				'email_content_error'           => $default_scan_notification_values['content_error'],
 				// Values for frequency, day and time are above.
-				'scheduled_scanning'            => $default_scan_settings->scheduled_scanning,
+				'scheduled_scanning'            => true,
 			),
 			'iplockout'             => array(
 				'login_protection'                       => true,

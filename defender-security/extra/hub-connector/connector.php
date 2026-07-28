@@ -18,7 +18,7 @@ if ( ! defined( '\WPMUDEV_HUB_CONNECTOR_FILE' ) ) {
 
 // Module version.
 if ( ! defined( '\WPMUDEV_HUB_CONNECTOR_VERSION' ) ) {
-	define( 'WPMUDEV_HUB_CONNECTOR_VERSION', '1.0.8' );
+	define( 'WPMUDEV_HUB_CONNECTOR_VERSION', '1.0.9' );
 }
 
 // SUI version.

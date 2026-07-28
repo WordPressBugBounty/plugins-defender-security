@@ -556,7 +556,9 @@ trait Plugin {
 	 *     newVersion:string,
 	 *     learnMoreUrl:string,
 	 *     updateUrl:string,
-	 *     canUpdate:bool
+	 *     canUpdate:bool,
+	 *     currentVersion:string,
+	 *     releaseDate:string
 	 * }
 	 */
 	public function get_plugin_update_notice_data(): array {
@@ -602,6 +604,12 @@ trait Plugin {
 			);
 		}
 
+		$release_date_raw = defined( 'DEFENDER_RELEASE_DATE' ) ? DEFENDER_RELEASE_DATE : '';
+		$timestamp        = strtotime( $release_date_raw );
+		$release_date     = false !== $timestamp
+			? date_i18n( get_option( 'date_format' ), $timestamp )
+			: '';
+
 		return array(
 			'available'      => $has_update,
 			'newVersion'     => $new_version,
@@ -609,7 +617,7 @@ trait Plugin {
 			'updateUrl'      => esc_url_raw( $update_url ),
 			'canUpdate'      => $can_update && '' !== $update_url,
 			'currentVersion' => DEFENDER_VERSION,
-			'releaseDate'    => defined( 'DEFENDER_RELEASE_DATE' ) ? DEFENDER_RELEASE_DATE : '',
+			'releaseDate'    => $release_date,
 		);
 	}
 }

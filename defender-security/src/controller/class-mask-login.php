@@ -215,6 +215,9 @@ class Mask_Login extends Event {
 		if ( ! $this->service->is_login_url() ) {
 			$redirect_path = trim( (string) wp_parse_url( $location, PHP_URL_PATH ), '/' );
 			if ( $redirect_path === $this->get_model()->mask_url ) {
+				if ( $this->is_recipient_email_action() ) {
+					return $location;
+				}
 				$this->maybe_lock();
 			}
 		}
@@ -928,6 +931,10 @@ class Mask_Login extends Event {
 		$action  = defender_get_data_from_request( 'action', 'r' );
 		$allowed = 'wp-admin/admin-post.php' === $path && is_string( $action ) && '' !== trim( $action );
 
+		if ( 'wp-admin/admin-ajax.php' === $path && $this->is_recipient_email_action() ) {
+			$allowed = true;
+		}
+
 		/**
 		 * Filter to allow whitelisting paths from login masking.
 		 *
@@ -937,6 +944,35 @@ class Mask_Login extends Event {
 		 * @since 2.6.4
 		 */
 		return apply_filters( 'wd_mask_login_is_allowed_path', $allowed, $path );
+	}
+
+	/**
+	 * Check if the request is a signed recipient email action.
+	 *
+	 * @return bool
+	 */
+	private function is_recipient_email_action(): bool {
+		$action = defender_get_data_from_request( 'action', 'r' );
+		$hash   = defender_get_data_from_request( 'hash', 'r' );
+		if ( ! is_string( $hash ) || '' === trim( $hash ) ) {
+			return false;
+		}
+
+		if ( Notification::SLUG_UNSUBSCRIBE === $action ) {
+			$slug = defender_get_data_from_request( 'slug', 'r' );
+
+			return is_string( $slug ) && '' !== trim( $slug );
+		}
+
+		if ( Notification::SLUG_SUBSCRIBE !== $action ) {
+			return false;
+		}
+
+		$slug  = defender_get_data_from_request( 'uid', 'r' );
+		$slugs = defender_get_data_from_request( 'uids', 'r' );
+
+		return ( is_string( $slug ) && '' !== trim( $slug ) )
+			|| ( is_string( $slugs ) && '' !== trim( $slugs ) );
 	}
 
 	/**

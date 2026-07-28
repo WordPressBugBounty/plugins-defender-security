@@ -16,6 +16,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
+use WP_Defender\Component\IP\Antibot_Global_Firewall;
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
 
 /**
@@ -83,12 +84,13 @@ class Global_Ip extends Controller {
 			HOUR_IN_SECONDS
 		);
 
-		if ( $this->service->can_blocklist_autosync() ) {
-			// No need to run Rate mechanism for IP lockouts because we do it in Blacklist class.
-			add_action( 'wd_blacklist_this_ip', array( $this, 'blacklist_an_ip' ) );
-		}
 		add_action( 'init', array( $this->service, 'handle_expired_membership' ) );
-
+		if ( $this->wpmudev->is_wpmu_hosting() ) {
+			// sync_state must run before can_blocklist_autosync is evaluated, so both hooks use priority 10.
+			add_action( 'init', array( $this, 'sync_state' ) );
+		}
+		// Register after sync_state so the model reflects the current Hosting state.
+		add_action( 'init', array( $this, 'maybe_register_blocklist_autosync_hook' ) );
 		// admin_init priority 20 runs after Hub_Connector sets the transient (priority 10);
 		// the other two hooks cover async-sync cases.
 		add_action( 'admin_init', array( $this, 'maybe_hcm_connection_attempt' ), 20 );
@@ -110,9 +112,6 @@ class Global_Ip extends Controller {
 		}
 
 		delete_site_transient( Hub_Connector::TRANSIENT_KEY );
-
-		$this->model->blocklist_autosync = true;
-		$this->model->save();
 	}
 
 	/**
@@ -150,10 +149,12 @@ class Global_Ip extends Controller {
 
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
-			$this->model->enabled = $this->model->allow_self_unlock || $this->model->blocklist_autosync;
 			$this->model->save();
 			Config_Hub_Helper::set_clear_active_flag();
 			if ( 'central_ip' === $message_type ) {
+				if ( isset( $data['enabled'] ) && $old_enabled !== $this->model->enabled ) {
+					$this->service->toggle_on_hosting( $this->model->enabled );
+				}
 				$message = $this->get_update_message( $data, $old_enabled, Global_Ip_Lockout::get_module_name() );
 			} else {
 				$message = '';
@@ -215,7 +216,9 @@ class Global_Ip extends Controller {
 				),
 				'hub'   => array(
 					'global_ip_list'        => $this->service->get_formated_global_ip_list(),
-					'global_ip_setting_url' => $this->wpmudev->get_api_base_url() . 'hub2/ip-banning',
+					'global_ip_setting_url' => defender_is_unlimited_hosting()
+						? wd_di()->get( Antibot_Global_Firewall::class )->get_uh_site_tools_link()
+						: $this->wpmudev->get_api_base_url() . 'hub2/security-center/custom-ip-list',
 				),
 			),
 			$this->dump_routes_and_nonces()
@@ -332,5 +335,35 @@ class Global_Ip extends Controller {
 	 */
 	public function export_strings() {
 		return array();
+	}
+
+	/**
+	 * Register the blocklist autosync hook after sync_state has updated the model.
+	 *
+	 * @return void
+	 */
+	public function maybe_register_blocklist_autosync_hook(): void {
+		if ( $this->service->can_blocklist_autosync() ) {
+			// No need to run Rate mechanism for IP lockouts because we do it in Blacklist class.
+			add_action( 'wd_blacklist_this_ip', array( $this, 'blacklist_an_ip' ) );
+		}
+	}
+
+	/**
+	 * Sync custom ip list status with Hosting.
+	 *
+	 * @return void
+	 */
+	public function sync_state(): void {
+		$hosting_enabled = defender_get_hosting_feature_state( 'globaliplist' );
+		if ( '' === $hosting_enabled ) {
+			return;
+		}
+		$hosting_enabled = (bool) $hosting_enabled;
+		if ( $hosting_enabled !== $this->model->enabled ) {
+			$this->model->enabled            = $hosting_enabled;
+			$this->model->blocklist_autosync = $hosting_enabled;
+			$this->model->save();
+		}
 	}
 }

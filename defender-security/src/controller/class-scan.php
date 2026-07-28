@@ -838,7 +838,7 @@ class Scan extends Event {
 		}
 
 		$data = array(
-			'scan'                  => $scan_data,
+			'scan'                   => $scan_data,
 			'has_first_scan_started' => $first_scan_started,
 		);
 

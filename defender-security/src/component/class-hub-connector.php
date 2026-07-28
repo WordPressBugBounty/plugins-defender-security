@@ -681,14 +681,25 @@ class Hub_Connector extends Component {
 			return null;
 		}
 
-		$api_logged_in = self::is_logged_in();
-		$is_pro        = wd_di()->get( WPMUDEV::class )->is_pro();
+		$api_logged_in       = self::is_logged_in();
+		$dashboard_connected = self::is_wpmudev_dashboard_connected();
+		$is_pro              = wd_di()->get( WPMUDEV::class )->is_pro();
 
-		if ( ! $api_logged_in && ! $is_pro ) {
+		if ( ! $api_logged_in && ! $dashboard_connected && ! $is_pro ) {
 			return null;
 		}
 
-		$raw = \WPMUDEV\Hub\Connector\Data::get()->profile_data( true );
+		if (
+			$dashboard_connected &&
+			! $api_logged_in &&
+			is_object( \WPMUDEV_Dashboard::$settings ) &&
+			method_exists( \WPMUDEV_Dashboard::$settings, 'get' )
+		) {
+			$dashboard_profile = \WPMUDEV_Dashboard::$settings->get( 'profile_data' );
+			$raw               = $dashboard_profile['profile'] ?? array();
+		} else {
+			$raw = \WPMUDEV\Hub\Connector\Data::get()->profile_data( true );
+		}
 
 		if ( ! is_array( $raw ) || empty( $raw['user_name'] ) ) {
 			return null;

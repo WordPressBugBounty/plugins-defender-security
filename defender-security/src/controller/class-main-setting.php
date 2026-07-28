@@ -394,7 +394,12 @@ class Main_Setting extends Event {
 	public function import_data( array $data ) {
 		$model = $this->get_model();
 
+		// Preserve Usage Tracking; it is a user privacy choice that a config must not change.
+		$current_usage_tracking = $model->usage_tracking;
+
 		$model->import( $data );
+		$model->usage_tracking = $current_usage_tracking;
+
 		if ( $model->validate() ) {
 			$model->save();
 		}
@@ -439,7 +444,6 @@ class Main_Setting extends Event {
 			);
 		}
 
-
 		if ( ! $this->validate_importer( $importer ) ) {
 			return new Response(
 				false,
@@ -471,7 +475,7 @@ class Main_Setting extends Event {
 		);
 
 		if ( ! $this->wpmudev->is_pro() ) {
-			$sample = $this->service->gather_data();
+			$sample      = $this->service->gather_data();
 			$pro_modules = array();
 
 			foreach ( $importer['configs'] as $slug => $module ) {
@@ -485,15 +489,15 @@ class Main_Setting extends Event {
 				$module_names = array_map(
 					function ( $slug ) {
 						$names = array(
-							'audit'             => esc_html__( 'Audit Logs', 'defender-security' ),
-							'waf'               => esc_html__( 'Web Application Firewall (WAF)', 'defender-security' ),
-							'blocklist_monitor' => esc_html__( 'Blocklist Monitor', 'defender-security' ),
-							'pwned_passwords'   => esc_html__( 'Pwned Passwords', 'defender-security' ),
+							'audit'                 => esc_html__( 'Audit Logs', 'defender-security' ),
+							'waf'                   => esc_html__( 'Web Application Firewall (WAF)', 'defender-security' ),
+							'blocklist_monitor'     => esc_html__( 'Blocklist Monitor', 'defender-security' ),
+							'pwned_passwords'       => esc_html__( 'Pwned Passwords', 'defender-security' ),
 							'force_strong_password' => esc_html__( 'Strong Passwords', 'defender-security' ),
-							'session_protection' => esc_html__( 'Session Protection', 'defender-security' ),
-							'two_factor'        => esc_html__( 'Two-Factor Authentication', 'defender-security' ),
-							'mask_login'        => esc_html__( 'Hide Login URL', 'defender-security' ),
-							'security_headers'  => esc_html__( 'Security Policies', 'defender-security' ),
+							'session_protection'    => esc_html__( 'Session Protection', 'defender-security' ),
+							'two_factor'            => esc_html__( 'Two-Factor Authentication', 'defender-security' ),
+							'mask_login'            => esc_html__( 'Hide Login URL', 'defender-security' ),
+							'security_headers'      => esc_html__( 'Security Policies', 'defender-security' ),
 						);
 
 						return $names[ $slug ] ?? $slug;
@@ -1183,18 +1187,18 @@ class Main_Setting extends Event {
 	}
 
 	/**
-	 * Generates an error message for when there is an issue applying some tweaks from the Recommendations tab.
+	 * Generates an error message for when there is an issue applying some tweaks from the Hardening tab.
 	 *
 	 * @return Response The response object containing the error message and fresh frontend configurations.
 	 */
 	private function apply_config_recommendations_error_message(): Response {
 		$message = sprintf(
-			/* translators: 1: Recommendations tab, 2: wp-config.php file, 3: Documentation. */
+			/* translators: 1: Hardening tab, 2: wp-config.php file, 3: Documentation. */
 			esc_html__(
 				'There was an issue with applying some of the tweaks from the %1$s tab because we cannot make changes to your %2$s file. Please see our %3$s to apply the changes manually.',
 				'defender-security'
 			),
-			'<strong>' . esc_html__( 'Recommendations', 'defender-security' ) . '</strong>',
+			'<strong>' . esc_html__( 'Hardening', 'defender-security' ) . '</strong>',
 			'<strong>' . esc_html__( 'wp-config.php', 'defender-security' ) . '</strong>',
 			'<a href="' . WP_DEFENDER_DOCS_LINK . '#manually-applying-recommendations" target="_blank">' . esc_html__( 'documentation', 'defender-security' ) . '</a>'
 		);

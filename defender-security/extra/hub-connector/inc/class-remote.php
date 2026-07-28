@@ -326,7 +326,7 @@ class Remote {
 	 */
 	public function action_logout( $params, $action ) {
 		// Logout the site.
-		API::get()->logout( false );
+		API::get()->logout();
 
 		wp_send_json_success();
 	}

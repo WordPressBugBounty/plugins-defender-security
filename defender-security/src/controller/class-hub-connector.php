@@ -161,28 +161,33 @@ class Hub_Connector extends Controller {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
+		// Current admin page slug, used to build callbacks that return to the originating page.
+		$current_page               = sanitize_text_field( wp_unslash( $_GET['page'] ?? 'wp-defender' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_hub_connector_logged_in = Hub_Connector_Component::is_logged_in();
+
 		return array_merge(
 			array(
-				'button_label'           => $this->service->get_button_label(),
-				'is_dash_installed'      => $this->is_dash_installed(),
-				'is_dash_activated'      => $this->is_dash_activated(),
-				'dash_url'               => add_query_arg( 'page', 'wpmudev', is_multisite() ? network_admin_url( 'admin.php' ) : admin_url( 'admin.php' ) ),
-				'is_hub_connected'       => $this->is_site_connected_to_hub_via_hcm_or_dash(),
-				'is_logged_in'           => Hub_Connector_Component::is_logged_in() || Hub_Connector_Component::is_wpmudev_dashboard_connected(),
-				'is_dashboard_connected' => Hub_Connector_Component::is_wpmudev_dashboard_connected(),
-				'has_login_error'        => Hub_Connector_Component::has_error_in_login(),
-				'login_error_msg'        => Hub_Connector_Component::get_auth_error(),
-				'hub_auth_url'           => Hub_Connector_Component::get_hub_google_login_url(),
-				'redirect_url'           => Hub_Connector_Component::get_hub_connector_callback_url(),
-				'domain'                 => Hub_Connector_Component::get_site_domain(),
-				'auth_nonce'             => wp_create_nonce( 'auth_nonce' ),
-				'login_auth_url'         => Hub_Connector_Component::get_hub_site_login_auth_url(),
-				'hub_signup_url'         => Hub_Connector_Component::get_hub_register_url(),
-				'forgot_password_url'    => Hub_Connector_Component::get_hub_forgot_password_url(),
-				'is_syncing'             => Hub_Connector_Component::is_syncing(),
-				'logout_url'             => rest_url( 'hub-connector/v1/logout' ),
-				'logout_nonce'           => wp_create_nonce( 'wp_rest' ),
-				'hub_connector_url'      => array(
+				'button_label'               => $this->service->get_button_label(),
+				'is_dash_installed'          => $this->is_dash_installed(),
+				'is_dash_activated'          => $this->is_dash_activated(),
+				'dash_url'                   => add_query_arg( 'page', 'wpmudev', is_multisite() ? network_admin_url( 'admin.php' ) : admin_url( 'admin.php' ) ),
+				'is_hub_connected'           => $this->is_site_connected_to_hub_via_hcm_or_dash(),
+				'is_logged_in'               => $is_hub_connector_logged_in || Hub_Connector_Component::is_wpmudev_dashboard_connected(),
+				'is_hub_connector_logged_in' => $is_hub_connector_logged_in,
+				'is_dashboard_connected'     => Hub_Connector_Component::is_wpmudev_dashboard_connected(),
+				'has_login_error'            => Hub_Connector_Component::has_error_in_login(),
+				'login_error_msg'            => Hub_Connector_Component::get_auth_error(),
+				'hub_auth_url'               => Hub_Connector_Component::get_hub_google_login_url(),
+				'redirect_url'               => Hub_Connector_Component::get_hub_connector_callback_url( $current_page ),
+				'domain'                     => Hub_Connector_Component::get_site_domain(),
+				'auth_nonce'                 => wp_create_nonce( 'auth_nonce' ),
+				'login_auth_url'             => Hub_Connector_Component::get_hub_site_login_auth_url(),
+				'hub_signup_url'             => Hub_Connector_Component::get_hub_register_url( $current_page ),
+				'forgot_password_url'        => Hub_Connector_Component::get_hub_forgot_password_url(),
+				'is_syncing'                 => Hub_Connector_Component::is_syncing(),
+				'logout_url'                 => rest_url( 'hub-connector/v1/logout' ),
+				'logout_nonce'               => wp_create_nonce( 'wp_rest' ),
+				'hub_connector_url'          => array(
 					'default'                   => $this->service->get_url(),
 					'global-ip'                 => $this->service->get_url( 'wdf-ip-lockout', 'global-ip' ),
 					'blocklist'                 => $this->service->get_url( 'wdf-ip-lockout', 'blocklist' ),
@@ -203,12 +208,12 @@ class Hub_Connector extends Controller {
 					'summary-box'               => $this->service->get_url( 'wdf-ip-lockout', 'summary-box' ),
 					// Custom one for Antibot notice shown on all Defender pages.
 					'antibot-notice'            => $this->service->get_url( 'wdf-ip-lockout', '', 'def_antibot_survey_notice', 'hub_connector' ),
-					// Signup URLs with post_sync_redirect embedded — Hub always calls back to Dashboard.
-					'settings-redirect-signup'  => Hub_Connector_Component::get_hub_register_url( 'wp-defender', $this->service->get_url( 'wdf-setting', 'tools' ) ),
-					'settings-blocklist-signup' => Hub_Connector_Component::get_hub_register_url( 'wp-defender', $this->service->get_url( 'wdf-setting', 'tools', '', '', 'blocklist-monitor' ) ),
-					'scan-signup'               => Hub_Connector_Component::get_hub_register_url( 'wp-defender', $this->service->get_url( 'wdf-scan' ) ),
-					'global-firewall-signup'    => Hub_Connector_Component::get_hub_register_url( 'wp-defender', $this->service->get_url( 'wdf-ip-lockout', 'global-ip', '', '', Antibot_Global_Firewall_Setting::MODULE_SLUG ) ),
-					'custom-rules-signup'       => Hub_Connector_Component::get_hub_register_url( 'wp-defender', $this->service->get_url( 'wdf-ip-lockout', 'custom-rules', '', '', Global_Ip::MODULE_SLUG ) ),
+					// Signup URLs embed post_sync_redirect so the callback lands on the current page, then redirects to the target.
+					'settings-redirect-signup'  => Hub_Connector_Component::get_hub_register_url( $current_page, $this->service->get_url( 'wdf-setting', 'tools' ) ),
+					'settings-blocklist-signup' => Hub_Connector_Component::get_hub_register_url( $current_page, $this->service->get_url( 'wdf-setting', 'tools', '', '', 'blocklist-monitor' ) ),
+					'scan-signup'               => Hub_Connector_Component::get_hub_register_url( $current_page, $this->service->get_url( 'wdf-scan' ) ),
+					'global-firewall-signup'    => Hub_Connector_Component::get_hub_register_url( $current_page, $this->service->get_url( 'wdf-ip-lockout', 'global-ip', '', '', Antibot_Global_Firewall_Setting::MODULE_SLUG ) ),
+					'custom-rules-signup'       => Hub_Connector_Component::get_hub_register_url( $current_page, $this->service->get_url( 'wdf-ip-lockout', 'custom-rules', '', '', Global_Ip::MODULE_SLUG ) ),
 				),
 			),
 			$this->dump_routes_and_nonces()

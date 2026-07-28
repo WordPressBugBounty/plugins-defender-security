@@ -97,11 +97,11 @@ class Protect_Information extends Abstract_Security_Tweaks {
 	 */
 	public function to_array(): array {
 		return array(
-			'slug'            => $this->slug,
-			'title'           => $this->get_label(),
-			'errorReason'     => $this->get_error_reason(),
-			'successReason'   => wp_strip_all_tags( __( 'Sensitive files are locked.', 'defender-security' ) ),
-			'misc'            => array(
+			'slug'             => $this->slug,
+			'title'            => $this->get_label(),
+			'errorReason'      => $this->get_error_reason(),
+			'successReason'    => wp_strip_all_tags( __( 'Sensitive files are locked.', 'defender-security' ) ),
+			'misc'             => array(
 				'active_server'      => Server::get_current_server(),
 				'apache_rules'       => Server::create( 'apache' )->from( $this->slug )->get_rules_for_instruction(),
 				'litespeed_rules'    => Server::create( 'litespeed' )->from( $this->slug )->get_rules_for_instruction(),
@@ -111,7 +111,7 @@ class Protect_Information extends Abstract_Security_Tweaks {
 			'bulk_description' => wp_strip_all_tags(
 				__( 'Misconfigured servers can expose sensitive files, including config files, .htaccess files, and backups. Prevent info disclosure to protect private site details and reduce the risk of unauthorized access.', 'defender-security' )
 			),
-			'bulk_title'      => wp_strip_all_tags( __( 'Information Disclosure', 'defender-security' ) ),
+			'bulk_title'       => wp_strip_all_tags( __( 'Information Disclosure', 'defender-security' ) ),
 		);
 	}
 }

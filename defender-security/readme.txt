@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 6.0.1
+Version: 6.1.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 7.0.1
-Stable tag: 6.0.1
+Stable tag: 6.1.0
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -221,12 +221,11 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Screenshots ==
 
-1. Malware scans and one-click website security hardening recommendations.
-2. Layered security recommendations let you harden your site with a few clicks.
-3. Enable AntiBot & Local Firewall for smart, layered defense against bots and brute-force attacks.
-4. Keep your account safe with 2FA options including TOTP apps, backup codes, and secure fallback methods.
-5. Use built-in password rules to ensure only secure, uncompromised passwords are used.
-6. Never miss a threat—Defender emails you security updates on your schedule.
+1. Easily configure optimal security settings in just a few clicks.
+2. Monitor site security status, active threats, firewall, and scan recommendations at a glance.
+3. Automatically block malicious IPs and safeguard your site against automated attacks.
+4. One-click security tweaks like disabling XML-RPC and hiding login URLs to lock down your site.
+5. Set up reCAPTCHA or Cloudflare Turnstile to prevent spam and brute-force logins.
 
 == Installation ==
 
@@ -236,6 +235,24 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 4. Done!
 
 == Changelog ==
+
+= 6.1.0 ( 2026-07-22 ) =
+
+- Enhancement: Improved compatibility of Central IP list status with Unlimited Hosting environments
+- Enhancement: Extended Whitelabel support to cover Global Firewall branding
+- Enhancement: User Agent lockout features reflected in the overall lockout count alongside 404 and Login lockouts
+- Enhancement: Added tooltip for the "Security actions required" badge and confirmation notice after applying configuration presets
+- Enhancement: Improved recipient name validation in Reports & Alerts and smarter alert scheduling for months with fewer than 31 days
+- Enhancement: Users remain on the current page after connecting to the Hub
+- Enhancement: Updated CVSS score handling for outdated plugin issues
+- Enhancement: Updated Defender icon, configuration branding, dropdown design, and Hub Connector submodule
+- Fix: Resolved multiple v5 → v6 upgrade issues where notification, 2FA, and Usage Tracking settings were incorrectly reset or disabled
+- Fix: Fixed errors triggered by third-party plugin conflicts and Notification model properties
+- Fix: Fixed WP-CLI command handling, including duplicate scan lines and missing subcommands
+- Fix: Resolved AntiBot and Bot Protection state issues, including Unlock Me button and feature activation modal
+- Fix: Fixed Firewall Logs status filter, IPv6 Blocklist lookup, and custom IP block/allow list sync
+- Fix: Fixed UI issues including pagination, file details panel truncation, and config dialog behavior
+- Fix: Minor code improvements, PHP warning fixes, and performance refinements
 
 = 6.0.1 ( 2026-07-08 ) =
 
@@ -329,3 +346,4 @@ Don't forget to stay up to date on everything WordPress from the Internet's numb
 [WPMU DEV Blog](https://wpmudev.com/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme&utm_content=wpmu_dev_blog_link)
 
 Hey, one more thing... we hope you [enjoy our free offerings](http://profiles.wordpress.org/WPMUDEV/) as much as we've loved making them for you!
+

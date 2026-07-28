@@ -304,9 +304,7 @@ class Plugin_Integrity extends Behavior {
 			$last = Scan::get_last();
 			if ( is_object( $last ) ) {
 				$ignored_issues = $last->get_issues( Scan_Item::TYPE_PLUGIN_CHECK, Scan_Item::STATUS_IGNORE );
-				foreach ( $ignored_issues as $issue ) {
-					$model->add_item( Scan_Item::TYPE_PLUGIN_CHECK, $issue->raw_data, Scan_Item::STATUS_IGNORE );
-				}
+				$model->carry_forward_ignored_issues( Scan_Item::TYPE_PLUGIN_CHECK, $ignored_issues, 'file' );
 			}
 			// Done, reset this, so we can use later.
 			$model->task_checkpoint = '';

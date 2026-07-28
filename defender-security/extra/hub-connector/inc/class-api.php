@@ -240,7 +240,16 @@ class API {
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
 			// Get membership data.
 			$data = json_decode( wp_remote_retrieve_body( $response ), true );
-			if ( ! empty( $data['membership'] ) ) {
+			if ( isset( $data['membership'] ) && empty( $data['membership'] ) && ! defined( '\WPMUDEV_APIKEY' ) && $this->get_api_key() ) {
+				Options::reset();
+				// Clear API key.
+				$this->set_api_key( '' );
+
+				return new WP_Error(
+					'invalid_api_key_or_expired',
+					__( 'Invalid API Key or Expired membership.', 'wpmudev' )
+				);
+			} elseif ( ! empty( $data['membership'] ) ) {
 				// Update membership data.
 				$this->update_membership_data( $data );
 
@@ -302,6 +311,41 @@ class API {
 	}
 
 	/**
+	 * Unsync site
+	 *
+	 * @return mixed|WP_Error
+	 */
+	public function unsync_site() {
+		// Only when logged in.
+		if ( ! $this->has_api_key() ) {
+			return new WP_Error(
+				'not_logged_in',
+				__( 'Not logged in.', 'wpmudev' )
+			);
+		}
+
+		// New request object.
+		$request = new Request();
+		// Make a hub unsync request.
+		$response = $request->delete(
+			'hub-unsync',
+			true,
+			array(
+				'call_version' => \WPMUDEV_HUB_CONNECTOR_VERSION,
+				'domain'       => Data::get()->network_site_url(),
+			)
+		);
+
+		// to trigger logging.
+		if ( 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			$this->get_api_error( $response );
+			$response = $this->format_error_messages( $response );
+		}
+
+		return $response;
+	}
+
+	/**
 	 * Logout and disconnect the site from Hub.
 	 *
 	 * @since 1.0.0
@@ -314,21 +358,15 @@ class API {
 			return new WP_Error( 'not_logged_in', __( 'Not logged in.', 'wpmudev' ) );
 		}
 
+		// whatever happens, reset + remove api key.
+		$response = $this->unsync_site();
+
 		// Reset settings.
 		Options::reset();
 		// Remove API key.
 		$this->set_api_key( '' );
 
-		// Do a sync to remove site.
-		$sync = $this->sync_site( true, false );
-
-		// Handle specific error.
-		if ( is_wp_error( $sync ) && 'invalid_api_response' === $sync->get_error_code() ) {
-			// For logout sync, membership data will be empty.
-			return array();
-		}
-
-		return $sync;
+		return $response;
 	}
 
 	/**
@@ -573,6 +611,16 @@ class API {
 			// translators: %s Support URL.
 				__( 'This site is currently registered to a different user. Please <a target="_blank" href="%s">contact support for assistance</a>.', 'wpmudev' ),
 				Data::get()->server_url( 'hub/support/' )
+			);
+		} elseif ( 'expired_membership' === $error['code'] ) {
+			$error['message'] = sprintf(
+			// translators: %1$s Hub Account URL, %2$s: Switch to Free URL.
+				__(
+					'Login failed — your WPMU DEV membership has expired. Renew now to regain full access, or switch to our free plan to continue managing all your site in the Hub.<br/><br/><a class="sui-button sui-button-blue" href="%1$s" target="_blank">Renew Membership</a>&nbsp;<a class="sui-button sui-button-ghost" href="%2$s" target="_blank">Switch to Free</a>',
+					'wpmudev'
+				),
+				Data::get()->server_url( 'hub2/account/' ),
+				Data::get()->server_url( 'hub2/?switch-free=1 ' )
 			);
 		}
 

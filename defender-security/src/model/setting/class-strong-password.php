@@ -119,7 +119,7 @@ class Strong_Password extends Setting {
 	 * Get localized default message.
 	 */
 	protected function get_default_message(): string {
-		return __(
+		return esc_html__(
 			"You are required to change your password because your password doesn't meet the strong password guidelines set by the administrator.",
 			'defender-security'
 		);

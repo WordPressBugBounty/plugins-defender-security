@@ -51,6 +51,40 @@ class Vuln_Result extends Behavior {
 	}
 
 	/**
+	 * Checks if a plugin upgrade is actually possible.
+	 *
+	 * First verifies that at least one vulnerability has a known fixed version,
+	 * then confirms WordPress's update API has an update available for the plugin.
+	 * This guards against showing an upgrade button when the plugin is already at
+	 * the latest version on wp.org, or when the plugin has been removed/closed.
+	 *
+	 * @param  array $data  The raw scan item data for the plugin.
+	 *
+	 * @return string The upgrade status ('disabled' or 'enabled').
+	 */
+	protected function plugin_upgrade_possible( array $data ): string {
+		// No known fixed version in vulnerability data — nothing to upgrade to.
+		if ( 'disabled' === $this->upgrade_possible( $data['bugs'] ) ) {
+			return 'disabled';
+		}
+
+		// Ensure the update transient is current. wp_update_plugins() detects newly
+		// installed/removed plugins and only fires an HTTP request to wp.org when
+		// the plugin list has changed or the transient has expired; otherwise it
+		// is effectively a no-op.
+		wp_update_plugins();
+		$updates = get_site_transient( 'update_plugins' );
+
+		// If the slug is absent from the response, the plugin is either already
+		// at the latest version on wp.org or is not available there (removed/closed).
+		if ( ! isset( $updates->response[ $data['slug'] ] ) ) {
+			return 'disabled';
+		}
+
+		return 'enabled';
+	}
+
+	/**
 	 * Converts the scan item information into an array for output.
 	 *
 	 * @return array
@@ -61,7 +95,9 @@ class Vuln_Result extends Behavior {
 			if ( 'wp_core' === $data['type'] ) {
 				// Check if the current WP version is the latest.
 				$upgrade = ( new WP_Version() )->check() ? 'disabled' : 'enabled';
-			} elseif ( in_array( $data['type'], array( 'plugin', 'theme' ), true ) ) {
+			} elseif ( 'plugin' === $data['type'] ) {
+				$upgrade = $this->plugin_upgrade_possible( $data );
+			} elseif ( 'theme' === $data['type'] ) {
 				$upgrade = $this->upgrade_possible( $data['bugs'] );
 			} else {
 				$upgrade = 'disabled';
@@ -204,6 +240,16 @@ class Vuln_Result extends Behavior {
 	 * @since 2.8.1
 	 */
 	private function upgrade_plugin( $slug ): array {
+		if ( null === $this->get_plugin_upgrade_path( $slug ) ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => esc_html__(
+					'The plugin associated with this vulnerability is no longer installed.',
+					'defender-security'
+				),
+			);
+		}
+
 		$skin     = new Plugin_Skin();
 		$upgrader = new Plugin_Upgrader( $skin );
 		$result   = $upgrader->bulk_upgrade( array( $slug ) );
@@ -239,6 +285,23 @@ class Vuln_Result extends Behavior {
 			'type_notice' => 'info',
 			'message'     => esc_html__( 'There is no update available for this plugin.', 'defender-security' ),
 		);
+	}
+
+	/**
+	 * Return the installed plugin path for a safe, existing plugin slug.
+	 *
+	 * @param mixed $slug Plugin file relative to the plugins directory.
+	 *
+	 * @return string|null
+	 */
+	private function get_plugin_upgrade_path( $slug ): ?string {
+		if ( ! is_string( $slug ) || '' === $slug || 0 !== validate_file( $slug ) ) {
+			return null;
+		}
+
+		$path = trailingslashit( WP_PLUGIN_DIR ) . $slug;
+
+		return is_file( $path ) ? $path : null;
 	}
 
 	/**

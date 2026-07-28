@@ -606,4 +606,32 @@ class Global_IP extends Component {
 			$this->log( 'Central IP automatically disabled due to expired membership.', 'central_ip.log' );
 		}
 	}
+
+	/**
+	 * Toggle the Custom IP List feature on hosting.
+	 *
+	 * @param bool $enable True to enable, false to disable.
+	 *
+	 * @return bool|WP_Error True on success, false if not on WPMU hosting, WP_Error on failure.
+	 */
+	public function toggle_on_hosting( bool $enable ) {
+		if ( ! $this->wpmudev->is_wpmu_hosting() ) {
+			return false;
+		}
+
+		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
+
+		$data = $this->make_wpmu_request(
+			WPMUDEV::API_GLOBAL_IP_LIST_HOSTING,
+			array( 'is_active' => $enable ),
+			array( 'method' => 'PUT' )
+		);
+
+		if ( is_wp_error( $data ) ) {
+			$this->log( 'Global IP API Error: ' . $data->get_error_message(), Firewall::FIREWALL_LOG );
+			return $data;
+		}
+
+		return true;
+	}
 }

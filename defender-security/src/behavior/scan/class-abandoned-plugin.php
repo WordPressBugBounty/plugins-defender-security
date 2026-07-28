@@ -104,11 +104,7 @@ class Abandoned_Plugin extends Behavior {
 	 * @param  array $ignored_issues  The array of ignored issues to add.
 	 */
 	private function add_ignored_issues( array $ignored_issues ) {
-		if ( array() !== $ignored_issues ) {
-			foreach ( $ignored_issues as $issue ) {
-				$this->scan->add_item( $issue->type, $issue->raw_data, Scan_Item::STATUS_IGNORE );
-			}
-		}
+		$this->scan->carry_forward_ignored_issues( Scan::get_abandoned_types(), $ignored_issues, 'slug' );
 	}
 
 	/**

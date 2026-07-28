@@ -17,7 +17,6 @@ use WP_Defender\Controller\WAF;
 use WP_Defender\Controller\Scan;
 use WP_Defender\Component\Crypt;
 use WP_Defender\Behavior\WPMUDEV;
-use WP_Defender\Controller\Onboard;
 use WP_Defender\Controller\Webauthn;
 use WP_Defender\Controller\Dashboard;
 use WP_Defender\Controller\Captcha;
@@ -34,9 +33,7 @@ use WP_Defender\Controller\Login_Access;
 use WP_Defender\Controller\Password_Reset;
 use WP_Defender\Controller\Setup_Wizard;
 use WP_Defender\Controller\Strong_Password;
-use WP_Defender\Controller\Expert_Services;
 use WP_Defender\Controller\Security_Tweaks;
-use WP_Defender\Controller\Security_Headers;
 use WP_Defender\Controller\Blocklist_Monitor;
 use WP_Defender\Controller\Session_Protection;
 use WP_Defender\Controller\Password_Protection;
@@ -389,14 +386,6 @@ SQL;
 		Array_Cache::set( 'orm', new Mapper() );
 
 		// New setup wizard is rendered directly inside Dashboard React UI.
-		// Keep legacy onboarding initialization commented for rollback/reference.
-		// if ( $this->is_onboarding() ) {
-		// If it's cli we should start this normally.
-		// Array_Cache::set( 'onboard', wd_di()->get( Onboard::class) );
-		// } else {
-		// Initialize the main controllers of every module.
-		// wd_di()->get( Dashboard::class );
-		// }
 		wd_di()->get( Setup_Wizard::class );
 		wd_di()->get( \WP_Defender\Controller\Activity_Log::class );
 		wd_di()->get( Dashboard::class );
@@ -410,7 +399,6 @@ SQL;
 		wd_di()->get( WAF::class );
 		wd_di()->get( Two_Factor::class );
 		wd_di()->get( Mask_Login::class );
-		// wd_di()->get( Security_Headers::class );
 		wd_di()->get( Captcha::class );
 		wd_di()->get( Notification::class );
 		wd_di()->get( Recipients::class );
@@ -419,7 +407,6 @@ SQL;
 		wd_di()->get( Password_Protection::class );
 		wd_di()->get( Password_Reset::class );
 		wd_di()->get( Webauthn::class );
-		// wd_di()->get( Expert_Services::class );
 		wd_di()->get( Hub_Connector_Controller::class );
 		wd_di()->get( Strong_Password::class );
 		wd_di()->get( Session_Protection::class );
@@ -680,7 +667,7 @@ SQL;
 			return $translations;
 		}
 
-		static $served = false;
+		static $served      = false;
 		static $cached_json = null;
 
 		if ( $served ) {

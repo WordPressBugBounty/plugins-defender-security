@@ -474,8 +474,6 @@
 			});
 		});
 	</script>
-	<script src="<?php echo plugins_url( 'assets/js/vendor.js', WP_DEFENDER_FILE ); ?>"></script>
-	<script src="<?php echo plugins_url( 'assets/js/manifest.js', WP_DEFENDER_FILE ); ?>"></script>
 	<script src="<?php echo plugins_url( 'assets/js/altcha.js', WP_DEFENDER_FILE ); ?>"></script>
 <?php } elseif ( true === $is_unlock_me ) { ?>
 	<script>

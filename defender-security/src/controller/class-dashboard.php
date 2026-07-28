@@ -45,6 +45,11 @@ class Dashboard extends Event {
 	public $slug = 'wp-defender';
 
 	/**
+	 * Site option key for the one-time report-schedule upgrade notice.
+	 */
+	public const REPORT_SCHEDULE_NOTICE_OPTION = 'wd_show_report_schedule_notice';
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -139,23 +144,23 @@ class Dashboard extends Event {
 		$security_tweaks->refresh_tweaks_status();
 		$security_tweaks_data = $security_tweaks->dashboard_widget();
 
-		$audit_model     = wd_di()->get( Audit_Logging_Settings::class );
-		$firewall        = wd_di()->get( Firewall::class )->get_summary();
+		$audit_model = wd_di()->get( Audit_Logging_Settings::class );
+		$firewall    = wd_di()->get( Firewall::class )->get_summary();
 		// Different lockout types.
 		$enabled_login = wd_di()->get( Login_Lockout::class )->enabled;
 		$enabled_nf    = wd_di()->get( Notfound_Lockout::class )->enabled;
 		$enabled_ua    = wd_di()->get( User_Agent_Lockout::class )->enabled;
 
 		return array(
-			'hide_onboarding'    => ! wd_di()->get( HUB::class )->get_onboarding_status(),
-			'defenderSetupNonce' => wp_create_nonce( 'defender_quick_setup' ),
-			'securityTweaks'     => $security_tweaks_data['summary']['issues_count'],
-			'scanData'           => array(
+			'hide_onboarding'             => ! wd_di()->get( HUB::class )->get_onboarding_status(),
+			'defenderSetupNonce'          => wp_create_nonce( 'defender_quick_setup' ),
+			'securityTweaks'              => $security_tweaks_data['summary']['issues_count'],
+			'scanData'                    => array(
 				'numberIssues' => wd_di()->get( \WP_Defender\Component\Scan::class )->indicator_issue_count(),
 				'settings'     => wd_di()->get( \WP_Defender\Model\Setting\Scan::class )->export(),
 				// Scan routes & nonces are set above.
 			),
-			'firewallData'       => array(
+			'firewallData'                => array(
 				'enabledLocalFirewall' => $enabled_login || $enabled_nf || $enabled_ua,
 				'enabledLogin'         => $enabled_login,
 				'enabledNotFound'      => $enabled_nf,
@@ -165,11 +170,12 @@ class Dashboard extends Event {
 				'uaLockoutMonth'       => $firewall['lockout_ua_this_month'],
 				'antibot'              => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
-			'site_id'            => wd_di()->get( WPMUDEV::class )->get_site_id(),
-			'auditData'          => array(
+			'site_id'                     => wd_di()->get( WPMUDEV::class )->get_site_id(),
+			'auditData'                   => array(
 				'enabled' => $audit_model->is_active(),
 			),
-			'sessionProtection'  => wd_di()->get( Session_Protection::class )->export(),
+			'sessionProtection'           => wd_di()->get( Session_Protection::class )->export(),
+			'show_report_schedule_notice' => (bool) get_site_option( self::REPORT_SCHEDULE_NOTICE_OPTION, false ),
 		);
 	}
 
@@ -388,6 +394,18 @@ class Dashboard extends Event {
 	}
 
 	/**
+	 * Dismiss the one-time report-schedule notice set during the 6.1.0 upgrade.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function dismiss_report_schedule_notice(): Response {
+		delete_site_option( self::REPORT_SCHEDULE_NOTICE_OPTION );
+
+		return new Response( true, array() );
+	}
+
+	/**
 	 * Toggle a dashboard feature by feature key.
 	 *
 	 * @param Request $request The current request data.
@@ -428,6 +446,8 @@ class Dashboard extends Event {
 	 */
 	public function remove_settings() {
 		wd_di()->get( Feature_Modal::class )->upgrade_site_options();
+
+		delete_site_option( self::REPORT_SCHEDULE_NOTICE_OPTION );
 	}
 
 	/**

@@ -69,6 +69,7 @@ class Notification extends Event {
 		add_action( 'wp_ajax_nopriv_' . self::SLUG_UNSUBSCRIBE, array( $this, 'unsubscribe_and_send_email' ) );
 		add_action( 'defender_notify', array( $this, 'send_notify' ), 10, 2 );
 		add_action( 'admin_notices', array( $this, 'show_actions_with_subscription' ) );
+		add_action( 'wp_footer', array( $this, 'show_public_subscription_notice' ) );
 	}
 
 	/**
@@ -91,22 +92,10 @@ class Notification extends Event {
 		$context = defender_get_data_from_request( 'context', 'g' );
 		if ( 'subscribed' === $context ) {
 			$unsubscribe_link = $this->service->create_unsubscribe_url( $m->slug, $this->get_current_user_email() );
-			$strings          = sprintf(
-			/* translators: 1. Module title. 2. Unsubscribed link. */
-				esc_html__(
-					'You are now subscribed to receive %1$s. Made a mistake? %2$s',
-					'defender-security'
-				),
-				'<strong>' . $m->title . '</strong>',
-				'<a href="' . esc_url_raw( $unsubscribe_link ) . '" style="text-decoration: none">' . esc_html__( 'Unsubscribe', 'defender-security' ) . '</a>'
-			);
-		} elseif ( 'unsubscribe' === $context ) {
-			$strings = sprintf(
-			/* translators: %s: Module title. */
-				esc_html__( 'You are now unsubscribed from %s.', 'defender-security' ),
-				'<strong>' . $m->title . '</strong>'
-			);
-		} else {
+		}
+
+		$strings = $this->get_subscription_notice_message( $m, $context, $unsubscribe_link ?? '' );
+		if ( '' === $strings ) {
 			return;
 		}
 		?>
@@ -118,6 +107,94 @@ class Notification extends Event {
 			</a>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Show public confirmation notice for out-of-house recipients.
+	 *
+	 * @return void
+	 */
+	public function show_public_subscription_notice(): void {
+		$context = defender_get_data_from_request( 'defender_subscription', 'g' );
+		if ( 'confirmed' !== $context && 'unsubscribe' !== $context ) {
+			return;
+		}
+
+		$slug = defender_get_data_from_request( 'slug', 'g' );
+		$hash = defender_get_data_from_request( 'hash', 'g' );
+		if ( ! is_string( $slug ) || '' === trim( $slug ) ) {
+			return;
+		}
+		if ( 'confirmed' === $context && ( ! is_string( $hash ) || '' === trim( $hash ) ) ) {
+			return;
+		}
+
+		$m = $this->service->find_module_by_slug( sanitize_key( $slug ) );
+		if ( ! is_object( $m ) ) {
+			return;
+		}
+
+		$unsubscribe_link = '';
+		if ( 'confirmed' === $context ) {
+			$unsubscribe_link = add_query_arg(
+				array(
+					'action' => self::SLUG_UNSUBSCRIBE,
+					'hash'   => sanitize_text_field( $hash ),
+					'slug'   => $m->slug,
+				),
+				admin_url( 'admin-ajax.php' )
+			);
+		}
+
+		$message = $this->get_subscription_notice_message(
+			$m,
+			'confirmed' === $context ? 'subscribed' : 'unsubscribe',
+			$unsubscribe_link
+		);
+		if ( '' === $message ) {
+			return;
+		}
+		?>
+		<div class="wpdef-public-subscription-notice" style="position:fixed;right:20px;bottom:20px;z-index:99999;max-width:420px;padding:14px 18px;border-left:4px solid #00a32a;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.18);font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1d2327;">
+			<?php echo wp_kses_post( $message ); ?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Build subscription notice message.
+	 *
+	 * @param object $module           Notification module.
+	 * @param string $context          Notice context.
+	 * @param string $unsubscribe_link Unsubscribe URL.
+	 * @return string
+	 */
+	private function get_subscription_notice_message( object $module, string $context, string $unsubscribe_link = '' ): string {
+		if ( 'subscribed' === $context ) {
+			if ( '' === trim( $unsubscribe_link ) ) {
+				return '';
+			}
+
+			return sprintf(
+				/* translators: 1. Module title. 2. Unsubscribe link. */
+				esc_html__(
+					'You are now subscribed to receive %1$s. Made a mistake? %2$s',
+					'defender-security'
+				),
+				'<strong>' . esc_html( $module->title ) . '</strong>',
+				'<a href="' . esc_url( $unsubscribe_link ) . '" style="text-decoration: none">' . esc_html__( 'Unsubscribe', 'defender-security' ) . '</a>'
+			);
+		}
+
+		if ( 'unsubscribe' === $context ) {
+			return sprintf(
+				/* translators: %s: Module title. */
+				esc_html__( 'You are now unsubscribed from %s.', 'defender-security' ),
+				'<strong>' . esc_html( $module->title ) . '</strong>'
+			);
+		}
+
+		return '';
 	}
 
 	/**
@@ -251,7 +328,8 @@ class Notification extends Event {
 		if ( ! is_object( $m ) ) {
 			wp_die( esc_html__( 'You shall not pass.', 'defender-security' ) );
 		}
-		$inhouse = false;
+		$inhouse   = false;
+		$processed = false;
 		foreach ( $m->in_house_recipients as &$recipient ) {
 			$email = $recipient['email'];
 			if ( hash_equals( $hash, hash( 'sha256', $email . AUTH_SALT ) ) ) {
@@ -264,6 +342,7 @@ class Notification extends Event {
 				}
 				$recipient['status'] = Model_Notification::USER_SUBSCRIBE_CANCELED;
 				$m->save();
+				$processed = true;
 				// Send email.
 				$this->service->send_unsubscribe_email( $m, $email, $inhouse, $recipient['name'] );
 				break;
@@ -277,6 +356,7 @@ class Notification extends Event {
 				if ( hash_equals( $hash, hash( 'sha256', $email . AUTH_SALT ) ) ) {
 					$recipient['status'] = Model_Notification::USER_SUBSCRIBE_CANCELED;
 					$m->save();
+					$processed = true;
 					$this->service->send_unsubscribe_email( $m, $email, $inhouse, $recipient['name'] );
 				}
 			}
@@ -289,6 +369,16 @@ class Notification extends Event {
 						'context' => 'unsubscribe',
 					),
 					get_edit_profile_url()
+				)
+			);
+		} elseif ( $processed ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'defender_subscription' => 'unsubscribe',
+						'slug'                  => $slug,
+					),
+					get_home_url()
 				)
 			);
 		} else {

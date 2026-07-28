@@ -94,7 +94,6 @@ abstract class Notification extends Setting {
 	 * This is for when user select report as monthly, we will have the day number, instead of text.
 	 *
 	 * @var int
-	 * @sanitize_text_field
 	 * @defender_property
 	 */
 	public int $day_n = 1;
@@ -251,12 +250,12 @@ abstract class Notification extends Setting {
 		}
 
 		// Est should be set as the last send. Create now timestamp.
-		$now              = new DateTime( 'now', wp_timezone() );
-		$interval         = DateInterval::createFromDateString( (string) $est->getOffset() . 'seconds' );
-		$time_parts       = array_pad( explode( ':', (string) $this->time ), 2, 0 );
-		[ $hour, $min ]   = $time_parts;
-		$hour             = (int) $hour;
-		$min              = (int) $min;
+		$now            = new DateTime( 'now', wp_timezone() );
+		$interval       = DateInterval::createFromDateString( (string) $est->getOffset() . 'seconds' );
+		$time_parts     = array_pad( explode( ':', (string) $this->time ), 2, 0 );
+		[ $hour, $min ] = $time_parts;
+		$hour           = (int) $hour;
+		$min            = (int) $min;
 		switch ( $this->frequency ) {
 			case 'daily':
 				// Set the time.

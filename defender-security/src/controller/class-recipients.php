@@ -98,17 +98,21 @@ class Recipients extends Event {
 		$name     = trim( (string) ( $data['name'] ?? '' ) );
 		$email    = trim( (string) ( $data['email'] ?? '' ) );
 		$statuses = array_map( 'sanitize_key', is_array( $data['statuses'] ?? null ) ? $data['statuses'] : array() );
-		$in_house = (bool) ( $data['_inHouse'] ?? false );
+		$user_id  = absint( $data['id'] ?? 0 );
+		$in_house = (bool) ( $data['_inHouse'] ?? false ) && $user_id > 0;
 
 		if ( '' === $name || ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
 			return new Response( false, array( 'message' => esc_html__( 'Invalid recipient data.', 'defender-security' ) ) );
+		}
+
+		if ( ! $in_house && ! preg_match( '/^[\p{L}\s\-\']+$/u', $name ) ) {
+			return new Response( false, array( 'message' => esc_html__( 'Only letters, spaces, hyphens and apostrophes allowed.', 'defender-security' ) ) );
 		}
 
 		if ( empty( $statuses ) ) {
 			return new Response( false, array( 'message' => esc_html__( 'Please enable at least one notification module before inviting a recipient.', 'defender-security' ) ) );
 		}
 
-		$user_id    = $in_house ? absint( $data['id'] ?? 0 ) : 0;
 		$subscriber = array(
 			'name'  => $name,
 			'email' => $email,
@@ -155,12 +159,16 @@ class Recipients extends Event {
 			return new Response( false, array( 'message' => esc_html__( 'Invalid recipient ID.', 'defender-security' ) ) );
 		}
 
-		$name     = trim( (string) ( $profile['name'] ?? '' ) );
+		$name     = sanitize_text_field( trim( (string) ( $profile['name'] ?? '' ) ) );
 		$email    = sanitize_email( trim( (string) ( $profile['email'] ?? '' ) ) );
 		$in_house = is_numeric( $recipient_id );
 
 		if ( '' === $name || ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
 			return new Response( false, array( 'message' => esc_html__( 'Invalid recipient data.', 'defender-security' ) ) );
+		}
+
+		if ( ! $in_house && ! preg_match( '/^[\p{L}\s\-\']+$/u', $name ) ) {
+			return new Response( false, array( 'message' => esc_html__( 'Only letters, spaces, hyphens and apostrophes allowed.', 'defender-security' ) ) );
 		}
 
 		$subscriber = array(
@@ -311,6 +319,17 @@ class Recipients extends Event {
 						'context' => 'subscribed',
 					),
 					get_edit_profile_url()
+				)
+			);
+		} elseif ( $result['processed'] ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'defender_subscription' => 'confirmed',
+						'slug'                  => $result['redirect_slug'],
+						'hash'                  => HTTP::get( 'hash', '' ),
+					),
+					home_url()
 				)
 			);
 		} else {

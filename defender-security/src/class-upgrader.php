@@ -481,6 +481,9 @@ class Upgrader {
 		if ( version_compare( $db_version, '6.0.0', '<' ) ) {
 			$this->upgrade_6_0_0();
 		}
+		if ( version_compare( $db_version, '6.1.0', '<' ) ) {
+			$this->upgrade_6_1_0();
+		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
 		// Don't run any function below this line.
@@ -2047,10 +2050,118 @@ To complete your login, copy and paste the temporary password into the Password 
 		$this->combine_all_preserve_settings_to_one();
 		$this->combine_all_file_change_detection_settings_to_one();
 		$this->update_issues_report_email_template();
+		$this->fix_scheduled_scanning_left_disabled();
 		$this->migrate_tweak_reminder_schedule();
 		$this->migrate_two_fa_force_auth_roles();
 		// Add the "What's new" modal.
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+	}
+
+	/**
+	 * Upgrade to 6.1.0: Fix Tweak Reminder est_timestamp left as 0 by the 6.0.0 migration.
+	 * Also sync all report schedules to match Malware Report.
+	 *
+	 * @return void
+	 */
+	private function upgrade_6_1_0(): void {
+		$model = wd_di()->get( Tweak_Reminder::class );
+		if ( 'report' === $model->type && (int) $model->est_timestamp <= 0 ) {
+			// Calling save() recovers the correct state: last_sent is
+			// reset to now if it is 0, then est_timestamp is recomputed via get_next_run().
+			$model->save();
+		}
+
+		$this->sync_all_report_schedules();
+	}
+
+	/**
+	 * Sync all report schedules to match Malware Report.
+	 *
+	 * Since 6.0.0 the UI enforces a single shared schedule for all reports via sync_report_schedule.
+	 * Sites upgrading from older versions may have each report on a different schedule.
+	 * This migration copies Malware_Report's schedule to Scan_Settings (the UI master) and to
+	 * all four report models, then recomputes est_timestamp on each so all report emails
+	 * arrive at the same time.
+	 *
+	 * @return void
+	 */
+	private function sync_all_report_schedules(): void {
+		// Get the schedule from Malware_Report.
+		$malware_report = wd_di()->get( Malware_Report::class );
+		$frequency      = $malware_report->frequency;
+		$day            = $malware_report->day;
+		$day_n          = (int) $malware_report->day_n;
+		$time           = $malware_report->time;
+
+		// Update Scan_Settings so the schedule pill shows the correct label.
+		$scan_settings            = wd_di()->get( Scan_Settings::class );
+		$scan_settings->frequency = $frequency;
+		$scan_settings->day       = $day;
+		$scan_settings->day_n     = $day_n;
+		$scan_settings->time      = $time;
+		$scan_settings->save();
+
+		// Apply the same schedule to all report models and recompute est_timestamp
+		// so every report fires at the same next occurrence.
+		$report_models = array(
+			$malware_report,
+			wd_di()->get( Firewall_Report::class ),
+			wd_di()->get( Audit_Report::class ),
+			wd_di()->get( Tweak_Reminder::class ),
+		);
+
+		foreach ( $report_models as $model ) {
+			$model->frequency = $frequency;
+			$model->day       = $day;
+			$model->day_n     = $day_n;
+			$model->time      = $time;
+
+			$next_run = $model->get_next_run();
+			if ( $next_run instanceof \DateTime ) {
+				$model->est_timestamp = $next_run->getTimestamp();
+			}
+
+			$model->save();
+		}
+
+		// Show a one-time dashboard bubble so users know about the shared schedule.
+		update_site_option( 'wd_show_report_schedule_notice', true );
+	}
+
+	/**
+	 * Heal 'Scheduled Scanning' left disabled while its related report stayed active.
+	 *
+	 * The bundled "Basic Config" preset stored 'scheduled_scanning' out of sync with its
+	 * 'report' flag, so applying it left scans disabled. Corrects the live setting and any
+	 * already-stored config presets with the same mismatch.
+	 *
+	 * @return void
+	 */
+	private function fix_scheduled_scanning_left_disabled(): void {
+		$scan_settings  = wd_di()->get( Scan_Settings::class );
+		$malware_report = wd_di()->get( Malware_Report::class );
+		if ( ! $scan_settings->scheduled_scanning && Notification::STATUS_ACTIVE === $malware_report->status ) {
+			$scan_settings->scheduled_scanning = true;
+			$scan_settings->save();
+		}
+
+		$service = wd_di()->get( Backup_Settings::class );
+		$configs = Config_Hub_Helper::get_configs( $service );
+
+		foreach ( $configs as $key => $config ) {
+			$scan = $config['configs']['scan'] ?? null;
+			if ( ! is_array( $scan ) || ! isset( $scan['report'], $scan['scheduled_scanning'] ) ) {
+				continue;
+			}
+
+			if ( 'enabled' === $scan['report'] && false === $scan['scheduled_scanning'] ) {
+				$configs[ $key ]['configs']['scan']['scheduled_scanning'] = true;
+				update_site_option( $key, $configs[ $key ] );
+				Config_Hub_Helper::update_on_hub( $configs[ $key ] );
+			}
+		}
+
+		delete_site_transient( Config_Hub_Helper::CONFIGS_TRANSIENT_KEY );
 	}
 
 	/**
@@ -2087,15 +2198,27 @@ To complete your login, copy and paste the temporary password into the Password 
 		}
 
 		$model->type = 'report';
-		if ( isset( $model->configs['reminder'] ) && in_array( $model->configs['reminder'], array( 'daily', 'weekly', 'monthly' ), true ) ) {
-			$model->frequency = $model->configs['reminder'];
-		}
+
+		$valid_frequencies = array( 'daily', 'weekly', 'monthly' );
+		$reminder          = $model->configs['reminder'] ?? '';
+		$model->frequency  = in_array( $reminder, $valid_frequencies, true ) ? $reminder : 'weekly';
+
 		if ( null === $model->day || '' === $model->day ) {
 			$model->day = 'sunday';
 		}
 		if ( null === $model->time || '' === $model->time ) {
 			$model->time = '4:00';
 		}
+		if ( ! is_int( $model->day_n ) || $model->day_n < 1 ) {
+			$model->day_n = 1;
+		}
+		// Compute est_timestamp.
+		$next_run = $model->get_next_run();
+		if ( $next_run instanceof \DateTime ) {
+			$model->est_timestamp = $next_run->getTimestamp();
+		}
+		// Clear the old notification style configs key.
+		unset( $model->configs['reminder'] );
 		$model->save();
 	}
 

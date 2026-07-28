@@ -486,7 +486,7 @@ class HUB extends Event {
 					'user_agent_lockout' => Lockout_Log::count(
 						strtotime( '-24 hours' ),
 						time(),
-						array( Lockout_Log::LOCKOUT_UA )
+						Lockout_Log::get_ua_lockout_types()
 					),
 				),
 				'7_days'                     => array(
@@ -508,7 +508,7 @@ class HUB extends Event {
 					'user_agent_lockout' => Lockout_Log::count(
 						strtotime( '-30 days' ),
 						time(),
-						array( Lockout_Log::LOCKOUT_UA )
+						Lockout_Log::get_ua_lockout_types()
 					),
 				),
 				'notification_status'        => array(

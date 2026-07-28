@@ -114,8 +114,8 @@ class Network_Cron_Manager extends Component {
 				$this->log( "Cleared existing WordPress cron event for '{$hook_name}' to prevent conflicts", self::LOG_FILE_NAME );
 			}
 
-			// Only save if this is a new callback.
-			if ( ! isset( $this->callbacks[ $hook_name ] ) || $this->callbacks[ $hook_name ]['interval'] !== $interval_seconds ) {
+			// Only save if this is a new callback or something changed.
+			if ( ! isset( $this->callbacks[ $hook_name ] ) || $this->callbacks[ $hook_name ]['interval'] !== $interval_seconds || $this->callbacks[ $hook_name ]['start_time'] !== $start_time ) {
 				$this->callbacks[ $hook_name ] = array(
 					'interval'   => $interval_seconds,
 					'start_time' => $start_time,
