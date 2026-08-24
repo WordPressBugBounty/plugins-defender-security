@@ -93,11 +93,8 @@ class User_Agent extends Component {
 				break;
 		}
 		$model->save();
-		// The 'defender_notify' hook doesn't work, so send notify directly.
-		$module = wd_di()->get( Firewall_Notification::class );
-		if ( $module->check_options( $model ) ) {
-			$module->send( $model );
-		}
+		// Notify directly because the 'defender_notify' hook isn't registered yet at firewall-time.
+		wd_di()->get( Firewall_Notification::class )->notify_lockout( $model );
 	}
 
 	/**

@@ -174,12 +174,8 @@ class Mask_Login extends Event {
 	 * @since 2.8.0
 	 */
 	public function before_mask_login_handle(): void {
-		// Some plugins for Cron actions clear HTTP_HOST-param.
-		$host = defender_get_data_from_request( 'HTTP_HOST', 's' );
-		if ( ! isset( $host['HTTP_HOST'] ) ) {
-			$host = '';
-		}
-		$current_url = set_url_scheme( 'http://' . $host . defender_get_data_from_request( 'REQUEST_URI', 's' ) );
+		$request_uri = (string) defender_get_data_from_request( 'REQUEST_URI', 's' );
+		$current_url = home_url( $request_uri );
 		$login_url   = $this->get_model()->get_new_login_url( $this->get_site_url() );
 
 		if (

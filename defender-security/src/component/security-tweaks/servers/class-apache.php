@@ -683,7 +683,8 @@ class Apache {
 	 */
 	private function get_custom_upload_dir(): string {
 		if ( defined( 'UPLOADS' ) ) {
-			return ABSPATH . UPLOADS . '/.htaccess';
+			$upload_dir = wp_upload_dir( null, false );
+			return $upload_dir['basedir'] . '/.htaccess';
 		}
 
 		return '';

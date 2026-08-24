@@ -150,14 +150,21 @@ class Firewall_Logs extends Controller {
 	 * @defender_route
 	 */
 	public function export_as_csv(): void {
-		$date_from   = (int) HTTP::get( 'date_from', strtotime( '-7 days midnight' ) );
-		$date_to     = (int) HTTP::get( 'date_to', strtotime( 'tomorrow' ) );
-		$ip          = sanitize_text_field( (string) HTTP::get( 'ip', '' ) );
-		$user_agent  = sanitize_text_field( (string) HTTP::get( 'user_agent', '' ) );
-		$type        = sanitize_text_field( (string) HTTP::get( 'type', '' ) );
-		$ban_status  = sanitize_text_field( (string) HTTP::get( 'ban_status', '' ) );
-		$sort        = sanitize_text_field( (string) HTTP::get( 'sort', Table_Lockout::SORT_DESC ) );
-		$sort_params = wd_di()->get( Table_Lockout::class )->resolve_sort( $sort );
+		$timezone      = wp_timezone();
+		$date_from_str = sanitize_text_field( (string) HTTP::get( 'date_from', '' ) );
+		$date_to_str   = sanitize_text_field( (string) HTTP::get( 'date_to', '' ) );
+		$date_from     = $date_from_str
+			? $this->date_string_to_timestamp( $date_from_str )
+			: ( new DateTime( '-30 days', $timezone ) )->setTime( 0, 0, 0 )->getTimestamp();
+		$date_to       = $date_to_str
+			? $this->date_string_to_timestamp( $date_to_str, true )
+			: ( new DateTime( 'now', $timezone ) )->setTime( 23, 59, 59 )->getTimestamp();
+		$ip            = sanitize_text_field( (string) HTTP::get( 'ip', '' ) );
+		$user_agent    = sanitize_text_field( (string) HTTP::get( 'user_agent', '' ) );
+		$type          = sanitize_text_field( (string) HTTP::get( 'type', '' ) );
+		$ban_status    = sanitize_text_field( (string) HTTP::get( 'ban_status', '' ) );
+		$sort          = sanitize_text_field( (string) HTTP::get( 'sort', Table_Lockout::SORT_DESC ) );
+		$sort_params   = wd_di()->get( Table_Lockout::class )->resolve_sort( $sort );
 
 		$filters = array(
 			'from'       => $date_from,
@@ -315,11 +322,11 @@ class Firewall_Logs extends Controller {
 		$data = $request->get_data(
 			array(
 				'date_from'  => array(
-					'type'     => 'int',
+					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'date_to'    => array(
-					'type'     => 'int',
+					'type'     => 'string',
 					'sanitize' => 'sanitize_text_field',
 				),
 				'ip'         => array(
@@ -355,9 +362,13 @@ class Firewall_Logs extends Controller {
 		// Validate.
 		$v = new Validator( $data, array() );
 		$v->rule( 'required', array( 'date_from', 'date_to' ) );
-		$v->rule( 'integer', array( 'date_from', 'date_to' ) );
-		$v->rule( 'min', array( 'date_from', 'date_to' ), 0 );
 		if ( ! $v->validate() ) {
+			return new Response( false, array( 'message' => esc_html__( 'Start and end date are required.', 'defender-security' ) ) );
+		}
+
+		$date_from = $this->date_string_to_timestamp( $data['date_from'] );
+		$date_to   = $this->date_string_to_timestamp( $data['date_to'], true );
+		if ( $date_from <= 0 || $date_to <= 0 ) {
 			return new Response( false, array( 'message' => esc_html__( 'Wrong start and end date.', 'defender-security' ) ) );
 		}
 
@@ -366,8 +377,8 @@ class Firewall_Logs extends Controller {
 
 		$result = $this->retrieve_logs(
 			array(
-				'from'       => $data['date_from'],
-				'to'         => $data['date_to'],
+				'from'       => $date_from,
+				'to'         => $date_to,
 				'ip'         => $data['ip'],
 				'user_agent' => $data['user_agent'] ?? '',
 				// If this is all, then we set to null to exclude it from the filter.
@@ -402,10 +413,11 @@ class Firewall_Logs extends Controller {
 		$type       = defender_get_data_from_request( 'type', 'g' );
 		$ip         = defender_get_data_from_request( 'ip', 'g' );
 		$user_agent = defender_get_data_from_request( 'user_agent', 'g' );
+		$timezone   = wp_timezone();
 
 		$init_filters = array(
-			'from'       => strtotime( '-30 days' ),
-			'to'         => time(),
+			'from'       => ( new DateTime( '-30 days', $timezone ) )->setTime( 0, 0, 0 )->getTimestamp(),
+			'to'         => ( new DateTime( 'now', $timezone ) )->setTime( 23, 59, 59 )->getTimestamp(),
 			'type'       => $type,
 			'ip'         => $ip,
 			'user_agent' => $user_agent,

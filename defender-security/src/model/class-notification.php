@@ -268,7 +268,7 @@ abstract class Notification extends Setting {
 				}
 				break;
 			case 'weekly':
-				if ( empty( $this->day ) ) {
+				if ( '' === $this->day || null === $this->day ) {
 					break;
 				}
 				$est->modify( 'this ' . $this->day );
@@ -447,6 +447,29 @@ abstract class Notification extends Setting {
 	}
 
 	/**
+	 * Prepare data for persistence.
+	 *
+	 * Recipients are indexed by email in memory (see after_load()), so re-index them back to
+	 * sequential arrays before storing. Otherwise they are JSON-encoded as objects, which on
+	 * downgrade breaks Defender 5 with "all_subscribers.slice is not a function".
+	 *
+	 * @param  array $data  The data array to import values from.
+	 *
+	 * @return array
+	 */
+	protected function prepare_data( $data = array() ): array {
+		$data = parent::prepare_data( $data );
+
+		foreach ( array( 'in_house_recipients', 'out_house_recipients', 'all_subscribers' ) as $key ) {
+			if ( isset( $data[ $key ] ) && is_array( $data[ $key ] ) ) {
+				$data[ $key ] = array_values( $data[ $key ] );
+			}
+		}
+
+		return $data;
+	}
+
+	/**
 	 * Overrided method to manipulate user details dynamically.
 	 */
 	protected function after_load(): void {
@@ -483,7 +506,7 @@ abstract class Notification extends Setting {
 		$email_indexed_recipients = array();
 
 		foreach ( $recipients as $recipient ) {
-			if ( empty( $recipient['email'] ) ) {
+			if ( ! isset( $recipient['email'] ) ) {
 				continue;
 			}
 

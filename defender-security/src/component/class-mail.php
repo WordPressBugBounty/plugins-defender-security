@@ -89,6 +89,8 @@ class Mail extends Component {
 	 */
 	public function get_headers( $from_email, $notification_slug = '' ): array {
 		$from_label = $this->get_sender_name( $notification_slug );
+		$from_email = str_replace( array( "\r", "\n" ), '', $from_email );
+		$from_label = str_replace( array( "\r", "\n" ), '', $from_label );
 		$headers    = array(
 			'From: ' . $from_label . ' <' . $from_email . '>',
 			'Content-Type: text/html; charset=UTF-8',

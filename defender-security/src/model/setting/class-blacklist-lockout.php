@@ -189,14 +189,35 @@ class Blacklist_Lockout extends Setting {
 				}
 			}
 
-			if ( property_exists( $this, $key ) ) {
-				$this->$key = implode( PHP_EOL, array_filter( $collection, 'strlen' ) );
-			}
+			$this->set_list_property( $key, implode( PHP_EOL, array_filter( $collection, 'strlen' ) ) );
 		}
 
 		if ( array() !== $errors ) {
 			$this->errors[] = esc_html__( 'Invalid IP addresses detected. Please fix the following errors:', 'defender-security' );
 			$this->errors   = array_merge( $this->errors, $errors );
+		}
+	}
+
+	/**
+	 * Set a list property.
+	 *
+	 * @param string $property Property name.
+	 * @param string $value    Property value.
+	 *
+	 * @throws \InvalidArgumentException Invalid property name.
+	 */
+	private function set_list_property( string $property, string $value ): void {
+		switch ( $property ) {
+			case 'ip_blacklist':
+				$this->ip_blacklist = $value;
+				break;
+
+			case 'ip_whitelist':
+				$this->ip_whitelist = $value;
+				break;
+
+			default:
+				throw new \InvalidArgumentException( 'Invalid property name.' );
 		}
 	}
 

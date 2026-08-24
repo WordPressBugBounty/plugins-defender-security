@@ -348,7 +348,7 @@ class Upgrader {
 
 		if ( DEFENDER_DB_VERSION === $db_version ) {
 			// Check if we need to create pro tables (Free to Pro upgrade scenario).
-			if ( class_exists( Bootstrap::class ) && method_exists( Bootstrap::class, 'create_database_tables' ) && ! get_site_option( 'wd_pro_tables_created' ) ) {
+			if ( class_exists( Bootstrap::class ) && method_exists( Bootstrap::class, 'create_database_tables' ) && false === (bool) get_site_option( 'wd_pro_tables_created', false ) ) {
 				wd_di()->get( Bootstrap::class )->create_database_tables();
 			}
 			return;
@@ -483,6 +483,9 @@ class Upgrader {
 		}
 		if ( version_compare( $db_version, '6.1.0', '<' ) ) {
 			$this->upgrade_6_1_0();
+		}
+		if ( version_compare( $db_version, '6.2.0', '<' ) ) {
+			$this->upgrade_6_2_0();
 		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
@@ -1994,8 +1997,6 @@ To complete your login, copy and paste the temporary password into the Password 
 		update_site_option( Feature_Modal::FEATURE_SLUG, true );
 		// Add Cloudflare challenge-platform to 404 whitelist.
 		$this->force_nf_lockout_exclusions();
-		// Remove the prev Breadcrumbs.
-		wd_di()->get( \WP_Defender\Component\Breadcrumbs::class )->delete_previous_meta();
 	}
 
 	/**
@@ -2053,8 +2054,9 @@ To complete your login, copy and paste the temporary password into the Password 
 		$this->fix_scheduled_scanning_left_disabled();
 		$this->migrate_tweak_reminder_schedule();
 		$this->migrate_two_fa_force_auth_roles();
-		// Add the "What's new" modal.
-		update_site_option( Feature_Modal::FEATURE_SLUG, true );
+		// Add the "What's new" modal only when landing on the exact release it belongs to,
+		// so it does not persist into later patch/minor releases (e.g. 6.0.1, 6.1).
+		Feature_Modal::maybe_enable_welcome_modal();
 	}
 
 	/**
@@ -2072,6 +2074,110 @@ To complete your login, copy and paste the temporary password into the Password 
 		}
 
 		$this->sync_all_report_schedules();
+	}
+
+	/**
+	 * Upgrade to 6.2.0.
+	 *
+	 * @return void
+	 */
+	private function upgrade_6_2_0(): void {
+		$this->fix_notification_recipients_format();
+		$this->cancel_recipients_of_inactive_reports();
+	}
+
+	/**
+	 * Unsubscribe every recipient of each inactive report so their stored preferences match
+	 * the reports' last saved on/off state.
+	 *
+	 * @return void
+	 */
+	private function cancel_recipients_of_inactive_reports(): void {
+		$report_classes = array(
+			Tweak_Reminder::class,
+			Malware_Report::class,
+			Firewall_Report::class,
+			Audit_Report::class,
+		);
+
+		foreach ( $report_classes as $report_class ) {
+			$model = wd_di()->get( $report_class );
+			if ( $model->check_active_status() ) {
+				continue;
+			}
+
+			$changed = false;
+			foreach ( array( 'in_house_recipients', 'out_house_recipients' ) as $group ) {
+				$recipients = 'in_house_recipients' === $group
+					? $model->in_house_recipients
+					: $model->out_house_recipients;
+				if ( ! is_array( $recipients ) ) {
+					continue;
+				}
+
+				foreach ( $recipients as $key => $recipient ) {
+					if ( Notification::USER_SUBSCRIBE_CANCELED !== ( $recipient['status'] ?? '' ) ) {
+						$recipients[ $key ]['status'] = Notification::USER_SUBSCRIBE_CANCELED;
+						$changed                      = true;
+					}
+				}
+
+				if ( 'in_house_recipients' === $group ) {
+					$model->in_house_recipients = $recipients;
+				} else {
+					$model->out_house_recipients = $recipients;
+				}
+			}
+
+			if ( $changed ) {
+				$model->save();
+			}
+		}
+	}
+
+	/**
+	 * Heal recipients that older 6.x versions stored as email-keyed objects instead of arrays,
+	 * which breaks Defender 5 on downgrade.
+	 *
+	 * @return void
+	 */
+	private function fix_notification_recipients_format(): void {
+		$tables = array(
+			wd_di()->get( Audit_Report::class )->get_table(),
+			wd_di()->get( Firewall_Notification::class )->get_table(),
+			wd_di()->get( Firewall_Report::class )->get_table(),
+			wd_di()->get( Malware_Notification::class )->get_table(),
+			wd_di()->get( Malware_Report::class )->get_table(),
+			wd_di()->get( Tweak_Reminder::class )->get_table(),
+		);
+
+		foreach ( $tables as $table ) {
+			$raw = get_site_option( $table );
+			if ( false === $raw ) {
+				continue;
+			}
+
+			$data = is_array( $raw ) ? $raw : json_decode( $raw, true );
+			if ( ! is_array( $data ) ) {
+				continue;
+			}
+
+			$changed = false;
+			foreach ( array( 'in_house_recipients', 'out_house_recipients', 'all_subscribers' ) as $key ) {
+				if ( isset( $data[ $key ] ) && is_array( $data[ $key ] ) ) {
+					// array_values() leaves a proper list untouched but reindexes an email-keyed one.
+					$reindexed = array_values( $data[ $key ] );
+					if ( $reindexed !== $data[ $key ] ) {
+						$data[ $key ] = $reindexed;
+						$changed      = true;
+					}
+				}
+			}
+
+			if ( $changed ) {
+				update_site_option( $table, wp_json_encode( $data ) );
+			}
+		}
 	}
 
 	/**
@@ -2125,7 +2231,7 @@ To complete your login, copy and paste the temporary password into the Password 
 		}
 
 		// Show a one-time dashboard bubble so users know about the shared schedule.
-		update_site_option( 'wd_show_report_schedule_notice', true );
+		update_site_option( \WP_Defender\Controller\Dashboard::REPORT_SCHEDULE_NOTICE_OPTION, true );
 	}
 
 	/**

@@ -206,7 +206,17 @@ class Password_Protection extends Component {
 	 */
 	public function set_cookie_notice( $name, $value, $time ) {
 		if ( ! isset( $_COOKIE[ $name ] ) ) {
-			setcookie( $name, $value, $time, '/' );
+			setcookie(
+				$name,
+				$value,
+				array(
+					'expires'  => $time,
+					'path'     => '/',
+					'secure'   => is_ssl(),
+					'httponly' => true,
+					'samesite' => 'Lax',
+				)
+			);
 		}
 	}
 
@@ -222,7 +232,17 @@ class Password_Protection extends Component {
 	 */
 	public function remove_cookie_notice( string $name ): void {
 		if ( isset( $_COOKIE[ $name ] ) && ! headers_sent() ) {
-			setcookie( $name, '', time() - YEAR_IN_SECONDS, '/' );
+			setcookie(
+				$name,
+				'',
+				array(
+					'expires'  => time() - YEAR_IN_SECONDS,
+					'path'     => '/',
+					'secure'   => is_ssl(),
+					'httponly' => true,
+					'samesite' => 'Lax',
+				)
+			);
 		}
 		$this->remove_extra_cookies();
 	}

@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 6.1.0
+Version: 6.2.2
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 7.0.1
-Stable tag: 6.1.0
+Tested up to: 7.1
+Stable tag: 6.2.2
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -103,7 +103,7 @@ Here's what Defender will be doing while you work on other things:
 
 * **Performing scheduled scans for issues:** Set up regular scans that look for malicious code, suspicious code injections, vulnerabilities, abandoned plugins, and missing hardening recommendations.
 * **Creating automated security reports:** Stay informed with health updates and immediate threat summaries delivered directly to your inbox.
-* **Making comprehensive audit logs:** Defender tracks and logs every backend event, to trace file edits, unauthorized changes and active hacking attempts instantly.
+* **Keeping audit logs:** Defender logs key site activity — logins, user changes, plugin and theme updates, content edits, and settings changes — so you can track what happened and when.
 
 = Why choose Defender? =
 
@@ -236,6 +236,48 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 6.2.2 ( 2026-08-24 ) =
+
+- Fix: Streamlined schema method by removing bootstrap trait
+
+= 6.2.1 ( 2026-08-20 ) =
+
+- Fix: 2FA > Web Authentication method binds credential verification to the target user (props: Tai)
+
+= 6.2.0 ( 2026-08-18 ) =
+
+- New: Audit Log for Free Hub and WP.org users
+- Enhancement: Compatibility with WordPress 7.1
+- Enhancement: Replace PHP-DI third-party package with custom lightweight DI Container
+- Enhancement: Display the Audit Log Storage retention setting
+- Enhancement: Handle UI state when all scan types are disabled on the Settings page
+- Enhancement: Update WPMU DEV domain in Audit service codebase
+- Enhancement: Validate secret-key API response before writing to wp-config.php
+- Enhancement: Improve toast message when attempting to disable the last enabled Malware Scan type
+- Enhancement: Remove dash-notice submodule
+- Enhancement: Ensure all scan status messages are displayed during scan progress
+- Enhancement: Improving user communication while the site is connecting to the Hub
+- Fix: Clicking on 'View Logs' link does not filter Firewall Logs after the redirect
+- Fix: Security improvements on Hub-Connector (props: Jakub Herman)
+- Fix: Prevent adding duplicate recipient email addresses in Reports and Alerts
+- Fix: Changing the default report template should not affect existing recipient(s) preferences
+- Fix: Fix responsive layout issues on Dashboard, Two-Factor Auth and Other Settings plugin pages
+- Fix: Reverting to Defender 5 causes JavaScript errors on the Notifications page
+- Fix: Recipients don't receive email for all types of 'Firewall Alert' when a firewall lockout is enabled and triggered for XSS, Fake Bot, or 'Non-installed plugin lockout'
+- Fix: Logs are displayed without timezone on Audit and Firewall log pages
+- Fix: Improve Malware Alert and Report flow for 'always_send' and 'error_send' params
+- Fix: Email notifications title issue with apostrophes
+- Fix: The scheduled time notice does not show after the Free upgrade
+- Fix: Defender Welcome Modal is displayed in wrong version
+- Fix: 3 strings were not imported for translation due to emoji
+- Fix: Unable to access the Custom Rules page
+- Fix: Force Authentication is not restricted to roles enabled under User Roles
+- Fix: Settings page layout breaks at 1280px with horizontal scrollbar
+- Fix: Incorrect 'Enable Bot Protection' modal on disabled reCAPTCHA toggles
+- Fix: Pagination remains visible after ignoring all files and only disappears after clicking a page
+- Fix: Defender Audit Logs creates incorrect and duplicate entries when updating General Settings
+- Fix: Minor code improvements
+
 = 6.1.0 ( 2026-07-22 ) =
 
 - Enhancement: Improved compatibility of Central IP list status with Unlimited Hosting environments
@@ -246,7 +288,7 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Enhancement: Users remain on the current page after connecting to the Hub
 - Enhancement: Updated CVSS score handling for outdated plugin issues
 - Enhancement: Updated Defender icon, configuration branding, dropdown design, and Hub Connector submodule
-- Fix: Resolved multiple v5 → v6 upgrade issues where notification, 2FA, and Usage Tracking settings were incorrectly reset or disabled
+- Fix: Resolved multiple v5 to v6 upgrade issues where notification, 2FA, and Usage Tracking settings were incorrectly reset or disabled
 - Fix: Fixed errors triggered by third-party plugin conflicts and Notification model properties
 - Fix: Fixed WP-CLI command handling, including duplicate scan lines and missing subcommands
 - Fix: Resolved AntiBot and Bot Protection state issues, including Unlock Me button and feature activation modal
@@ -288,52 +330,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Fix: Colored elements appear on Defender admin pages when High Contrast Mode is enabled
 - Fix: Exported Firewall logs do not follow the selected sort order
 
-= 5.9.0 ( 2026-01-27 ) =
-
-- New: WooCommerce and BuddyPress integrations in Cloudflare Turnstile
-- Enhancement: Compatibility with PHP 8.4
-- Enhancement: Update malware signatures
-- Enhancement: Update ALTCHA functionality
-- Enhancement: Improve plugin code style using PHPStan
-- Enhancement: Refactor CAPTCHA file structure
-- Enhancement: Add Thinkbot user agent to Blocklist Presets
-- Enhancement: Display the readme file on the Malware Scanning page after it is renamed
-- Enhancement: Add new "Outdated and closed plugin" key to the config structure
-- Fix: Prevent audit logs from being created when updating a user profile without changes
-- Fix: Backslash character in salt generator can break the site
-- Fix: Update copy for Mask URL block page
-- Fix: Hide Settings > General > "More info" link when Whitelabel is enabled
-- Fix: Inconsistent validation in CAPTCHA when the Preview test is not passed
-- Fix: IP address and event type filters not working in the audit log export file
-- Fix: Masked Login URL slug validation after activation
-
-= 5.8.1 ( 2026-01-12 ) =
-
-- Enhancement: Miscellaneous improvements
-
-= 5.8.0 ( 2025-12-24 ) =
-
-- New: Detect suspicious code in JavaScript files during Malware Scanning
-- Enhancement: Prevent false lockouts when requests contain mixed Facebook/Twitterbot user agents
-- Enhancement: Update Axios and form-data package versions
-- Enhancement: Update malware signatures
-- Enhancement: Split Bulk checkboxes between tabs on Malware Scanning page
-- Enhancement: Display Disconnect Site button on Defender’s general settings screen
-- Enhancement: Improve plugin code style using PHPStan
-- Enhancement: Improve UI for background Malware Scanning
-- Enhancement: Restore reCAPTCHA class alias for backward compatibility
-- Enhancement: Add new audit logging events
-- Enhancement: Migrate notification events to the centralized Cron Manager
-- Enhancement: Migrate common plugin events to the centralized Cron Manager
-- Fix: Update .htaccess rules for LiteSpeed servers
-- Fix: Duplicate user agent records in robots.txt
-- Fix: Extra space and hidden Google reCAPTCHA field shown on multisite registration page
-- Fix: Duplicates of Ignored Scan issues
-- Fix: Deprecation warnings from the thecodingmachine/safe package in PHP 8.4
-- Fix: Quarantine activation link does not work in the free version
-- Fix: Incorrect "Configure" button flow in the Firewall widget on the Dashboard
-- Fix: UI improvements
-
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 
 == Upgrade Notice ==
@@ -346,4 +342,3 @@ Don't forget to stay up to date on everything WordPress from the Internet's numb
 [WPMU DEV Blog](https://wpmudev.com/?utm_source=wordpress.org&utm_medium=readme&utm_campaign=defender-readme&utm_content=wpmu_dev_blog_link)
 
 Hey, one more thing... we hope you [enjoy our free offerings](http://profiles.wordpress.org/WPMUDEV/) as much as we've loved making them for you!
-

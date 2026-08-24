@@ -105,6 +105,19 @@ class Feature_Modal extends Component {
 	}
 
 	/**
+	 * Enable the welcome modal only when the installed plugin version matches the exact
+	 * release the modal belongs to, so it does not re-appear on later patches/minors
+	 * (e.g. 6.0.1, 6.1) that share the same DB version.
+	 *
+	 * @return void
+	 */
+	public static function maybe_enable_welcome_modal(): void {
+		if ( defined( 'DEFENDER_VERSION' ) && version_compare( DEFENDER_VERSION, self::FEATURE_VERSION, '==' ) ) {
+			update_site_option( self::FEATURE_SLUG, true );
+		}
+	}
+
+	/**
 	 * Delete welcome modal key.
 	 *
 	 * @return void

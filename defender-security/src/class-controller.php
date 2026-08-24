@@ -214,11 +214,24 @@ abstract class Controller extends \Calotes\Base\Controller {
 		$wpmudev        = wd_di()->get( \WP_Defender\Behavior\WPMUDEV::class );
 		$scan_api       = wd_di()->get( \WP_Defender\Controller\Scan::class )->dump_routes_and_nonces();
 
+		// wp_timezone_string() returns a raw offset like "+05:30" for sites that use
+		// a numeric GMT offset instead of a named timezone. Intl.DateTimeFormat does
+		// not accept "+05:30", but it does accept the "UTC+05:30" form in all modern
+		// browsers (Chrome 24+, Firefox 23+, Safari 10+). Prefix the offset so the
+		// JS Intl APIs work correctly without falling back to the browser timezone.
+		$tz_string = wp_timezone_string();
+		if ( preg_match( '/^[+-]/', $tz_string ) ) {
+			$tz_string = 'UTC' . $tz_string;
+		}
+
 		return array(
 			'defenderUrl'        => network_admin_url( 'admin.php?page=wp-defender' ),
 			'pluginUrl'          => WP_DEFENDER_BASE_URL,
 			'adminUrl'           => network_admin_url(),
 			'siteUrl'            => network_site_url(),
+			'timeZone'           => $tz_string,
+			'timeZoneOffset'     => (int) round( wp_timezone()->getOffset( new \DateTime( 'now' ) ) / 60 ),
+			'startOfWeek'        => (int) get_option( 'start_of_week', 1 ),
 			'profileData'        => $profile_data,
 			'hubConnector'       => wd_di()->get( \WP_Defender\Controller\Hub_Connector::class )->data_frontend(),
 			'isPro'              => $wpmudev->is_pro(),
@@ -227,7 +240,7 @@ abstract class Controller extends \Calotes\Base\Controller {
 			'whiteLabel'         => defender_whitelabel_data(),
 			'activityLog'        => wd_di()->get( \WP_Defender\Controller\Activity_Log::class )->data_frontend(),
 			'hubApiKey'          => array(
-				'available' => false !== $wpmudev->get_apikey(),
+				'available' => $wpmudev->is_apikey_available(),
 			),
 			'hosted'             => $wpmudev->is_wpmu_hosting(),
 			'highContrastMode'   => defender_high_contrast(),

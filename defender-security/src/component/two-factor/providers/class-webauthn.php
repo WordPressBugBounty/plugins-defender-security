@@ -228,7 +228,8 @@ class Webauthn extends Two_Factor_Provider {
 	 */
 	public function validate_authentication( WP_User $user ) {
 		$webauthn_controller = wd_di()->get( Webauthn_Controller::class );
-		$response            = $webauthn_controller->verify_response( true );
+		// Pass $user explicitly to avoid broken binding between authentication stages.
+		$response = $webauthn_controller->verify_response( true, $user );
 
 		if ( isset( $response['success'] ) && true === $response['success'] ) {
 			return true;

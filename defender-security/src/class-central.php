@@ -123,7 +123,7 @@ class Central extends Component {
 			// Manipulate the POST as raw data.
 			$_POST = $request->get_data();
 
-			return $object->$method( $request );
+			return call_user_func( array( $object, $method ), $request );
 		} else {
 			$this->log( sprintf( 'class not found when executing: %s %s', $class_name, $method ), self::INTERNAL_LOG );
 		}

@@ -443,13 +443,23 @@ class Captcha extends Event {
 
 		$success = (bool) ( $response['success'] ?? false );
 		if ( $success ) {
-			$data_key = Captcha_Model::TURNSTILE === $this->model->provider
-				? 'data_turnstile'
-				: 'data_' . $this->model->active_type;
-
-			$data                     = $this->model->{$data_key};
-			$data['verified']         = true;
-			$this->model->{$data_key} = $data;
+			if ( Captcha_Model::TURNSTILE === $this->model->provider ) {
+				$data                        = $this->model->data_turnstile;
+				$data['verified']            = true;
+				$this->model->data_turnstile = $data;
+			} elseif ( 'v2_checkbox' === $this->model->active_type ) {
+				$data                          = $this->model->data_v2_checkbox;
+				$data['verified']              = true;
+				$this->model->data_v2_checkbox = $data;
+			} elseif ( 'v2_invisible' === $this->model->active_type ) {
+				$data                           = $this->model->data_v2_invisible;
+				$data['verified']               = true;
+				$this->model->data_v2_invisible = $data;
+			} elseif ( 'v3_recaptcha' === $this->model->active_type ) {
+				$data                           = $this->model->data_v3_recaptcha;
+				$data['verified']               = true;
+				$this->model->data_v3_recaptcha = $data;
+			}
 			$this->model->save();
 		}
 

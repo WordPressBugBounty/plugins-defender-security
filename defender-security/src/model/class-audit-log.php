@@ -189,6 +189,7 @@ class Audit_Log extends DB {
 	 * @param  string   $user_id  Who trigger this event, if it 0, will be guest.
 	 * @param  string   $ip  IP of who trigger this.
 	 * @param  int|bool $paged  Current page.
+	 * @param  int      $per_page  Number of logs per page.
 	 *
 	 * @return array
 	 */
@@ -198,7 +199,8 @@ class Audit_Log extends DB {
 		$events = array(),
 		$user_id = '',
 		$ip = '',
-		$paged = 1
+		$paged = 1,
+		$per_page = 10
 	): array {
 		$orm     = self::get_orm();
 		$builder = $orm->get_repository( self::class );
@@ -222,7 +224,7 @@ class Audit_Log extends DB {
 
 		if ( false !== $paged ) {
 			// If paged == false, then it will be no paging.
-			$per_page = 20;
+			$per_page = max( 1, (int) $per_page );
 			$offset   = ( $paged - 1 ) * $per_page;
 			$builder->limit( $per_page, $offset );
 		}

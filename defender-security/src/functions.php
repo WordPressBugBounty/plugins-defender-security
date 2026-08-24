@@ -102,7 +102,7 @@ function defender_is_windows(): bool {
 /**
  * Returns the global DI container for the WP Defender plugin.
  *
- * @return \WPMU_DEV\Defender\Vendor\DI\Container  The global DI container.
+ * @return \WP_Defender\Component\Container The global DI container.
  */
 function wd_di() {
 	global $wp_defender_di;
@@ -287,7 +287,6 @@ function defender_noreply_email( string $filter_tag = '' ) {
 }
 
 /**
- * Todo: remove if we don't need Vue.js.
  * Get data of the whitelabel feature from WPMUDEV Dashboard:
  * hide_branding, hide_doc_link, footer_text, hero_image, change_footer.
  *
@@ -344,11 +343,11 @@ function defender_whitelabel_data(): array {
 			$wl_settings        = WPMUDEV_Dashboard::$whitelabel->get_settings();
 			$pid                = Config_Hub_Helper::WDP_ID;
 			$labels_networkwide = (bool) ( $wl_settings['labels_networkwide'] ?? true );
-			$labels_subsites    = (array) ( $wl_settings['labels_subsites'] ?? array() );
+			$labels_subsites    = array_map( 'intval', (array) ( $wl_settings['labels_subsites'] ?? array() ) );
 			$apply_labels       = ! is_multisite()
 									|| is_network_admin()
 									|| $labels_networkwide
-									|| in_array( get_current_blog_id(), $labels_subsites, false );
+									|| in_array( get_current_blog_id(), $labels_subsites, true );
 
 			if ( $apply_labels && isset( $wl_settings['labels_config'][ $pid ] ) ) {
 				$cfg              = $wl_settings['labels_config'][ $pid ];

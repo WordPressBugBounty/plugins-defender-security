@@ -64,13 +64,6 @@ class Backup_Settings extends Component {
 	public const KEY = 'defender_last_settings', INDEXER = 'defender_config_indexer';
 
 	/**
-	 * Indicates whether the current installation is a pro version.
-	 *
-	 * @var bool
-	 */
-	private $is_pro;
-
-	/**
 	 * Indicates whether the site has a HUB API key (true for both free and pro with Hub connected).
 	 *
 	 * @var bool
@@ -82,9 +75,8 @@ class Backup_Settings extends Component {
 	 * It initializes the class and sets whether the current installation is a pro version.
 	 */
 	public function __construct() {
-		$wpmudev               = new WPMUDEV();
-		$this->is_pro          = $wpmudev->is_pro();
-		$this->has_hub_api_key = false !== $wpmudev->get_apikey();
+		$wpmudev = new WPMUDEV();
+		$this->has_hub_api_key = $wpmudev->is_apikey_available();
 	}
 
 	/**
@@ -171,7 +163,24 @@ class Backup_Settings extends Component {
 			'email_content_issue_found'     => $scan_notification->configs['template']['found']['body'],
 			'email_content_error'           => $scan_notification->configs['template']['error']['body'],
 		);
+		if ( class_exists( Model_Audit_Logging::class ) ) {
+			$settings     = new Model_Audit_Logging();
+			$audit_report = new Audit_Report();
+			$audit        = array(
+				'enabled'      => $settings->is_active(),
+				'report'       => 'disabled',
+				'subscribers'  => $this->change_subscriber_format( $audit_report ),
+				'frequency'    => $audit_report->frequency,
+				'day'          => $audit_report->day,
+				'day_n'        => $audit_report->day_n,
+				'time'         => $audit_report->time,
+				// @since 2.7.0 We can remove it in the next version.
+				'dry_run'      => false,
+				'storage_days' => $settings->storage_days,
+			);
+		} else {
 			$audit['enabled'] = false;
+		}
 
 		$settings_firewall    = new Model_Firewall();
 		$settings_ll          = new Model_Login_Lockout();
@@ -420,8 +429,9 @@ class Backup_Settings extends Component {
 		$default_password_protection_values = ( new Model_Password_Protection() )->get_default_values();
 		$default_2fa_values                 = ( new Model_Two_Fa() )->get_default_values();
 		$default_scan_settings              = wd_di()->get( Model_Scan::class );
+
 		// Total data.
-		$data = array(
+		$data          = array(
 			'scan'                  => array(
 				'integrity_check'               => true,
 				'check_core'                    => true,
@@ -576,7 +586,18 @@ class Backup_Settings extends Component {
 				'lock_properties' => array(),
 			),
 		);
-			$data['audit']['enabled'] = false;
+		$data['audit'] = array(
+			'enabled'      => true,
+			'report'       => 'disabled',
+			'subscribers'  => $default_recipients,
+			'frequency'    => 'weekly',
+			'day'          => 'sunday',
+			'day_n'        => 1,
+			'time'         => '4:00',
+			// @since 2.7.0 We can remove it in the next version.
+			'dry_run'      => false,
+			'storage_days' => '6 months',
+		);
 		if ( $this->has_hub_api_key ) {
 			$data['blocklist_monitor'] = array(
 				// @since 2.7.0 Enable.
@@ -750,7 +771,11 @@ class Backup_Settings extends Component {
 								$scan_notification->in_house_recipients  = array();
 								$scan_notification->out_house_recipients = array();
 								foreach ( $module_data['notification_subscribers'] as $key => $subscribers ) {
-									$scan_notification->$key = $subscribers;
+									if ( 'in_house_recipients' === $key ) {
+										$scan_notification->in_house_recipients = $subscribers;
+									} elseif ( 'out_house_recipients' === $key ) {
+										$scan_notification->out_house_recipients = $subscribers;
+									}
 								}
 							}
 							$scan_notification->save();
@@ -763,7 +788,11 @@ class Backup_Settings extends Component {
 							$scan_report->in_house_recipients  = array();
 							$scan_report->out_house_recipients = array();
 							foreach ( $module_data['report_subscribers'] as $key => $subscribers ) {
-								$scan_report->$key = $subscribers;
+								if ( 'in_house_recipients' === $key ) {
+									$scan_report->in_house_recipients = $subscribers;
+								} elseif ( 'out_house_recipients' === $key ) {
+									$scan_report->out_house_recipients = $subscribers;
+								}
 							}
 						}
 						// Step#2 if 'scheduled_scanning'-key exists.
@@ -834,7 +863,11 @@ class Backup_Settings extends Component {
 								$lockout_notification->in_house_recipients  = array();
 								$lockout_notification->out_house_recipients = array();
 								foreach ( $module_data['notification_subscribers'] as $key => $subscribers ) {
-									$lockout_notification->$key = $subscribers;
+									if ( 'in_house_recipients' === $key ) {
+										$lockout_notification->in_house_recipients = $subscribers;
+									} elseif ( 'out_house_recipients' === $key ) {
+										$lockout_notification->out_house_recipients = $subscribers;
+									}
 								}
 							}
 
@@ -888,7 +921,11 @@ class Backup_Settings extends Component {
 							$audit_report->in_house_recipients  = array();
 							$audit_report->out_house_recipients = array();
 							foreach ( $module_data['subscribers'] as $key => $subscribers ) {
-								$audit_report->$key = $subscribers;
+								if ( 'in_house_recipients' === $key ) {
+									$audit_report->in_house_recipients = $subscribers;
+								} elseif ( 'out_house_recipients' === $key ) {
+									$audit_report->out_house_recipients = $subscribers;
+								}
 							}
 						}
 						if ( isset( $module_data['last_sent'] ) ) {

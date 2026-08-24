@@ -56,7 +56,7 @@ class Hub_Connector extends Component {
 		}
 
 		$page_action     = sanitize_text_field( wp_unslash( $_GET['page_action'] ?? '' ) );
-		$is_hub_callback = ! empty( $_GET['hub_connector_callback'] );
+		$is_hub_callback = isset( $_GET['hub_connector_callback'] ) && '1' === $_GET['hub_connector_callback'];
 
 		if ( self::CONNECTION_ACTION === $page_action || $is_hub_callback ) {
 			return false;
@@ -114,9 +114,12 @@ class Hub_Connector extends Component {
 	 * @return bool
 	 */
 	public static function is_team_selection_callback(): bool {
-		return ! empty( $_REQUEST['hub_connector_callback'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			&& ! empty( $_REQUEST['user_apikey'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			&& 1 === (int) ( $_REQUEST['is_multi_auth'] ?? 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// Follow the approach implemented in HC module. Skip a sanitization step to avoid ruining the input.
+		$is_multi_auth = isset( $_REQUEST['is_multi_auth'] ) ? (int) $_REQUEST['is_multi_auth'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		return isset( $_REQUEST['hub_connector_callback'] ) && '1' === $_REQUEST['hub_connector_callback'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			&& isset( $_REQUEST['user_apikey'] ) && '' !== $_REQUEST['user_apikey'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			&& 1 === $is_multi_auth;
 	}
 
 	/**
@@ -338,11 +341,14 @@ class Hub_Connector extends Component {
 			return false;
 		}
 
-		$page_action = sanitize_text_field( wp_unslash( $_REQUEST['page_action'] ?? '' ) );
-		$syncing     = current_user_can( 'manage_options' )
-			&& self::verify_auth_nonce()
-			&& self::CONNECTION_ACTION === $page_action
-			&& ! empty( $_REQUEST['set_apikey'] );
+		$syncing = false;
+		if ( current_user_can( 'manage_options' ) && self::verify_auth_nonce() ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verified above by self::verify_auth_nonce().
+			$page_action = sanitize_text_field( wp_unslash( $_REQUEST['page_action'] ?? '' ) );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verified above by self::verify_auth_nonce().
+			$set_apikey = sanitize_text_field( wp_unslash( $_REQUEST['set_apikey'] ?? '' ) );
+			$syncing    = self::CONNECTION_ACTION === $page_action && '' !== $set_apikey;
+		}
 
 		if ( $syncing ) {
 			set_site_transient( self::SYNCING_TRANSIENT_KEY, true, MINUTE_IN_SECONDS );
@@ -357,19 +363,21 @@ class Hub_Connector extends Component {
 	 * @return bool
 	 */
 	public static function has_error_in_login() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only URL parameter check / validated via verify_auth_nonce below.
 		$page_action     = sanitize_text_field( wp_unslash( $_GET['page_action'] ?? '' ) );
-		$api_error       = sanitize_text_field( wp_unslash( $_GET['api_error'] ?? 0 ) );
-		$is_hub_callback = ! empty( $_GET['hub_connector_callback'] );
+		$api_error       = sanitize_text_field( wp_unslash( $_GET['api_error'] ?? '' ) );
+		$is_hub_callback = isset( $_GET['hub_connector_callback'] ) && '1' === $_GET['hub_connector_callback'];
+		$has_api_error   = ! in_array( trim( $api_error ), array( '', '0' ), true );
 
 		if ( self::CONNECTION_ACTION === $page_action ) {
-			return ! empty( $api_error );
+			return $has_api_error;
 		}
 
 		if ( ! $is_hub_callback || ! self::verify_auth_nonce() ) {
 			return false;
 		}
 
-		return ! empty( $api_error );
+		return $has_api_error;
 	}
 
 	/**
@@ -505,7 +513,7 @@ class Hub_Connector extends Component {
 						break;
 					default:
 						// Use the actual error message passed through from the sync poll if available.
-						if ( ! empty( $_GET['api_error_msg'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						if ( isset( $_GET['api_error_msg'] ) && '' !== $_GET['api_error_msg'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 							$error = sanitize_text_field( wp_unslash( $_GET['api_error_msg'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 						} else {
 							$error = __( 'Unknown error. Please update the WPMU DEV Dashboard plugin and try again.', 'defender-security' );
@@ -513,7 +521,7 @@ class Hub_Connector extends Component {
 						break;
 				}
 			}
-		} elseif ( ! empty( $_REQUEST['connection_error'] ) ) {
+		} elseif ( isset( $_REQUEST['connection_error'] ) && '' !== $_REQUEST['connection_error'] ) {
 			// Variable `$connection_error` is set by the UI function `render_dashboard`.
 			$error = sprintf(
 				'%s<br>%s<br><em>%s</em>',
@@ -525,7 +533,7 @@ class Hub_Connector extends Component {
 					\WPMUDEV\Hub\Connector\Data::get()->server_url()
 				)
 			);
-		} elseif ( ! empty( $_REQUEST['invalid_key'] ) ) {
+		} elseif ( isset( $_REQUEST['invalid_key'] ) && '' !== $_REQUEST['invalid_key'] ) {
 			// Invalid API key.
 			$error = __( 'Your API Key was invalid. Please try again.', 'defender-security' );
 		}
@@ -568,7 +576,7 @@ class Hub_Connector extends Component {
 			$args = self::get_connection_args( $target_page );
 		}
 
-		if ( ! empty( $utm_campaign ) ) {
+		if ( '' !== trim( $utm_campaign ) ) {
 			$args['utm_campaign'] = sanitize_text_field( $utm_campaign );
 		}
 
@@ -588,7 +596,7 @@ class Hub_Connector extends Component {
 	public static function get_hub_connector_callback_url( string $target_page = 'wp-defender', string $utm_campaign = '' ): string {
 		$args = self::get_connection_args( $target_page );
 
-		if ( ! empty( $utm_campaign ) ) {
+		if ( '' !== trim( $utm_campaign ) ) {
 			$args['utm_campaign'] = sanitize_text_field( $utm_campaign );
 		}
 
@@ -701,7 +709,7 @@ class Hub_Connector extends Component {
 			$raw = \WPMUDEV\Hub\Connector\Data::get()->profile_data( true );
 		}
 
-		if ( ! is_array( $raw ) || empty( $raw['user_name'] ) ) {
+		if ( ! is_array( $raw ) || ! isset( $raw['user_name'] ) || '' === trim( $raw['user_name'] ) ) {
 			return null;
 		}
 

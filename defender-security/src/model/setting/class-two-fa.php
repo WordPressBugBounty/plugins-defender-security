@@ -224,7 +224,9 @@ To complete your login, copy and paste the temporary password into the Password 
 	 * @return void
 	 */
 	protected function after_load(): void {
-		$this->user_roles = array_values( $this->user_roles );
+		$this->user_roles       = array_values( $this->user_roles );
+		$this->force_auth_roles = array_values( array_intersect( $this->force_auth_roles, $this->user_roles ) );
+		$this->force_auth       = array() !== $this->force_auth_roles;
 	}
 
 	/**

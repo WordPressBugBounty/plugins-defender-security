@@ -471,6 +471,7 @@ class Blacklist_Lockout extends Component {
 					Lockout_Log::LOCKOUT_404,
 					Lockout_Log::AUTH_LOCK,
 					Lockout_Log::LOCKOUT_UA,
+					// todo: add other 404- and UA-lockouts.
 					strtotime( '-' . $max_age_days . ' days', time() ),
 					$limit
 				),

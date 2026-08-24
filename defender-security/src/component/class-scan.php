@@ -103,7 +103,7 @@ class Scan extends Component {
 		$this->attach_behavior( Core_Integrity::class, Core_Integrity::class );
 		$this->attach_behavior( Plugin_Integrity::class, Plugin_Integrity::class );
 
-		$this->is_apikey = false !== wd_di()->get( WPMUDEV::class )->get_apikey();
+		$this->is_apikey = wd_di()->get( WPMUDEV::class )->is_apikey_available();
 		$this->settings  = wd_di()->get( Scan_Settings::class );
 	}
 
@@ -140,9 +140,11 @@ class Scan extends Component {
 			// Get the first.
 			$this->log( 'Prepare facts for a scan', Scan_Controller::SCAN_LOG );
 			$task                    = Scan_Model::STEP_GATHER_INFO;
+			$this->scan->status      = $task;
 			$this->scan->percent     = 0;
 			$this->scan->total_tasks = $runner->count();
 			$this->scan->save();
+			$this->scan->enqueue_status_message( $this->scan->get_status_text() );
 		}
 		if (
 			in_array(
@@ -180,6 +182,7 @@ class Scan extends Component {
 					$this->scan->task_checkpoint = '';
 					$this->scan->date_end        = gmdate( 'Y-m-d H:i:s' );
 					$this->scan->save();
+					$this->scan->enqueue_status_message( $this->scan->get_status_text() );
 					// Queue for next run.
 					return false;
 				}
@@ -294,8 +297,12 @@ class Scan extends Component {
 				}
 
 				return $this->abandoned_plugin_check( $this->abandoned_plugin );
+			case 'core_integrity_check':
+				return $this->core_integrity_check();
+			case 'plugin_integrity_check':
+				return $this->plugin_integrity_check();
 			default:
-				return is_callable( array( $this, $task ) ) ? $this->$task() : false;
+				return false;
 		}
 	}
 
@@ -456,13 +463,35 @@ class Scan extends Component {
 	}
 
 	/**
+	 * Checks if any scan type is active.
+	 *
+	 * @return bool True if any scan type is active, false otherwise.
+	 */
+	public function is_any_scan_type_active(): bool {
+		$settings          = $this->settings;
+		$file_change_check = $settings->is_checked_any_file_change_types();
+		// Check#1 the 'File change detection' type because only it's available with nested types.
+		// Check#2 the Abandoned plugin type.
+		$check_free_settings = $file_change_check || $settings->check_abandoned_plugin;
+		// Indicates if the API key is available for HC features.
+		if ( $this->is_apikey ) {
+			// HC version. Check all parent types.
+			return $check_free_settings || $settings->check_known_vuln || $settings->scan_malware;
+		} else {
+			// Without HC access.
+			return $check_free_settings;
+		}
+	}
+
+
+	/**
 	 * Checks if any scan type is active based on the scan settings and the user's membership status.
 	 *
 	 * @param  array $scan_settings  The scan settings.
 	 *
 	 * @return bool Returns true if any scan type is active, false otherwise.
 	 */
-	public function is_any_scan_active( $scan_settings ): bool {
+	public function check_scan_active_by( $scan_settings ): bool {
 		if ( ! isset( $scan_settings['integrity_check'] ) || ! $scan_settings['integrity_check'] ) {
 			// Check the parent type.
 			$file_change_check = false;
@@ -477,14 +506,16 @@ class Scan extends Component {
 			$file_change_check = true;
 		}
 
+		$check_free_settings = $file_change_check
+			|| ( isset( $scan_settings['check_abandoned_plugin'] ) && $scan_settings['check_abandoned_plugin'] );
 		// For HC features.
 		if ( $this->is_apikey ) {
-			// Similar to is_any_active(...) method from the controller.Check all parent types including HC features.
-			return $file_change_check || ( isset( $scan_settings['check_known_vuln'] ) && $scan_settings['check_known_vuln'] )
+			// Similar to is_any_scan_type_active() method.Check all parent types including HC features.
+			return $check_free_settings || ( isset( $scan_settings['check_known_vuln'] ) && $scan_settings['check_known_vuln'] )
 				|| ( isset( $scan_settings['scan_malware'] ) && $scan_settings['scan_malware'] );
 		}
 
-		return $file_change_check || ( isset( $scan_settings['check_abandoned_plugin'] ) && $scan_settings['check_abandoned_plugin'] );
+		return $check_free_settings;
 	}
 
 	/**
@@ -916,5 +947,19 @@ class Scan extends Component {
 	 */
 	public function get_lock_filename(): string {
 		return $this->lock_filename;
+	}
+
+	/**
+	 * Get the text for the emergency scan stop case.
+	 *
+	 * @return string
+	 */
+	public static function get_emergency_scan_stop_text(): string {
+		$text = __( 'Scan aborted. No scan types are enabled. Enable at least one scan type under Defender > Settings > Tools before running a scan.', 'defender-security' );
+		if ( defender_is_wp_cli() ) {
+			return $text;
+		}
+
+		return esc_html( $text );
 	}
 }

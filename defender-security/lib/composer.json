@@ -1,0 +1,48 @@
+{
+  "name": "incsub/wp-defender-lib",
+  "description": "A package for prefixing dependencies namespace",
+  "require": {
+    "php": ">=8.0"
+  },
+  "require-dev": {
+    "nyholm/psr7": "^1.8",
+    "nyholm/psr7-server": "^1.0",
+    "web-auth/webauthn-lib": "^3.3"
+  },
+  "config": {
+    "platform": {
+      "php": "8.0"
+    }
+  },
+  "extra": {
+    "mozart": {
+      "dep_namespace": "WP_DEFENDER_VENDOR\\",
+      "dep_directory": "/packages/",
+      "packages": [
+        "nyholm/psr7",
+        "nyholm/psr7-server",
+        "web-auth/webauthn-lib"
+      ],
+      "override_autoload": {
+        "thecodingmachine/safe": {
+          "psr-4": {
+            "Safe\\": "."
+          }
+        },
+        "symfony/polyfill-php80": {
+          "psr-4": {
+            "Symfony\\Polyfill\\Php80\\": ""
+          }
+        },
+        "symfony/polyfill-php81": {
+          "psr-4": {
+            "Symfony\\Polyfill\\Php81\\": ""
+          }
+        }
+      },
+      "classmap_directory": "/classes/",
+      "classmap_prefix": "WPDEF_Vendor_",
+      "delete_vendor_directories": true
+    }
+  }
+}

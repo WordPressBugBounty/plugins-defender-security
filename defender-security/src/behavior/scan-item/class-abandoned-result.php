@@ -30,8 +30,8 @@ class Abandoned_Result extends Behavior {
 	public function to_array(): array {
 		$data = $this->owner->raw_data;
 
-		$last_updated = $data['last_updated'];
-		if ( ! empty( $last_updated ) ) {
+		$last_updated = isset( $data['last_updated'] ) ? trim( $data['last_updated'] ) : '';
+		if ( '' !== $last_updated ) {
 			$ttl = strtotime( $last_updated );
 			if ( false !== $ttl ) {
 				$last_updated = wp_date( 'M j, Y', $ttl );

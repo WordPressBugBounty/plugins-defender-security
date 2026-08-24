@@ -49,6 +49,15 @@ class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 	}
 
 	/**
+	 * Is the Hub API key available?
+	 *
+	 * @return bool
+	 */
+	public function is_apikey_available(): bool {
+		return false !== $this->get_apikey();
+	}
+
+	/**
 	 * Check if whitelabel is enabled.
 	 *
 	 * @since 2.5.5 Use Whitelabel filters instead of calling the whitelabel functions directly.

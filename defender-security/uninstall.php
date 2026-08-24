@@ -82,7 +82,6 @@ if ( $uninstall_settings || $uninstall_data ) {
 		wd_di()->get( \WP_Defender\Controller\Two_Factor::class )->remove_settings();
 		wd_di()->get( \WP_Defender\Controller\Blocklist_Monitor::class )->remove_settings();
 		wd_di()->get( \WP_Defender\Controller\Main_Setting::class )->remove_settings();
-		wd_di()->get( \WP_Defender\Controller\Onboard::class )->remove_settings();
 		wd_di()->get( \WP_Defender\Controller\Setup_Wizard::class )->remove_settings();
 		wd_di()->get( \WP_Defender\Controller\Activity_Log::class )->remove_settings();
 		wd_di()->get( \WP_Defender\Controller\Data_Tracking::class )->remove_settings();
@@ -97,7 +96,7 @@ if ( $uninstall_settings || $uninstall_data ) {
 		delete_site_option( 'wp_defender_config_default' );
 		delete_site_option( 'disable-xml-rpc' );
 
-		// Because not call remove_settings from WAF and Onboard controllers.
+		// Because not call remove_settings from WAF controller.
 		delete_site_transient( 'def_waf_status' );
 		delete_site_option( 'wp_defender_is_activated' );
 		delete_site_transient( \WP_Defender\Component\Blacklist_Lockout::IP_LIST_KEY );
@@ -125,7 +124,6 @@ if ( $uninstall_settings || $uninstall_data ) {
 		$login_access->remove_data();
 		defender_drop_custom_tables();
 		wd_di()->get( \WP_Defender\Component\Network_Cron_Manager::class )->remove_data();
-		wd_di()->get( \WP_Defender\Component\Breadcrumbs::class )->delete_meta_key();
 		wd_di()->get( \WP_Defender\Controller\Data_Tracking::class )->remove_data();
 	}
 }

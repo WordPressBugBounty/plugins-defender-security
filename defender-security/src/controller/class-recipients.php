@@ -109,7 +109,29 @@ class Recipients extends Event {
 			return new Response( false, array( 'message' => esc_html__( 'Only letters, spaces, hyphens and apostrophes allowed.', 'defender-security' ) ) );
 		}
 
-		if ( empty( $statuses ) ) {
+		// Block duplicate recipient emails. Messages render as React text, so keep them unescaped.
+		if ( $this->recipient_directory->email_exists( $email ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => __( 'This email address is already added as a recipient. Edit the existing recipient to add more report types.', 'defender-security' ),
+					'code'    => 'recipient_notice',
+				)
+			);
+		}
+
+		// Registered users must be added via user search, not invited by email.
+		if ( ! $in_house && get_user_by( 'email', $email ) ) {
+			return new Response(
+				false,
+				array(
+					'message' => __( "Registered user email can't be invited, you can add them directly at Search WordPress user tab.", 'defender-security' ),
+					'code'    => 'recipient_notice',
+				)
+			);
+		}
+
+		if ( array() === $statuses ) {
 			return new Response( false, array( 'message' => esc_html__( 'Please enable at least one notification module before inviting a recipient.', 'defender-security' ) ) );
 		}
 

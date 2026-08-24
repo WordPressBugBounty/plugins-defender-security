@@ -112,7 +112,7 @@ class Two_Factor extends Event {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			$is_jetpack_sso = $this->service->is_jetpack_sso();
 			$is_tml         = $this->service->is_tml();
-			add_action( 'admin_init', array( $this->service, 'get_providers' ) );
+			add_action( 'admin_init', array( $this, 'load_providers' ) );
 			add_action( 'pre_get_users', array( $this, 'filter_users_by_2fa' ) );
 			add_action( 'show_user_profile', array( $this, 'show_user_profile' ) );
 			add_action( 'profile_update', array( $this, 'profile_update' ) );
@@ -171,6 +171,15 @@ class Two_Factor extends Event {
 			// Fires when 2FA methods are enabled.
 			add_action( 'wd_2fa_enabled_provider_slugs', array( $this, 'enable_provider_slugs' ) );
 		}
+	}
+
+	/**
+	 * Loads the available service providers.
+	 *
+	 * @return void
+	 */
+	public function load_providers(): void {
+		$this->service->get_providers();
 	}
 
 	/**
@@ -330,6 +339,7 @@ class Two_Factor extends Event {
 				$this->password_protection_service->do_force_reset( $user, $password );
 			} else {
 				$user_id = $user->ID;
+				// For the Webauthn method, the check occurs inside Webauthn_Controller::verify_response().
 				// Set active user.
 				wp_set_current_user( $user_id, $user->user_login );
 				// Todo: add code for 'rememberme'-option.
@@ -890,11 +900,22 @@ class Two_Factor extends Event {
 	 * @defender_route
 	 */
 	public function save_settings( Request $request ): Response {
-		$model = $this->model;
-		$data  = $request->get_data();
+		$model          = $this->model;
+		$data           = $request->get_data();
+		$old_detect_woo = $model->detect_woo;
+
 		$model->import( $data );
 		if ( $model->validate() ) {
 			$model->save();
+
+			if ( $old_detect_woo !== $model->detect_woo ) {
+				if ( $model->detect_woo ) {
+					$this->wp_defender_2fa_endpoint();
+				}
+
+				flush_rewrite_rules();
+			}
+
 			Config_Hub_Helper::set_clear_active_flag();
 
 			return new Response(
@@ -1099,7 +1120,6 @@ class Two_Factor extends Event {
 	}
 
 	/**
-	 * Todo: add changes when the design is ready.
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.
@@ -1334,7 +1354,6 @@ class Two_Factor extends Event {
 	 */
 	public function wp_defender_2fa_endpoint(): void {
 		add_rewrite_endpoint( $this->slug, EP_PERMALINK | EP_PAGES );
-		flush_rewrite_rules();
 	}
 
 	/**

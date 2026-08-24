@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Defender
  * Plugin URI:   https://wpmudev.com/project/wp-defender/
- * Version:      6.1.0
+ * Version:      6.2.2
  * Description:  Get regular security scans, vulnerability reports, safety recommendations and customized hardening for your site in just a few clicks. Defender is the analyst and enforcer who never sleeps.
  * Author:       WPMU DEV
  * Author URI:   https://wpmudev.com/
@@ -37,13 +37,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die;
 }
 if ( ! defined( 'DEFENDER_VERSION' ) ) {
-	define( 'DEFENDER_VERSION', '6.1.0' );
+	define( 'DEFENDER_VERSION', '6.2.2' );
 }
 if ( ! defined( 'DEFENDER_RELEASE_DATE' ) ) {
-	define( 'DEFENDER_RELEASE_DATE', '2026-07-22' );
+	define( 'DEFENDER_RELEASE_DATE', '2026-08-24' );
 }
 if ( ! defined( 'DEFENDER_DB_VERSION' ) ) {
-	define( 'DEFENDER_DB_VERSION', '6.1.0' );
+	define( 'DEFENDER_DB_VERSION', '6.2.2' );
 }
 if ( ! defined( 'DEFENDER_SUI' ) ) {
 	define( 'DEFENDER_SUI', '2-12-24' );
@@ -141,9 +141,8 @@ if ( file_exists( WP_DEFENDER_DIR . 'vendor/woocommerce/action-scheduler/action-
 
 require_once WP_DEFENDER_DIR . 'src/functions.php';
 // Create container.
-$builder = new \WPMU_DEV\Defender\Vendor\DI\ContainerBuilder();
 global $wp_defender_di;
-$wp_defender_di = $builder->build();
+$wp_defender_di = new \WP_Defender\Component\Container();
 global $wp_defender_central;
 $wp_defender_central = new \WP_Defender\Central();
 do_action( 'wp_defender' );

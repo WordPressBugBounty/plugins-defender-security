@@ -126,14 +126,14 @@ class Security_Tweaks extends Event {
 		if ( ! is_string( $test_err_reporting ) || '' === trim( $test_err_reporting ) ) {
 			return;
 		}
-		// It should be only trigger by admin.
+		// It should be triggered only by admin.
 		if ( ! $this->check_permission() ) {
 			return;
 		}
 
-		$var = '$' . uniqid( '', true );
-		// This should output a warning. Ignored phpcs as it's a test.
-		echo ${$var}; // phpcs:ignore
+		// This should output a warning. Ignored by PHPCS as it's a test.
+		// @phpstan-ignore-next-line.
+		echo $undefined_variable; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Intentionally outputs an undefined variable to test warning handling.
 		exit();
 	}
 
@@ -200,7 +200,7 @@ class Security_Tweaks extends Event {
 			}
 		}
 
-		if ( 'replace-admin-username' === $slug && ! empty( $data['username'] ) ) {
+		if ( 'replace-admin-username' === $slug && isset( $data['username'] ) && '' !== trim( $data['username'] ) ) {
 			$_POST['username'] = $data['username'];
 		}
 
@@ -891,7 +891,13 @@ class Security_Tweaks extends Event {
 			$tmp = $tweaks;
 		} else {
 			$settings = new Model_Security_Tweaks();
-			$compare  = $settings->$type;
+
+			try {
+				$compare = $settings->get_collection( $type );
+			} catch ( \InvalidArgumentException $e ) {
+				$compare = array();
+			}
+
 			foreach ( $compare as $slug ) {
 				if ( isset( $tweaks[ $slug ] ) ) {
 					$tmp[ $slug ] = $tweaks[ $slug ];

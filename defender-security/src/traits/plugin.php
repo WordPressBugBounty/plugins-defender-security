@@ -119,7 +119,7 @@ trait Plugin {
 		$url       = 'https://api.wordpress.org/plugins/info/1.0/' . $slug . '.json';
 		$http_args = array(
 			'timeout'    => 15,
-			'sslverify'  => false, // Many hosts have no updated CA bundle.
+			'sslverify'  => true,
 			'user-agent' => defender_get_own_user_agent(),
 		);
 

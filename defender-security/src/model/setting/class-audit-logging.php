@@ -48,13 +48,15 @@ class Audit_Logging extends Setting {
 	}
 
 	/**
-	 * Audit logging is disabled always.
+	 * Checks if the audit logging is active.
 	 *
-	 * @return bool
+	 * @return bool Returns true if the audit logging is active, false otherwise.
 	 * @since 2.6.5
 	 */
 	public function is_active(): bool {
-		return false;
+		$enabled = apply_filters( 'wd_audit_enable', $this->enabled );
+
+		return is_bool( $enabled ) ? $enabled : (bool) $enabled;
 	}
 
 	/**

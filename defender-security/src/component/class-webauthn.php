@@ -8,10 +8,13 @@
 namespace WP_Defender\Component;
 
 use WP_User;
-use Webauthn\PublicKeyCredentialSource;
-use Webauthn\PublicKeyCredentialUserEntity;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialSource;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialUserEntity;
+use WP_DEFENDER_VENDOR\Webauthn\TrustPath\CertificateTrustPath;
+use WP_DEFENDER_VENDOR\Webauthn\TrustPath\EcdaaKeyIdTrustPath;
+use WP_DEFENDER_VENDOR\Webauthn\TrustPath\EmptyTrustPath;
 use WP_Defender\Traits\Webauthn as Webauthn_Trait;
-use Webauthn\PublicKeyCredentialSourceRepository;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialSourceRepository;
 
 /**
  * Handles WebAuthn functionalities providing methods to manage and verify user credentials.
@@ -35,6 +38,29 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 	 * @var string
 	 */
 	public const USER_HANDLE_MISMATCH_KEY = 'user_handle_match_failed';
+
+	/**
+	 * User ID that findOneByCredentialId() lookups are currently scoped to.
+	 * Must be set only via set_expected_user_id() from trusted server-side
+	 * context (e.g. the WP_User passed down the 2FA login chain) — never
+	 * derived from request input inside this class.
+	 *
+	 * @var int|null
+	 */
+	private $expected_user_id = null;
+
+	/**
+	 * Restrict findOneByCredentialId() to a specific user's credential set.
+	 * Call this before delegating to Webauthn\Server so the library's internal
+	 * repository lookups stay scoped to the expected 2FA target user.
+	 *
+	 * @param int|null $user_id Trusted user ID, or null to clear the scope.
+	 *
+	 * @return void
+	 */
+	public function set_expected_user_id( ?int $user_id ): void {
+		$this->expected_user_id = $user_id;
+	}
 
 	/**
 	 * Get user credentials.
@@ -61,27 +87,28 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 
 	/**
 	 * Get one credential by credential ID.
+	 * {@inheritDoc}
+	 * Interface-mandated single-parameter signature. Scoping to a specific
+	 * user is done via $this->expected_user_id, set beforehand through
+	 * set_expected_user_id() by trusted calling code — never via $_POST.
 	 *
 	 * @param string $public_key_credential_id The public key credential ID.
 	 *
 	 * @return PublicKeyCredentialSource|null
 	 */
 	public function findOneByCredentialId( string $public_key_credential_id ): ?PublicKeyCredentialSource {
-		$username = defender_get_data_from_request( 'username', 'p' );
-		if ( isset( $username ) ) {
-			$user = get_user_by( 'login', $username );
-
-			if ( is_object( $user ) ) {
-				$user_id = $user->ID;
-			} else {
-				$user_id = 0;
-			}
-		} else {
-			$user_id = get_current_user_id();
+		if ( null === $this->expected_user_id ) {
+			// No trusted scope set — deny rather than search globally.
+			// Never needs an unscoped, cross-account lookup.
+			return null;
 		}
-		$data = $this->getCredentials( $user_id );
-		if ( isset( $data[ base64_encode( $public_key_credential_id ) ]['credential_source'] ) ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-			return PublicKeyCredentialSource::createFromArray( $data[ base64_encode( $public_key_credential_id ) ]['credential_source'] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+
+		$data = $this->getCredentials( $this->expected_user_id );
+		$key  = base64_encode( $public_key_credential_id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		if ( isset( $data[ $key ]['credential_source'] ) ) {
+			$credential_source = $data[ $key ]['credential_source']; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+
+			return PublicKeyCredentialSource::createFromArray( $this->normalize_legacy_trust_path( $credential_source ) );
 		}
 
 		return null;
@@ -131,12 +158,36 @@ class Webauthn implements PublicKeyCredentialSourceRepository {
 				}
 
 				if ( isset( $data['credential_source'] ) ) {
-					$sources[] = PublicKeyCredentialSource::createFromArray( $data['credential_source'] );
+					$sources[] = PublicKeyCredentialSource::createFromArray(
+						$this->normalize_legacy_trust_path( $data['credential_source'] )
+					);
 				}
 			}
 		}
 
 		return $sources;
+	}
+
+	/**
+	 * Map trust-path class names stored by Defender 6.1 to their Mozart-prefixed 6.2 classes.
+	 *
+	 * @param array $credential_source Stored WebAuthn credential source.
+	 *
+	 * @return array
+	 */
+	private function normalize_legacy_trust_path( array $credential_source ): array {
+		$legacy_type = $credential_source['trustPath']['type'] ?? null;
+		$legacy_map  = array(
+			'Webauthn\\TrustPath\\EmptyTrustPath'       => EmptyTrustPath::class,
+			'Webauthn\\TrustPath\\EcdaaKeyIdTrustPath'  => EcdaaKeyIdTrustPath::class,
+			'Webauthn\\TrustPath\\CertificateTrustPath' => CertificateTrustPath::class,
+		);
+
+		if ( is_string( $legacy_type ) && isset( $legacy_map[ $legacy_type ] ) ) {
+			$credential_source['trustPath']['type'] = $legacy_map[ $legacy_type ];
+		}
+
+		return $credential_source;
 	}
 
 	/**

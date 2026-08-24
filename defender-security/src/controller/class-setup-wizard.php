@@ -35,6 +35,13 @@ class Setup_Wizard extends Event {
 	public $slug = 'wdf-setup-wizard';
 
 	/**
+	 * The old key for the remind later in Onboarding. This is from V5.x. We can delete it in the future versions.
+	 *
+	 * @var string
+	 */
+	public const REMINDER_KEY = 'wp_defender_onboard_antibot_reminder';
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -109,7 +116,7 @@ class Setup_Wizard extends Event {
 
 		switch ( $step ) {
 			case 'local-firewall':
-				$saved['local_firewall'] = ! empty( $data['local_firewall'] );
+				$saved['local_firewall'] = isset( $data['local_firewall'] );
 				break;
 			case 'hardening':
 				$hardening          = isset( $data['hardening'] ) && is_array( $data['hardening'] )
@@ -202,7 +209,7 @@ class Setup_Wizard extends Event {
 			}
 
 			// Activate all other selected hardening tweaks.
-			if ( ! empty( $resolved_slugs ) ) {
+			if ( is_array( $resolved_slugs ) && array() !== $resolved_slugs ) {
 				$security_tweaks = wd_di()->get( Security_Tweaks::class );
 				$security_tweaks->security_tweaks_auto_action( $resolved_slugs, 'resolve' );
 			}
@@ -310,6 +317,9 @@ class Setup_Wizard extends Event {
 	public function remove_settings() {
 		delete_site_option( 'wd_onboarding_data' );
 		self::clear_resume_notice_option();
+		// From V5.x. We can delete it in the future versions.
+		delete_site_option( self::REMINDER_KEY );
+		delete_site_option( 'wp_defender_onboarding_step' );
 	}
 
 	/**

@@ -748,7 +748,6 @@ class Notification extends Event {
 		if ( ! $this->is_page_active() ) {
 			return;
 		}
-		// todo: add changes when the design is ready.
 	}
 
 	/**
@@ -874,7 +873,6 @@ class Notification extends Event {
 	}
 
 	/**
-	 * Todo: add changes when the design is ready.
 	 * Provides data for the frontend.
 	 *
 	 * @return array An array of data for the frontend.

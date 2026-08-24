@@ -417,7 +417,8 @@ class File {
 		$filename_include = isset( $include['filename'] ) ? $include['filename'] : array();
 		if ( is_array( $filename_include ) && count( $filename_include ) && 'file' === $type ) {
 			foreach ( $filename_include as $filename ) {
-				if ( preg_match( '/' . $filename . '/', pathinfo( $path, PATHINFO_BASENAME ) ) ) {
+				$pattern = '/' . preg_quote( $filename, '/' ) . '/';
+				if ( preg_match( $pattern, pathinfo( $path, PATHINFO_BASENAME ) ) ) {
 					return true;
 				}
 			}

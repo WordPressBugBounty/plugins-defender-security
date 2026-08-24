@@ -85,7 +85,11 @@ class Strong_Password extends Event {
 		add_filter( 'random_password', array( $this->service, 'generate_password' ), 10, 2 );
 
 		// WooCommerce-specific hooks — each gated on its own form setting.
-		if ( $this->woo->is_activated() && ! empty( $this->model->plugins['woocommerce'] ) ) {
+		if (
+			$this->woo->is_activated() &&
+			isset( $this->model->plugins['woocommerce'] ) &&
+			$this->model->plugins['woocommerce']
+		) {
 			$woo_forms = $this->model->forms['woocommerce'] ?? array();
 
 			if ( array() !== $woo_forms ) {

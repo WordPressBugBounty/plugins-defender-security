@@ -57,7 +57,7 @@ class Recipients extends Component {
 		);
 		$this->unsubscribe_recipient_from_modules( $unsubscribed, $key, $in_house, $module_map );
 
-		if ( ! empty( $saved_models ) ) {
+		if ( array() !== $saved_models ) {
 			if ( 1 === count( $saved_models ) ) {
 				$this->notification->send_email( $subscriber, $saved_models[0]->export() );
 			} else {
@@ -138,9 +138,12 @@ class Recipients extends Component {
 			return false;
 		}
 
-		$group = $in_house ? 'in_house_recipients' : 'out_house_recipients';
-		if ( isset( $model->{$group}[ $key ] ) ) {
-			$changed = $this->update_existing_recipient( $model, $group, $key, $name );
+		$exists = $in_house
+			? isset( $model->in_house_recipients[ $key ] )
+			: isset( $model->out_house_recipients[ $key ] );
+
+		if ( $exists ) {
+			$changed = $this->update_existing_recipient( $model, $in_house, $key, $name );
 			if ( $in_house ) {
 				$this->maybe_update_wp_user_profile( $user_id, $name, $subscriber );
 			}
@@ -148,24 +151,24 @@ class Recipients extends Component {
 			return $changed;
 		}
 
-		$list = $model->{$group};
-
 		if ( $in_house ) {
-			$list[ $key ] = array(
+			$list                       = $model->in_house_recipients;
+			$list[ $key ]               = array(
 				'id'     => $user_id,
 				'name'   => $name,
 				'email'  => $key,
 				'status' => Model_Notification::USER_SUBSCRIBE_NA,
 			);
+			$model->in_house_recipients = $list;
 		} else {
-			$list[ $key ] = array(
+			$list                        = $model->out_house_recipients;
+			$list[ $key ]                = array(
 				'name'   => $name,
 				'email'  => $key,
 				'status' => Model_Notification::USER_SUBSCRIBE_NA,
 			);
+			$model->out_house_recipients = $list;
 		}
-
-		$model->{$group} = $list;
 
 		return true;
 	}
@@ -173,23 +176,32 @@ class Recipients extends Component {
 	/**
 	 * Update an existing recipient record in one module.
 	 *
-	 * @param Model_Notification $model Notification model.
-	 * @param string             $group Recipient group property.
-	 * @param string             $key   Recipient lookup key.
-	 * @param string             $name  Recipient display name.
+	 * @param Model_Notification $model    Notification model.
+	 * @param bool               $in_house Whether the recipient is a WordPress user.
+	 * @param string             $key      Recipient lookup key.
+	 * @param string             $name     Recipient display name.
 	 * @return bool Whether the recipient data changed.
 	 */
-	private function update_existing_recipient( Model_Notification $model, string $group, string $key, string $name ): bool {
-		$changed = false;
+	private function update_existing_recipient( Model_Notification $model, bool $in_house, string $key, string $name ): bool {
+		$changed    = false;
+		$recipients = $in_house ? $model->in_house_recipients : $model->out_house_recipients;
 
-		if ( $model->{$group}[ $key ]['name'] !== $name ) {
-			$model->{$group}[ $key ]['name'] = $name;
-			$changed                         = true;
+		if ( $recipients[ $key ]['name'] !== $name ) {
+			$recipients[ $key ]['name'] = $name;
+			$changed                    = true;
 		}
 
-		if ( Model_Notification::USER_SUBSCRIBE_CANCELED === $model->{$group}[ $key ]['status'] ) {
-			$model->{$group}[ $key ]['status'] = Model_Notification::USER_SUBSCRIBE_NA;
-			$changed                           = true;
+		if ( Model_Notification::USER_SUBSCRIBE_CANCELED === $recipients[ $key ]['status'] ) {
+			$recipients[ $key ]['status'] = Model_Notification::USER_SUBSCRIBE_NA;
+			$changed                      = true;
+		}
+
+		if ( $changed ) {
+			if ( $in_house ) {
+				$model->in_house_recipients = $recipients;
+			} else {
+				$model->out_house_recipients = $recipients;
+			}
 		}
 
 		return $changed;
@@ -211,8 +223,9 @@ class Recipients extends Component {
 				continue;
 			}
 
-			$group     = $in_house ? 'in_house_recipients' : 'out_house_recipients';
-			$recipient = $model->$group[ $key ] ?? null;
+			$recipient = $in_house
+				? ( $model->in_house_recipients[ $key ] ?? null )
+				: ( $model->out_house_recipients[ $key ] ?? null );
 
 			if (
 				! is_array( $recipient )
@@ -221,7 +234,11 @@ class Recipients extends Component {
 				continue;
 			}
 
-			$model->{$group}[ $key ]['status'] = Model_Notification::USER_SUBSCRIBE_CANCELED;
+			if ( $in_house ) {
+				$model->in_house_recipients[ $key ]['status'] = Model_Notification::USER_SUBSCRIBE_CANCELED;
+			} else {
+				$model->out_house_recipients[ $key ]['status'] = Model_Notification::USER_SUBSCRIBE_CANCELED;
+			}
 			$model->save();
 			$this->notification->send_unsubscribe_email( $model, $recipient['email'], $in_house, $recipient['name'] );
 		}

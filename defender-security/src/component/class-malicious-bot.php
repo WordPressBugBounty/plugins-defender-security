@@ -13,6 +13,7 @@ use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Traits\File_Operations;
 use WP_Defender\Integrations\Smartcrawl;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
+use WP_Defender\Model\Notification\Firewall_Notification;
 
 /**
  * Handles operations to insert a weekly rotating hash URL into the footer,
@@ -255,6 +256,8 @@ class Malicious_Bot extends Component {
 				break;
 		}
 		$model->save();
+		// Notify directly because the 'defender_notify' hook isn't registered yet at firewall-time.
+		wd_di()->get( Firewall_Notification::class )->notify_lockout( $model );
 	}
 
 	/**

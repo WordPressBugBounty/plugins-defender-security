@@ -19,6 +19,8 @@ use WP_Defender\Traits\IO;
 use WP_Defender\Traits\Theme;
 use WP_Defender\Traits\Plugin;
 use WP_Defender\Traits\Formats;
+use WP_Defender\Behavior\WPMUDEV;
+use WP_Defender\Component\Audit;
 use WP_Defender\Model\Audit_Log;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Model\Lockout_Ip;
@@ -63,20 +65,30 @@ class Cli {
 		persistent_hub_datetime_format as protected;
 		time_since as protected;
 		get_local_human_date as protected;
+		get_time_diff as protected;
+	}
+	use IO {
+		try_create_lock as protected;
 		release_cron_lock as protected;
-		create_lock as protected;
-		has_lock as protected;
 		remove_lock as protected;
-		check_plugin_on_wp_org as protected;
-		check_by_readme_file as protected;
 		acquire_cron_lock as protected;
 		compare_hashes as protected;
 		delete_dir as protected;
 		detect_line_ending as protected;
+		get_log_path as protected;
+	}
+	use Theme {
+		get_path_of_themes_dir as protected;
+		get_theme as protected;
+		get_theme_slugs as protected;
+		get_themes as protected;
+		is_active_theme as protected;
+	}
+	use Plugin {
+		check_plugin_on_wp_org as protected;
+		check_by_readme_file as protected;
 		get_abs_plugin_path_by_slug as protected;
 		get_active_plugin_names as protected;
-		get_path_of_themes_dir as protected;
-		get_log_path as protected;
 		get_plugin_details_by as protected;
 		get_plugin_directory_name as protected;
 		get_plugin_headers as protected;
@@ -84,19 +96,11 @@ class Cli {
 		get_plugin_slugs as protected;
 		get_plugins as protected;
 		get_plugin_slug_by as protected;
-		get_theme as protected;
-		get_theme_slugs as protected;
-		get_themes as protected;
-		get_time_diff as protected;
 		handle_wp_org_response_by as protected;
 		is_active_plugin as protected;
-		is_active_theme as protected;
 		is_likely_wporg_slug as protected;
 		ping_wp_org_by_plugin_slug as protected;
 	}
-	use IO;
-	use Theme;
-	use Plugin;
 
 	/**
 	 * Run scans and manage scan results via WP-CLI.
@@ -200,6 +204,10 @@ class Cli {
 				WP_CLI::error( sprintf( 'Unknown scan type %s', $type ) );
 				break;
 		}
+		$scan_component = wd_di()->get( Scan_Component::class );
+		if ( ! $scan_component->is_any_scan_type_active() ) {
+			WP_CLI::error( Scan_Component::get_emergency_scan_stop_text() );
+		}
 		WP_CLI::log( 'Check if there is a scan ongoing...' );
 		$scan = Model_Scan::get_active();
 		if ( ! is_object( $scan ) ) {
@@ -211,7 +219,7 @@ class Cli {
 			if ( is_wp_error( $scan ) ) {
 				WP_CLI::error( $scan->get_error_message() );
 			}
-			wd_di()->get( Scan_Component::class )->gather_actioned_plugin_details();
+			$scan_component->gather_actioned_plugin_details();
 		} else {
 			WP_CLI::log( 'Continue from last scan' );
 		}
@@ -220,7 +228,7 @@ class Cli {
 			$start = microtime( true );
 		}
 		$handler = wd_di()->get( Scan_Component::class );
-        while ( $handler->process() === false ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
+		while ( $handler->process() === false ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedWhile
 		}
 		$scan = Model_Scan::get_last();
 		if ( ! is_object( $scan ) || is_wp_error( $scan ) ) {
@@ -497,17 +505,36 @@ class Cli {
 
 			return;
 		}
-		[$command] = $args;
+		if ( ! $this->is_testing_mode() ) {
+			return;
+		}
+
+		[ $command ] = $args;
 		switch ( $command ) {
 			case 'scan:core':
+				WP_CLI::confirm( 'This will modify a WordPress core file (wp-load.php). Are you sure?', array() );
+
 				$file_path = ABSPATH . 'wp-load.php';
-				$content   = '//this make different';
-				if ( $wp_filesystem->exists( $file_path ) ) {
-					$content = $wp_filesystem->get_contents( $file_path ) . $content;
+				if ( ! $wp_filesystem->exists( $file_path ) ) {
+					WP_CLI::error( sprintf( 'File does not exist: %s', $file_path ) );
+
+					return;
 				}
-				$wp_filesystem->put_contents( $file_path, $content );
+				$content = $wp_filesystem->get_contents( $file_path );
+				if ( false === $content ) {
+					WP_CLI::error( sprintf( 'Could not read file: %s', $file_path ) );
+
+					return;
+				}
+				if ( str_contains( $content, '//this make different' ) ) {
+					WP_CLI::warning( 'File already seeded, skipping.' );
+
+					return;
+				}
+				$wp_filesystem->put_contents( $file_path, $content . '//this make different' );
 				break;
 			case 'ip:logs':
+				WP_CLI::confirm( 'This will insert fake firewall lockout log entries into the database. Are you sure?', array() );
 				// We will generate randomly 10k logs in 3 months.
 				$types   = array( Lockout_Log::AUTH_FAIL, Lockout_Log::AUTH_LOCK, Lockout_Log::ERROR_404, Lockout_Log::LOCKOUT_404, Lockout_Log::LOCKOUT_UA );
 				$is_lock = array( Lockout_Log::AUTH_LOCK, Lockout_Log::LOCKOUT_404, Lockout_Log::LOCKOUT_UA );
@@ -585,13 +612,36 @@ class Cli {
 
 			return;
 		}
-		[$command] = $args;
+		if ( ! $this->is_testing_mode() ) {
+			return;
+		}
+
+		[ $command ] = $args;
 		switch ( $command ) {
 			case 'scan:core':
-				$content = file_get_contents( ABSPATH . 'wp-load.php' );
-				$wp_filesystem->put_contents( ABSPATH . 'wp-load.php', str_replace( '//this make different', '', $content ) );
+				WP_CLI::confirm( 'This will revert the modification to wp-load.php. Are you sure?', array() );
+
+				$file_path = ABSPATH . 'wp-load.php';
+				if ( ! $wp_filesystem->exists( $file_path ) ) {
+					WP_CLI::error( sprintf( 'File does not exist: %s', $file_path ) );
+
+					return;
+				}
+				$content = $wp_filesystem->get_contents( $file_path );
+				if ( false === $content ) {
+					WP_CLI::error( sprintf( 'Could not read file: %s', $file_path ) );
+
+					return;
+				}
+				if ( ! str_contains( $content, '//this make different' ) ) {
+					WP_CLI::warning( 'Marker not found in file, nothing to revert.' );
+
+					return;
+				}
+				$wp_filesystem->put_contents( $file_path, str_replace( '//this make different', '', $content ) );
 				break;
 			case 'scan:suspicious':
+				WP_CLI::confirm( 'This will delete the false-positive test file. Are you sure?', array() );
 				wp_delete_file( WP_CONTENT_DIR . '/false-positive.php' );
 				break;
 			default:
@@ -600,7 +650,7 @@ class Cli {
 	}
 
 	/**
-	 * Manage audit logs via WP-CLI. Requires a WPMU DEV subscription.
+	 * Manage audit logs via WP-CLI.
 	 *
 	 * ## OPTIONS
 	 *
@@ -609,6 +659,7 @@ class Cli {
 	 * ---
 	 * options:
 	 *   - reset
+	 *   - sync
 	 * ---
 	 *
 	 * ## EXAMPLES
@@ -617,12 +668,43 @@ class Cli {
 	 *     $ wp defender audit reset
 	 *     All clear
 	 *
+	 *     # Synchronize local audit logs with cloud history (Pro only).
+	 *     $ wp defender audit sync
+	 *     Sync completed.
+	 *
 	 * @param mixed $args Command arguments.
 	 */
 	public function audit( $args ) {
-		if ( defender_is_wp_org_version() ) {
-			WP_CLI::warning( 'A WPMU DEV subscription is required to use this command.' );
+		if ( ! is_array( $args ) || array() === $args ) {
+			WP_CLI::error( 'Invalid command, add necessary arguments. See below...', false );
+			WP_CLI::runcommand(
+				'defender audit --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
+
 			return;
+		}
+
+		[$command] = $args;
+		switch ( $command ) {
+			case 'reset':
+				wd_di()->get( Audit::class )->reset();
+
+				WP_CLI::log( 'All clear' );
+				break;
+			default:
+				WP_CLI::error( 'Invalid command, add necessary arguments. See below...', false );
+				WP_CLI::runcommand(
+					'defender audit --help',
+					array(
+						'launch'     => false,
+						'exit_error' => false,
+					)
+				);
+				break;
 		}
 	}
 
@@ -664,7 +746,7 @@ class Cli {
 
 			return;
 		}
-		$model = new Security_Headers();
+		$model     = new Security_Headers();
 		[$command] = $args;
 		switch ( $command ) {
 			case 'check':
@@ -750,7 +832,13 @@ class Cli {
 	public function settings( $args, $options ) {
 		if ( ! is_array( $args ) || array() === $args ) {
 			WP_CLI::error( 'Invalid command, add necessary arguments. See below...', false );
-			WP_CLI::runcommand( 'defender settings --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender settings --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -761,6 +849,7 @@ class Cli {
 				WP_CLI::confirm( 'This will completely reset the plugin settings, are you sure to continue?', $options );
 				// Analog Settings > Reset Settings.
 				wd_di()->get( Login_Access::class )->remove_settings();
+				wd_di()->get( Audit_Logging::class )->remove_settings();
 				wd_di()->get( Dashboard::class )->remove_settings();
 				wd_di()->get( Security_Tweaks::class )->remove_settings();
 				wd_di()->get( \WP_Defender\Controller\Scan::class )->remove_settings();
@@ -775,7 +864,13 @@ class Cli {
 				break;
 			default:
 				WP_CLI::error( sprintf( 'Unknown command %s, use correct arguments. See below...', $command ), false );
-				WP_CLI::runcommand( 'defender settings --help', [ 'launch' => false, 'exit_error' => false ] );
+				WP_CLI::runcommand(
+					'defender settings --help',
+					array(
+						'launch'     => false,
+						'exit_error' => false,
+					)
+				);
 				break;
 		}
 	}
@@ -833,7 +928,13 @@ class Cli {
 		$arg_count = is_array( $args ) || $args instanceof Countable ? count( $args ) : 0;
 		if ( $arg_count < 2 ) {
 			WP_CLI::error( 'Invalid command, add necessary arguments. See below...', false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -845,7 +946,13 @@ class Cli {
 
 		if ( ! is_string( $type ) || '' === $type ) {
 			WP_CLI::error( 'Invalid option.', false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -883,14 +990,26 @@ class Cli {
 
 		if ( ! in_array( $type, $type_default, true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $type ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
 
 		if ( ! in_array( $field, $field_default, true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $field ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -979,14 +1098,26 @@ class Cli {
 
 		if ( ! in_array( $type, $type_default, true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $type ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
 
 		if ( ! in_array( $field, $field_default, true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $field ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -1001,7 +1132,13 @@ class Cli {
 			}
 		} else {
 			WP_CLI::error( 'Option \'ips\' is not provided. See below...', false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -1023,13 +1160,25 @@ class Cli {
 		$field_default = array( 'all', 'allowlist', 'blocklist' );
 		if ( ! in_array( $type, $type_default, true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $type ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
 		if ( ! in_array( $field, $field_default, true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $field ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -1061,13 +1210,25 @@ class Cli {
 	private function toggle_firewall_submodule( $key_word, $submodule, $action ) {
 		if ( 'submodule' !== $key_word ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $key_word ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
 		if ( ! in_array( $submodule, array( 'login_protection', '404_detection', 'user_agent' ), true ) ) {
 			WP_CLI::error( sprintf( 'Invalid option %s. See below...', $submodule ), false );
-			WP_CLI::runcommand( 'defender firewall --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender firewall --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -1103,10 +1264,23 @@ class Cli {
 	}
 
 	/**
-	 * Manage mask login settings via WP-CLI.
+	 * Check if the testing mode is enabled.
+	 * Outputs an error and returns false if WP_DEFENDER_TESTING is not defined and true.
 	 *
-	 * ## OPTIONS
-	 *
+	 * @return bool
+	 */
+	private function is_testing_mode(): bool {
+		if ( ! defined( 'WP_DEFENDER_TESTING' ) || ! WP_DEFENDER_TESTING ) {
+			WP_CLI::error( 'This command is intended for testing only. Define WP_DEFENDER_TESTING as true to proceed.' );
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Force Bulk Password Reset.
 	 * <command>
 	 * : Action to perform.
 	 * ---
@@ -1125,7 +1299,13 @@ class Cli {
 	public function mask_login( $args ) {
 		if ( ( is_array( $args ) || $args instanceof Countable ? count( $args ) : 0 ) < 1 ) {
 			WP_CLI::error( 'Invalid command, add necessary arguments. See below...', false );
-			WP_CLI::runcommand( 'defender mask_login --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender mask_login --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}
@@ -1219,7 +1399,13 @@ class Cli {
 	public function logs( $args ) {
 		if ( ( is_array( $args ) || $args instanceof Countable ? count( $args ) : 0 ) < 1 ) {
 			WP_CLI::error( 'Invalid command, add necessary arguments. See below...', false );
-			WP_CLI::runcommand( 'defender logs --help', [ 'launch' => false, 'exit_error' => false ] );
+			WP_CLI::runcommand(
+				'defender logs --help',
+				array(
+					'launch'     => false,
+					'exit_error' => false,
+				)
+			);
 
 			return;
 		}

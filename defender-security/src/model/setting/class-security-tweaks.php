@@ -104,17 +104,22 @@ class Security_Tweaks extends Setting {
 	 * @param  string $slug  Tweak slug.
 	 */
 	public function mark( $status, $slug ) {
-		foreach ( array( 'issues', 'fixed', 'ignore' ) as $collection ) {
-			if ( ! property_exists( $this, $collection ) ) {
+		foreach ( array(
+			\WP_Defender\Controller\Security_Tweaks::STATUS_ISSUES,
+			\WP_Defender\Controller\Security_Tweaks::STATUS_RESOLVE,
+			\WP_Defender\Controller\Security_Tweaks::STATUS_IGNORE,
+		) as $collection_name ) {
+			$collection = $this->get_collection( $collection_name );
+
+			if ( ! is_array( $collection ) ) {
 				continue;
 			}
 
-			$arr   = $this->$collection;
-			$index = array_search( $slug, $arr, true );
+			$index = array_search( $slug, $collection, true );
 			if ( false !== $index ) {
-				unset( $arr[ $index ] );
+				unset( $collection[ $index ] );
 			}
-			$this->$collection = $arr;
+			$this->set_collection( $collection_name, $collection );
 		}
 
 		if ( \WP_Defender\Controller\Security_Tweaks::STATUS_RESTORE === $status ) {
@@ -125,10 +130,67 @@ class Security_Tweaks extends Setting {
 			return;
 		}
 
-		$collection      = $this->{$status};
-		$collection[]    = $slug;
-		$this->{$status} = $collection;
+		try {
+			$collection = $this->get_collection( $status );
+		} catch ( \InvalidArgumentException $e ) {
+			return;
+		}
+
+		$collection[] = $slug;
+		$this->set_collection( $status, $collection );
 		$this->save();
+	}
+
+	/**
+	 * Get a tweak collection by name.
+	 *
+	 * @param string $name Collection name.
+	 *
+	 * @return array
+	 *
+	 * @throws \InvalidArgumentException Invalid collection name.
+	 */
+	public function get_collection( string $name ): array {
+		switch ( $name ) {
+			case \WP_Defender\Controller\Security_Tweaks::STATUS_ISSUES:
+				return $this->issues;
+
+			case \WP_Defender\Controller\Security_Tweaks::STATUS_RESOLVE:
+				return $this->fixed;
+
+			case \WP_Defender\Controller\Security_Tweaks::STATUS_IGNORE:
+				return $this->ignore;
+
+			default:
+				throw new \InvalidArgumentException( 'Invalid collection name.' );
+		}
+	}
+
+	/**
+	 * Set a tweak collection by name.
+	 *
+	 * @param string $name  Collection name.
+	 * @param array  $value Collection value.
+	 *
+	 * @throws \InvalidArgumentException Invalid collection name.
+	 */
+	private function set_collection( string $name, array $value ): void {
+		switch ( $name ) {
+			case \WP_Defender\Controller\Security_Tweaks::STATUS_ISSUES:
+				$this->issues = $value;
+				break;
+
+			case \WP_Defender\Controller\Security_Tweaks::STATUS_RESOLVE:
+				$this->fixed = $value;
+				break;
+
+			case \WP_Defender\Controller\Security_Tweaks::STATUS_IGNORE:
+				$this->ignore = $value;
+				break;
+
+			default:
+				throw new \InvalidArgumentException( 'Invalid collection name.' );
+		}
 	}
 
 	/**

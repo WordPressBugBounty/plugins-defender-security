@@ -92,8 +92,8 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 			}
 			return false;
 		}
-		// Check 'User Agent Lockout'.
-		if ( Lockout_Log::LOCKOUT_UA === $model->type ) {
+		// Check 'User Agent Lockout' (includes Fake Bot and Malicious Bot lockouts).
+		if ( in_array( $model->type, Lockout_Log::get_ua_lockout_types(), true ) ) {
 			if ( true === wd_di()->get( User_Agent_Lockout::class )->enabled ) {
 				return true;
 			}
@@ -101,6 +101,22 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Sends the notification for a lockout when it is enabled for that type.
+	 *
+	 * Firewall-time detectors call this directly because the 'defender_notify' hook
+	 * is not registered yet at that stage, keeping the eligibility rules in this class.
+	 *
+	 * @param  Lockout_Log $model  The lockout log model.
+	 *
+	 * @return void
+	 */
+	public function notify_lockout( Lockout_Log $model ): void {
+		if ( $this->check_options( $model ) ) {
+			$this->send( $model );
+		}
 	}
 
 	/**
@@ -150,7 +166,7 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 			return 'login-lockout';
 		}
 
-		if ( Lockout_Log::LOCKOUT_UA === $model->type ) {
+		if ( in_array( $model->type, Lockout_Log::get_ua_lockout_types(), true ) ) {
 			return 'ua-lockout';
 		}
 
@@ -240,7 +256,8 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 */
 	private function get_login_lockout_email_data( Lockout_Log $model, string $network_site_url ): array {
 		/* translators: %s: Site URL. */
-		$subject = sprintf( esc_html__( 'Login lockout alert for %s', 'defender-security' ), $network_site_url );
+		$subject = sprintf( __( 'Login lockout alert for %s', 'defender-security' ), $network_site_url );
+		$subject = wp_specialchars_decode( $subject, ENT_QUOTES );
 		// If the log is made from the 2FA module, then we get the settings from it, otherwise from Login_Lockout.
 		$settings = wd_di()->get( Login_Lockout::class );
 		if ( false !== strpos( $model->log, '2fa attempts' ) ) {
@@ -282,10 +299,11 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	private function get_ua_lockout_email_data( Lockout_Log $model, string $network_site_url ): array {
 		$subject = sprintf(
 			/* translators: %s: Site URL. */
-			esc_html__( 'User Agent lockout alert for %s', 'defender-security' ),
+			__( 'User Agent lockout alert for %s', 'defender-security' ),
 			$network_site_url
 		);
-		$text = sprintf(
+		$subject = wp_specialchars_decode( $subject, ENT_QUOTES );
+		$text    = sprintf(
 			/* translators: 1: User agent, 2: Site URL */
 			__( 'The %1$s has been locked out of %2$s.', 'defender-security' ),
 			'<strong>' . $model->user_agent . '</strong>',
@@ -305,7 +323,8 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 	 */
 	private function get_404_lockout_email_data( Lockout_Log $model, string $network_site_url ): array {
 		/* translators: %s: Site URL. */
-		$subject  = sprintf( esc_html__( '404 lockout alert for %s', 'defender-security' ), $network_site_url );
+		$subject  = sprintf( __( '404 lockout alert for %s', 'defender-security' ), $network_site_url );
+		$subject  = wp_specialchars_decode( $subject, ENT_QUOTES );
 		$settings = wd_di()->get( Notfound_Lockout::class );
 		/* translators: 1: IP address, 2: Site URL, 3: Total attempt from an IP, 4: Tried, 5. Translation string. */
 		$text = __(

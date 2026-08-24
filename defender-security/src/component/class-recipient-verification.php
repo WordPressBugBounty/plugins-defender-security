@@ -43,7 +43,7 @@ class Recipient_Verification extends Component {
 		$raw_pending  = $data['pending'] ?? null;
 		$statuses     = array_map( 'sanitize_key', is_array( $raw_pending ) ? $raw_pending : array() );
 
-		if ( '' === $recipient_id || empty( $statuses ) ) {
+		if ( '' === $recipient_id || array() === $statuses ) {
 			return $this->response_data( false, esc_html__( 'Invalid request.', 'defender-security' ) );
 		}
 
@@ -59,7 +59,7 @@ class Recipient_Verification extends Component {
 			return $this->response_data( false, esc_html__( 'Recipient not found.', 'defender-security' ) );
 		}
 
-		if ( empty( $modules ) ) {
+		if ( ! is_array( $modules ) || array() === $modules ) {
 			return $this->response_data( false, esc_html__( 'Module not found.', 'defender-security' ) );
 		}
 
@@ -75,7 +75,7 @@ class Recipient_Verification extends Component {
 	 */
 	public function parse_subscription_slugs( $slug, $uids ): array {
 		if ( is_string( $uids ) && '' !== trim( $uids ) ) {
-			return array_filter( array_map( 'sanitize_key', explode( ',', $uids ) ) );
+			return array_filter( array_map( 'sanitize_key', explode( ',', $uids ) ), fn( string $v ): bool => '' !== $v );
 		}
 		if ( is_string( $slug ) && '' !== trim( $slug ) ) {
 			return array( sanitize_key( $slug ) );
@@ -104,12 +104,17 @@ class Recipient_Verification extends Component {
 			}
 			$result['found_module'] = true;
 
-			$match = $this->confirm_recipients_in_group( $model->$group, $hash, $group );
+			$recipients = 'in_house_recipients' === $group ? $model->in_house_recipients : $model->out_house_recipients;
+			$match      = $this->confirm_recipients_in_group( $recipients, $hash, $group );
 			if ( null === $match ) {
 				continue;
 			}
 
-			$model->$group = $match['recipients'];
+			if ( 'in_house_recipients' === $group ) {
+				$model->in_house_recipients = $match['recipients'];
+			} else {
+				$model->out_house_recipients = $match['recipients'];
+			}
 			$model->save();
 
 			$result['processed']     = true;

@@ -50,6 +50,11 @@ class Dashboard extends Event {
 	public const REPORT_SCHEDULE_NOTICE_OPTION = 'wd_show_report_schedule_notice';
 
 	/**
+	 * Site-wide dismissal key for the Dashboard plugin required modal.
+	 */
+	public const DASHBOARD_REQUIRED_NOTICE_OPTION = 'wpdef_dashboard_required_notice_dismissed';
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -59,6 +64,7 @@ class Dashboard extends Event {
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
 		add_filter( 'custom_menu_order', '__return_true' );
 		add_filter( 'menu_order', array( $this, 'menu_order' ) );
+		add_filter( 'plugins_api', array( $this, 'filter_dashboard_plugin_info' ), 101, 3 );
 		add_action( 'admin_init', array( $this, 'maybe_redirect_notification_request' ), 99 );
 	}
 
@@ -152,15 +158,14 @@ class Dashboard extends Event {
 		$enabled_ua    = wd_di()->get( User_Agent_Lockout::class )->enabled;
 
 		return array(
-			'hide_onboarding'             => ! wd_di()->get( HUB::class )->get_onboarding_status(),
-			'defenderSetupNonce'          => wp_create_nonce( 'defender_quick_setup' ),
-			'securityTweaks'              => $security_tweaks_data['summary']['issues_count'],
-			'scanData'                    => array(
+			'defenderSetupNonce'       => wp_create_nonce( 'defender_quick_setup' ),
+			'securityTweaks'           => $security_tweaks_data['summary']['issues_count'],
+			'scanData'                 => array(
 				'numberIssues' => wd_di()->get( \WP_Defender\Component\Scan::class )->indicator_issue_count(),
 				'settings'     => wd_di()->get( \WP_Defender\Model\Setting\Scan::class )->export(),
 				// Scan routes & nonces are set above.
 			),
-			'firewallData'                => array(
+			'firewallData'             => array(
 				'enabledLocalFirewall' => $enabled_login || $enabled_nf || $enabled_ua,
 				'enabledLogin'         => $enabled_login,
 				'enabledNotFound'      => $enabled_nf,
@@ -170,12 +175,13 @@ class Dashboard extends Event {
 				'uaLockoutMonth'       => $firewall['lockout_ua_this_month'],
 				'antibot'              => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),
 			),
-			'site_id'                     => wd_di()->get( WPMUDEV::class )->get_site_id(),
-			'auditData'                   => array(
+			'site_id'                  => wd_di()->get( WPMUDEV::class )->get_site_id(),
+			'auditData'                => array(
 				'enabled' => $audit_model->is_active(),
 			),
-			'sessionProtection'           => wd_di()->get( Session_Protection::class )->export(),
-			'show_report_schedule_notice' => (bool) get_site_option( self::REPORT_SCHEDULE_NOTICE_OPTION, false ),
+			'sessionProtection'        => wd_di()->get( Session_Protection::class )->export(),
+			'showReportScheduleNotice' => ! defender_is_wp_org_version()
+				&& (bool) get_site_option( self::REPORT_SCHEDULE_NOTICE_OPTION, false ),
 		);
 	}
 
@@ -257,9 +263,10 @@ class Dashboard extends Event {
 				wd_di()->get( Feature_Modal::class )->get_dashboard_modals(),
 				// Specific data.
 				array(
-					'showOnboarding' => $show_onboarding,
-					'routes'         => $routes,
-					'nonces'         => $nonces,
+					'showOnboarding'          => $show_onboarding,
+					'dashboardRequiredNotice' => $this->get_dashboard_required_notice_data(),
+					'routes'                  => $routes,
+					'nonces'                  => $nonces,
 				),
 				$setup_wizard_data,
 				$tracking_data,
@@ -275,6 +282,69 @@ class Dashboard extends Event {
 		);
 
 		$this->enqueue_main_assets();
+	}
+
+	/**
+	 * Get the state and action URLs for the Dashboard plugin required modal.
+	 *
+	 * @return array
+	 */
+	private function get_dashboard_required_notice_data(): array {
+		return array(
+			'isProPlugin'        => WP_DEFENDER_PRO_PATH === DEFENDER_PLUGIN_BASENAME,
+			'dashboardActive'    => $this->is_dash_activated(),
+			'dashboardInstalled' => $this->is_dash_installed(),
+			'dashboardPageUrl'   => network_admin_url( 'admin.php?page=wpmudev' ),
+			'activateUrl'        => add_query_arg(
+				array(
+					'_wpnonce' => wp_create_nonce( 'activate-plugin_wpmudev-updates/update-notifications.php' ),
+					'action'   => 'activate',
+					'plugin'   => 'wpmudev-updates/update-notifications.php',
+				),
+				network_admin_url( 'plugins.php' )
+			),
+			'installUrl'         => add_query_arg(
+				array(
+					'_wpnonce' => wp_create_nonce( 'install-plugin_install_wpmudev_dash' ),
+					'action'   => 'install-plugin',
+					'plugin'   => 'install_wpmudev_dash',
+				),
+				network_admin_url( 'update.php' )
+			),
+			'dismissed'          => (bool) get_site_option( self::DASHBOARD_REQUIRED_NOTICE_OPTION, false ),
+		);
+	}
+
+	/**
+	 * Supply WordPress with the WPMU DEV Dashboard package details.
+	 *
+	 * @param mixed  $result Existing Plugins API result.
+	 * @param string $action Requested Plugins API action.
+	 * @param object $args   Requested plugin arguments.
+	 *
+	 * @return mixed
+	 */
+	public function filter_dashboard_plugin_info( $result, $action, $args ) {
+		if (
+			'plugin_information' !== $action
+			|| ! is_object( $args )
+			|| ! isset( $args->slug )
+			|| '' === trim( (string) $args->slug )
+			|| false === strpos( $args->slug, 'install_wpmudev_dash' )
+		) {
+			return $result;
+		}
+
+		$plugin                = new \stdClass();
+		$plugin->name          = 'WPMU DEV Dashboard';
+		$plugin->slug          = 'wpmu-dev-dashboard';
+		$plugin->version       = '';
+		$plugin->rating        = 100;
+		$plugin->homepage      = 'https://wpmudev.com/project/wpmu-dev-dashboard/';
+		$plugin->download_link = 'https://wpmudev.com/api/dashboard/v1/download-dashboard';
+		$plugin->tested        = get_bloginfo( 'version' );
+
+		return $plugin;
 	}
 
 	/**
@@ -406,6 +476,18 @@ class Dashboard extends Event {
 	}
 
 	/**
+	 * Permanently dismiss the Dashboard plugin required modal for this site.
+	 *
+	 * @return Response
+	 * @defender_route
+	 */
+	public function dismiss_dashboard_required_notice(): Response {
+		update_site_option( self::DASHBOARD_REQUIRED_NOTICE_OPTION, true );
+
+		return new Response( true, array() );
+	}
+
+	/**
 	 * Toggle a dashboard feature by feature key.
 	 *
 	 * @param Request $request The current request data.
@@ -454,6 +536,7 @@ class Dashboard extends Event {
 	 * Delete all the data & the cache.
 	 */
 	public function remove_data() {
+		delete_site_option( self::DASHBOARD_REQUIRED_NOTICE_OPTION );
 	}
 
 	/**

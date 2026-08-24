@@ -470,7 +470,7 @@ class Strong_Password extends Component {
 	 * @param string $form Form slug.
 	 */
 	private function is_woo_form_enabled( string $form ): bool {
-		if ( empty( $this->model->plugins['woocommerce'] ) ) {
+		if ( ! isset( $this->model->plugins['woocommerce'] ) || ! $this->model->plugins['woocommerce'] ) {
 			return false;
 		}
 

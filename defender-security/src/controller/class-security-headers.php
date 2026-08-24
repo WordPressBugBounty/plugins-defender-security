@@ -236,9 +236,12 @@ class Security_Headers extends Event {
 	 * @return array Returns an array of configuration strings.
 	 */
 	public function config_strings( array $config ): array {
-		$active = ! empty( $config['sh_xframe'] ) || ! empty( $config['sh_xss_protection'] )
-			|| ! empty( $config['sh_content_type_options'] ) || ! empty( $config['sh_feature_policy'] )
-			|| ! empty( $config['sh_strict_transport'] ) || ! empty( $config['sh_referrer_policy'] );
+		$active = ( isset( $config['sh_xframe'] ) && $config['sh_xframe'] )
+			|| ( isset( $config['sh_xss_protection'] ) && $config['sh_xss_protection'] )
+			|| ( isset( $config['sh_content_type_options'] ) && $config['sh_content_type_options'] )
+			|| ( isset( $config['sh_feature_policy'] ) && $config['sh_feature_policy'] )
+			|| ( isset( $config['sh_strict_transport'] ) && $config['sh_strict_transport'] )
+			|| ( isset( $config['sh_referrer_policy'] ) && $config['sh_referrer_policy'] );
 
 		return array(
 			\WP_Defender\Model\Setting\Security_Headers::get_module_name() . ' '

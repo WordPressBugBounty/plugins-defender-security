@@ -124,7 +124,27 @@ trait Defender_Hub_Client {
 		array $args = array(),
 		bool $recheck = false
 	) {
-		$api_key          = $this->get_api_key();
+		$api_key = $this->get_api_key();
+		if ( '' === $api_key ) {
+			$link_text = sprintf(
+				'<a target="_blank" href="%s">%s</a>',
+				'https://wpmudev.com/project/wpmu-dev-dashboard/',
+				esc_html__( 'here', 'defender-security' )
+			);
+
+			return new WP_Error(
+				'dashboard_required',
+				sprintf(
+				/* translators: %s - wpmudev link */
+					esc_html__(
+						'WPMU DEV Dashboard will be required for this action. Please visit %s and install the WPMU DEV Dashboard.',
+						'defender-security'
+					),
+					$link_text
+				)
+			);
+		}
+
 		$body['domain'] ??= network_site_url();
 
 		$headers = array(
@@ -190,28 +210,7 @@ trait Defender_Hub_Client {
 		array $args = array(),
 		bool $recheck = false
 	) {
-		$api_key = $this->get_api_key();
-
-		if ( '' === $api_key ) {
-			$link_text = sprintf(
-				'<a target="_blank" href="%s">%s</a>',
-				'https://wpmudev.com/project/wpmu-dev-dashboard/',
-				esc_html__( 'here', 'defender-security' )
-			);
-
-			return new WP_Error(
-				'dashboard_required',
-				sprintf(
-					/* translators: %s - wpmudev link */
-					esc_html__(
-						'WPMU DEV Dashboard will be required for this action. Please visit %s and install the WPMU DEV Dashboard.',
-						'defender-security'
-					),
-					$link_text
-				)
-			);
-		}
-
+		// Checking the validity of API key inside the method.
 		return $this->hub_api_request( $scenario, $body, $args, $recheck );
 	}
 

@@ -98,11 +98,6 @@ function defender_init_routes() {
 			'update_settings' => 'save_settings',
 			'reset_settings'  => 'reset_settings',
 		),
-		'onboard'           => array(
-			'activating'       => 'activating',
-			'skip'             => 'skip',
-			'antibot_reminder' => 'antibot_reminder',
-		),
 		'tracking'          => array(
 			'close_track_modal' => 'close_track_modal',
 			'save_track_modal'  => 'save_track_modal',

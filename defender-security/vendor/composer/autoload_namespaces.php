@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'WPMU_DEV\\Defender\\Vendor\\' => array($baseDir . '/lib/packages'),
+    'WP_DEFENDER_VENDOR\\' => array($baseDir . '/lib/packages'),
 );

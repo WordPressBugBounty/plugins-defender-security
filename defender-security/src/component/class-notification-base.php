@@ -110,7 +110,7 @@ abstract class Notification_Base extends Component {
 		if ( is_object( $module ) ) {
 			if ( 'malware-notification' === $module->slug ) {
 				// For a manual scan, always notify the triggering user regardless of notification status.
-				$is_manual_with_user = ! $args->is_automation && get_transient( 'defender_scan_triggered_by_' . $args->id );
+				$is_manual_with_user = ! $args->is_automation && (int) get_transient( 'defender_scan_triggered_by_' . $args->id ) > 0;
 				if ( $is_manual_with_user || $module->check_options() ) {
 					$module->send( $args );
 				}
@@ -548,9 +548,4 @@ abstract class Notification_Base extends Component {
 	 * @return array
 	 */
 	abstract public function get_active_pro_reports_as_objects(): array;
-
-	/**
-	 * Dispatches reports if conditions are met.
-	 */
-	abstract public function maybe_dispatch_report();
 }

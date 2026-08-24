@@ -227,7 +227,7 @@ class Config_Hub_Helper {
 	 * @return bool
 	 */
 	public static function delete_configs_from_hub( int $hub_id ): bool {
-		// Always tombstone the hub_id locally so Hub re-sync can't re-create it.
+		// Always tombstone the hub_id locally, so Hub re-sync can't re-create it.
 		self::add_deleted_hub_id( $hub_id );
 
 		if ( ! defined( WPMUDEV::class . '::API_PACKAGE_CONFIGS' ) ) {
@@ -242,6 +242,10 @@ class Config_Hub_Helper {
 			$wpmudev->get_apikey(),
 			'DELETE'
 		);
+		// Emergency exit, for example, if the API key is not valid.
+		if ( ! is_array( $response ) ) {
+			return false;
+		}
 
 		if ( isset( $response['deleted'] ) && $response['deleted'] ) {
 			delete_site_transient( self::CONFIGS_TRANSIENT_KEY );
@@ -305,6 +309,10 @@ class Config_Hub_Helper {
 			$wpmudev->get_apikey(),
 			'PUT'
 		);
+		// Emergency exit, for example, if the API key is not valid.
+		if ( ! is_array( $response ) ) {
+			return false;
+		}
 
 		if ( isset( $response['id'] ) && $response['id'] ) {
 			delete_site_transient( self::CONFIGS_TRANSIENT_KEY );
@@ -326,6 +334,10 @@ class Config_Hub_Helper {
 	 * @return bool|array
 	 */
 	private static function send_request( string $url, array $body, $api_key, string $method ) {
+		if ( false === $api_key || '' === $api_key ) {
+			return false;
+		}
+
 		$request = wp_remote_request(
 			$url,
 			array(

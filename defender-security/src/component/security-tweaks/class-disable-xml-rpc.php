@@ -97,7 +97,7 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 		// Disable XML-RPC methods that require authentication.
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 		// Class used for handling XML-RPC requests.
-		add_filter( 'wp_xmlrpc_server_class', array( $this, 'send_forbidden_response' ) );
+		add_filter( 'wp_xmlrpc_server_class', array( $this, 'handle_send_forbidden_response' ) );
 		// Methods exposed by the XML-RPC server.
 		add_filter( 'xmlrpc_methods', '__return_empty_array' );
 	}
@@ -191,6 +191,18 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 	public function send_forbidden_response(): void {
 		http_response_code( 403 );
 		exit( esc_html__( 'Forbidden', 'defender-security' ) );
+	}
+
+	/**
+	 * Wraps the send_forbidden_response method to fix PHPStan error.
+	 *
+	 * @param string $callback_class Class name passed by the filter.
+	 */
+	public function handle_send_forbidden_response( string $callback_class ): string {
+		$this->send_forbidden_response();
+
+		// Unreachable, but required for PHPStan. Return the class name to satisfy the filter's expected return type.
+		return $callback_class;
 	}
 
 	/**

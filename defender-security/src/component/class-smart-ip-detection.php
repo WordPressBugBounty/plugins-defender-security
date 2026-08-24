@@ -177,7 +177,7 @@ class Smart_Ip_Detection extends Component {
 			admin_url( 'admin-ajax.php' )
 		);
 		$args     = array(
-			'sslverify' => false,  // Many hosts have no updated CA bundle.
+			'sslverify' => true,
 		);
 		$response = wp_remote_get( $url, $args );
 

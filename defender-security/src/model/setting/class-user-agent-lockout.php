@@ -403,98 +403,6 @@ class User_Agent_Lockout extends Setting {
 	}
 
 	/**
-	 * Checks if a user agent is present in a given list.
-	 *
-	 * @param string $ua   The user agent to check.
-	 * @param string $collection The type of list to check against ('blocklist' or 'allowlist').
-	 *
-	 * @return bool Returns true if the user agent is in the list, false otherwise.
-	 */
-	public function is_ua_in_list( $ua, $collection ): bool {
-		if ( 'allowlist' === $collection ) {
-			$arr = str_replace( '#', '\#', $this->get_lockout_list( $collection ) );
-		} else {
-			$arr = str_replace( '#', '\#', $this->get_all_selected_blocklist_ua() );
-		}
-
-		// Escape regex special characters in each item before building the pattern.
-		$arr_escaped        = array_map( 'preg_quote', $arr, array_fill( 0, count( $arr ), '#' ) );
-		$list_regex_pattern = '#' . implode( '|', $arr_escaped ) . '#i';
-
-		return 1 === preg_match( $list_regex_pattern, $ua );
-	}
-
-	/**
-	 * Remove User Agent from a list.
-	 *
-	 * @param string $ua The user agent to remove.
-	 * @param string $collection blocklist|allowlist.
-	 *
-	 * @return void
-	 */
-	public function remove_from_list( $ua, $collection ) {
-		if ( 'allowlist' === $collection ) {
-			$arr = $this->get_lockout_list( $collection );
-			// Array can contain uppercase.
-			$orig_arr = str_replace( '#', '\#', $this->get_lockout_list( $collection, false ) );
-		} else {
-			$arr = $this->get_all_selected_blocklist_ua();
-			// Array can contain uppercase.
-			$orig_arr = str_replace( '#', '\#', $this->get_all_selected_blocklist_ua( false ) );
-		}
-
-		$list_regex_pattern = '#' . implode( '|', $arr ) . '#i';
-		$list_match         = preg_match( $list_regex_pattern, $ua );
-		if ( false !== $list_match ) {
-			if ( 'blocklist' === $collection ) {
-				// Check in 'Blocklist Presets'.
-				if ( $this->blocklist_presets ) {
-					$key = array_search( $ua, $this->blocklist_preset_values, true );
-					if ( false !== $key ) {
-						unset( $this->blocklist_preset_values[ $key ] );
-						$this->blocklist_preset_values = array_values( $this->blocklist_preset_values );
-					}
-				}
-				// Check in 'Script Presets' using Regex.
-				if ( $this->script_presets ) {
-					if ( false !== strpos( $ua, User_Agent_Service::GO_HTTP_CLIENT_KEY . '/' ) ) {
-						$key_script_preset = User_Agent_Service::GO_HTTP_CLIENT_KEY;
-					} elseif ( false !== strpos( $ua, User_Agent_Service::PYTHON_REQUESTS_KEY . '/' ) ) {
-						$key_script_preset = User_Agent_Service::PYTHON_REQUESTS_KEY;
-					} else {
-						$key_script_preset = '';
-					}
-
-					$key = array_search( $key_script_preset, $this->script_preset_values, true );
-					if ( false !== $key ) {
-						unset( $this->script_preset_values[ $key ] );
-						$this->script_preset_values = array_values( $this->script_preset_values );
-					}
-				}
-				// Check 'Custom User Agents' case.
-				$arr_blocklist = $this->get_lockout_list( 'blocklist', false );
-				if ( array() !== $arr_blocklist ) {
-					$key = array_search( $ua, $arr_blocklist, true );
-					if ( false !== $key && isset( $arr_blocklist[ $key ] ) ) {
-						unset( $arr_blocklist[ $key ] );
-						// Convert back to string.
-						$this->blacklist = implode( PHP_EOL, $arr_blocklist );
-					}
-				}
-			} elseif ( 'allowlist' === $collection ) {
-				$key = array_search( $ua, $arr, true );
-				if ( false !== $key && isset( $arr[ $key ] ) ) {
-					unset( $arr[ $key ] );
-					// Convert back to string.
-					$this->whitelist = implode( PHP_EOL, $arr );
-				}
-			}
-
-			$this->save();
-		}
-	}
-
-	/**
 	 * Add an UA to the list.
 	 *
 	 * @param string $ua   User agent name.
@@ -540,17 +448,15 @@ class User_Agent_Lockout extends Setting {
 	 * Filter the UAs, as we use a textarea to submit, so it can contain some un-valid UAs.
 	 */
 	protected function after_validate(): void {
-		$lists = array(
-			'blacklist' => $this->get_lockout_list( 'blocklist' ),
-			'whitelist' => $this->get_lockout_list( 'allowlist' ),
+		$this->blacklist = implode(
+			PHP_EOL,
+			array_filter( $this->get_lockout_list( 'blocklist' ), 'strlen' )
 		);
 
-		foreach ( $lists as $key => &$collection ) {
-			// If UA collection is not valid, we should display an error message. We'll improve it by UA standard/pattern.
-			if ( property_exists( $this, $key ) ) {
-				$this->$key = implode( PHP_EOL, array_filter( $collection, 'strlen' ) );
-			}
-		}
+		$this->whitelist = implode(
+			PHP_EOL,
+			array_filter( $this->get_lockout_list( 'allowlist' ), 'strlen' )
+		);
 	}
 
 	/**

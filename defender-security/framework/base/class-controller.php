@@ -90,7 +90,6 @@ class Controller extends Component {
 			return false;
 		}
 		if ( Hub_Connector::should_render() ) {
-			wp_dequeue_script( 'def-iplockout' );
 			// Custimize the text.
 			add_filter(
 				'wpmudev_hub_connector_localize_text_vars',

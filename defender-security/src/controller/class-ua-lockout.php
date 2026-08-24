@@ -272,11 +272,7 @@ class UA_Lockout extends Event {
 			'blocklist_presets'       => User_Agent_Service::get_blocklist_presets(),
 			'script_presets'          => User_Agent_Service::get_script_presets(),
 			'has_empty_disallow_line' => $has_empty_disallow,
-			'lockouts_last_24_hours'  => Lockout_Log::count(
-				strtotime( '-24 hours' ),
-				time(),
-				Lockout_Log::LOCKOUT_UA
-			),
+			'lockouts_last_24_hours'  => Lockout_Log::count_ua_lockouts_in_24_hours(),
 		);
 
 		return array_merge(

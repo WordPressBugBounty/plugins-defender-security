@@ -11,7 +11,6 @@ use DateTime;
 use Countable;
 use Exception;
 use DateInterval;
-use DI\DependencyException;
 use Calotes\Helper\Array_Cache;
 use WP_Defender\Component\Mail;
 use WP_Defender\Component\Notification;

@@ -8,17 +8,18 @@
 namespace WP_Defender\Controller;
 
 use Error;
+use WP_User;
 use Exception;
-use Webauthn\Server;
+use WP_DEFENDER_VENDOR\Webauthn\Server;
 use WP_Defender\Controller;
 use WP_Defender\Behavior\WPMUDEV;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Webauthn\PublicKeyCredentialRpEntity;
-use Nyholm\Psr7Server\ServerRequestCreator;
-use Webauthn\PublicKeyCredentialUserEntity;
-use Webauthn\AuthenticatorSelectionCriteria;
-use Webauthn\PublicKeyCredentialRequestOptions;
-use Webauthn\PublicKeyCredentialCreationOptions;
+use WP_DEFENDER_VENDOR\Nyholm\Psr7\Factory\Psr17Factory;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialRpEntity;
+use WP_DEFENDER_VENDOR\Nyholm\Psr7Server\ServerRequestCreator;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialUserEntity;
+use WP_DEFENDER_VENDOR\Webauthn\AuthenticatorSelectionCriteria;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialRequestOptions;
+use WP_DEFENDER_VENDOR\Webauthn\PublicKeyCredentialCreationOptions;
 use WP_Defender\Traits\Webauthn as Webauthn_Trait;
 use WP_Defender\Component\Two_Fa as Two_Fa_Component;
 use WP_Defender\Component\Webauthn as Webauthn_Component;
@@ -66,8 +67,8 @@ class Webauthn extends Controller {
 					'get_credential_request_option',
 				)
 			);
-			add_action( 'wp_ajax_defender_webauthn_verify_response', array( $this, 'verify_response' ) );
-			add_action( 'wp_ajax_nopriv_defender_webauthn_verify_response', array( $this, 'verify_response' ) );
+			add_action( 'wp_ajax_defender_webauthn_verify_response', array( $this, 'handle_verify_response_request' ) );
+			add_action( 'wp_ajax_nopriv_defender_webauthn_verify_response', array( $this, 'handle_verify_response_request' ) );
 			// Handling requests in the frontend.
 			if ( wd_di()->get( Two_Fa_Controller::class )->woo_integration_enabled() ) {
 				add_action( 'wp_ajax_nopriv_defender_webauthn_create_challenge', array( $this, 'create_challenge' ) );
@@ -247,6 +248,7 @@ class Webauthn extends Controller {
 			if ( '' === $posted_data['data'] || '' === $posted_data['client_id'] ) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
+			$client_id = sanitize_text_field( $posted_data['client_id'] );
 
 			$psr17_factory = new Psr17Factory();
 			$creator       = new ServerRequestCreator(
@@ -270,7 +272,6 @@ class Webauthn extends Controller {
 			);
 
 			$response_data = base64_decode( sanitize_text_field( $posted_data['data'] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-			$client_id     = sanitize_text_field( $posted_data['client_id'] );
 			$pub_key_cco   = $this->get_trans_val( 'pub_key_cco', $client_id );
 			$pub_key_cco   = PublicKeyCredentialCreationOptions::createFromString( base64_decode( $pub_key_cco, true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
@@ -305,10 +306,14 @@ class Webauthn extends Controller {
 			}
 			wp_send_json_success( $response );
 		} catch ( Error $error ) {
-			$this->delete_trans( 'pub_key_cco', $client_id );
+			if ( null !== $client_id ) {
+				$this->delete_trans( 'pub_key_cco', $client_id );
+			}
 			wp_send_json_error( $error->getMessage() );
 		} catch ( Exception $exception ) {
-			$this->delete_trans( 'pub_key_cco', $client_id );
+			if ( null !== $client_id ) {
+				$this->delete_trans( 'pub_key_cco', $client_id );
+			}
 			wp_send_json_error( $exception->getMessage() );
 		}
 	}
@@ -486,14 +491,24 @@ class Webauthn extends Controller {
 	}
 
 	/**
+	 * Handle verify response request.
+	 *
+	 * @return void
+	 */
+	public function handle_verify_response_request(): void {
+		$this->verify_response();
+	}
+
+	/**
 	 * Verify response.
 	 *
-	 * @param  bool $will_return  Either return array or echo json.
+	 * @param  bool         $will_return    Either return array or echo json.
+	 * @param  WP_User|null $expected_user  The expected user.
 	 *
 	 * @return array|void
 	 * @throws Exception If something goes wrong.
 	 */
-	public function verify_response( bool $will_return = false ) {
+	public function verify_response( bool $will_return = false, WP_User $expected_user = null ) {
 		$client_id = null;
 		try {
 			if ( ! $this->verify_nonce( 'wpdef_webauthn', 'post' ) ) {
@@ -509,21 +524,42 @@ class Webauthn extends Controller {
 			) {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
-
-			$user_entity   = false;
-			$response_data = base64_decode( $posted_data['data'], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-			$username      = sanitize_text_field( $posted_data['username'] );
-			$client_id     = sanitize_text_field( $posted_data['client_id'] );
-			$pub_key_cro   = PublicKeyCredentialRequestOptions::createFromString( base64_decode( $this->get_trans_val( 'pub_key_cro', $client_id ), true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-			$user          = get_user_by( 'login', $username );
-
-			if ( is_object( $user ) ) {
-				$user_entity = $this->get_user_entity( $user->ID );
+			$client_id = sanitize_text_field( $posted_data['client_id'] );
+			// Check expected user.
+			if ( $expected_user instanceof WP_User ) {
+				$user = $expected_user;
+			} else {
+				$user = wp_get_current_user();
 			}
 
+			// Establish a trusted scope BEFORE any access to the repository —
+			// both before our own pre-check and before internal library calls
+			// inside loadAndCheckAssertionResponse().
+			$this->service->set_expected_user_id( $user->ID );
+			$response_data = base64_decode( $posted_data['data'], true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			if ( false === $response_data ) {
+				throw new Exception( esc_html__( 'Invalid response data.', 'defender-security' ) );
+			}
+
+			$decoded_response = json_decode( $response_data, true );
+			if ( ! is_array( $decoded_response ) || empty( $decoded_response['rawId'] ) ) {
+				throw new Exception( esc_html__( 'Invalid assertion payload.', 'defender-security' ) );
+			}
+
+			$credential_id = $this->base64url_decode( $decoded_response['rawId'] );
+			if ( false === $credential_id || '' === $credential_id ) {
+				throw new Exception( esc_html__( 'Invalid credential id.', 'defender-security' ) );
+			}
+			$credential = $this->service->findOneByCredentialId( $credential_id );
+			if ( ! $credential ) {
+				throw new Exception( esc_html__( 'Invalid user.', 'defender-security' ) );
+			}
+
+			$user_entity = $this->get_user_entity( $user->ID );
 			if ( false === $user_entity ) {
 				throw new Exception( esc_html__( 'User does not exist.', 'defender-security' ) );
 			}
+			$pub_key_cro = PublicKeyCredentialRequestOptions::createFromString( base64_decode( $this->get_trans_val( 'pub_key_cro', $client_id ), true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
 			$psr17_factory = new Psr17Factory();
 			$creator       = new ServerRequestCreator(
@@ -554,12 +590,16 @@ class Webauthn extends Controller {
 			);
 
 			$this->delete_trans( 'pub_key_cro', $client_id );
+			// Reset the area just in case.
+			$this->service->set_expected_user_id( null );
 
 			$data = esc_html__( 'Authenticator verified successfully.', 'defender-security' );
 
 			return defender_maybe_echo_json( $data, true, $will_return );
 		} catch ( Error $error ) {
-			$this->delete_trans( 'pub_key_cro', $client_id );
+			if ( null !== $client_id ) {
+				$this->delete_trans( 'pub_key_cro', $client_id );
+			}
 
 			return defender_maybe_echo_json( $error->getMessage(), false, $will_return );
 		} catch ( Exception $exception ) {
@@ -575,7 +615,9 @@ class Webauthn extends Controller {
 				$this->service->addUserHandleMatchFailed( $user, $decoded_response );
 			}
 
-			$this->delete_trans( 'pub_key_cro', $client_id );
+			if ( null !== $client_id ) {
+				$this->delete_trans( 'pub_key_cro', $client_id );
+			}
 
 			return defender_maybe_echo_json( $data, false, $will_return );
 		}

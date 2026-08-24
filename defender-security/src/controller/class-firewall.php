@@ -529,7 +529,7 @@ class Firewall extends Event {
 				),
 			)
 		);
-		$maybe_email = ! empty( $data['user_data'] ) ? $data['user_data'] : '';
+		$maybe_email = isset( $data['user_data'] ) ? $data['user_data'] : '';
 		if ( ! is_string( $maybe_email ) || '' === trim( $maybe_email ) ) {
 			return new Response( false, array() );
 		}
@@ -608,7 +608,8 @@ class Firewall extends Event {
 			defender_noreply_email( 'wd_unlock_noreply_email' ),
 			Unlock_Me::SLUG_UNLOCK
 		);
-		$subject = esc_html__( 'Request to Unblock IP Address', 'defender-security' );
+		$subject = __( 'Request to Unblock IP Address', 'defender-security' );
+		$subject = wp_specialchars_decode( $subject, ENT_QUOTES );
 
 		$content_body = $this->render_partial(
 			'email/unlockout',
@@ -1216,7 +1217,7 @@ class Firewall extends Event {
 		$ip_deleted  = Lockout_Ip::truncate();
 		$log_deleted = Lockout_Log::delete_lockout_records();
 
-		if ( $ip_deleted !== false && $log_deleted !== false ) {
+		if ( false !== $ip_deleted && false !== $log_deleted ) {
 			$this->log( 'Deleted lockout records successfully.', self::FIREWALL_LOG );
 
 			return new Response(

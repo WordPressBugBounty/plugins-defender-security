@@ -110,7 +110,7 @@ class Admin {
 					$this->get_link( 'upsell', 'defender_new-submenu_upsell' )
 				);
 				global $submenu;
-				if ( ! empty( $submenu['wp-defender'] ) ) {
+				if ( isset( $submenu['wp-defender'] ) && is_array( $submenu['wp-defender'] ) && array() !== $submenu['wp-defender'] ) {
 					$last                               = array_key_last( $submenu['wp-defender'] );
 					$submenu['wp-defender'][ $last ][4] = 'defender-menu-upsell'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 				}
@@ -174,12 +174,6 @@ class Admin {
 	}
 
 	/**
-	 * The method is a stub without content.
-	 */
-	private function menu_nope(): void {
-	}
-
-	/**
 	 * Generates the submenu callout for the WP Defender plugin.
 	 *
 	 * @return void
@@ -234,11 +228,7 @@ class Admin {
 			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a,
 			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:hover,
 			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:active,
-			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:focus,
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"],
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:hover,
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:active,
-			#toplevel_page_wp-defender.wp-not-current-submenu > ul > li > a[href="admin.php?page=defender_cross_sell"]:focus {
+			#toplevel_page_wp-defender.wp-not-current-submenu .wp-submenu li.defender-menu-upsell > a:focus {
 				margin-left: -4px;
 			}
 		</style>
@@ -613,13 +603,27 @@ class Admin {
 		$model_firewall                 = wd_di()->get( Model\Setting\Firewall::class );
 		$model_firewall->http_ip_header = 'HTTP_X_FORWARDED_FOR';
 		$xff_ip                         = defender_get_data_from_request( 'HTTP_X_FORWARDED_FOR', 's' );
+		$xff_parts                      = preg_split( '/\s*,\s*/', $xff_ip );
+		$xff_parts                      = is_array( $xff_parts ) ? $xff_parts : array();
+		$xff_parts                      = array_map( 'trim', $xff_parts );
+		$xff_parts                      = array_filter(
+			$xff_parts,
+			static function ( $ip ) {
+				return false !== filter_var( $ip, FILTER_VALIDATE_IP );
+			}
+		);
+		$separator                      = "\r\n";
+		$xff_parts                      = array_unique( $xff_parts );
+		$xff_ip                         = implode( $separator, $xff_parts );
+		if ( '' === $xff_ip ) {
+			wp_send_json_error(
+				array( 'message' => esc_html__( 'Invalid trusted proxy IP(s) detected in X-Forwarded-For header.', 'defender-security' ) )
+			);
+		}
 		if ( '' === $model_firewall->trusted_proxies_ip ) {
 			$model_firewall->trusted_proxies_ip = $xff_ip;
 		} else {
 			// Todo: improve the code using a separate method. This will be useful when the user switches between different proxy headeres (IP detection options).
-			$separator = "\r\n";
-			// Check if the XFF header contains multiple IPs.
-			$xff_ip                             = str_replace( array( ',', ' ,' ), $separator, $xff_ip );
 			$model_firewall->trusted_proxies_ip = $model_firewall->trusted_proxies_ip . $separator . $xff_ip;
 		}
 		$model_firewall->save();
@@ -644,7 +648,12 @@ class Admin {
 
 		// Data to be passed to the template file.
 		$is_pro    = wd_di()->get( WPMUDEV::class )->is_pro();
-		$docs_link = $this->get_link( 'support_with_utm', 'defender_deactivation_survey_help', '', $is_pro ? 'defender-pro' : 'defender' );
+		$docs_link = $this->get_link(
+			'support_with_utm',
+			'defender_deactivation_survey_help',
+			'',
+			$is_pro ? 'defender-pro' : 'defender'
+		);
 
 		ob_start();
 		require_once $deactivation_survey_template_file;

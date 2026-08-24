@@ -117,7 +117,7 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 		$options                 = get_site_option( 'defender_security_tweaks_' . $this->slug );
 		$this->reminder_date     = $options['reminder_date'] ?? 0;
 		$this->reminder_duration = isset( $options['reminder_duration'] ) && '' !== $options['reminder_duration'] ? $options['reminder_duration'] : $this->default_days;
-		$this->is_reverted       = ! empty( $options['is_reverted'] );
+		$this->is_reverted       = isset( $options['is_reverted'] ) && true === (bool) $options['is_reverted'];
 
 		$last_modified = $this->get_wp_config_last_modified_time();
 		if ( false === $last_modified ) {
@@ -196,32 +196,81 @@ class Security_Key extends Abstract_Security_Tweaks implements Security_Key_Cons
 	}
 
 	/**
-	 * Get salts to be placed in wp-config.php.
+	 * Parse and validate salt definitions string.
 	 *
-	 * @return array|WP_Error
+	 * @param string $body      API response body.
+	 * @param array  $constants Expected constant keys.
+	 *
+	 * @return array|false
 	 */
-	private function get_salts(): WP_Error|array {
-		$response = wp_safe_remote_get( 'https://api.wordpress.org/secret-key/1.1/salt/' );
-
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error(
-				'defender_salts_not_found',
-				esc_html__( 'Unable to generate salts. Please try again.', 'defender-security' )
-			);
-		}
-
-		$raw_salts = explode( "\n", wp_remote_retrieve_body( $response ) );
+	private function parse_and_validate_salts( string $body, array $constants ): array|false {
+		$raw_salts = explode( "\n", $body );
 		$salts     = array();
+		$values    = array();
+		$index     = 0;
 
 		foreach ( $raw_salts as $salt ) {
 			$salt = trim( $salt );
 			if ( '' === $salt ) {
 				continue;
 			}
-			$salts[] = stripslashes( $salt );
+
+			$salt           = stripslashes( $salt );
+			$expected_const = $constants[ $index ] ?? null;
+
+			if (
+				null === $expected_const ||
+				0 !== strpos( $salt, 'define(' ) ||
+				1 !== preg_match( '/^define\(\s*[\'"]' . preg_quote( $expected_const, '/' ) . '[\'"]\s*,\s*[\'"](.*?)[\'"]\s*\)\s*;$/s', $salt, $matches )
+			) {
+				return false;
+			}
+
+			$val = $matches[1];
+			if ( 'put your unique phrase here' === $val || strlen( $val ) < 64 || isset( $values[ $val ] ) ) {
+				return false;
+			}
+
+			$values[ $val ] = true;
+			$salts[]        = $salt;
+			++$index;
+		}
+
+		if ( count( $salts ) !== count( $constants ) ) {
+			return false;
 		}
 
 		return $salts;
+	}
+
+	/**
+	 * Get salts to be placed in wp-config.php.
+	 *
+	 * @return array|WP_Error
+	 */
+	private function get_salts(): WP_Error|array {
+		$constants    = $this->get_constants();
+		$max_attempts = 3;
+		$attempt      = 0;
+
+		while ( $attempt < $max_attempts ) {
+			++$attempt;
+			$response = wp_safe_remote_get( 'https://api.wordpress.org/secret-key/1.1/salt/' );
+
+			if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+				continue;
+			}
+
+			$salts = $this->parse_and_validate_salts( wp_remote_retrieve_body( $response ), $constants );
+			if ( false !== $salts ) {
+				return $salts;
+			}
+		}
+
+		return new WP_Error(
+			'defender_salts_not_found',
+			esc_html__( 'Unable to generate salts. Please try again.', 'defender-security' )
+		);
 	}
 
 	/**

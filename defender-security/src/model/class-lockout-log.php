@@ -267,7 +267,7 @@ class Lockout_Log extends DB {
 	}
 
 	/**
-	 * Count UA lockout in the last 7 days.
+	 * Count all UA lockouts in the last 7 days.
 	 *
 	 * @return string|null
 	 */
@@ -279,7 +279,19 @@ class Lockout_Log extends DB {
 	}
 
 	/**
-	 * A shortcut for quickly count lockout in last 24 hours.
+	 * Count all UA lockouts in the last 24 hours.
+	 *
+	 * @return string|null
+	 */
+	public static function count_ua_lockouts_in_24_hours(): ?string {
+		$start = strtotime( '-24 hours' );
+		$end   = time();
+
+		return self::count( $start, $end, self::get_ua_lockout_types() );
+	}
+
+	/**
+	 * A shortcut for quickly count ALL lockouts in last 24 hours.
 	 *
 	 * @return string|null
 	 */

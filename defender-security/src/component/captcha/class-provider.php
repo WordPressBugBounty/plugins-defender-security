@@ -340,7 +340,7 @@ abstract class Provider implements Interface_Provider {
 			$url,
 			array(
 				'body'      => $body,
-				'sslverify' => false,
+				'sslverify' => true,
 			)
 		);
 		if ( is_wp_error( $response ) ) {

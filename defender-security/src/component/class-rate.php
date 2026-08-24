@@ -202,7 +202,7 @@ class Rate extends Component {
 			default:
 				$text = '<p class="notice-header">' . sprintf(
 					/* translators: %d - Number of completed scans. */
-					esc_html__( '🎉 Nice work — %d scans completed!', 'defender-security' ),
+					esc_html__( 'Nice work — %d scans completed!', 'defender-security' ),
 					self::NUMBER_COMPLETED_SCANS
 				);
 				$text .= '</p><p class="notice-body">';
@@ -242,7 +242,7 @@ class Rate extends Component {
 			case 'ua_lockouts':
 				$text = '<p class="notice-header">' . sprintf(
 					/* translators: %d - Number of UA lockouts. */
-					esc_html__( '🤖 Defender has blocked %d malicious bots!', 'defender-security' ),
+					esc_html__( 'Defender has blocked %d malicious bots!', 'defender-security' ),
 					self::NUMBER_UA_LOCKOUTS
 				);
 				$text .= '</p><p class="notice-body">';
@@ -260,7 +260,7 @@ class Rate extends Component {
 			case 'ip_lockouts':
 				$text = '<p class="notice-header">' . sprintf(
 					/* translators: %d - Number of IP lockouts. */
-					esc_html__( '🚫 Defender has blocked %d suspicious IPs!', 'defender-security' ),
+					esc_html__( 'Defender has blocked %d suspicious IPs!', 'defender-security' ),
 					self::NUMBER_IP_LOCKOUTS
 				);
 				$text .= '</p><p class="notice-body">';
@@ -500,7 +500,7 @@ class Rate extends Component {
 	 * @return bool
 	 */
 	protected static function is_required_page(): bool {
-		$arr   = array(
+		$arr = array(
 			'wdf-hardener',
 			'wdf-scan',
 			'wdf-logging',
@@ -509,11 +509,9 @@ class Rate extends Component {
 			'wdf-advanced-tools',
 			'wdf-notification',
 			'wdf-setting',
+			// Dashboard and Setup Wizard have the same page slug.
+			'wp-defender',
 		);
-		$_this = new self();
-		if ( ! $_this->is_onboarding() ) {
-			$arr[] = 'wp-defender';
-		}
 
 		return in_array( defender_get_current_page(), $arr, true );
 	}

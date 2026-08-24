@@ -9,6 +9,7 @@ namespace WP_Defender\Component;
 
 use WP_Defender\Component;
 use WP_Defender\Model\Notification as Model_Notification;
+use WP_Defender\Model\Notification\Firewall_Notification;
 
 /**
  * Handles recipient search and frontend directory data.
@@ -54,7 +55,7 @@ class Recipient_Directory extends Component {
 				'id'    => (string) $user->ID,
 				'name'  => $user->display_name,
 				'email' => $user->user_email,
-				'role'  => ! empty( $user->roles ) ? $user->roles[0] : '',
+				'role'  => isset( $user->roles[0] ) ? $user->roles[0] : '',
 			);
 		}
 
@@ -95,6 +96,33 @@ class Recipient_Directory extends Component {
 	}
 
 	/**
+	 * Check whether an email already belongs to a recipient in any module.
+	 *
+	 * @param string $email Email address to look up.
+	 * @return bool True when the email is already a recipient.
+	 */
+	public function email_exists( string $email ): bool {
+		$email = strtolower( trim( $email ) );
+		if ( '' === $email ) {
+			return false;
+		}
+
+		foreach ( $this->notification->get_modules_as_objects() as $model ) {
+			$recipients = array_merge(
+				array_values( $model->in_house_recipients ),
+				array_values( $model->out_house_recipients )
+			);
+			foreach ( $recipients as $recipient ) {
+				if ( strtolower( trim( (string) ( $recipient['email'] ?? '' ) ) ) === $email ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Get recipients across all modules.
 	 *
 	 * @return array Recipient data.
@@ -123,7 +151,7 @@ class Recipient_Directory extends Component {
 	 * @return void
 	 */
 	private function collect_in_house_recipients( array &$result, array &$seen, Model_Notification $model, array $avatar_map ): void {
-		$is_module_active = Model_Notification::STATUS_ACTIVE === $model->status;
+		$counts_as_subscribed = $this->counts_as_subscribed( $model );
 		foreach ( $model->in_house_recipients as $recipient ) {
 			$key  = 'u_' . ( $recipient['id'] ?? $recipient['email'] );
 			$base = array(
@@ -132,7 +160,7 @@ class Recipient_Directory extends Component {
 				'role'     => $recipient['role'] ?? '',
 				'_inHouse' => true,
 			);
-			$this->collect_recipient( $result, $seen, $key, $recipient, $model->slug, $base, $is_module_active );
+			$this->collect_recipient( $result, $seen, $key, $recipient, $model->slug, $base, $counts_as_subscribed );
 		}
 	}
 
@@ -145,7 +173,7 @@ class Recipient_Directory extends Component {
 	 * @return void
 	 */
 	private function collect_out_house_recipients( array &$result, array &$seen, Model_Notification $model ): void {
-		$is_module_active = Model_Notification::STATUS_ACTIVE === $model->status;
+		$counts_as_subscribed = $this->counts_as_subscribed( $model );
 		foreach ( $model->out_house_recipients as $recipient ) {
 			$key  = 'o_' . $recipient['email'];
 			$base = array(
@@ -154,8 +182,26 @@ class Recipient_Directory extends Component {
 				'role'     => '',
 				'_inHouse' => false,
 			);
-			$this->collect_recipient( $result, $seen, $key, $recipient, $model->slug, $base, $is_module_active );
+			$this->collect_recipient( $result, $seen, $key, $recipient, $model->slug, $base, $counts_as_subscribed );
 		}
+	}
+
+	/**
+	 * Whether membership in this module counts as an active subscription.
+	 *
+	 * Reports and the firewall alert are per-recipient preferences, so they count regardless of the
+	 * module's on/off state; otherwise a template toggle would mask a recipient's own preference.
+	 * Other notifications count only while their status is active.
+	 *
+	 * @param Model_Notification $model Notification model.
+	 * @return bool
+	 */
+	private function counts_as_subscribed( Model_Notification $model ): bool {
+		if ( 'report' === $model->type || Firewall_Notification::SLUG === $model->slug ) {
+			return true;
+		}
+
+		return Model_Notification::STATUS_ACTIVE === $model->status;
 	}
 
 	/**
@@ -168,7 +214,7 @@ class Recipient_Directory extends Component {
 		$in_house_emails = array();
 		foreach ( $modules as $model ) {
 			foreach ( $model->in_house_recipients as $recipient ) {
-				if ( ! empty( $recipient['email'] ) ) {
+				if ( isset( $recipient['email'] ) && '' !== trim( $recipient['email'] ) ) {
 					$in_house_emails[ $recipient['email'] ] = true;
 				}
 			}
@@ -185,19 +231,19 @@ class Recipient_Directory extends Component {
 	/**
 	 * Add a recipient entry to the result or append its module slug if already seen.
 	 *
-	 * @param array  $result           Accumulated recipients list.
-	 * @param array  $seen             Deduplication index.
-	 * @param string $key              Unique recipient key.
-	 * @param array  $recipient        Recipient data from the model.
-	 * @param string $slug             Notification module slug.
-	 * @param array  $base             Type-specific fields.
-	 * @param bool   $is_module_active Whether the notification module is enabled.
+	 * @param array  $result               Accumulated recipients list.
+	 * @param array  $seen                 Deduplication index.
+	 * @param string $key                  Unique recipient key.
+	 * @param array  $recipient            Recipient data from the model.
+	 * @param string $slug                 Notification module slug.
+	 * @param array  $base                 Type-specific fields.
+	 * @param bool   $counts_as_subscribed Whether membership in the module counts as an active subscription.
 	 * @return void
 	 */
-	private function collect_recipient( array &$result, array &$seen, string $key, array $recipient, string $slug, array $base, bool $is_module_active = true ): void {
+	private function collect_recipient( array &$result, array &$seen, string $key, array $recipient, string $slug, array $base, bool $counts_as_subscribed = true ): void {
 		$status   = $recipient['status'] ?? '';
 		$canceled = Model_Notification::USER_SUBSCRIBE_CANCELED === $status;
-		$add_slug = $is_module_active && ! $canceled;
+		$add_slug = $counts_as_subscribed && ! $canceled;
 
 		if ( isset( $seen[ $key ] ) ) {
 			if ( $add_slug ) {

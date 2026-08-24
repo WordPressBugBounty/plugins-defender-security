@@ -23,6 +23,18 @@ class Data_Tracking extends Event {
 	public const TRACKING_SLUG = 'wd_show_usage_data';
 
 	/**
+	 * Site option key that controls the dashboard share-usage bubble lifecycle.
+	 * Kept separate from TRACKING_SLUG so that skipping onboarding does not
+	 * suppress the bubble.
+	 */
+	public const DASHBOARD_NOTICE_SLUG = 'wd_show_dashboard_usage_notice';
+
+	/**
+	 * Records whether the dashboard notice lifecycle has been initialized.
+	 */
+	public const DASHBOARD_NOTICE_INITIALIZED_SLUG = 'wd_dashboard_usage_notice_initialized';
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -158,6 +170,8 @@ class Data_Tracking extends Event {
 	 */
 	public function remove_data() {
 		self::delete_modal_key();
+		delete_site_option( self::DASHBOARD_NOTICE_SLUG );
+		delete_site_option( self::DASHBOARD_NOTICE_INITIALIZED_SLUG );
 	}
 
 	/**
@@ -193,6 +207,8 @@ class Data_Tracking extends Event {
 	 */
 	public function remove_settings(): void {
 		self::delete_modal_key();
+		delete_site_option( self::DASHBOARD_NOTICE_SLUG );
+		delete_site_option( self::DASHBOARD_NOTICE_INITIALIZED_SLUG );
 	}
 
 	/**
@@ -205,15 +221,38 @@ class Data_Tracking extends Event {
 	}
 
 	/**
+	 * Initializes the dashboard notice lifecycle once.
+	 *
+	 * A dedicated marker distinguishes an intentionally consumed false value
+	 * from an option that an older or interrupted upgrade failed to seed.
+	 *
+	 * @return void
+	 */
+	public static function initialize_dashboard_notice(): void {
+		if ( (bool) get_site_option( self::DASHBOARD_NOTICE_INITIALIZED_SLUG ) ) {
+			return;
+		}
+
+		$usage_tracking = wd_di()->get( Main_Setting::class )->usage_tracking;
+		delete_site_option( self::DASHBOARD_NOTICE_SLUG );
+		add_site_option( self::DASHBOARD_NOTICE_SLUG, ! $usage_tracking );
+		update_site_option( self::DASHBOARD_NOTICE_INITIALIZED_SLUG, true );
+	}
+
+	/**
 	 * Returns whether the dashboard share usage notice should be displayed.
 	 *
 	 * @return bool
 	 */
 	public function should_show_dashboard_notice(): bool {
-		if ( ! get_site_option( self::TRACKING_SLUG ) ) {
+		$notice_option = (bool) get_site_option( self::DASHBOARD_NOTICE_SLUG );
+
+		// Falsey means not eligible or already displayed.
+		if ( ! $notice_option ) {
 			return false;
 		}
 
+		// Truthy means eligible; also guard against already opted-in.
 		return ! wd_di()->get( Main_Setting::class )->usage_tracking;
 	}
 
@@ -223,6 +262,7 @@ class Data_Tracking extends Event {
 	 * @return array
 	 */
 	public function get_dashboard_notice_data(): array {
+		self::initialize_dashboard_notice();
 		$result = $this->dump_routes_and_nonces();
 
 		return array(
@@ -241,7 +281,7 @@ class Data_Tracking extends Event {
 	 * @defender_route
 	 */
 	public function mark_track_notice_displayed(): Response {
-		self::dismiss_modal_key();
+		update_site_option( self::DASHBOARD_NOTICE_SLUG, false );
 
 		return new Response( true, array() );
 	}

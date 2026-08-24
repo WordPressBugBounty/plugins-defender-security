@@ -113,6 +113,7 @@ class Main_Setting extends Event {
 		// Guarded to AJAX only to prevent a duplicate admin menu entry on normal page loads.
 		if ( wp_doing_ajax() ) {
 			wd_di()->get( Firewall::class );
+			wd_di()->get( Audit_Logging::class );
 		}
 	}
 
@@ -183,6 +184,7 @@ class Main_Setting extends Event {
 		// Include Module data for the Tools tab.
 		$scan_controller              = wd_di()->get( Scan::class );
 		$firewall_controller          = wd_di()->get( Firewall::class );
+		$audit_logging_controller     = wd_di()->get( Audit_Logging::class );
 		$blocklist_monitor_controller = wd_di()->get( Blocklist_Monitor::class );
 		$notification_controller      = wd_di()->get( Notification::class );
 		$recipients_controller        = wd_di()->get( Recipients::class );
@@ -196,6 +198,7 @@ class Main_Setting extends Event {
 					'settings'          => array_merge( $data, array( 'security_headers' => $sh_data ) ),
 					'scan'              => $scan_controller->data_frontend(),
 					'firewall'          => $firewall_controller->data_frontend(),
+					'audit_logging'     => $audit_logging_controller->settings_data_frontend(),
 					'blocklist_monitor' => $blocklist_monitor_controller->data_frontend(),
 					'notification'      => $notification_controller->data_frontend(),
 					'recipients'        => $recipients_controller->data_frontend(),
@@ -485,7 +488,7 @@ class Main_Setting extends Event {
 				}
 			}
 
-			if ( ! empty( $pro_modules ) ) {
+			if ( array() !== $pro_modules ) {
 				$module_names = array_map(
 					function ( $slug ) {
 						$names = array(

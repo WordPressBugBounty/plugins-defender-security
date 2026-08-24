@@ -843,10 +843,8 @@ class Quarantine extends Component {
 	 * If Remove settings chosen then directly remove data i.e. without archiving the quarantined file and table data.
 	 */
 	public function on_uninstall(): void {
-		$method_name = 'data_' . $this->main_setting->uninstall_quarantine;
-
-		if ( method_exists( $this, $method_name ) ) {
-			$this->$method_name();
+		if ( 'remove' === $this->main_setting->uninstall_quarantine ) {
+			$this->data_remove();
 		}
 	}
 

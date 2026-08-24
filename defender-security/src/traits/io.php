@@ -242,16 +242,6 @@ trait IO {
 	}
 
 	/**
-	 * Create a file lock, so we can check if a process already running.
-	 *
-	 * @param  string $lock_filename  The lock file name.
-	 */
-	public function create_lock( string $lock_filename ) {
-		$this->remove_lock( $lock_filename );
-		file_put_contents( $this->get_lock_path( $lock_filename ), time(), LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-	}
-
-	/**
 	 * Delete file lock.
 	 *
 	 * @param  string $lock_filename  The lock file name.
@@ -264,29 +254,43 @@ trait IO {
 	}
 
 	/**
-	 * Check if a lock is valid.
+	 * Atomically acquire a file lock.
 	 *
-	 * @param  string $lock_filename  The lock file name.
+	 * @param string $lock_filename The lock filename.
 	 *
-	 * @return bool
+	 * @return bool True when the lock is acquired.
 	 */
-	public function has_lock( string $lock_filename ): bool {
+	public function try_create_lock( string $lock_filename ): bool {
 		global $wp_filesystem;
-		// Initialize the WP filesystem, no more using 'file-put-contents' function.
+
 		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			WP_Filesystem();
 		}
 
 		$lock_path = $this->get_lock_path( $lock_filename );
-		if ( ! file_exists( $lock_path ) ) {
+
+		if ( is_file( $lock_path ) ) {
+			$time = (int) $wp_filesystem->get_contents( $lock_path );
+
+			// Existing lock is still valid.
+			if ( ( $time + 90 ) >= time() ) {
+				return false;
+			}
+
+			// Remove stale lock.
+			wp_delete_file( $lock_path );
+		}
+
+		$handle = @fopen( $lock_path, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.PHP.NoSilencedErrors.Discouraged
+
+		if ( false === $handle ) {
+			// Another process acquired the lock.
 			return false;
 		}
-		$time = $wp_filesystem->get_contents( $lock_path );
-		if ( strtotime( '+90 seconds', $time ) < time() ) {
-			// Usually a timeout window is 30 seconds, so we should allow lock at 1.30min for safe.
-			return false;
-		}
+
+		fwrite( $handle, (string) time() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 		return true;
 	}

@@ -7,8 +7,7 @@
 
 namespace WP_Defender\Traits;
 
-use DI\NotFoundException;
-use DI\DependencyException;
+use RuntimeException;
 use WP_Defender\Extra\GeoIp;
 use MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Model\Setting\Blacklist_Lockout;
@@ -21,8 +20,7 @@ trait Country {
 	 * @param  string $ip  IPV4 or IPV6 address.
 	 *
 	 * @return array|bool
-	 * @throws DependencyException                     Container exception.
-	 * @throws NotFoundException                       Thrown when DI injected class not found.
+	 * @throws RuntimeException         Thrown when a dependency cannot be resolved.
 	 * @throws InvalidDatabaseException Thrown for unexpected data is found in DB.
 	 */
 	public function get_current_country( $ip ) {

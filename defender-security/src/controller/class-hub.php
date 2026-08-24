@@ -25,6 +25,7 @@ use WP_Defender\Component\Config\Config_Adapter;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Model\Notification\Malware_Report;
 use WP_Defender\Model\Notification\Tweak_Reminder;
+use WP_Defender\Component\Scan as Scan_Component;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Notification\Firewall_Report;
 use WP_Defender\Model\Notification\Malware_Notification;
@@ -40,13 +41,6 @@ class HUB extends Event {
 
 	use IO;
 	use Formats;
-
-	/**
-	 * Flag indicating whether to display the onboarding view or not.
-	 *
-	 * @var bool
-	 */
-	private $view_onboard = false;
 
 	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
@@ -93,6 +87,15 @@ class HUB extends Event {
 	 * Create new scan, triggered from HUB.
 	 */
 	public function new_scan() {
+		$scan_component = wd_di()->get( Scan_Component::class );
+		if ( ! $scan_component->is_any_scan_type_active() ) {
+			wp_send_json_error(
+				array(
+					'message' => Scan_Component::get_emergency_scan_stop_text(),
+				)
+			);
+		}
+
 		$scan = \WP_Defender\Model\Scan::create();
 		if ( is_wp_error( $scan ) ) {
 			wp_send_json_error(
@@ -481,13 +484,9 @@ class HUB extends Event {
 					'404_lockout'        => Lockout_Log::count(
 						strtotime( '-24 hours' ),
 						time(),
-						array( Lockout_Log::LOCKOUT_404 )
+						Lockout_Log::get_404_lockout_types()
 					),
-					'user_agent_lockout' => Lockout_Log::count(
-						strtotime( '-24 hours' ),
-						time(),
-						Lockout_Log::get_ua_lockout_types()
-					),
+					'user_agent_lockout' => Lockout_Log::count_ua_lockouts_in_24_hours(),
 				),
 				'7_days'                     => array(
 					'login_lockout'      => Lockout_Log::count_login_lockout_last_7_days(),
@@ -619,24 +618,6 @@ class HUB extends Event {
 	 */
 	public function export_strings(): array {
 		return array();
-	}
-
-	/**
-	 * Display Onboard if the bool value 'true' and vice versa.
-	 *
-	 * @param  bool $is_show  Settings to display.
-	 */
-	public function set_onboarding_status( $is_show ) {
-		$this->view_onboard = $is_show;
-	}
-
-	/**
-	 * Retrieve the Onboard status.
-	 *
-	 * @return bool
-	 */
-	public function get_onboarding_status(): bool {
-		return $this->view_onboard;
 	}
 
 	/**

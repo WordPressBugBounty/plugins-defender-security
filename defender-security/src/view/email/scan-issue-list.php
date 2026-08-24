@@ -20,9 +20,11 @@ foreach ( $issues as $item ) {
 		}
 	}
 
-	if ( in_array( $item->type, $abandoned_types, true ) ) {
-		$file_name               = esc_html( $detail['file_name'] );
-		$short_desc              = esc_html( $detail['short_desc'] );
+	$item_type  = isset( $item->type ) ? $item->type : ( $detail['type'] ?? '' );
+	$file_name  = $detail['file_name'] ?? '';
+	$short_desc = $detail['short_desc'] ?? '';
+
+	if ( in_array( $item_type, $abandoned_types, true ) ) {
 		$abandoned_plugins_html .= '<tr class="report-list-item" style="border: 1px solid #F2F2F2;padding: 0;text-align: left;vertical-align: top">
 			<td class="report-list-item-info" style="border-collapse: collapse !important;color: #1A1A1A;font-family: Roboto, Arial, sans-serif;font-size: 12px;line-height: 22px;font-weight: 500;letter-spacing: -0.23px;margin: 0;padding: 18px 0;text-align: left;vertical-align: top">
 				<span style="color: inherit;display: inline-block;font-size: inherit;font-weight: inherit;font-family: inherit;line-height: inherit;vertical-align: middle;letter-spacing: -0.25px;padding-left: 20px;">
@@ -39,12 +41,12 @@ foreach ( $issues as $item ) {
 		$other_issues_html .= '<tr class="report-list-item" style="border: 1px solid #F2F2F2;padding: 0;text-align: left;vertical-align: top">
 			<td class="report-list-item-info" style="border-collapse: collapse !important;color: #1A1A1A;font-family: Roboto, Arial, sans-serif;font-size: 12px;line-height: 22px;font-weight: 500;letter-spacing: -0.23px;margin: 0;padding: 18px 0;text-align: left;vertical-align: top">
 				<span style="color: inherit;display: inline-block;font-size: inherit;font-weight: inherit;font-family: inherit;line-height: inherit;vertical-align: middle;letter-spacing: -0.25px;padding-left: 20px;">
-					' . esc_html( $detail['file_name'] ) . '
+					' . esc_html( $file_name ) . '
 					<span class="report-list-item-path" style="display: inline-block; width: 100%;">' . wp_kses( $full_path, array( 'span' => array() ) ) . '</span>
 				</span>
 			</td>
-			<td class="report-list-item-info" style="border-collapse: collapse !important;color: #1A1A1A;font-family: Roboto, Arial, sans-serif;font-size: 12px;line-height: 22px;font-weight: 500;letter-spacing: -0.25px;margin: 0;padding: 18px 0;text-align: left;vertical-align: top">
-				<span style="color: inherit;display: inline-block;font-size: inherit;font-weight: inherit;font-family: inherit;line-height: inherit;vertical-align: middle;letter-spacing: -0.25px;padding-right: 20px;">' . esc_html( $detail['short_desc'] ) . '</span>
+			<td class="report-list-item-info" style="border-collapse: collapse !important;color: #1A1A1A;font-family: Roboto, Arial, sans-serif;font-size: 12px;line-height: 22px;font-weight: 500;letter-spacing: -0.23px;margin: 0;padding: 18px 0;text-align: left;vertical-align: top">
+				<span style="color: inherit;display: inline-block;font-size: inherit;font-weight: inherit;font-family: inherit;line-height: inherit;vertical-align: middle;letter-spacing: -0.25px;padding-right: 20px;">' . esc_html( $short_desc ) . '</span>
 			</td>
 		</tr>';
 	}

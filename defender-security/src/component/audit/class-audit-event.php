@@ -113,9 +113,12 @@ abstract class Audit_Event extends Component {
 		foreach ( $links as $link ) {
 			if ( is_array( $obj ) && array_key_exists( $link, $obj ) ) {
 				$obj = $obj[ $link ];
-			} elseif ( is_object( $obj ) && isset( $obj->$link ) ) {
-				// @phpstan-ignore-next-line
-				$obj = $obj->$link;
+			} elseif ( is_object( $obj ) ) {
+				$vars = get_object_vars( $obj );
+				if ( ! array_key_exists( $link, $vars ) ) {
+					return false;
+				}
+				$obj = $vars[ $link ];
 			} else {
 				return false;
 			}

@@ -44,7 +44,8 @@ class Scan extends DB {
 	/**
 	 * Active scan type across page loads.
 	 */
-	public const OPTION_SCAN_TYPE = 'wpdef_active_scan_type';
+	public const OPTION_SCAN_TYPE       = 'wpdef_active_scan_type';
+	public const OPTION_STATUS_MESSAGES = 'wpdef_scan_status_messages';
 
 	/**
 	 * Any valid relative Date and Time formats.
@@ -268,7 +269,7 @@ class Scan extends DB {
 	public function get_issues( $type = null, $status = null, $per_page = null, $paged = null ) {
 		$orm     = self::get_orm();
 		$builder = $orm->get_repository( Scan_Item::class )
-						->where( 'parent_id', $this->id );
+			->where( 'parent_id', $this->id );
 
 		$valid_types = Scan_Item::get_all_scan_types();
 		if ( null !== $type ) {
@@ -372,7 +373,10 @@ class Scan extends DB {
 		$current_issue_arr = $issue->to_array();
 		foreach ( $this->get_issues( null, Scan_Item::STATUS_ACTIVE ) as $active_issue ) {
 			$active_issue_arr = $active_issue->to_array();
-			if ( $issue->type === $active_issue_arr['type'] && $current_issue_arr['file_name'] === $active_issue_arr['file_name'] ) {
+			if (
+				$current_issue_arr['type'] === $active_issue_arr['type']
+				&& $current_issue_arr['full_path'] === $active_issue_arr['full_path']
+			) {
 				return false;
 			}
 		}
@@ -671,6 +675,7 @@ class Scan extends DB {
 		if ( ! $this->is_positive_int( $id ) ) {
 			$id = $this->id;
 		}
+		$this->clear_status_messages( $id );
 
 		// Delete all the related result items.
 		$orm = self::get_orm();
@@ -682,6 +687,76 @@ class Scan extends DB {
 		$orm->get_repository( self::class )->delete(
 			array( 'id' => $id )
 		);
+	}
+
+	/**
+	 * Store a user-visible status transition for this scan.
+	 *
+	 * @param string $message Status transition message.
+	 */
+	public function enqueue_status_message( $message ): void {
+		$message = sanitize_text_field( wp_strip_all_tags( (string) $message ) );
+		if ( '' === $message || ! $this->is_positive_int( $this->id ) ) {
+			return;
+		}
+
+		$queues       = get_site_option( self::OPTION_STATUS_MESSAGES, array() );
+		$queues       = is_array( $queues ) ? $queues : array();
+		$key          = (string) $this->id;
+		$stored_queue = $queues[ $key ] ?? null;
+		$queue        = is_array( $stored_queue ) ? $stored_queue : array();
+		if ( end( $queue ) !== $message ) {
+			$queue[]        = $message;
+			$queues[ $key ] = $queue;
+			update_site_option( self::OPTION_STATUS_MESSAGES, $queues );
+		}
+	}
+
+	/**
+	 * Return queued status messages without consuming them.
+	 */
+	public function get_status_messages(): array {
+		$queues = get_site_option( self::OPTION_STATUS_MESSAGES, array() );
+		$queue  = is_array( $queues ) ? ( $queues[ (string) $this->id ] ?? array() ) : array();
+
+		return is_array( $queue ) ? array_values( $queue ) : array();
+	}
+
+	/**
+	 * Return and remove queued status messages.
+	 */
+	public function drain_status_messages(): array {
+		$messages = $this->get_status_messages();
+		$this->clear_status_messages();
+
+		return $messages;
+	}
+
+	/**
+	 * Remove queued messages for one scan.
+	 *
+	 * @param int|null $id Table primary key ID.
+	 */
+	public function clear_status_messages( $id = null ): void {
+		$id = $this->is_positive_int( $id ) ? $id : $this->id;
+		if ( ! $this->is_positive_int( $id ) ) {
+			return;
+		}
+		$queues = get_site_option( self::OPTION_STATUS_MESSAGES, array() );
+		if ( ! is_array( $queues ) || ! array_key_exists( (string) $id, $queues ) ) {
+			return;
+		}
+		unset( $queues[ (string) $id ] );
+		array() === $queues
+			? delete_site_option( self::OPTION_STATUS_MESSAGES )
+			: update_site_option( self::OPTION_STATUS_MESSAGES, $queues );
+	}
+
+	/**
+	 * Remove status queues for all scans.
+	 */
+	public static function clear_all_status_messages(): void {
+		delete_site_option( self::OPTION_STATUS_MESSAGES );
 	}
 
 	/**

@@ -48,9 +48,9 @@ class Options_Audit extends Audit_Event {
 		$old               = $args[1]['old_value'];
 		$new               = $args[1]['value'];
 		$option_human_read = self::key_to_human_name( $option );
-		// To avoid the recursive compare if both are nested array, convert all to string.
-		$check1 = is_array( $old ) ? wp_json_encode( $old ) : $old;
-		$check2 = is_array( $new ) ? wp_json_encode( $new ) : $new;
+		// Normalize both values to strings (JSON for arrays/objects) so type-only changes, e.g. int 1 vs string "1", aren't logged.
+		$check1 = ( is_array( $old ) || is_object( $old ) ) ? wp_json_encode( $old ) : (string) $old;
+		$check2 = ( is_array( $new ) || is_object( $new ) ) ? wp_json_encode( $new ) : (string) $new;
 
 		if ( $check1 === $check2 ) {
 			return false;

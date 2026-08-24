@@ -42,7 +42,6 @@ use WP_Defender\Component\Logger\Rotation_Logger;
 use WP_Defender\Component\Firewall as Firewall_Component;
 use WP_Defender\Controller\Firewall as Firewall_Controller;
 use WP_Defender\Controller\Hub_Connector as Hub_Connector_Controller;
-use WP_Defender\Model\Onboard as Onboard_Model;
 use WP_Defender\Controller\Rate as Rate_Controller;
 use WP_Defender\Component\Rate as Rate_Component;
 use WP_Defender\Upgrader;
@@ -167,6 +166,37 @@ SQL;
 	}
 
 	/**
+	 * Creates the audit log table used for caching audit events.
+	 */
+	protected function create_table_audit_log(): void {
+		global $wpdb;
+
+		$charset_collate = $wpdb->get_charset_collate();
+		// Audit log table. Though our data mainly store on API side, we will need a table for caching.
+		$sql = "CREATE TABLE IF NOT EXISTS {$wpdb->base_prefix}defender_audit_log (
+ `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+ `timestamp` int NOT NULL,
+ `event_type` varchar(255) NOT NULL,
+ `action_type` varchar(255) NOT NULL,
+ `site_url` varchar(255) NOT NULL,
+ `user_id` int NOT NULL,
+ `context` varchar(255) NOT NULL,
+ `ip` varchar(45) NOT NULL,
+ `msg` varchar(255) NOT NULL,
+ `blog_id` int NOT NULL,
+ `synced` int NOT NULL,
+ `ttl` int NOT NULL,
+ PRIMARY KEY  (`id`),
+ KEY `event_type` (`event_type`),
+ KEY `action_type` (`action_type`),
+ KEY `user_id` (`user_id`),
+ KEY `context` (`context`),
+ KEY `ip` (`ip`)
+) $charset_collate;";
+		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
 	 * Creates Defender's tables.
 	 *
 	 * @since 2.7.1 No use dbDelta because PHP v8.1 triggers an error when calling query "DESCRIBE {$table};" if the
@@ -261,6 +291,8 @@ SQL;
 		$this->create_table_blocklist();
 		// Create Quarantine table.
 		$this->create_table_quarantine();
+		// Create Audit Log table.
+		$this->create_table_audit_log();
 	}
 
 	/**
@@ -348,32 +380,6 @@ SQL;
 
 		// Execute the SQL query.
 		$wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-	}
-
-	/**
-	 * Check if this is onboarding.
-	 *
-	 * @return bool
-	 */
-	private function is_onboarding(): bool {
-		// Temporary switch for setup-wizard showcase phase:
-		// keep legacy onboarding disabled until new flow integration.
-		$enable_legacy_onboarding = (bool) apply_filters( 'wpdef_enable_legacy_onboarding', false );
-		if ( ! $enable_legacy_onboarding ) {
-			return false;
-		}
-
-		/**
-		 * Display Onboarding if:
-		 * it's a fresh install and there were no requests from the Hub before,
-		 * after Reset Settings.
-		 *
-		 * @var HUB
-		 */
-		$hub_class = wd_di()->get( HUB::class );
-		$hub_class->set_onboarding_status( Onboard_Model::maybe_show_onboarding() );
-
-		return $hub_class->get_onboarding_status() && ! defender_is_wp_cli();
 	}
 
 	/**
@@ -707,7 +713,7 @@ SQL;
 			),
 		);
 
-		if ( ! empty( $mo->headers['Plural-Forms'] ) ) {
+		if ( isset( $mo->headers['Plural-Forms'] ) && '' !== $mo->headers['Plural-Forms'] ) {
 			$locale_data['']['plural-forms'] = $mo->headers['Plural-Forms'];
 		}
 
@@ -756,8 +762,6 @@ SQL;
 		add_filter( 'pre_load_script_translations', array( $this, 'provide_script_translations' ), 10, 4 );
 		// Register the Hub Connector early to handle the auth callback during the admin init hook.
 		add_action( 'plugins_loaded', array( wd_di()->get( Hub_Connector::class ), 'init' ) );
-		// Register the Cross-Sell module.
-		// add_action( 'init', array( wd_di()->get( \WP_Defender\Component\Cross_Sell::class ), 'init' ), 9 );
 		// Include admin class. Don't use is_admin().
 		add_action( 'admin_init', array( ( new Admin() ), 'init' ) );
 		// Initialize deactivation survey.

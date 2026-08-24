@@ -102,7 +102,7 @@ class Activity_Log extends Controller {
 	 */
 	public function record_log( $notification ) {
 		$sanitized_notification = $this->sanitize_notification( $notification );
-		if ( empty( $sanitized_notification ) ) {
+		if ( array() === $sanitized_notification ) {
 			return false;
 		}
 
@@ -184,8 +184,8 @@ class Activity_Log extends Controller {
 	 *
 	 * @return array{id: string, timestamp: string|int, type: string, content: string, url: string}
 	 */
-	private function sanitize_notification( $notification ) {
-		if ( empty( $notification['content'] ) ) {
+	private function sanitize_notification( $notification ): array {
+		if ( ! isset( $notification['content'] ) || '' === $notification['content'] ) {
 			return array();
 		}
 		// Sanitize and ensure all expected fields exist.
@@ -210,7 +210,7 @@ class Activity_Log extends Controller {
 	 */
 	private function sanitize_notification_for_ui( $notification ) {
 		$sanitized = $this->sanitize_notification( $notification );
-		if ( empty( $sanitized['content'] ) ) {
+		if ( ! isset( $sanitized['content'] ) || '' === $sanitized['content'] ) {
 			return array();
 		}
 
@@ -225,7 +225,7 @@ class Activity_Log extends Controller {
 	private function get_notifications_for_ui(): array {
 		$notifications = $this->get_notifications();
 
-		if ( empty( $notifications ) ) {
+		if ( array() === $notifications ) {
 			$this->record_log(
 				array(
 					'module'  => 'defender',
