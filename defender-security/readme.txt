@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 6.2.2
+Version: 6.2.4
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 6.2.2
+Stable tag: 6.2.4
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -235,6 +235,23 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 4. Done!
 
 == Changelog ==
+
+= 6.2.4 ( 2026-09-01 ) =
+
+- Fix: Username does not appear in some Audit Log events
+- Fix: Audit module stores un-interpolated {{user_login}} in some logs
+- Fix: Minor improvements in vulnerability detection
+
+= 6.2.3 ( 2026-08-31 ) =
+
+- Enhancement: Improved Audit Log UI across Dashboard and Audit Log pages
+- Enhancement: Added a "Save your API keys to load" preview state for Bot Protection CAPTCHA settings
+- Enhancement: Updated the event type label in the detailed Audit Log view from 'Content' to 'Context'
+- Fix: Resolved an issue where audit log events from multi-event requests were not synchronizing to the Hub
+- Fix: Fixed a UI layout issue when editing Nginx configuration under Hardening > Prevent Information Disclosure
+- Fix: Addressed a deprecation notice for Webauthn::verify_response()
+- Fix: Fixed a visual bug where the "Learn how we detect your IP" link overlapped the background border at 1280px screen widths
+- Fix: Minor code improvements
 
 = 6.2.2 ( 2026-08-24 ) =
 

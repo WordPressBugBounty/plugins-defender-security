@@ -42,49 +42,6 @@ class Data_Tracking extends Event {
 	}
 
 	/**
-	 * Get the Tracking modal that is displayed on all plugin pages.
-	 *
-	 * @return array
-	 */
-	public function get_tracking_modal(): array {
-		$title = esc_html__( 'Help Us Enhance Your Site\'s Security', 'defender-security' );
-
-		$current_user = wp_get_current_user();
-
-		$desc = sprintf(
-		/* translators: %s: user display name */
-			esc_html__(
-				'Hey there! %s, Defender is dedicated to protecting your WordPress website from hackers and malware. However, our mission is more effective with your collaboration. By opting in to share anonymous usage data, you help us refine and enhance our plugin for everyone\'s benefit.',
-				'defender-security'
-			),
-			'<strong>' . esc_html( $current_user->display_name ) . '</strong>'
-		);
-		$desc .= '<br/><br/>';
-		$desc .= sprintf(
-		/* translators: %s: Link. */
-			esc_html__(
-				'Your privacy is important to us. We guarantee that your data stays anonymous and your identity stays secure. Learn more about our usage tracking %s.',
-				'defender-security'
-			),
-			'<a href="' . Main_Setting::PRIVACY_LINK . '" target="_blank">' . esc_html__( 'here', 'defender-security' ) . '<a>'
-		);
-		$result = $this->dump_routes_and_nonces();
-
-		return array(
-			'title'                => $title,
-			'desc'                 => $desc,
-			'banner_1x'            => defender_asset_url( '/assets/img/modal/tracking-modal.png' ),
-			'banner_2x'            => defender_asset_url( '/assets/img/modal/tracking-modal@2x.png' ),
-			'banner_alt'           => esc_html__( 'Help us improve Defender', 'defender-security' ),
-			'optin_button_title'   => esc_html__( 'OPT IN', 'defender-security' ),
-			'skip_button_title'    => esc_html__( 'Skip for now', 'defender-security' ),
-			'state_usage_tracking' => wd_di()->get( Main_Setting::class )->usage_tracking,
-			'routes'               => $result['routes'],
-			'nonces'               => $result['nonces'],
-		);
-	}
-
-	/**
 	 * Handles the closing of the tracking modal.
 	 *
 	 * @return Response Response object indicating success.
@@ -98,7 +55,6 @@ class Data_Tracking extends Event {
 			Config_Hub_Helper::set_clear_active_flag();
 			$this->track_opt_toggle( false, 'Tracking modal' );
 		}
-
 		// Track.
 		$this->track_feature( 'def_tracking_modal', array( 'Modal Action' => 'closed' ) );
 		self::dismiss_modal_key();
@@ -144,25 +100,6 @@ class Data_Tracking extends Event {
 	 */
 	public static function delete_modal_key(): void {
 		delete_site_option( self::TRACKING_SLUG );
-	}
-
-	/**
-	 * Conditions of the Tracking modal:
-	 * 1)show on all Defender pages.
-	 * 2)show to users upgrading from older versions.
-	 * 3)should have higher priority than a Welcome modal on the Defender > Dashboard page.
-	 * 4)if user closes or clicks on the Save button on one plugin page, we don't itl on another plugin page.
-	 * 5)no display after the updated Onboarding with Opt-in.
-	 * 6)no display when Whitelabel > Documentation, Tutorials and What’s New Modal is set to “Hide”
-	 *
-	 * @return bool
-	 */
-	public function show_tracking_modal() {
-		$info = defender_white_label_status();
-
-		$white_label_is_hide = isset( $info['hide_doc_link'] ) && $info['hide_doc_link'];
-
-		return (bool) get_site_option( self::TRACKING_SLUG ) && ! $white_label_is_hide;
 	}
 
 	/**

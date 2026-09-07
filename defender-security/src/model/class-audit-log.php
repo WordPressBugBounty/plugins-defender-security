@@ -290,17 +290,18 @@ class Audit_Log extends DB {
 	/**
 	 * Mass insert logs, usually fetched from API.
 	 *
-	 * @param  array $data  An array of data to be inserted into the Audit_Log table.
+	 * @param  array $data    An array of data to be inserted into the Audit_Log table.
+	 * @param  int   $synced  Whether the logs have already been synced.
 	 *
 	 * @return void
 	 * @throws ReflectionException If the import method of the Audit_Log class throws a ReflectionException.
 	 */
-	public static function mass_insert( $data ) {
+	public static function mass_insert( $data, $synced = 1 ) {
 		// Use raw sql for faster.
 		foreach ( $data as $datum ) {
 			$item = new Audit_Log();
 			$item->import( $datum );
-			$item->synced = 1;
+			$item->synced = $synced;
 			$item->save();
 		}
 	}

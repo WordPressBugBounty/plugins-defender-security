@@ -444,12 +444,7 @@ class Audit_Logging extends Event {
 			->getTimestamp();
 		$month_count = Audit_Log::count( $date_from, $date_to );
 
-		// Weekly count.
-		$date_from  = ( new DateTime( '-7 days', $timezone ) )
-			->setTime( 0, 0, 0 )
-			->getTimestamp();
-		$week_count = Audit_Log::count( $date_from, $date_to );
-
+		// Weekly count sets in the returned array.
 		// Daily count. Sync data to the Hub without timezone.
 		$date_from = $for_hub ? new DateTime( 'now' ) : new DateTime( 'now', wp_timezone() );
 		$date_from = $date_from->modify( '-24 hours' )->setTime( 0, 0, 0 )->getTimestamp();
@@ -467,7 +462,7 @@ class Audit_Logging extends Event {
 
 		return array(
 			'monthCount' => $month_count,
-			'weekCount'  => $week_count,
+			'weekCount'  => Audit::get_audit_events_per_week(),
 			'dayCount'   => $day_count,
 			'lastEvent'  => $last,
 			'report'     => wd_di()->get( Audit_Report::class )->to_string(),

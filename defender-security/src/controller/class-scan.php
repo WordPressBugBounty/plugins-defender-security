@@ -782,8 +782,8 @@ class Scan extends Event {
 		$time_difference     = time() - $last_scan_timestamp;
 		$data                = array(
 			'last_scan' => sprintf(
-				/* translators: %s: human-readable time difference, e.g. "5 minutes" */
-				__( '%s ago', 'defender-security' ),
+				/* translators: %s: human-readable time difference, e.g. "5 minutes ago" */
+				__( 'Scanned %s ago', 'defender-security' ),
 				human_time_diff( $last_scan_timestamp )
 			),
 		);

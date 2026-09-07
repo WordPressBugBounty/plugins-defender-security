@@ -15,6 +15,7 @@ use WP_Defender\Controller;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Traits\Formats;
+use WP_Defender\Traits\Country;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\User_Agent;
@@ -33,6 +34,7 @@ use WP_Defender\Component\Firewall_Logs as Firewall_Logs_Component;
 class Firewall_Logs extends Controller {
 
 	use Formats;
+	use Country;
 
 	/**
 	 * The slug identifier for this controller.
@@ -415,7 +417,7 @@ class Firewall_Logs extends Controller {
 		$user_agent = defender_get_data_from_request( 'user_agent', 'g' );
 		$timezone   = wp_timezone();
 
-		$init_filters = array(
+		$init_filters      = array(
 			'from'       => ( new DateTime( '-30 days', $timezone ) )->setTime( 0, 0, 0 )->getTimestamp(),
 			'to'         => ( new DateTime( 'now', $timezone ) )->setTime( 23, 59, 59 )->getTimestamp(),
 			'type'       => $type,
@@ -423,8 +425,10 @@ class Firewall_Logs extends Controller {
 			'user_agent' => $user_agent,
 			'ban_status' => '',
 		);
-		$def_filters  = array(
-			'misc'           => wd_di()->get( Table_Lockout::class )->get_filters(),
+		$misc              = wd_di()->get( Table_Lockout::class )->get_filters();
+		$misc['countries'] = $this->countries_list();
+		$def_filters       = array(
+			'misc'           => $misc,
 			'default_filter' => $init_filters,
 			'per_page'       => self::DEFAULT_PER_PAGE,
 		);

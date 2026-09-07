@@ -323,7 +323,7 @@ class Audit extends Component {
 
 		if ( ( is_array( $events ) || $events instanceof Countable ? count( $events ) : 0 ) > 1 ) {
 			if ( $model->has_method( 'mass_insert' ) ) {
-				$model->mass_insert( $events );
+				$model->mass_insert( $events, 0 );
 
 				return;
 			}
@@ -334,5 +334,20 @@ class Audit extends Component {
 			$model->synced = 0;
 			$model->save();
 		}
+	}
+
+	/**
+	 * Get audit events per week.
+	 */
+	public static function get_audit_events_per_week(): int {
+		$timezone  = wp_timezone();
+		$date_to   = ( new DateTime( 'now', $timezone ) )
+			->setTime( 23, 59, 59 )
+			->getTimestamp();
+		$date_from = ( new DateTime( '-7 days', $timezone ) )
+			->setTime( 0, 0, 0 )
+			->getTimestamp();
+
+		return Audit_Log::count( $date_from, $date_to );
 	}
 }

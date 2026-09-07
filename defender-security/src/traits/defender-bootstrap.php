@@ -553,12 +553,7 @@ SQL;
 		$wpmu_dev = new WPMUDEV();
 		global $wp_defender_central;
 
-		$misc          = array();
-		$data_tracking = wd_di()->get( Data_Tracking::class );
-		$is_tracking   = $data_tracking->show_tracking_modal();
-		if ( $is_tracking ) {
-			$misc = $data_tracking->get_tracking_modal();
-		}
+		$misc                  = array();
 		$misc['high_contrast'] = defender_high_contrast();
 		$is_wp_org             = defender_is_wp_org_version();
 		if ( $is_wp_org ) {
@@ -598,7 +593,6 @@ SQL;
 				'wpmudev_support_ticket_text' => defender_support_ticket_text(),
 				'wpmudev_api_base_url'        => $wpmu_dev->get_api_base_url(),
 				'upgrade_title'               => esc_html__( 'UPGRADE TO PRO', 'defender-security' ),
-				'tracking_modal'              => $is_tracking ? 'show' : 'hide',
 				'hosted'                      => $wpmu_dev->is_wpmu_hosting(),
 				'file_upload_nonce'           => wp_create_nonce( 'defender_file_upload' ),
 				'wpmudev_hub_link'            => 'https://wpmudev.com/hub2/',

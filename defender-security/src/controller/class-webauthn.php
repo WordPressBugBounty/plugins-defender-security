@@ -508,7 +508,7 @@ class Webauthn extends Controller {
 	 * @return array|void
 	 * @throws Exception If something goes wrong.
 	 */
-	public function verify_response( bool $will_return = false, WP_User $expected_user = null ) {
+	public function verify_response( bool $will_return = false, ?WP_User $expected_user = null ) {
 		$client_id = null;
 		try {
 			if ( ! $this->verify_nonce( 'wpdef_webauthn', 'post' ) ) {

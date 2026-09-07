@@ -93,7 +93,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -115,7 +115,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -146,7 +146,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -177,7 +177,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -221,7 +221,7 @@ class User_Audit extends Audit_Event {
 				'action_type' => self::ACTION_RESET_PASS,
 				'context'     => self::CONTEXT_PROFILE,
 				'custom_args' => array(
-					'user_login' => '{{user->user_login}}',
+					'user_login' => '{{user->data->user_login}}',
 				),
 			),
 			'set_user_role'                => array(
@@ -248,7 +248,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_ID}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 				'false_when'   => array(
@@ -278,7 +278,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -300,7 +300,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -323,7 +323,7 @@ class User_Audit extends Audit_Event {
 							'id',
 							'{{user_id}}',
 						),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			),
@@ -346,7 +346,7 @@ class User_Audit extends Audit_Event {
 					'username' => array(
 						'callable'        => 'get_user_by',
 						'params'          => array( 'id', '{{user_id}}' ),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			);
@@ -366,7 +366,7 @@ class User_Audit extends Audit_Event {
 					'username' => array(
 						'callable'        => 'get_user_by',
 						'params'          => array( 'id', '{{user_id}}' ),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			);
@@ -398,7 +398,7 @@ class User_Audit extends Audit_Event {
 					'username'  => array(
 						'callable'        => 'get_user_by',
 						'params'          => array( 'id', '{{user_id}}' ),
-						'result_property' => 'user_login',
+						'result_property' => 'data->user_login',
 					),
 				),
 			);

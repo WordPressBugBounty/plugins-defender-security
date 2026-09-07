@@ -7,6 +7,7 @@
 
 namespace WP_Defender\Controller;
 
+use WP_Defender\Component\Audit;
 use WP_Defender\Event;
 use Calotes\Helper\HTTP;
 use Calotes\Helper\Route;
@@ -22,6 +23,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Feature_Modal;
 use WP_Defender\Component\Hub_Connector as Hub_Connector_Component;
 use WP_Defender\Model\Setting\Audit_Logging as Audit_Logging_Settings;
+use WP_Defender\Model\Audit_Log;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
@@ -150,8 +152,21 @@ class Dashboard extends Event {
 		$security_tweaks->refresh_tweaks_status();
 		$security_tweaks_data = $security_tweaks->dashboard_widget();
 
-		$audit_model = wd_di()->get( Audit_Logging_Settings::class );
-		$firewall    = wd_di()->get( Firewall::class )->get_summary();
+		$audit_model   = wd_di()->get( Audit_Logging_Settings::class );
+		$enabled_audit = $audit_model->is_active();
+		// Audit summary.
+		$audit_events_logged = 0;
+		$last_event_time     = esc_html__( '-', 'defender-security' );
+		if ( $enabled_audit ) {
+			$audit_events_logged = Audit::get_audit_events_per_week();
+			$audit_last          = Audit_Log::get_last();
+			if ( is_object( $audit_last ) ) {
+				$last_event_time = $this->get_date( $audit_last->timestamp );
+			}
+		}
+
+		// Firewall summary.
+		$firewall = wd_di()->get( Firewall::class )->get_summary();
 		// Different lockout types.
 		$enabled_login = wd_di()->get( Login_Lockout::class )->enabled;
 		$enabled_nf    = wd_di()->get( Notfound_Lockout::class )->enabled;
@@ -177,7 +192,9 @@ class Dashboard extends Event {
 			),
 			'site_id'                  => wd_di()->get( WPMUDEV::class )->get_site_id(),
 			'auditData'                => array(
-				'enabled' => $audit_model->is_active(),
+				'enabled'      => $enabled_audit,
+				'eventsLogged' => $audit_events_logged,
+				'lastEvent'    => $last_event_time,
 			),
 			'sessionProtection'        => wd_di()->get( Session_Protection::class )->export(),
 			'showReportScheduleNotice' => ! defender_is_wp_org_version()

@@ -2,14 +2,14 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 6.2.2\n"
+"Project-Id-Version: Defender Pro 6.2.4\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-24T07:48:46+00:00\n"
+"POT-Creation-Date: 2026-09-01T11:58:40+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wpdef\n"
@@ -502,7 +502,7 @@ msgid "Go to Defender Dashboard"
 msgstr ""
 
 #: src/class-admin.php:315
-#: src/controller/class-dashboard.php:99
+#: src/controller/class-dashboard.php:101
 msgid "Dashboard"
 msgstr ""
 
@@ -584,7 +584,6 @@ msgstr ""
 
 #: src/class-admin.php:480
 #: src/class-admin.php:504
-#: src/controller/class-data-tracking.php:69
 #: src/traits/defender-hub-client.php:147
 msgid "here"
 msgstr ""
@@ -1677,8 +1676,8 @@ msgstr ""
 #: src/component/class-backup-settings.php:1330
 #: src/component/class-backup-settings.php:1338
 #: src/component/class-backup-settings.php:1340
-#: src/controller/class-audit-logging.php:661
-#: src/controller/class-audit-logging.php:699
+#: src/controller/class-audit-logging.php:656
+#: src/controller/class-audit-logging.php:694
 #: src/controller/class-captcha.php:531
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-password-protection.php:394
@@ -3286,16 +3285,17 @@ msgid "Summary"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:227
-#: src/controller/class-firewall-logs.php:198
+#: src/controller/class-firewall-logs.php:200
 msgid "Date / Time"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:228
+#: assets/js/core-ui.js:1
 msgid "Context"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:229
-#: src/controller/class-firewall-logs.php:199
+#: src/controller/class-firewall-logs.php:201
 #: src/view/two-fa/user-options.php:101
 #: src/view/two-fa/user-options.php:115
 #: assets/js/core-ui.js:1
@@ -3304,7 +3304,7 @@ msgid "Type"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:230
-#: src/controller/class-firewall-logs.php:200
+#: src/controller/class-firewall-logs.php:202
 #: assets/js/core-ui.js:1
 msgid "IP address"
 msgstr ""
@@ -3317,7 +3317,7 @@ msgstr ""
 msgid "Invalid data."
 msgstr ""
 
-#: src/controller/class-audit-logging.php:516
+#: src/controller/class-audit-logging.php:511
 #: src/controller/class-blacklist.php:243
 #: src/controller/class-firewall.php:346
 #: src/controller/class-login-access.php:101
@@ -3333,8 +3333,8 @@ msgstr ""
 msgid "Your settings have been updated."
 msgstr ""
 
-#: src/controller/class-audit-logging.php:660
-#: src/controller/class-audit-logging.php:698
+#: src/controller/class-audit-logging.php:655
+#: src/controller/class-audit-logging.php:693
 #: src/controller/class-captcha.php:531
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-password-protection.php:399
@@ -3350,8 +3350,8 @@ msgid "Active"
 msgstr ""
 
 #. translators: %s: Frequency value.
-#: src/controller/class-audit-logging.php:670
-#: src/controller/class-audit-logging.php:706
+#: src/controller/class-audit-logging.php:665
+#: src/controller/class-audit-logging.php:701
 #: src/controller/class-firewall.php:1058
 #: src/controller/class-firewall.php:1125
 #, php-format
@@ -3359,8 +3359,8 @@ msgid "Email reports sending %s"
 msgstr ""
 
 #. translators: %s: Html for Pro-tag.
-#: src/controller/class-audit-logging.php:679
-#: src/controller/class-audit-logging.php:714
+#: src/controller/class-audit-logging.php:674
+#: src/controller/class-audit-logging.php:709
 #: src/controller/class-firewall.php:1066
 #: src/controller/class-firewall.php:1132
 #, php-format
@@ -3446,59 +3446,35 @@ msgstr ""
 msgid "CAPTCHA module is disabled successfully!"
 msgstr ""
 
-#: src/controller/class-dashboard.php:521
+#: src/controller/class-dashboard.php:159
+msgid "-"
+msgstr ""
+
+#: src/controller/class-dashboard.php:538
 msgid "Unsupported feature toggle request."
 msgstr ""
 
-#: src/controller/class-data-tracking.php:50
-msgid "Help Us Enhance Your Site's Security"
-msgstr ""
-
-#. translators: %s: user display name
-#: src/controller/class-data-tracking.php:56
-#, php-format
-msgid "Hey there! %s, Defender is dedicated to protecting your WordPress website from hackers and malware. However, our mission is more effective with your collaboration. By opting in to share anonymous usage data, you help us refine and enhance our plugin for everyone's benefit."
-msgstr ""
-
-#. translators: %s: Link.
-#: src/controller/class-data-tracking.php:65
-#, php-format
-msgid "Your privacy is important to us. We guarantee that your data stays anonymous and your identity stays secure. Learn more about our usage tracking %s."
-msgstr ""
-
-#: src/controller/class-data-tracking.php:78
-msgid "Help us improve Defender"
-msgstr ""
-
-#: src/controller/class-data-tracking.php:79
-msgid "OPT IN"
-msgstr ""
-
-#: src/controller/class-data-tracking.php:80
-msgid "Skip for now"
-msgstr ""
-
-#: src/controller/class-firewall-logs.php:197
+#: src/controller/class-firewall-logs.php:199
 msgid "Log"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:201
+#: src/controller/class-firewall-logs.php:203
 msgid "IP Status"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:202
+#: src/controller/class-firewall-logs.php:204
 msgid "User Agent Name"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:203
+#: src/controller/class-firewall-logs.php:205
 msgid "User Agent Status"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:366
+#: src/controller/class-firewall-logs.php:368
 msgid "Start and end date are required."
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:372
+#: src/controller/class-firewall-logs.php:374
 msgid "Wrong start and end date."
 msgstr ""
 
@@ -4115,11 +4091,10 @@ msgstr ""
 msgid "Wrong scan issue data."
 msgstr ""
 
-#. translators: %s: human-readable time difference, e.g. "5 minutes"
+#. translators: %s: human-readable time difference, e.g. "5 minutes ago"
 #: src/controller/class-scan.php:821
-#: src/model/class-scan.php:610
 #, php-format
-msgid "%s ago"
+msgid "Scanned %s ago"
 msgstr ""
 
 #. translators: %s: Frequency value.
@@ -4575,6 +4550,12 @@ msgstr ""
 #: src/model/class-notification.php:414
 #, php-format
 msgid "Email %s is invalid format"
+msgstr ""
+
+#. translators: %s: human-readable time difference, e.g. "5 minutes"
+#: src/model/class-scan.php:610
+#, php-format
+msgid "%s ago"
 msgstr ""
 
 #: src/model/class-scan.php:656
@@ -5376,7 +5357,7 @@ msgstr ""
 msgid "Polynesia"
 msgstr ""
 
-#: src/traits/defender-bootstrap.php:600
+#: src/traits/defender-bootstrap.php:595
 msgid "UPGRADE TO PRO"
 msgstr ""
 
@@ -6153,6 +6134,42 @@ msgid "Use this file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Stored securely in the cloud"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Keep an off-site copy separate from your site database."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Available when the site is offline"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Review site activity even when WordPress is unreachable."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Downloadable from The Hub"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Access and export your logs directly from The Hub."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Cloud"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sync audit logs with cloud"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Store audit logs securely off-site and access them when your site is offline."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Advanced issues scanner"
 msgstr ""
 
@@ -6242,6 +6259,46 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Original WP file"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose where to sync your audit logs"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Locally"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Keep your audit logs in this site's database for easy access in WordPress."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Stored on your site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Unavailable when the site is offline"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Can't download from The Hub"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Store locally"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sync audit logs securely off-site and access them when your site is offline."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Synced securely in the cloud"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "30-days money back guarantee"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6527,6 +6584,14 @@ msgid "Clear filter"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Stored on cloud"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Stored locally"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "More actions"
 msgstr ""
 
@@ -6547,11 +6612,7 @@ msgid "View audit log for"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Sync audit logs with cloud"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Upgrade Pro"
+msgid "Cloud sync is off"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6584,10 +6645,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Description"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Content"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6643,6 +6700,10 @@ msgid "No log selected"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Use cloud storage"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Malicious IPs blocked"
 msgstr ""
 
@@ -6680,6 +6741,18 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Local firewall is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Storage"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Events logged in last 7d"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Last event"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -8710,6 +8783,14 @@ msgid "Check your keys and ensure your domain is included. If the issue persists
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "This website isn't allowed for these Turnstile keys. Add its domain to the allowed hostnames in Cloudflare, then try again."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Turnstile setup needs attention."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Error: Invalid site or secret key."
 msgstr ""
 
@@ -8719,6 +8800,14 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Please add valid keys and complete verification to enable captcha."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "The Turnstile preview will appear once your API keys are saved."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "The reCAPTCHA preview will appear once your API keys are saved."
 msgstr ""
 
 #: assets/js/core-ui.js:1
