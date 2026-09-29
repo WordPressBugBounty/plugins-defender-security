@@ -46,6 +46,10 @@ class Hub_Connector extends Controller {
 	 * Maybe member is trying to connect via Hub Connection Module.
 	 */
 	public function maybe_hcm_connection_attempt() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		$module_slug = defender_get_data_from_request( 'module_slug', 'g' );
 		$is_callback = defender_get_data_from_request( 'hub_connector_callback', 'g' );
 

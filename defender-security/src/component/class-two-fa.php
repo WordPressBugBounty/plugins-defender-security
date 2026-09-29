@@ -789,7 +789,12 @@ class Two_Fa extends Component {
 		$screen    = get_current_screen();
 		$screen_id = is_multisite() ? 'users-network' : 'users';
 
-		if ( $screen_id !== $screen->id || ! current_user_can( 'edit_users' ) ) {
+		$cap = is_multisite() ? 'manage_network_options' : 'manage_options';
+		if ( $screen_id !== $screen->id || ! current_user_can( $cap ) ) {
+			return;
+		}
+		$nonce = defender_get_data_from_request( '_wpnonce', 'g' );
+		if ( ! is_string( $nonce ) || false === wp_verify_nonce( $nonce, 'bulk-users' ) ) {
 			return;
 		}
 		$action  = defender_get_data_from_request( 'action', 'g' );

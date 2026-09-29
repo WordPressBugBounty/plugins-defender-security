@@ -10,6 +10,7 @@ namespace WP_Defender\Model;
 use WP_Defender\DB;
 use Calotes\Base\Model;
 use WP_Defender\Traits\Formats;
+use WP_Defender\Traits\Country;
 use WP_Defender\Component\User_Agent;
 use WP_Defender\Component\Table_Lockout;
 use WP_Defender\Model\Setting\Blacklist_Lockout;
@@ -21,6 +22,7 @@ use WP_Defender\Model\Setting\User_Agent_Lockout;
 class Lockout_Log extends DB {
 
 	use Formats;
+	use Country;
 
 	// The Firewall log hierarchy. Parent items: 'login', '404', 'bots', 'unlock' and 'custom'.
 	// Group of 'login' cases.
@@ -38,8 +40,6 @@ class Lockout_Log extends DB {
 	public const IP_UNLOCK = 'ip_unlock';
 	// Group of 'custom' cases.
 	public const LOCKOUT_IP_CUSTOM = 'custom_lockout';
-
-	public const INFINITE_SCROLL_SIZE = 50;
 
 	/**
 	 * Table name.
@@ -111,6 +111,32 @@ class Lockout_Log extends DB {
 	 * @defender_property
 	 */
 	public $country_iso_code;
+
+	/**
+	 * Factory method to instantiate and populate a Lockout_Log model with request data.
+	 *
+	 * @param  string      $ip     The IP address.
+	 * @param  string|null $tried  The attempted URI, username, or user agent.
+	 *
+	 * @return self
+	 */
+	public static function create( string $ip, ?string $tried = null ): self {
+		$model             = new self();
+		$model->ip         = $ip;
+		$user_agent        = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
+		$model->user_agent = '' !== $user_agent ? User_Agent::fast_cleaning( $user_agent ) : '';
+		$model->date       = time();
+		$model->tried      = $tried ?? $model->user_agent;
+		$model->blog_id    = get_current_blog_id();
+
+		$ip_to_country = $model->ip_to_country( $ip );
+
+		if ( isset( $ip_to_country['iso'] ) ) {
+			$model->country_iso_code = $ip_to_country['iso'];
+		}
+
+		return $model;
+	}
 
 	/**
 	 * Query the logs based on the provided filters and pagination settings.

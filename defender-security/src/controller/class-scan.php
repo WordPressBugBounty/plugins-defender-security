@@ -80,6 +80,13 @@ class Scan extends Event {
 	private $quarantine_controller;
 
 	/**
+	 * Is the Malware Report option unlocked?
+	 *
+	 * @var bool
+	 */
+	private $is_unlocked;
+
+	/**
 	 * Initializes the model and service, registers routes, and sets up scheduled events if the model is active.
 	 */
 	public function __construct() {
@@ -93,8 +100,8 @@ class Scan extends Event {
 		$this->model                 = wd_di()->get( Scan_Settings::class );
 		$this->service               = wd_di()->get( Scan_Component::class );
 		$this->quarantine_controller = wd_di()->get( Quarantine::class );
-		$wpmudev                     = wd_di()->get( WPMUDEV::class );
 
+		$this->is_unlocked = wd_di()->get( WPMUDEV::class )->is_pro();
 
 		$this->register_routes();
 		add_action( 'defender_enqueue_assets', array( $this, 'enqueue_assets' ) );
@@ -110,7 +117,7 @@ class Scan extends Event {
 			is_admin() &&
 			'plugins.php' === $pagenow &&
 			apply_filters( 'wd_display_vulnerability_warnings', true ) &&
-			$wpmudev->is_apikey_available()
+			wd_di()->get( WPMUDEV::class )->is_apikey_available()
 		) {
 			$this->service->display_vulnerability_warnings();
 		}
@@ -862,7 +869,7 @@ class Scan extends Event {
 	}
 
 	/**
-	 * Render main page.
+	 * Render the main page.
 	 *
 	 * @return void
 	 */
@@ -923,7 +930,7 @@ class Scan extends Event {
 
 		wp_enqueue_style(
 			$handle,
-			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			WP_DEFENDER_BASE_URL . 'assets/css/core-ui.css',
 			array(),
 			DEFENDER_VERSION
 		);
@@ -1074,7 +1081,8 @@ class Scan extends Event {
 		if ( 'enabled' === $config['notification'] ) {
 			$strings[] = esc_html__( 'Email notifications active', 'defender-security' );
 		}
-		if ( ! ( property_exists( $this, 'is_pro' ) ? $this->is_pro : wd_di()->get( WPMUDEV::class )->is_pro() ) ) {
+		// No Pro membership and No hosted site.
+		if ( ! $this->is_unlocked ) {
 			$strings[] = sprintf(
 			/* translators: %s: Html for Pro-tag. */
 				esc_html__( 'Scheduled scan inactive %s', 'defender-security' ),

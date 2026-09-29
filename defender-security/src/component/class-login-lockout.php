@@ -345,21 +345,7 @@ class Login_Lockout extends Component {
 	 * @param  string $message  Additional message for the log.
 	 */
 	public function log_event( $ip, $username, $scenario, $message = '' ) {
-		$user_agent        = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-		$model             = new Lockout_Log();
-		$model->ip         = $ip;
-		$model->user_agent = isset( $user_agent )
-			? User_Agent::fast_cleaning( $user_agent )
-			: null;
-		$model->date       = time();
-		$model->tried      = $username;
-		$model->blog_id    = get_current_blog_id();
-
-		$ip_to_country = $this->ip_to_country( $ip );
-
-		if ( isset( $ip_to_country['iso'] ) ) {
-			$model->country_iso_code = $ip_to_country['iso'];
-		}
+		$model = Lockout_Log::create( $ip, $username );
 
 		switch ( $scenario ) {
 			case self::SCENARIO_LOGIN_FAIL:

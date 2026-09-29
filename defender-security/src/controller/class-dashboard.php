@@ -213,6 +213,7 @@ class Dashboard extends Event {
 
 		$wizard_action = HTTP::get( 'wizard_action' );
 		$wizard_source = HTTP::get( 'source' );
+		$nonce         = HTTP::get( '_wpnonce' );
 
 		// Fallback completion marker for setup wizard integrations rendered on dashboard.
 		// This prevents onboarding loops if client-side completion request fails.
@@ -220,6 +221,8 @@ class Dashboard extends Event {
 			'setup_wizard' === $wizard_source
 			&& in_array( $wizard_action, array( 'view_results', 'close_wizard', 'finish_wizard' ), true )
 			&& current_user_can( 'manage_options' )
+			&& is_string( $nonce )
+			&& false !== wp_verify_nonce( $nonce, 'wpdef_setup_wizard' )
 		) {
 			update_site_option( 'wp_defender_shown_activator', true );
 		}
@@ -293,7 +296,7 @@ class Dashboard extends Event {
 
 		wp_enqueue_style(
 			$handle,
-			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			WP_DEFENDER_BASE_URL . 'assets/css/core-ui.css',
 			array(),
 			DEFENDER_VERSION
 		);

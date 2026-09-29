@@ -51,5 +51,6 @@ class Bootstrap {
 	public function deactivation_hook(): void {
 		$this->deactivation_hook_common();
 		wp_clear_scheduled_hook( 'audit_clean_up_logs' );
+		wp_clear_scheduled_hook( 'wpdef_quarantine_delete_expired' );
 	}
 }

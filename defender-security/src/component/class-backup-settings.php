@@ -75,7 +75,7 @@ class Backup_Settings extends Component {
 	 * It initializes the class and sets whether the current installation is a pro version.
 	 */
 	public function __construct() {
-		$wpmudev = new WPMUDEV();
+		$wpmudev = wd_di()->get( WPMUDEV::class );
 		$this->has_hub_api_key = $wpmudev->is_apikey_available();
 	}
 

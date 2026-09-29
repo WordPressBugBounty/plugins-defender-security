@@ -15,7 +15,7 @@ use WP_Defender\Model\Lockout_Ip;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Model\Onboard;
-use MaxMind\Db\Reader\InvalidDatabaseException;
+use WP_DEFENDER_VENDOR\MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Model\Setting\Firewall as Model_Firewall;
 use WP_Defender\Component\Trusted_Proxy_Preset\Cloudflare_Proxy;
 use WP_Defender\Component\Trusted_Proxy_Preset\Trusted_Proxy_Preset;
@@ -70,10 +70,42 @@ class Firewall extends Component {
 	/**
 	 * Check is the access from authenticated staff.
 	 *
-	 * @return bool
+	 * Validates the `wpmudev_is_staff` cookie token by verifying:
+	 * - Token version and structure (v1.<payload>.<signature>)
+	 * - HMAC-SHA256 signature against site salt (`wpmudev_remote_access`)
+	 * - Token expiration timestamp against current time
+	 * - Audience (`aud`) against current site URL (`home_url('/')`)
+	 * - Subject (`sub`) against currently authenticated user ID
+	 *
+	 * @return bool True if staff access token is valid and unexpired, false otherwise.
 	 */
 	private function is_authenticated_staff_access(): bool {
-		return '1' === defender_get_data_from_request( 'wpmudev_is_staff', 'c' );
+		$cookie = defender_get_data_from_request( 'wpmudev_is_staff', 'c' );
+		if ( ! is_string( $cookie ) ) {
+			return false;
+		}
+
+		$token = explode( '.', $cookie, 3 );
+		if ( 3 !== count( $token ) || 'v1' !== $token[0] ) {
+			return false;
+		}
+
+		$signature = hash_hmac( 'sha256', $token[1], wp_salt( 'wpmudev_remote_access' ) );
+		if ( ! hash_equals( $signature, $token[2] ) ) {
+			return false;
+		}
+		// Improve flow to avoid bypassing staff access authentication via an unsigned cookie. Use legitim payload.
+		$payload = base64_decode( strtr( $token[1], '-_', '+/' ) . str_repeat( '=', ( 4 - strlen( $token[1] ) % 4 ) % 4 ), true );// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		$payload = is_string( $payload ) ? json_decode( $payload, true ) : null;
+
+		return is_array( $payload ) &&
+			isset( $payload['aud'], $payload['exp'], $payload['sub'] ) &&
+			is_string( $payload['aud'] ) &&
+			is_numeric( $payload['exp'] ) &&
+			is_numeric( $payload['sub'] ) &&
+			(int) $payload['exp'] > time() &&
+			hash_equals( home_url( '/' ), $payload['aud'] ) &&
+			get_current_user_id() === (int) $payload['sub'];
 	}
 
 	/**
@@ -97,8 +129,11 @@ class Firewall extends Component {
 							true === WPMUDEV_Dashboard::$api->remote_access_details( 'enabled' );
 
 		if ( $is_remote_access ) {
-			$access = $wpmu_dev->get_remote_access();
-			if ( $this->is_authenticated_staff_access() || $this->is_commencing_staff_access( $access ) ) {
+			$access                        = $wpmu_dev->get_remote_access();
+			$is_authenticated_staff_access = isset( $access['userid'] ) &&
+				get_current_user_id() === (int) $access['userid'] &&
+				$this->is_authenticated_staff_access();
+			if ( $is_authenticated_staff_access || $this->is_commencing_staff_access( $access ) ) {
 				$this->log( $access, Firewall_Controller::FIREWALL_LOG );
 
 				return true;

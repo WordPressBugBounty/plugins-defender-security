@@ -82,7 +82,7 @@ class Options_Audit extends Audit_Event {
 					$old_day = $wp_locale->get_weekday( $old );
 					$new_day = $wp_locale->get_weekday( $new );
 					$text    = sprintf(
-					/* translators: 1: Blog name, 2: User's display name, 3: Option: Week Starts On, 4: Old day, 5: New day */
+					/* translators: 1: Blog name, 2: User's display name, 3: Option label, 4: Old option value, 5: New option value */
 						esc_html__( '%1$s %2$s update option %3$s from %4$s to %5$s', 'defender-security' ),
 						$blog_name,
 						$user_name,

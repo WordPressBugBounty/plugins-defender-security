@@ -10,7 +10,7 @@ namespace WP_Defender\Component\Known_Bots\Bots;
 /**
  * This class is responsible for fetching and managing Bing Bot IPs.
  */
-class Bing_Bot implements Bots_Interface {
+class Bing_Bot extends Abstract_Bot {
 	/**
 	 * Returns the name of the bot.
 	 *
@@ -47,5 +47,32 @@ class Bing_Bot implements Bots_Interface {
 		}
 
 		return $ips;
+	}
+
+	/**
+	 * Checks if the user agent belongs to Bing.
+	 *
+	 * @param string $user_agent Optional user agent string to check.
+	 *
+	 * @return bool
+	 */
+	public function is_ua( string $user_agent = '' ): bool {
+		$ua = $this->normalize_ua( $user_agent );
+		if ( '' === $ua ) {
+			return false;
+		}
+
+		return (bool) preg_match( '/Bingbot|MSNBot|MSNBot-Media|AdIdxBot|BingPreview/i', $ua );
+	}
+
+	/**
+	 * Checks if IP is from Bing, based on DNS verification.
+	 *
+	 * @param string $ip The IP address to check.
+	 *
+	 * @return bool
+	 */
+	public function is_ip( string $ip ): bool {
+		return $this->verify_dns( $ip, '(^|\.)(msn\.com|msnbot\.msn\.com|bing\.com)' );
 	}
 }

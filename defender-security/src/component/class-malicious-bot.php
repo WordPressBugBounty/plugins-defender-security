@@ -234,19 +234,7 @@ class Malicious_Bot extends Component {
 	 * @param  string $scenario  The scenario under which the event is logged.
 	 */
 	public function log_event( $ip, $uri, $scenario ) {
-		$model             = new Lockout_Log();
-		$model->ip         = $ip;
-		$user_agent        = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-		$model->user_agent = isset( $user_agent ) ? User_Agent::fast_cleaning( $user_agent ) : null;
-		$model->date       = time();
-		$model->tried      = $uri;
-		$model->blog_id    = get_current_blog_id();
-
-		$ip_to_country = $this->ip_to_country( $ip );
-
-		if ( isset( $ip_to_country['iso'] ) ) {
-			$model->country_iso_code = $ip_to_country['iso'];
-		}
+		$model = Lockout_Log::create( $ip, $uri );
 
 		switch ( $scenario ) {
 			case self::SCENARIO_MALICIOUS_BOT:

@@ -8,12 +8,14 @@
 namespace WP_Defender\Controller;
 
 use Exception;
+use Generator;
 use WP_Defender\Event;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
 use WP_Defender\Traits\Setting;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
+use WP_Defender\Component\Export\Csv;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\User_Agent as User_Agent_Service;
 
@@ -346,34 +348,32 @@ class UA_Lockout extends Event {
 	 * @since 2.6.0
 	 */
 	public function export_ua(): void {
-		$data = array();
+		try {
+			Csv::to_browser( 'ua', $this->get_export_rows() );
+		} catch ( \RuntimeException $e ) {
+			$this->log( $e->getMessage(), 'ua-lockout' );
+		}
+	}
 
+	/**
+	 * Generates User Agent export rows.
+	 *
+	 * @return Generator
+	 */
+	private function get_export_rows(): Generator {
 		foreach ( $this->model->get_lockout_list( 'allowlist', false ) as $ua ) {
-			$data[] = array(
+			yield array(
 				'ua'   => $ua,
 				'type' => 'allowlist',
 			);
 		}
 
 		foreach ( $this->model->get_all_selected_blocklist_ua( false ) as $ua ) {
-			$data[] = array(
+			yield array(
 				'ua'   => $ua,
 				'type' => 'blocklist',
 			);
 		}
-
-		// WP_Filesystem class doesn’t directly provide a function for opening a stream to php://memory with the 'w' mode.
-		$fp = fopen( 'php://memory', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
-		foreach ( $data as $fields ) {
-			fputcsv( $fp, $fields, ',', '"', '\\' );
-		}
-		$filename = 'wdf-ua-export-' . wp_date( 'ymdHis' ) . '.csv';
-		fseek( $fp, 0 );
-		header( 'Content-Type: text/csv' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '";' );
-		// Make php send the generated csv lines to the browser.
-		fpassthru( $fp );
-		exit();
 	}
 
 	/**

@@ -876,6 +876,10 @@ class Mask_Login extends Event {
 		$key         = wp_unslash( defender_get_data_from_request( 'key', 'r' ) );
 		$login       = wp_unslash( defender_get_data_from_request( 'login', 'r' ) );
 		$wd_ml_token = defender_get_data_from_request( 'wd-ml-token', 'g' );
+		$cookie_name = 'wd-rp-' . COOKIEHASH;
+		$rp_path     = defined( 'COOKIEPATH' ) ? COOKIEPATH : '/';
+		$rp_domain   = defined( 'COOKIE_DOMAIN' ) ? COOKIE_DOMAIN : '';
+
 		if (
 			isset( $action, $key, $login, $wd_ml_token )
 			&& 'rp' === $action
@@ -884,33 +888,57 @@ class Mask_Login extends Event {
 
 			$user = check_password_reset_key( $key, $login );
 			if ( ! is_wp_error( $user ) ) {
-				$value = sprintf( '%s:%s', $login, $key );
-				set_site_transient( 'wd-rp-' . COOKIEHASH, $value, 2 * MINUTE_IN_SECONDS );
+				$token         = wp_generate_password( 20, false );
+				$transient_key = 'wd-rp-' . COOKIEHASH . '_' . $token;
+				$value         = sprintf( '%s:%s', $login, $key );
+
+				set_site_transient( $transient_key, $value, 2 * MINUTE_IN_SECONDS );
+				setcookie( $cookie_name, $token, 0, $rp_path, $rp_domain, is_ssl(), true );
+				$_COOKIE[ $cookie_name ] = $token;
+
 				wp_safe_redirect( remove_query_arg( array( 'key', 'login', 'wd-ml-token' ) ) );
 				exit;
 			}
 		}
-		$value = get_site_transient( 'wd-rp-' . COOKIEHASH );
+
+		$cookie_token = defender_get_data_from_request( $cookie_name, 'c' );
+		if ( ! is_string( $cookie_token ) || '' === trim( $cookie_token ) ) {
+			return;
+		}
+
+		$transient_key = 'wd-rp-' . COOKIEHASH . '_' . $cookie_token;
+		$value         = get_site_transient( $transient_key );
+
 		// Process the data and display the result.
 		if (
 			isset( $action )
 			&& in_array( $action, array( 'rp', 'resetpass' ), true )
-			&& isset( $value ) && 0 < strpos( $value, ':' )
+			&& is_string( $value ) && 0 < strpos( $value, ':' )
 		) {
 			[ $login, $key ] = explode( ':', wp_unslash( $value ), 2 );
 			$user            = check_password_reset_key( $key, $login );
+
+			if ( is_wp_error( $user ) ) {
+				delete_site_transient( $transient_key );
+				setcookie( $cookie_name, ' ', time() - YEAR_IN_SECONDS, $rp_path, $rp_domain, is_ssl(), true );
+				unset( $_COOKIE[ $cookie_name ] );
+
+				return;
+			}
+
 			if ( 'resetpass' === $action ) {
-				delete_site_transient( 'wd-rp-' . COOKIEHASH );
+				delete_site_transient( $transient_key );
+				setcookie( $cookie_name, ' ', time() - YEAR_IN_SECONDS, $rp_path, $rp_domain, is_ssl(), true );
+				unset( $_COOKIE[ $cookie_name ] );
 			}
-			if ( ! is_wp_error( $user ) ) {
-				$this->render_partial(
-					'mask-login/reset',
-					array(
-						'user' => $user,
-					)
-				);
-				exit;
-			}
+
+			$this->render_partial(
+				'mask-login/reset',
+				array(
+					'user' => $user,
+				)
+			);
+			exit;
 		}
 	}
 

@@ -85,7 +85,7 @@ class Apache {
 		return new WP_Error(
 			'defender_file_not_writable',
 			sprintf(
-			/* translators: %s - file path */
+			/* translators: %s: file path */
 				esc_html__( 'The file %s is not writable', 'defender-security' ),
 				$file_path
 			)
@@ -261,7 +261,7 @@ class Apache {
 	public function get_rules() {
 		$rules = array(
 			PHP_EOL . '## WP Defender - Prevent information disclosure ##' . PHP_EOL,
-			'<FilesMatch "\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL .
+			'<FilesMatch "(?i)\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL .
 			'Require all denied' . PHP_EOL .
 			'</FilesMatch>' . PHP_EOL,
 			'<Files robots.txt>' . PHP_EOL .
@@ -276,7 +276,7 @@ class Apache {
 		if ( version_compare( $this->get_version(), '2.4', '<' ) ) {
 			$rules = array(
 				PHP_EOL . '## WP Defender - Prevent information disclosure ##' . PHP_EOL,
-				'<FilesMatch "\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL .
+				'<FilesMatch "(?i)\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL .
 				'Order allow,deny' . PHP_EOL .
 				'Deny from all' . PHP_EOL .
 				'</FilesMatch>' . PHP_EOL,
@@ -349,7 +349,7 @@ class Apache {
 		if ( 'protect-information' === $this->type ) {
 			$rules  = '## WP Defender - Prevent information disclosure ##' . PHP_EOL;
 			$rules .= PHP_EOL;
-			$rules .= '<FilesMatch "\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL;
+			$rules .= '<FilesMatch "(?i)\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL;
 			$rules .= 'Require all denied' . PHP_EOL;
 			$rules .= '</FilesMatch>' . PHP_EOL;
 			$rules .= PHP_EOL;
@@ -366,7 +366,7 @@ class Apache {
 			if ( version_compare( $this->get_version(), '2.4', '<' ) ) {
 				$rules  = '## WP Defender - Prevent information disclosure ##' . PHP_EOL;
 				$rules .= PHP_EOL;
-				$rules .= '<FilesMatch "\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL;
+				$rules .= '<FilesMatch "(?i)\.(md|exe|sh|bak|inc|pot|po|mo|log|sql)$">' . PHP_EOL;
 				$rules .= 'Order allow,deny' . PHP_EOL;
 				$rules .= 'Deny from all' . PHP_EOL;
 				$rules .= '</FilesMatch>' . PHP_EOL;

@@ -11,6 +11,7 @@ use WP_Defender\Component;
 use WP_Defender\Traits\Country;
 use WP_Defender\Model\Lockout_Ip;
 use WP_Defender\Model\Lockout_Log;
+use WP_Defender\Component\Known_Bots\Known_Bots_Factory;
 
 /**
  * Handles the detection of 404 errors and manages lockouts based on configured settings.
@@ -152,132 +153,13 @@ class Notfound_Lockout extends Component {
 	}
 
 	/**
-	 * Check if user-agent is looks like from googlebot.
-	 *
-	 * @param  string $user_agent  The user agent string to check.
-	 *
-	 * @return bool
-	 */
-	private function is_google_ua( $user_agent = '' ): bool {
-		if ( '' === $user_agent ) {
-			$user_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-			if ( '' === $user_agent ) {
-				return false;
-			}
-			$user_agent = User_Agent::fast_cleaning( $user_agent );
-		}
-		if ( function_exists( 'mb_strtolower' ) ) {
-			$user_agent = mb_strtolower( $user_agent, 'UTF-8' );
-		} else {
-			$user_agent = strtolower( $user_agent );
-		}
-
-		if ( false !== stristr( $user_agent, 'googlebot' ) ) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if IP is from Google, base on https://support.google.com/webmasters/answer/80553?hl=en.
-	 *
-	 * @param  string $ip  The IP address to check.
-	 *
-	 * @return bool
-	 */
-	private function is_google_ip( $ip ): bool {
-		$hostname = gethostbyaddr( $ip );
-		// Check if this hostname has googlebot or google.com.
-		if ( preg_match( '/\.googlebot|google\.com$/i', $hostname ) ) {
-			$hosts = gethostbynamel( $hostname );
-
-			if ( ! is_array( $hosts ) ) {
-				return false;
-			}
-
-			// Check if this match the original ip.
-			foreach ( $hosts as $host ) {
-				if ( $ip === $host ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Checks if the user agent belongs to Bing.
-	 *
-	 * @param  string $user_agent  The user agent string to check.
-	 *
-	 * @return bool Returns true if the user agent is identified as belonging to Bing, false otherwise.
-	 */
-	private function is_bing_ua( $user_agent = '' ): bool {
-
-		if ( '' === $user_agent ) {
-			$user_agent = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-			if ( '' === $user_agent ) {
-				return false;
-			}
-			$user_agent = User_Agent::fast_cleaning( $user_agent );
-		}
-
-		if ( function_exists( 'mb_strtolower' ) ) {
-			$user_agent = mb_strtolower( $user_agent, 'UTF-8' );
-		} else {
-			$user_agent = strtolower( $user_agent );
-		}
-		// MSN Bot Useragent https://www.bing.com/webmaster/help/which-crawlers-does-bing-use-8c184ec0.
-		$msn_ua = 'Bingbot|MSNBot|MSNBot-Media|AdIdxBot|BingPreview';
-
-		if ( preg_match( '/' . $msn_ua . '/i', $user_agent ) ) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Check if IP is from Bing, base on https://www.bing.com/webmaster/help/how-to-verify-bingbot-3905dc26.
-	 *
-	 * @param  string $ip  The IP address to check.
-	 *
-	 * @return bool
-	 */
-	private function is_bing_ip( $ip ): bool {
-		$hostname = gethostbyaddr( $ip );
-		if ( preg_match( '/\.msnbot|msn\.com$/i', $hostname ) ) {
-			$hosts = gethostbynamel( $hostname );
-
-			if ( ! is_array( $hosts ) ) {
-				return false;
-			}
-
-			// Check if this match the original ip.
-			foreach ( $hosts as $host ) {
-				if ( $ip === $host ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/**
 	 * Processes 404 detection for a single IP address.
 	 *
 	 * @param  string $ip  The IP address to process.
 	 */
 	public function process_404_detect( string $ip ): void {
-		// Check if this from Google.
-		if ( $this->is_google_ua() && $this->is_google_ip( $ip ) ) {
-			return;
-		}
-		// or bing.
-		if ( $this->is_bing_ua() && $this->is_bing_ip( $ip ) ) {
+		// Check if request is from a legitimate known bot (Google, Bing, Facebook).
+		if ( Known_Bots_Factory::create()->is_known_bot( $ip ) ) {
 			return;
 		}
 
@@ -443,19 +325,7 @@ class Notfound_Lockout extends Component {
 	 * @param  string $scenario  The scenario under which the event is logged.
 	 */
 	public function log_event( $ip, $uri, $scenario ) {
-		$model             = new Lockout_Log();
-		$model->ip         = $ip;
-		$user_agent        = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-		$model->user_agent = isset( $user_agent ) ? User_Agent::fast_cleaning( $user_agent ) : null;
-		$model->date       = time();
-		$model->tried      = $uri;
-		$model->blog_id    = get_current_blog_id();
-
-		$ip_to_country = $this->ip_to_country( $ip );
-
-		if ( isset( $ip_to_country['iso'] ) ) {
-			$model->country_iso_code = $ip_to_country['iso'];
-		}
+		$model = Lockout_Log::create( $ip, $uri );
 
 		switch ( $scenario ) {
 			case self::SCENARIO_ERROR_404:

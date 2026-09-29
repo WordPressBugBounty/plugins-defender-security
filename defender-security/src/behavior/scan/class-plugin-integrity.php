@@ -29,9 +29,10 @@ class Plugin_Integrity extends Behavior {
 	use IO;
 	use Plugin;
 
-	public const URL_PLUGIN_VCS       = 'https://downloads.wordpress.org/plugin-checksums/';
-	public const PLUGIN_SLUGS         = 'wd_plugin_slugs_changes';
-	public const PLUGIN_PREMIUM_SLUGS = 'wd_plugin_premium_slugs';
+	public const URL_PLUGIN_VCS          = 'https://downloads.wordpress.org/plugin-checksums/';
+	public const PLUGIN_SLUGS            = 'wd_plugin_slugs_changes';
+	public const PLUGIN_SLUGS_CHECKPOINT = 'wd_plugin_slugs_changes_checkpoint';
+	public const PLUGIN_PREMIUM_SLUGS    = 'wd_plugin_premium_slugs';
 	/**
 	 * List of premium plugin slugs.
 	 *
@@ -212,6 +213,9 @@ class Plugin_Integrity extends Behavior {
 		$model        = $this->owner->scan;
 		$pos          = (int) $model->task_checkpoint;
 		$plugin_files->seek( $pos );
+		if ( 0 === $pos ) {
+			delete_site_option( self::PLUGIN_SLUGS_CHECKPOINT );
+		}
 		$slugs_of_edited_plugins = array();
 		$integration_smush       = wd_di()->get( Smush::class );
 		$exist_smush_images      = $integration_smush->exist_image_table();
@@ -317,15 +321,33 @@ class Plugin_Integrity extends Behavior {
 		 * @since 2.4.10
 		 */
 		if ( ( new Scan_Settings() )->scan_malware ) {
-			if ( array() !== $slugs_of_edited_plugins ) {
-				update_site_option( self::PLUGIN_SLUGS, array_unique( $slugs_of_edited_plugins ) );
-			}
+			$this->persist_changed_plugin_slugs( $slugs_of_edited_plugins, ! $plugin_files->valid() );
 			if ( array() !== $this->premium_slugs ) {
 				update_site_option( self::PLUGIN_PREMIUM_SLUGS, $this->premium_slugs );
 			}
 		}
 
 		return ! $plugin_files->valid();
+	}
+
+	/**
+	 * Persist changed plugin slugs across checkpoint scan batches.
+	 *
+	 * @param array $batch_slugs Slugs found in the current batch.
+	 * @param bool  $is_complete Whether the plugin integrity task has completed.
+	 *
+	 * @return void
+	 */
+	private function persist_changed_plugin_slugs( array $batch_slugs, bool $is_complete ): void {
+		$checkpoint_slugs = (array) get_site_option( self::PLUGIN_SLUGS_CHECKPOINT, array() );
+		$changed_slugs    = array_values( array_unique( array_merge( $checkpoint_slugs, $batch_slugs ) ) );
+
+		if ( $is_complete ) {
+			update_site_option( self::PLUGIN_SLUGS, $changed_slugs );
+			delete_site_option( self::PLUGIN_SLUGS_CHECKPOINT );
+		} else {
+			update_site_option( self::PLUGIN_SLUGS_CHECKPOINT, $changed_slugs );
+		}
 	}
 
 	/**

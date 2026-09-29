@@ -30,10 +30,26 @@ class DB extends Model {
 	 * Save the current instance.
 	 *
 	 * @return false|int
-	 * @throws ReflectionException If class is not defined.
 	 */
-	public function save() {
-		return self::get_orm()->save( $this );
+	public function save(): bool|int {
+		try {
+			return self::get_orm()->save( $this );
+		} catch ( \Throwable $e ) {
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$this->log(
+					sprintf(
+						'Failed to save %s: %s in %s:%d',
+						static::class,
+						$e->getMessage(),
+						$e->getFile(),
+						$e->getLine()
+					),
+					'db-save-error.log'
+				);
+			}
+
+			return false;
+		}
 	}
 
 	/**

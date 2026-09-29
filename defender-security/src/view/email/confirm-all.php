@@ -13,7 +13,7 @@
 </h1>
 <p style="color:#1A1A1A;font-family:Roboto,Arial,sans-serif;font-size:16px;font-weight:normal;line-height:24px;margin:0;padding:0 0 28px;text-align:left;">
 	<?php
-	/* translators: %s: Recipient name. */
+	/* translators: %s: Name. */
 	printf( esc_html__( 'Hi %s,', 'defender-security' ), esc_html( $name ) );
 	?>
 </p>

@@ -9,7 +9,7 @@ namespace WP_Defender\Traits;
 
 use RuntimeException;
 use WP_Defender\Extra\GeoIp;
-use MaxMind\Db\Reader\InvalidDatabaseException;
+use WP_DEFENDER_VENDOR\MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Model\Setting\Blacklist_Lockout;
 
 trait Country {
@@ -37,7 +37,7 @@ trait Country {
 		}
 		$model = wd_di()->get( Blacklist_Lockout::class );
 		// Additional check if MaxMind dir is deleted.
-		if ( is_null( $model->geodb_path ) || ! is_file( $model->geodb_path ) ) {
+		if ( ! is_string( $model->geodb_path ) || ! is_file( $model->geodb_path ) ) {
 			return false;
 		}
 		$helper = new GeoIp( $model->geodb_path );

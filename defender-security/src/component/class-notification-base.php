@@ -548,4 +548,9 @@ abstract class Notification_Base extends Component {
 	 * @return array
 	 */
 	abstract public function get_active_pro_reports_as_objects(): array;
+
+	/**
+	 * Dispatches reports if conditions are met.
+	 */
+	abstract public function maybe_dispatch_report();
 }

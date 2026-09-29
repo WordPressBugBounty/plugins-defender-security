@@ -38,7 +38,7 @@ class Known_Bots {
 	public function get_all_bot_ips(): array {
 		$data = array();
 
-		foreach ( $this->providers as $provider ) {
+		foreach ( $this->get_providers() as $provider ) {
 			if ( $provider instanceof Bots_Interface ) {
 				$name          = $provider->get_name();
 				$data[ $name ] = $this->get_or_set_bot_ips( $provider );
@@ -81,5 +81,32 @@ class Known_Bots {
 		$ips = get_site_transient( $key );
 
 		return is_array( $ips ) && array() !== $ips ? $ips : array();
+	}
+
+	/**
+	 * Returns the registered bot providers.
+	 *
+	 * @return Bots_Interface[]
+	 */
+	public function get_providers(): array {
+		return $this->providers;
+	}
+
+	/**
+	 * Checks if the given IP and user agent match any registered known bot.
+	 *
+	 * @param string $ip         The IP address to check.
+	 * @param string $user_agent Optional user agent string.
+	 *
+	 * @return bool
+	 */
+	public function is_known_bot( string $ip, string $user_agent = '' ): bool {
+		foreach ( $this->get_providers() as $provider ) {
+			if ( $provider instanceof Bots_Interface && $provider->is_ua( $user_agent ) && $provider->is_ip( $ip ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

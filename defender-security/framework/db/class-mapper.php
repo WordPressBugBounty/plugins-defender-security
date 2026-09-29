@@ -74,7 +74,7 @@ class Mapper extends Component {
 	/**
 	 * Set the repository class name.
 	 *
-	 * @param  mixed $class_name  The class name to set for the repository.
+	 * @param mixed $class_name The class name to set for the repository.
 	 *
 	 * @return $this
 	 */
@@ -87,7 +87,7 @@ class Mapper extends Component {
 	/**
 	 * Set the columns to select in the SQL query.
 	 *
-	 * @param  mixed $select  The columns to select.
+	 * @param mixed $select The columns to select.
 	 *
 	 * @return $this
 	 */
@@ -104,7 +104,7 @@ class Mapper extends Component {
 	 * - where($column, $value) - equals comparison
 	 * - where($column, $operator, $value) - custom operator comparison
 	 *
-	 * @param  mixed ...$args  The conditions to apply in the WHERE clause.
+	 * @param mixed ...$args The conditions to apply in the WHERE clause.
 	 *
 	 * @return $this
 	 */
@@ -133,7 +133,7 @@ class Mapper extends Component {
 	/**
 	 * Prepare where arguments - handles both 2-arg and 3-arg signatures.
 	 *
-	 * @param  array $args  The arguments passed to where().
+	 * @param array $args The arguments passed to where().
 	 *
 	 * @return array|null [$column, $operator, $value] or null if invalid argument count.
 	 */
@@ -154,13 +154,17 @@ class Mapper extends Component {
 	/**
 	 * Compile a where clause into SQL.
 	 *
-	 * @param  string $column    The column name.
-	 * @param  string $operator  The operator.
-	 * @param  mixed  $value     The value to compare against.
+	 * @param string $column   The column name.
+	 * @param string $operator The operator.
+	 * @param mixed  $value    The value to compare against.
 	 *
 	 * @return string|null The compiled SQL or null if invalid.
 	 */
 	private function compile_where( string $column, string $operator, $value ): ?string {
+		if ( ! preg_match( '/^[a-zA-Z0-9_]+$/', $column ) ) {
+			return null;
+		}
+
 		global $wpdb;
 
 		$op_lower = strtolower( $operator );
@@ -178,20 +182,24 @@ class Mapper extends Component {
 		// Handle basic comparison operators.
 		$placeholder = $this->guess_var_type( $value );
 
-		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $wpdb->prepare( "`$column` $operator $placeholder", $value );
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		return $wpdb->prepare( "%i $operator $placeholder", $column, $value );
 	}
 
 	/**
 	 * Compile a WHERE IN / NOT IN clause.
 	 *
-	 * @param  string $column    The column name.
-	 * @param  string $operator  The operator (IN or NOT IN).
-	 * @param  mixed  $values    The values (should be array, invalid inputs skipped).
+	 * @param string $column   The column name.
+	 * @param string $operator The operator (IN or NOT IN).
+	 * @param mixed  $values   The values (should be array, invalid inputs skipped).
 	 *
 	 * @return string|null The compiled SQL or null if empty values.
 	 */
 	private function compile_where_in( string $column, string $operator, $values ): ?string {
+		if ( ! preg_match( '/^[a-zA-Z0-9_]+$/', $column ) ) {
+			return null;
+		}
+
 		if ( ! is_array( $values ) || 0 === count( $values ) ) {
 			return null;
 		}
@@ -203,22 +211,26 @@ class Mapper extends Component {
 			$placeholders[] = $this->guess_var_type( $val );
 		}
 
-		$sql_template = "`$column` $operator (" . implode( ', ', $placeholders ) . ')';
+		$sql_template = '%i ' . $operator . ' (' . implode( ', ', $placeholders ) . ')';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		return $wpdb->prepare( $sql_template, ...$values );
+		return $wpdb->prepare( $sql_template, $column, ...$values );
 	}
 
 	/**
 	 * Compile a WHERE BETWEEN clause.
 	 *
-	 * @param  string $column    The column name.
-	 * @param  string $operator  The operator (BETWEEN).
-	 * @param  mixed  $values    The values (should be array with min/max, invalid inputs skipped).
+	 * @param string $column   The column name.
+	 * @param string $operator The operator (BETWEEN).
+	 * @param mixed  $values   The values (should be array with min/max, invalid inputs skipped).
 	 *
 	 * @return string|null The compiled SQL or null if invalid values.
 	 */
 	private function compile_where_between( string $column, string $operator, $values ): ?string {
+		if ( ! preg_match( '/^[a-zA-Z0-9_]+$/', $column ) ) {
+			return null;
+		}
+
 		if ( ! is_array( $values ) || count( $values ) < 2 ) {
 			return null;
 		}
@@ -228,8 +240,10 @@ class Mapper extends Component {
 		$placeholder_min = $this->guess_var_type( $values[0] );
 		$placeholder_max = $this->guess_var_type( $values[1] );
 
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 		return $wpdb->prepare(
-			"`$column` $operator $placeholder_min AND $placeholder_max", // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			"%i $operator $placeholder_min AND $placeholder_max", // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$column,
 			$values[0],
 			$values[1]
 		);
@@ -238,7 +252,7 @@ class Mapper extends Component {
 	/**
 	 * Guess the type of value for correcting placeholder.
 	 *
-	 * @param  mixed $value  The value to guess.
+	 * @param mixed $value The value to guess.
 	 *
 	 * @return string
 	 */
@@ -257,7 +271,7 @@ class Mapper extends Component {
 	/**
 	 * Find a record by its ID.
 	 *
-	 * @param  int $id  The ID of the record.
+	 * @param int $id The ID of the record.
 	 *
 	 * @return $this
 	 */
@@ -271,17 +285,30 @@ class Mapper extends Component {
 	/**
 	 * Set the group by clause for the SQL query based on the provided argument.
 	 *
-	 * @param  string $group_by  The column to group by.
+	 * @param string $group_by The column to group by.
 	 *
 	 * @return $this
 	 */
 	public function group_by( $group_by ) {
 		global $wpdb;
-		$this->group = str_replace(
-			"'",
-			'',
-			$wpdb->prepare( 'GROUP BY %s', $group_by )
-		);
+
+		if ( ! is_string( $group_by ) || '' === trim( $group_by ) ) {
+			return $this;
+		}
+
+		$parts      = array_map( 'trim', explode( ',', $group_by ) );
+		$safe_parts = array();
+		foreach ( $parts as $part ) {
+			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $part ) ) {
+				$safe_parts[] = $wpdb->prepare( '%i', $part );
+			}
+		}
+
+		if ( empty( $safe_parts ) ) {
+			return $this;
+		}
+
+		$this->group = 'GROUP BY ' . implode( ', ', $safe_parts );
 
 		return $this;
 	}
@@ -289,22 +316,33 @@ class Mapper extends Component {
 	/**
 	 * Set the order for the SQL query based on the provided arguments.
 	 *
-	 * @param  mixed  $order_by  The column to order by.
-	 * @param  string $order  The order direction, defaults to 'asc'.
+	 * @param mixed  $order_by The column to order by.
+	 * @param string $order    The order direction, defaults to 'asc'.
 	 *
 	 * @return $this
 	 */
 	public function order_by( $order_by, $order = 'asc' ) {
 		global $wpdb;
-		if ( ! in_array( $order, array( 'asc', 'desc' ), true ) ) {
-			// Fall it back.
-			$order = 'asc';
+
+		$order = 'desc' === strtolower( (string) $order ) ? 'DESC' : 'ASC';
+
+		if ( ! is_string( $order_by ) || '' === trim( $order_by ) ) {
+			return $this;
 		}
-		$this->order = str_replace(
-			"'",
-			'',
-			$wpdb->prepare( 'ORDER BY %s %s', $order_by, $order )
-		);
+
+		$parts      = array_map( 'trim', explode( ',', $order_by ) );
+		$safe_parts = array();
+		foreach ( $parts as $part ) {
+			if ( preg_match( '/^[a-zA-Z0-9_]+$/', $part ) ) {
+				$safe_parts[] = $wpdb->prepare( '%i', $part );
+			}
+		}
+
+		if ( empty( $safe_parts ) ) {
+			return $this;
+		}
+
+		$this->order = 'ORDER BY ' . implode( ', ', $safe_parts ) . ' ' . $order;
 
 		return $this;
 	}
@@ -312,8 +350,8 @@ class Mapper extends Component {
 	/**
 	 * Set the limit for the SQL query based on the provided value.
 	 *
-	 * @param  int      $limit  The limit value.
-	 * @param  int|null $offset The offset value.
+	 * @param int      $limit  The limit value.
+	 * @param int|null $offset The offset value.
 	 *
 	 * @return $this
 	 */
@@ -389,7 +427,7 @@ class Mapper extends Component {
 	 * Get records in array form.
 	 *
 	 * @return array
-	 * @since 2.7.0
+	 * @since  2.7.0
 	 */
 	public function get_results() {
 		$sql                 = $this->query_build(); // SQL is prepared here.
@@ -421,7 +459,7 @@ class Mapper extends Component {
 	/**
 	 * Handle the insert/update of current model.
 	 *
-	 * @param  Model $model  The model to save.
+	 * @param Model $model The model to save.
 	 *
 	 * @return int|bool The ID of current record OR false.
 	 * @throws \ReflectionException If class is not defined.
@@ -467,7 +505,7 @@ class Mapper extends Component {
 	/**
 	 * Delete a record from the database table based on the provided conditions.
 	 *
-	 * @param  mixed $where  The conditions to apply when deleting the record.
+	 * @param mixed $where The conditions to apply when deleting the record.
 	 *
 	 * @return int|false The number of rows affected or false on failure.
 	 * @throws \ReflectionException If class is not defined.
@@ -545,8 +583,8 @@ class Mapper extends Component {
 	/**
 	 * It is used to retrieve the table name associated with a given model.
 	 *
-	 * @param  mixed $model  (optional) The model object or class name. If not provided, it uses the "repository"
-	 *                    property of the class.
+	 * @param mixed $model (optional) The model object or class name. If not provided, it uses the "repository"
+	 *                     property of the class.
 	 *
 	 * @return string|false The table name with the WordPress database prefix, or false if the table property doesn't
 	 *     exist or an exception occurs.
@@ -584,7 +622,7 @@ class Mapper extends Component {
 	 * Join the stuff on the table to make a full query statement.
 	 * SQL params e.g. WHERE, ORDER or LIMIT were escaped on separate methods.
 	 *
-	 * @param  string $select  Columns to select.
+	 * @param string $select Columns to select.
 	 *
 	 * @return string
 	 * @throws \ReflectionException If class is not defined.
@@ -613,7 +651,7 @@ class Mapper extends Component {
 	/**
 	 * Checks if the given operator is valid.
 	 *
-	 * @param  string $operator  The operator to check.
+	 * @param string $operator The operator to check.
 	 *
 	 * @return bool True if the operator is valid, false otherwise.
 	 */

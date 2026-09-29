@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 6.2.4
+Version: 6.3.0
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
-Tested up to: 7.1
-Stable tag: 6.2.4
+Tested up to: 7.1.1
+Stable tag: 6.3.0
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -236,6 +236,32 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 6.3.0 ( 2026-09-22 ) =
+
+- Enhancement: Update malware signatures
+- Enhancement: Make Scan settings uneditable while scanning is in progress
+- Enhancement: Upgrade node packages
+- Enhancement: Display country name tooltip on country flag hover in Firewall Logs
+- Enhancement: Reduce the plugin archive size by removing legacy code in some files
+- Enhancement: Translation improvements
+- Enhancement: Display scan details of issue with a suspicious code with automatic scrolling
+- Enhancement: Update support and product roadmap links
+- Enhancement: DOM improvements when Pwned/Strong passwords are enabled
+- Enhancement: Style improvements on Issues page
+- Enhancement: Scan progress bar improvements
+- Enhancement: Placeholder copy for Files, folders and file types field
+- Enhancement: Show count of lockouts in the notice within Malicious Bot detector
+- Enhancement: Improve config applying message
+- Fix: Unlock Pro features on free plan for sites hosted by WPMU DEV
+- Fix: Passing null to parameter #1 on class-malicious-bot.php
+- Fix: Audit logs are causing an error when updating menu items
+- Fix: Defender blocking entire America if Armenia is blocked in geoblocking
+- Fix: Messaging missing for the config file imports
+- Fix: Defender > Strong passwords option breaks the WP Application Password
+- Fix: Dropdown scroll issue in smaller screens
+- Fix: Overlapping modals on Dashboard page
+- Fix: Minor code improvements
+
 = 6.2.4 ( 2026-09-01 ) =
 
 - Fix: Username does not appear in some Audit Log events
@@ -316,36 +342,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 = 6.0.1 ( 2026-07-08 ) =
 
 - Fix: Resolved a fatal error caused by legacy null date values
-
-= 6.0.0 ( 2026-07-07 ) =
-
-- New: Reimagined Defender interface for a seamless, clutter-free optimization experience
-- New: Comprehensive Activity Log to track scans, optimizations, and configuration changes in real time
-- Enhancement: Transitioned to real-time Auto-save for all settings to provide a frictionless workflow
-- Fix: Minor code improvements and performance refinements
-
-= 5.11.0 ( 2026-03-31 ) =
-
-- Enhancement: Improvements to Audit Logging in both API and plugin
-- Enhancement: Compatibility with WordPress 7.0
-- Enhancement: Improve compliance with wp.org guidelines throughout the plugin
-- Enhancement: Submit button activates without radio button selection on Deactivate modal
-- Fix: Error when Uninstall plugin settings are set to Delete value
-- Fix: Console error when saving User Agent Banning changes
-- Fix: Deprecated function warnings on PHP 8.5.X
-
-= 5.10.0 ( 2026-02-26 ) =
-
-- Enhancement: Improve AntiBot Stats endpoint
-- Enhancement: Improve handling of response data in the Audit API
-- Enhancement: Update malware signatures
-- Enhancement: Improve suspicious issue view on the Malware Scanning page
-- Enhancement: Include selected presets in the User Agent blocklist during export
-- Fix: Error when filtering the Firewall logs
-- Fix: Error when switching languages with WPML while Bot Trap is enabled
-- Fix: Strong Passwords do not work when Mask Login URL is enabled
-- Fix: Colored elements appear on Defender admin pages when High Contrast Mode is enabled
-- Fix: Exported Firewall logs do not follow the selected sort order
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

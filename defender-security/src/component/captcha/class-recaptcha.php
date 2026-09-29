@@ -236,7 +236,13 @@ class Recaptcha extends Provider {
 	 * @return bool
 	 */
 	public function should_skip_check( Woocommerce $woo, Buddypress $buddypress ): bool {
-		return false;
+		// Ultimate Member (UM) handles its own form validation through these hooks; skip
+		// reCAPTCHA to avoid conflicting with UM's validation flow.
+		if ( ! class_exists( 'UM' ) ) {
+			return false;
+		}
+
+		return doing_action( 'um_submit_form_errors_hook_login' ) || doing_action( 'um_submit_account_details' );
 	}
 
 	/**

@@ -68,12 +68,12 @@ class Blacklist_Lockout extends Setting {
 
 	/**
 	 * Path to downloaded GeoDB.
-	 * Important: This var doesn't support Union Types. So just 'string'.
+	 * An empty string indicates that no database path is saved.
 	 *
 	 * @var string
 	 * @defender_property
 	 */
-	public $geodb_path = null;
+	public $geodb_path = '';
 
 	/**
 	 * MaxMind license key.
@@ -286,9 +286,14 @@ class Blacklist_Lockout extends Setting {
 	 * @return void
 	 */
 	protected function after_load(): void {
+		// Normalize legacy or imported settings before using this value in filesystem functions.
+		if ( ! is_string( $this->geodb_path ) ) {
+			$this->geodb_path = '';
+		}
+
 		if (
-			is_string( $this->geodb_path ) &&
-			strlen( $this->geodb_path ) > 0
+			strlen( $this->geodb_path ) > 0 &&
+			! is_file( $this->geodb_path )
 		) {
 			$service_geo = wd_di()->get( MaxMind_Geolocation::class );
 

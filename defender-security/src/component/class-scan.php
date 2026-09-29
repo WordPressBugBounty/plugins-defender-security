@@ -587,6 +587,7 @@ class Scan extends Component {
 		delete_site_option( Malware_Scan::YARA_RULES );
 		delete_site_option( Core_Integrity::CACHE_CHECKSUMS );
 		delete_site_option( Plugin_Integrity::PLUGIN_SLUGS );
+		delete_site_option( Plugin_Integrity::PLUGIN_SLUGS_CHECKPOINT );
 		delete_site_option( Plugin_Integrity::PLUGIN_PREMIUM_SLUGS );
 		delete_site_option( self::PLUGINS_ACTIONED );
 		$this->maybe_track_failed_checksum();
@@ -668,7 +669,7 @@ class Scan extends Component {
 			);
 
 			$notice = sprintf(
-			/* translators: %s - Plugin name. */
+			/* translators: %s: Plugin name. */
 				esc_html__(
 					'%s has detected a vulnerability in this plugin that may cause harm to your site.',
 					'defender-security'
@@ -685,7 +686,7 @@ class Scan extends Component {
 				$notice .= '<hr/><span class="vulnerability-indent"></span>';
 				if ( '0' !== $last_fixed_in ) {
 					$notice .= sprintf(
-					/* translators: %s - Version number. */
+					/* translators: %s: Version number. */
 						esc_html__(
 							'The vulnerability has been fixed in version %s. We recommend that you update this plugin accordingly.',
 							'defender-security'
@@ -706,7 +707,7 @@ class Scan extends Component {
 						'defender-security'
 					)
 					: sprintf(
-					/* translators: 1: Version number. */
+					/* translators: %s: Version number. */
 						esc_html__(
 							'The vulnerability has been fixed in version %s. We recommend that you update this plugin accordingly.',
 							'defender-security'

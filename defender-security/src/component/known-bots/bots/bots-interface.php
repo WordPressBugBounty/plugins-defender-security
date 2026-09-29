@@ -24,4 +24,22 @@ interface Bots_Interface {
 	 * @return array An array of IP addresses used by the bot.
 	 */
 	public function fetch_ips(): array;
+
+	/**
+	 * Checks if the given or current user agent belongs to the bot.
+	 *
+	 * @param string $user_agent Optional user agent string to check.
+	 *
+	 * @return bool
+	 */
+	public function is_ua( string $user_agent = '' ): bool;
+
+	/**
+	 * Checks if the given IP belongs to the bot.
+	 *
+	 * @param string $ip The IP address to check.
+	 *
+	 * @return bool
+	 */
+	public function is_ip( string $ip ): bool;
 }

@@ -2,14 +2,14 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 6.2.4\n"
+"Project-Id-Version: Defender Pro 6.3.0\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-01T11:58:40+00:00\n"
+"POT-Creation-Date: 2026-09-22T07:46:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wpdef\n"
@@ -17,7 +17,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: wp-defender.php
 #: src/class-admin.php:159
-#: src/component/class-scan.php:676
+#: src/component/class-scan.php:677
 #: src/traits/defender-dashboard-client.php:88
 #: assets/js/core-ui.js:1
 msgid "Defender Pro"
@@ -64,7 +64,7 @@ msgstr ""
 #: src/component/ip/class-global-ip.php:268
 #: src/component/ip/class-global-ip.php:272
 #: src/component/ip/class-global-ip.php:275
-#: src/controller/class-firewall.php:894
+#: src/controller/class-firewall.php:902
 #: src/model/class-notification.php:384
 #: src/model/class-notification.php:399
 #: src/model/notification/class-malware-report.php:159
@@ -75,7 +75,7 @@ msgstr ""
 
 #: free/component/class-notification.php:102
 #: src/component/class-notification.php:170
-#: src/controller/class-scan.php:155
+#: src/controller/class-scan.php:151
 #: assets/js/core-ui.js:1
 msgid "Issues"
 msgstr ""
@@ -83,7 +83,7 @@ msgstr ""
 #: free/component/class-notification.php:105
 #: src/component/class-backup-settings.php:1407
 #: src/component/class-notification.php:173
-#: src/controller/class-main-setting.php:1207
+#: src/controller/class-main-setting.php:1227
 #: src/controller/class-security-tweaks.php:100
 #: assets/js/core-ui.js:1
 msgid "Hardening"
@@ -93,7 +93,7 @@ msgstr ""
 #: src/component/class-backup-settings.php:1413
 #: src/component/class-mail.php:63
 #: src/component/class-notification.php:176
-#: src/controller/class-firewall.php:627
+#: src/controller/class-firewall.php:635
 #: src/model/notification/class-firewall-notification.php:397
 #: src/model/notification/class-firewall-report.php:154
 #: assets/js/core-ui.js:1
@@ -158,7 +158,7 @@ msgstr ""
 #: free/model/notification/class-audit-report.php:59
 #: free/model/notification/class-firewall-report.php:58
 #: free/model/notification/class-malware-report.php:65
-#: free/model/setting/class-scan.php:151
+#: free/model/setting/class-scan.php:150
 #: src/model/notification/class-audit-report.php:198
 #: src/model/notification/class-firewall-report.php:182
 #: src/model/notification/class-malware-report.php:146
@@ -170,7 +170,7 @@ msgstr ""
 #: free/model/notification/class-firewall-report.php:59
 #: free/model/notification/class-malware-report.php:66
 #: free/model/notification/class-tweak-reminder.php:75
-#: free/model/setting/class-scan.php:148
+#: free/model/setting/class-scan.php:147
 #: src/model/notification/class-audit-report.php:199
 #: src/model/notification/class-firewall-report.php:183
 #: src/model/notification/class-malware-report.php:147
@@ -228,8 +228,8 @@ msgstr ""
 msgid "Hardening report"
 msgstr ""
 
-#: free/model/setting/class-scan.php:140
-#: free/model/setting/class-scan.php:183
+#: free/model/setting/class-scan.php:139
+#: free/model/setting/class-scan.php:182
 #: src/model/setting/class-scan.php:142
 #: src/model/setting/class-scan.php:185
 #: src/traits/defender-hub-client.php:643
@@ -237,76 +237,76 @@ msgstr ""
 msgid "File change detection"
 msgstr ""
 
-#: free/model/setting/class-scan.php:141
+#: free/model/setting/class-scan.php:140
 #: src/model/setting/class-scan.php:143
 #: src/traits/defender-hub-client.php:644
 msgid "Scan core files"
 msgstr ""
 
-#: free/model/setting/class-scan.php:142
+#: free/model/setting/class-scan.php:141
 #: src/model/setting/class-scan.php:144
 #: src/traits/defender-hub-client.php:645
 msgid "Scan plugin files"
 msgstr ""
 
-#: free/model/setting/class-scan.php:143
+#: free/model/setting/class-scan.php:142
 #: src/model/setting/class-scan.php:145
 #: assets/js/core-ui.js:1
 msgid "Outdated & removed plugins"
 msgstr ""
 
-#: free/model/setting/class-scan.php:144
+#: free/model/setting/class-scan.php:143
 #: src/model/setting/class-scan.php:146
 #: src/traits/defender-hub-client.php:646
 #: assets/js/core-ui.js:1
 msgid "Known vulnerabilities"
 msgstr ""
 
-#: free/model/setting/class-scan.php:145
+#: free/model/setting/class-scan.php:144
 #: src/model/setting/class-scan.php:147
 #: src/traits/defender-hub-client.php:647
 #: assets/js/core-ui.js:1
 msgid "Suspicious code"
 msgstr ""
 
-#: free/model/setting/class-scan.php:146
+#: free/model/setting/class-scan.php:145
 #: src/model/setting/class-scan.php:148
 #: assets/js/core-ui.js:1
 msgid "Max included file size"
 msgstr ""
 
-#: free/model/setting/class-scan.php:147
+#: free/model/setting/class-scan.php:146
 #: src/model/setting/class-scan.php:149
 msgid "Scheduled Scanning"
 msgstr ""
 
-#: free/model/setting/class-scan.php:149
+#: free/model/setting/class-scan.php:148
 #: src/model/setting/class-scan.php:151
 #: assets/js/core-ui.js:1
 msgid "Day of the week"
 msgstr ""
 
-#: free/model/setting/class-scan.php:150
+#: free/model/setting/class-scan.php:149
 #: src/model/setting/class-scan.php:152
 #: assets/js/core-ui.js:1
 msgid "Day of the month"
 msgstr ""
 
 #. translators: %s: File change detection.
-#: free/model/setting/class-scan.php:182
+#: free/model/setting/class-scan.php:181
 #: src/model/setting/class-scan.php:184
 #, php-format
 msgid "You have not selected a scan type for the %s. Please choose at least one and save the settings again."
 msgstr ""
 
-#: free/model/setting/class-scan.php:187
+#: free/model/setting/class-scan.php:186
 #: src/model/setting/class-scan.php:189
 msgid "You have not selected a scan type. Please enable at least one scan type and save the settings again."
 msgstr ""
 
 #. translators: %s: Scan issue name.
 #: src/behavior/scan-item/class-abandoned-result.php:83
-#: src/behavior/scan-item/class-core-integrity.php:150
+#: src/behavior/scan-item/class-core-integrity.php:203
 #: src/behavior/scan-item/class-malware-result.php:89
 #: src/behavior/scan-item/class-plugin-integrity.php:148
 #: src/behavior/scan-item/class-vuln-result.php:147
@@ -353,39 +353,47 @@ msgstr ""
 msgid "Removed from the wordpress.org repository"
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:118
+#: src/behavior/scan-item/class-core-integrity.php:87
+msgid "The trusted WordPress core checksum is unavailable."
+msgstr ""
+
+#: src/behavior/scan-item/class-core-integrity.php:94
+msgid "The downloaded WordPress core file failed checksum verification."
+msgstr ""
+
+#: src/behavior/scan-item/class-core-integrity.php:171
 #: src/behavior/scan-item/class-plugin-integrity.php:116
 #: src/behavior/scan-item/class-vuln-result.php:219
 #: src/behavior/scan-item/class-vuln-result.php:273
 msgid "This item has been resolved."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:122
+#: src/behavior/scan-item/class-core-integrity.php:175
 #: src/behavior/scan-item/class-plugin-integrity.php:120
 msgid "Permissions Denied. Defender does not have the needed permissions to edit the file. Please change file permissions to 640 or contact your hosting provider so they could change them for you."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:165
+#: src/behavior/scan-item/class-core-integrity.php:218
 #: src/behavior/scan-item/class-malware-result.php:104
 #: src/behavior/scan-item/class-plugin-integrity.php:163
 msgid "The suspicious file has been successfully restored."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:186
+#: src/behavior/scan-item/class-core-integrity.php:239
 #: src/behavior/scan-item/class-malware-result.php:123
 #: src/behavior/scan-item/class-plugin-integrity.php:182
 msgid "This item has been deleted."
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:243
+#: src/behavior/scan-item/class-core-integrity.php:298
 msgid "Unknown file in WordPress core"
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:245
+#: src/behavior/scan-item/class-core-integrity.php:300
 msgid "This directory does not belong to WordPress core"
 msgstr ""
 
-#: src/behavior/scan-item/class-core-integrity.php:247
+#: src/behavior/scan-item/class-core-integrity.php:302
 msgid "This WordPress core file appears modified"
 msgstr ""
 
@@ -435,40 +443,49 @@ msgstr ""
 msgid "There is no update available for this plugin."
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:380
+#: src/behavior/scan-item/class-vuln-result.php:379
+#: src/behavior/scan-item/class-vuln-result.php:407
+msgid "Invalid theme path."
+msgstr ""
+
+#: src/behavior/scan-item/class-vuln-result.php:386
+msgid "The requested theme is not installed."
+msgstr ""
+
+#: src/behavior/scan-item/class-vuln-result.php:394
 msgid "This theme cannot be removed because it is active."
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:388
+#: src/behavior/scan-item/class-vuln-result.php:414
 msgid "Defender does not have enough permission to remove this theme."
 msgstr ""
 
 #. translators: %s: Plugin theme.
-#: src/behavior/scan-item/class-vuln-result.php:397
+#: src/behavior/scan-item/class-vuln-result.php:423
 #, php-format
 msgid "%s theme"
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:421
-#: src/behavior/scan-item/class-vuln-result.php:461
+#: src/behavior/scan-item/class-vuln-result.php:447
+#: src/behavior/scan-item/class-vuln-result.php:487
 msgid "Vulnerability type:"
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:423
-#: src/behavior/scan-item/class-vuln-result.php:465
+#: src/behavior/scan-item/class-vuln-result.php:449
+#: src/behavior/scan-item/class-vuln-result.php:491
 msgid "No Update Available"
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:425
-#: src/behavior/scan-item/class-vuln-result.php:467
+#: src/behavior/scan-item/class-vuln-result.php:451
+#: src/behavior/scan-item/class-vuln-result.php:493
 msgid "This bug has been fixed in version:"
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:491
+#: src/behavior/scan-item/class-vuln-result.php:517
 msgid "WordPress core cannot be removed."
 msgstr ""
 
-#: src/behavior/scan-item/class-vuln-result.php:502
+#: src/behavior/scan-item/class-vuln-result.php:528
 msgid "We couldn't remove this item."
 msgstr ""
 
@@ -642,8 +659,8 @@ msgid "Invalid API request."
 msgstr ""
 
 #: src/class-central.php:92
-#: src/controller/class-main-setting.php:932
-#: src/controller/class-main-setting.php:1092
+#: src/controller/class-main-setting.php:952
+#: src/controller/class-main-setting.php:1112
 #: src/controller/class-notification.php:339
 #: src/controller/class-notification.php:343
 #: src/controller/class-recipients.php:309
@@ -1008,25 +1025,25 @@ msgid "Uploaded"
 msgstr ""
 
 #. translators: 1: Blog name, 2: User's display name, 3: Menu item, 4: Menu name
-#: src/component/audit/class-menu-audit.php:181
+#: src/component/audit/class-menu-audit.php:178
 #, php-format
 msgid "%1$s %2$s updated item \"%3$s\" from menu \"%4$s\""
 msgstr ""
 
 #. translators: 1: Blog name, 2: User's display name, 3: Menu item, 4: Menu name
-#: src/component/audit/class-menu-audit.php:201
+#: src/component/audit/class-menu-audit.php:198
 #, php-format
 msgid "%1$s %2$s added item \"%3$s\" to menu \"%4$s\""
 msgstr ""
 
 #. translators: 1: Blog name, 2: User's display name, 3: Menu item, 4: Menu name
-#: src/component/audit/class-menu-audit.php:241
+#: src/component/audit/class-menu-audit.php:238
 #, php-format
 msgid "%1$s %2$s removed item \"%3$s\" from menu \"%4$s\""
 msgstr ""
 
 #. translators: 1: Blog name, 2: User's display name, 3: Menu name
-#: src/component/audit/class-menu-audit.php:268
+#: src/component/audit/class-menu-audit.php:265
 #, php-format
 msgid "%1$s %2$s created a new menu \"%3$s\""
 msgstr ""
@@ -1055,7 +1072,6 @@ msgstr ""
 msgid "%1$s %2$s opened site registration"
 msgstr ""
 
-#. translators: 1: Blog name, 2: User's display name, 3: Option: Week Starts On, 4: Old day, 5: New day
 #. translators: 1: Blog name, 2: User's display name, 3: Option label, 4: Old option value, 5: New option value
 #: src/component/audit/class-options-audit.php:86
 #: src/component/audit/class-options-audit.php:118
@@ -1649,11 +1665,11 @@ msgstr ""
 msgid "Use wd_captcha_excluded_handles to filter excluded script handles for all captcha providers."
 msgstr ""
 
-#: src/component/captcha/class-recaptcha.php:263
+#: src/component/captcha/class-recaptcha.php:269
 msgid "Use wd_captcha_remote_ip to filter remote IP for all captcha providers."
 msgstr ""
 
-#: src/component/captcha/class-recaptcha.php:294
+#: src/component/captcha/class-recaptcha.php:300
 msgid "Use wd_captcha_check_result to filter captcha verification for all providers."
 msgstr ""
 
@@ -1676,14 +1692,14 @@ msgstr ""
 #: src/component/class-backup-settings.php:1330
 #: src/component/class-backup-settings.php:1338
 #: src/component/class-backup-settings.php:1340
-#: src/controller/class-audit-logging.php:656
-#: src/controller/class-audit-logging.php:694
+#: src/controller/class-audit-logging.php:680
+#: src/controller/class-audit-logging.php:718
 #: src/controller/class-captcha.php:531
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-password-protection.php:394
 #: src/controller/class-password-protection.php:400
-#: src/controller/class-scan.php:1080
-#: src/controller/class-scan.php:1120
+#: src/controller/class-scan.php:1076
+#: src/controller/class-scan.php:1116
 #: src/controller/class-session-protection.php:179
 #: src/controller/class-strong-password.php:252
 #: src/controller/class-strong-password.php:271
@@ -1707,7 +1723,7 @@ msgstr ""
 
 #: src/component/class-backup-settings.php:1423
 #: src/controller/class-blocklist-monitor.php:292
-#: src/controller/class-main-setting.php:500
+#: src/controller/class-main-setting.php:520
 #: assets/js/core-ui.js:1
 msgid "Blocklist Monitor"
 msgstr ""
@@ -1753,9 +1769,9 @@ msgstr ""
 msgid "Please verify that you are not a robot."
 msgstr ""
 
-#: src/component/class-captcha.php:471
-#: src/component/class-captcha.php:491
-#: src/component/class-captcha.php:523
+#: src/component/class-captcha.php:465
+#: src/component/class-captcha.php:485
+#: src/component/class-captcha.php:517
 #: src/component/class-login-lockout.php:117
 #: src/component/class-login-lockout.php:172
 msgid "Error"
@@ -1783,12 +1799,12 @@ msgid "The Defender file with the random key is incorrect."
 msgstr ""
 
 #. translators: %s: The name of the bot being impersonated.
-#: src/component/class-fake-bot-detection.php:324
+#: src/component/class-fake-bot-detection.php:302
 #, php-format
 msgid "Lockout occurred: Fake bot impersonated %s."
 msgstr ""
 
-#: src/component/class-firewall.php:554
+#: src/component/class-firewall.php:589
 #: assets/js/core-ui.js:1
 msgid "Cloudflare"
 msgstr ""
@@ -1927,18 +1943,18 @@ msgid "Dummy data."
 msgstr ""
 
 #. translators: %s: Username.
-#: src/component/class-login-lockout.php:369
+#: src/component/class-login-lockout.php:355
 #, php-format
 msgid "Failed login attempt with username %s"
 msgstr ""
 
 #. translators: %s: Username.
-#: src/component/class-login-lockout.php:377
+#: src/component/class-login-lockout.php:363
 #, php-format
 msgid "Failed login attempt with a ban username %s"
 msgstr ""
 
-#: src/component/class-login-lockout.php:386
+#: src/component/class-login-lockout.php:372
 msgid "Lockout occurred: Too many failed login attempts"
 msgstr ""
 
@@ -1974,56 +1990,56 @@ msgstr ""
 
 #: src/component/class-mail.php:73
 #: src/component/class-two-fa.php:508
-#: src/controller/class-main-setting.php:504
+#: src/controller/class-main-setting.php:524
 #: src/model/setting/class-two-fa.php:326
 #: src/view/two-fa/user-options.php:16
 #: assets/js/core-ui.js:1
 msgid "Two-Factor Authentication"
 msgstr ""
 
-#: src/component/class-malicious-bot.php:255
+#: src/component/class-malicious-bot.php:243
 msgid "Lockout occurred: Bot ignored robots.txt rules."
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:465
-#: src/component/class-notfound-lockout.php:473
+#: src/component/class-notfound-lockout.php:335
+#: src/component/class-notfound-lockout.php:343
 #, php-format
 msgid "Request for file %s which doesn`t exist"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:482
+#: src/component/class-notfound-lockout.php:352
 #, php-format
 msgid "Possible XSS attempt detected in request: %s"
 msgstr ""
 
-#: src/component/class-notfound-lockout.php:488
+#: src/component/class-notfound-lockout.php:358
 msgid "Lockout occurred: Multiple XSS attempt requests detected"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:494
+#: src/component/class-notfound-lockout.php:364
 #, php-format
 msgid "Attempt to access non-installed plugin: %s"
 msgstr ""
 
-#: src/component/class-notfound-lockout.php:501
+#: src/component/class-notfound-lockout.php:371
 msgid "Lockout occurred: Multiple requests for non-installed plugin"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:507
+#: src/component/class-notfound-lockout.php:377
 #, php-format
 msgid "Attempt to access non-installed theme: %s"
 msgstr ""
 
-#: src/component/class-notfound-lockout.php:514
+#: src/component/class-notfound-lockout.php:384
 msgid "Lockout occurred: Multiple requests for non-installed theme"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:521
+#: src/component/class-notfound-lockout.php:391
 #, php-format
 msgid "Lockout occurred:  Too many 404 requests for %s"
 msgstr ""
@@ -2210,37 +2226,36 @@ msgstr ""
 msgid "Could not send verification email, please try again."
 msgstr ""
 
-#. translators: %s - Plugin name.
-#: src/component/class-scan.php:672
+#. translators: %s: Plugin name.
+#: src/component/class-scan.php:673
 #, php-format
 msgid "%s has detected a vulnerability in this plugin that may cause harm to your site."
 msgstr ""
 
-#. translators: %s - Version number.
-#. translators: 1: Version number.
-#: src/component/class-scan.php:689
-#: src/component/class-scan.php:710
+#. translators: %s: Version number.
+#: src/component/class-scan.php:690
+#: src/component/class-scan.php:711
 #, php-format
 msgid "The vulnerability has been fixed in version %s. We recommend that you update this plugin accordingly."
 msgstr ""
 
-#: src/component/class-scan.php:696
+#: src/component/class-scan.php:697
 msgid "Important! We recommend that you deactivate this plugin until the vulnerability has been fixed."
 msgstr ""
 
-#: src/component/class-scan.php:704
+#: src/component/class-scan.php:705
 msgid "We recommend that you deactivate this plugin until the vulnerability has been fixed."
 msgstr ""
 
-#: src/component/class-scan.php:785
+#: src/component/class-scan.php:786
 msgid "Action scheduler is not setup"
 msgstr ""
 
-#: src/component/class-scan.php:832
+#: src/component/class-scan.php:833
 msgid "Malware scan logs are cleared"
 msgstr ""
 
-#: src/component/class-scan.php:958
+#: src/component/class-scan.php:959
 msgid "Scan aborted. No scan types are enabled. Enable at least one scan type under Defender > Settings > Tools before running a scan."
 msgstr ""
 
@@ -2270,7 +2285,7 @@ msgstr ""
 msgid "IP Address"
 msgstr ""
 
-#: src/component/class-session-protection.php:231
+#: src/component/class-session-protection.php:270
 msgid "You've been logged out due to inactivity. Please sign in to continue."
 msgstr ""
 
@@ -2472,22 +2487,22 @@ msgid "Two Factor"
 msgstr ""
 
 #. translators: %s: User name.
-#: src/component/class-two-fa.php:821
+#: src/component/class-two-fa.php:826
 #, php-format
 msgid "Two factor authentication has been reset for %s."
 msgstr ""
 
-#: src/component/class-two-fa.php:850
+#: src/component/class-two-fa.php:855
 msgid "Reset two factor"
 msgstr ""
 
 #. translators: %s: IP address
-#: src/component/class-unlock-me.php:172
+#: src/component/class-unlock-me.php:174
 #, php-format
 msgid "%s was unlocked via \"Unlock Me (Email)\""
 msgstr ""
 
-#: src/component/class-unlock-me.php:244
+#: src/component/class-unlock-me.php:246
 msgid "Unlock Me"
 msgstr ""
 
@@ -2656,7 +2671,7 @@ msgstr ""
 
 #: src/component/security-tweaks/class-change-admin.php:172
 #: src/component/security-tweaks/class-security-key.php:162
-#: src/controller/class-main-setting.php:811
+#: src/controller/class-main-setting.php:831
 msgid "re-login"
 msgstr ""
 
@@ -2952,7 +2967,6 @@ msgid "Security Keys"
 msgstr ""
 
 #. translators: %s: file path
-#. translators: %s - file path
 #: src/component/security-tweaks/class-security-key.php:570
 #: src/component/security-tweaks/servers/class-apache.php:89
 #, php-format
@@ -3285,7 +3299,7 @@ msgid "Summary"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:227
-#: src/controller/class-firewall-logs.php:200
+#: src/controller/class-firewall-logs.php:183
 msgid "Date / Time"
 msgstr ""
 
@@ -3295,7 +3309,7 @@ msgid "Context"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:229
-#: src/controller/class-firewall-logs.php:201
+#: src/controller/class-firewall-logs.php:184
 #: src/view/two-fa/user-options.php:101
 #: src/view/two-fa/user-options.php:115
 #: assets/js/core-ui.js:1
@@ -3304,28 +3318,28 @@ msgid "Type"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:230
-#: src/controller/class-firewall-logs.php:202
+#: src/controller/class-firewall-logs.php:185
 #: assets/js/core-ui.js:1
 msgid "IP address"
 msgstr ""
 
-#: src/controller/class-audit-logging.php:313
-#: src/controller/class-audit-logging.php:319
+#: src/controller/class-audit-logging.php:337
+#: src/controller/class-audit-logging.php:343
 #: src/controller/class-notification.php:416
 #: src/controller/class-notification.php:422
 #: src/controller/class-notification.php:740
 msgid "Invalid data."
 msgstr ""
 
-#: src/controller/class-audit-logging.php:511
+#: src/controller/class-audit-logging.php:535
 #: src/controller/class-blacklist.php:243
 #: src/controller/class-firewall.php:346
 #: src/controller/class-login-access.php:101
 #: src/controller/class-main-setting.php:251
 #: src/controller/class-mask-login.php:348
-#: src/controller/class-mask-login.php:1210
+#: src/controller/class-mask-login.php:1238
 #: src/controller/class-password-reset.php:218
-#: src/controller/class-scan.php:646
+#: src/controller/class-scan.php:642
 #: src/controller/class-security-headers.php:104
 #: src/controller/class-two-factor.php:925
 #: src/traits/setting.php:24
@@ -3333,13 +3347,13 @@ msgstr ""
 msgid "Your settings have been updated."
 msgstr ""
 
-#: src/controller/class-audit-logging.php:655
-#: src/controller/class-audit-logging.php:693
+#: src/controller/class-audit-logging.php:679
+#: src/controller/class-audit-logging.php:717
 #: src/controller/class-captcha.php:531
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-password-protection.php:399
-#: src/controller/class-scan.php:1078
-#: src/controller/class-scan.php:1119
+#: src/controller/class-scan.php:1074
+#: src/controller/class-scan.php:1115
 #: src/controller/class-session-protection.php:179
 #: src/controller/class-strong-password.php:252
 #: src/controller/class-strong-password.php:276
@@ -3350,19 +3364,19 @@ msgid "Active"
 msgstr ""
 
 #. translators: %s: Frequency value.
-#: src/controller/class-audit-logging.php:665
-#: src/controller/class-audit-logging.php:701
-#: src/controller/class-firewall.php:1058
-#: src/controller/class-firewall.php:1125
+#: src/controller/class-audit-logging.php:689
+#: src/controller/class-audit-logging.php:725
+#: src/controller/class-firewall.php:1066
+#: src/controller/class-firewall.php:1133
 #, php-format
 msgid "Email reports sending %s"
 msgstr ""
 
 #. translators: %s: Html for Pro-tag.
-#: src/controller/class-audit-logging.php:674
-#: src/controller/class-audit-logging.php:709
-#: src/controller/class-firewall.php:1066
-#: src/controller/class-firewall.php:1132
+#: src/controller/class-audit-logging.php:698
+#: src/controller/class-audit-logging.php:733
+#: src/controller/class-firewall.php:1074
+#: src/controller/class-firewall.php:1140
 #, php-format
 msgid "Email report inactive %s"
 msgstr ""
@@ -3450,31 +3464,31 @@ msgstr ""
 msgid "-"
 msgstr ""
 
-#: src/controller/class-dashboard.php:538
+#: src/controller/class-dashboard.php:541
 msgid "Unsupported feature toggle request."
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:199
+#: src/controller/class-firewall-logs.php:182
 msgid "Log"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:203
+#: src/controller/class-firewall-logs.php:186
 msgid "IP Status"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:204
+#: src/controller/class-firewall-logs.php:187
 msgid "User Agent Name"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:205
+#: src/controller/class-firewall-logs.php:188
 msgid "User Agent Status"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:368
+#: src/controller/class-firewall-logs.php:374
 msgid "Start and end date are required."
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:374
+#: src/controller/class-firewall-logs.php:380
 msgid "Wrong start and end date."
 msgstr ""
 
@@ -3486,62 +3500,62 @@ msgstr ""
 msgid "Demo"
 msgstr ""
 
-#: src/controller/class-firewall.php:611
+#: src/controller/class-firewall.php:619
 msgid "Request to Unblock IP Address"
 msgstr ""
 
-#: src/controller/class-firewall.php:869
+#: src/controller/class-firewall.php:877
 msgid "Your logs have been successfully deleted."
 msgstr ""
 
-#: src/controller/class-firewall.php:878
-#: src/controller/class-firewall.php:1275
+#: src/controller/class-firewall.php:886
+#: src/controller/class-firewall.php:1283
 msgid "Failed remove!"
 msgstr ""
 
-#: src/controller/class-firewall.php:1051
-#: src/controller/class-firewall.php:1117
-#: src/controller/class-scan.php:1085
-#: src/controller/class-scan.php:1123
+#: src/controller/class-firewall.php:1059
+#: src/controller/class-firewall.php:1125
+#: src/controller/class-scan.php:1081
+#: src/controller/class-scan.php:1119
 #: src/controller/class-security-tweaks.php:1137
 #: src/controller/class-security-tweaks.php:1171
 msgid "Email notifications active"
 msgstr ""
 
 #. translators: %s: Html for Pro-tag.
-#: src/controller/class-firewall.php:1071
-#: src/controller/class-firewall.php:1149
+#: src/controller/class-firewall.php:1079
+#: src/controller/class-firewall.php:1157
 #, php-format
 msgid "Web Application Firewall (WAF) inactive %s"
 msgstr ""
 
-#: src/controller/class-firewall.php:1141
+#: src/controller/class-firewall.php:1149
 #: src/controller/class-waf.php:179
 msgid "Web Application Firewall (WAF) active"
 msgstr ""
 
-#: src/controller/class-firewall.php:1143
+#: src/controller/class-firewall.php:1151
 #: src/controller/class-waf.php:184
 msgid "Web Application Firewall (WAF) inactive"
 msgstr ""
 
-#: src/controller/class-firewall.php:1266
+#: src/controller/class-firewall.php:1274
 msgid "Deleted lockout records successfully."
 msgstr ""
 
-#: src/controller/class-firewall.php:1384
+#: src/controller/class-firewall.php:1392
 msgid "Invalid nonce."
 msgstr ""
 
-#: src/controller/class-firewall.php:1396
+#: src/controller/class-firewall.php:1404
 msgid "IP detection process completed."
 msgstr ""
 
-#: src/controller/class-firewall.php:1422
+#: src/controller/class-firewall.php:1430
 msgid "You have reached the maximum limit of verification attempts. Please try again later or contact your web administrator for assistance."
 msgstr ""
 
-#: src/controller/class-firewall.php:1467
+#: src/controller/class-firewall.php:1475
 msgid "Captcha verification failed. Please try again."
 msgstr ""
 
@@ -3567,15 +3581,15 @@ msgstr ""
 msgid "An error occurred while synchronizing the Custom IP List."
 msgstr ""
 
-#: src/controller/class-hub-connector.php:75
+#: src/controller/class-hub-connector.php:79
 msgid "Site disconnected successfully!"
 msgstr ""
 
-#: src/controller/class-hub-connector.php:102
+#: src/controller/class-hub-connector.php:106
 msgid "Dashboard plugin has been activated. You should be redirected to sign-in page shortly."
 msgstr ""
 
-#: src/controller/class-hub-connector.php:117
+#: src/controller/class-hub-connector.php:121
 msgid "Unauthorized"
 msgstr ""
 
@@ -3584,14 +3598,14 @@ msgid "Missing parameter: id."
 msgstr ""
 
 #: src/controller/class-hub.php:416
-#: src/controller/class-main-setting.php:587
-#: src/controller/class-main-setting.php:600
-#: src/controller/class-main-setting.php:756
-#: src/controller/class-main-setting.php:769
-#: src/controller/class-main-setting.php:860
-#: src/controller/class-main-setting.php:873
-#: src/controller/class-main-setting.php:1023
-#: src/controller/class-main-setting.php:1071
+#: src/controller/class-main-setting.php:607
+#: src/controller/class-main-setting.php:620
+#: src/controller/class-main-setting.php:776
+#: src/controller/class-main-setting.php:789
+#: src/controller/class-main-setting.php:880
+#: src/controller/class-main-setting.php:893
+#: src/controller/class-main-setting.php:1043
+#: src/controller/class-main-setting.php:1091
 msgid "Invalid config"
 msgstr ""
 
@@ -3612,7 +3626,7 @@ msgid "Login & Access"
 msgstr ""
 
 #: src/controller/class-login-access.php:306
-#: src/controller/class-main-setting.php:505
+#: src/controller/class-main-setting.php:525
 #: src/model/setting/class-mask-login.php:271
 #: assets/js/core-ui.js:1
 msgid "Hide Login URL"
@@ -3734,143 +3748,143 @@ msgstr ""
 msgid "Your settings have been reset."
 msgstr ""
 
-#: src/controller/class-main-setting.php:448
+#: src/controller/class-main-setting.php:468
 msgid "The file is corrupted."
 msgstr ""
 
-#: src/controller/class-main-setting.php:457
+#: src/controller/class-main-setting.php:477
 msgid "An error occurred while importing the file. Please check your file or upload another file."
 msgstr ""
 
 #. translators: %s: Config name.
-#: src/controller/class-main-setting.php:474
+#: src/controller/class-main-setting.php:494
 #, php-format
 msgid "%s config has been uploaded successfully – you can now apply it to this site."
 msgstr ""
 
-#: src/controller/class-main-setting.php:498
+#: src/controller/class-main-setting.php:518
 #: assets/js/core-ui.js:1
 msgid "Audit Logs"
 msgstr ""
 
-#: src/controller/class-main-setting.php:499
+#: src/controller/class-main-setting.php:519
 msgid "Web Application Firewall (WAF)"
 msgstr ""
 
-#: src/controller/class-main-setting.php:501
+#: src/controller/class-main-setting.php:521
 #: src/model/setting/class-password-protection.php:115
 #: assets/js/core-ui.js:1
 msgid "Pwned Passwords"
 msgstr ""
 
-#: src/controller/class-main-setting.php:502
+#: src/controller/class-main-setting.php:522
 #: assets/js/core-ui.js:1
 msgid "Strong Passwords"
 msgstr ""
 
-#: src/controller/class-main-setting.php:503
+#: src/controller/class-main-setting.php:523
 #: assets/js/core-ui.js:1
 msgid "Session Protection"
 msgstr ""
 
-#: src/controller/class-main-setting.php:506
+#: src/controller/class-main-setting.php:526
 #: assets/js/core-ui.js:1
 msgid "Security Policies"
 msgstr ""
 
 #. translators: %s: Comma-separated list of Pro-only feature names.
-#: src/controller/class-main-setting.php:516
+#: src/controller/class-main-setting.php:536
 #, php-format
 msgid "This config included features not available in the Free version: %s. Only the available settings were imported."
 msgstr ""
 
-#: src/controller/class-main-setting.php:546
+#: src/controller/class-main-setting.php:566
 msgid "Invalid config name"
 msgstr ""
 
 #. translators: %s: Config name.
-#: src/controller/class-main-setting.php:567
-#: src/controller/class-main-setting.php:895
+#: src/controller/class-main-setting.php:587
+#: src/controller/class-main-setting.php:915
 #, php-format
 msgid "%s config saved successfully."
 msgstr ""
 
-#: src/controller/class-main-setting.php:623
-#: src/controller/class-main-setting.php:646
-#: src/controller/class-main-setting.php:942
-#: src/controller/class-main-setting.php:953
-#: src/controller/class-main-setting.php:974
-#: src/controller/class-main-setting.php:1102
-#: src/controller/class-main-setting.php:1114
-#: src/controller/class-main-setting.php:1133
+#: src/controller/class-main-setting.php:643
+#: src/controller/class-main-setting.php:666
+#: src/controller/class-main-setting.php:962
+#: src/controller/class-main-setting.php:973
+#: src/controller/class-main-setting.php:994
+#: src/controller/class-main-setting.php:1122
+#: src/controller/class-main-setting.php:1134
+#: src/controller/class-main-setting.php:1153
 msgid "Invalid config list"
 msgstr ""
 
-#: src/controller/class-main-setting.php:655
+#: src/controller/class-main-setting.php:675
 msgid "Zip archive is not supported on this server."
 msgstr ""
 
-#: src/controller/class-main-setting.php:665
-#: src/controller/class-main-setting.php:711
+#: src/controller/class-main-setting.php:685
+#: src/controller/class-main-setting.php:731
 msgid "Could not prepare zip file."
 msgstr ""
 
-#: src/controller/class-main-setting.php:683
+#: src/controller/class-main-setting.php:703
 msgid "Could not create zip file."
 msgstr ""
 
-#: src/controller/class-main-setting.php:727
+#: src/controller/class-main-setting.php:747
 msgid "No valid configs found to export."
 msgstr ""
 
 #. translators: %s: Config name.
-#: src/controller/class-main-setting.php:792
+#: src/controller/class-main-setting.php:812
 #, php-format
 msgid "%s config has been applied successfully."
 msgstr ""
 
 #. translators: %s: Login link.
-#: src/controller/class-main-setting.php:807
+#: src/controller/class-main-setting.php:827
 #, php-format
 msgid "Due to currently applied security recommendations, you will now need to %s."
 msgstr ""
 
-#: src/controller/class-main-setting.php:814
+#: src/controller/class-main-setting.php:834
 msgid "This will auto reload now."
 msgstr ""
 
-#: src/controller/class-main-setting.php:906
+#: src/controller/class-main-setting.php:926
 msgid "An error occurred while saving your config. Please try it again."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1001
+#: src/controller/class-main-setting.php:1021
 msgid "Configs synced successfully."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1036
+#: src/controller/class-main-setting.php:1056
 msgid "Config can't be removed"
 msgstr ""
 
-#: src/controller/class-main-setting.php:1045
-#: src/controller/class-main-setting.php:1061
+#: src/controller/class-main-setting.php:1065
+#: src/controller/class-main-setting.php:1081
 msgid "Config removed successfully."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1146
+#: src/controller/class-main-setting.php:1166
 msgid "Config list synced successfully."
 msgstr ""
 
 #. translators: 1: Hardening tab, 2: wp-config.php file, 3: Documentation.
-#: src/controller/class-main-setting.php:1203
+#: src/controller/class-main-setting.php:1223
 #, php-format
 msgid "There was an issue with applying some of the tweaks from the %1$s tab because we cannot make changes to your %2$s file. Please see our %3$s to apply the changes manually."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1208
+#: src/controller/class-main-setting.php:1228
 msgid "wp-config.php"
 msgstr ""
 
-#: src/controller/class-main-setting.php:1209
+#: src/controller/class-main-setting.php:1229
 msgid "documentation"
 msgstr ""
 
@@ -3912,7 +3926,7 @@ msgstr ""
 msgid "inactive"
 msgstr ""
 
-#: src/controller/class-mask-login.php:1221
+#: src/controller/class-mask-login.php:1249
 #: src/model/setting/class-mask-login.php:200
 msgid "A page already exists at this URL. Please enter a unique URL for your login area."
 msgstr ""
@@ -4055,20 +4069,20 @@ msgstr ""
 msgid "Invalid recipient ID."
 msgstr ""
 
-#: src/controller/class-scan.php:211
+#: src/controller/class-scan.php:207
 msgid "A scan is already in progress"
 msgstr ""
 
-#: src/controller/class-scan.php:282
+#: src/controller/class-scan.php:278
 msgid "Malware scan completed successfully!"
 msgstr ""
 
-#: src/controller/class-scan.php:298
+#: src/controller/class-scan.php:294
 msgid "Error during scanning"
 msgstr ""
 
 #. translators: %s: Vulnerability item(es)
-#: src/controller/class-scan.php:587
+#: src/controller/class-scan.php:583
 #, php-format
 msgid "Defender doesn't have enough permission to remove this file: %s"
 msgid_plural "Defender doesn't have enough permission to remove these files: %s"
@@ -4076,37 +4090,37 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: Vulnerability item(es)
-#: src/controller/class-scan.php:598
+#: src/controller/class-scan.php:594
 #, php-format
 msgid "%s has (have) been deleted"
 msgstr ""
 
 #. translators: 1. Open tag. 2. Close tag. 3. Open tag. 4. Close tag.
-#: src/controller/class-scan.php:634
+#: src/controller/class-scan.php:630
 #, php-format
 msgid "To reduce false-positive results, we recommend enabling %1$sFile change detection%2$s options for all scan types while the %3$sSuspicious code%4$s option is enabled."
 msgstr ""
 
-#: src/controller/class-scan.php:743
+#: src/controller/class-scan.php:739
 msgid "Wrong scan issue data."
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "5 minutes ago"
-#: src/controller/class-scan.php:821
+#: src/controller/class-scan.php:817
 #, php-format
 msgid "Scanned %s ago"
 msgstr ""
 
 #. translators: %s: Frequency value.
-#: src/controller/class-scan.php:1092
-#: src/controller/class-scan.php:1130
+#: src/controller/class-scan.php:1088
+#: src/controller/class-scan.php:1125
 #, php-format
 msgid "Scheduled scan sending %s"
 msgstr ""
 
 #. translators: %s: Html for Pro-tag.
-#: src/controller/class-scan.php:1099
-#: src/controller/class-scan.php:1138
+#: src/controller/class-scan.php:1095
+#: src/controller/class-scan.php:1134
 #, php-format
 msgid "Scheduled scan inactive %s"
 msgstr ""
@@ -4553,45 +4567,45 @@ msgid "Email %s is invalid format"
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "5 minutes"
-#: src/model/class-scan.php:610
+#: src/model/class-scan.php:532
 #, php-format
 msgid "%s ago"
 msgstr ""
 
-#: src/model/class-scan.php:656
+#: src/model/class-scan.php:578
 msgid "A scan is already in progress."
 msgstr ""
 
-#: src/model/class-scan.php:919
-#: src/model/class-scan.php:921
+#: src/model/class-scan.php:841
+#: src/model/class-scan.php:843
 msgid "Gathering information..."
 msgstr ""
 
-#: src/model/class-scan.php:919
+#: src/model/class-scan.php:841
 msgid "Initializing..."
 msgstr ""
 
-#: src/model/class-scan.php:923
+#: src/model/class-scan.php:845
 msgid "Analyzing WordPress Core..."
 msgstr ""
 
-#: src/model/class-scan.php:925
+#: src/model/class-scan.php:847
 msgid "Analyzing WordPress Plugins..."
 msgstr ""
 
-#: src/model/class-scan.php:927
+#: src/model/class-scan.php:849
 msgid "Checking for vulnerabilities in plugins and themes..."
 msgstr ""
 
-#: src/model/class-scan.php:929
+#: src/model/class-scan.php:851
 msgid "Analyzing WordPress Content..."
 msgstr ""
 
-#: src/model/class-scan.php:931
+#: src/model/class-scan.php:853
 msgid "Checking for outdated & removed plugins..."
 msgstr ""
 
-#: src/model/class-scan.php:933
+#: src/model/class-scan.php:855
 msgid "Scanning..."
 msgstr ""
 
@@ -4810,7 +4824,7 @@ msgstr ""
 msgid "MaxMind license key"
 msgstr ""
 
-#: src/model/setting/class-blacklist-lockout.php:307
+#: src/model/setting/class-blacklist-lockout.php:312
 msgid "Local Blocklist"
 msgstr ""
 
@@ -5357,7 +5371,7 @@ msgstr ""
 msgid "Polynesia"
 msgstr ""
 
-#: src/traits/defender-bootstrap.php:595
+#: src/traits/defender-bootstrap.php:591
 msgid "UPGRADE TO PRO"
 msgstr ""
 
@@ -5475,7 +5489,8 @@ msgstr ""
 msgid "%s has been activated."
 msgstr ""
 
-#: src/traits/setting.php:39
+#. translators: %s: Module name.
+#: src/traits/setting.php:38
 #, php-format
 msgid "%s has been deactivated."
 msgstr ""
@@ -5492,7 +5507,6 @@ msgid "Hub"
 msgstr ""
 
 #. translators: %s: Name.
-#. translators: %s: Recipient name.
 #: src/view/email/audit-report-no-events.php:13
 #: src/view/email/audit-report-table.php:21
 #: src/view/email/confirm-all.php:17
@@ -6049,46 +6063,6 @@ msgid "Cancel"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "No scan types selected. Enable at least one in settings to run a scan."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Close panel"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Close"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Connect to WPMU DEV"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sign in"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Create free account"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "or"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scanning"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Stop"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Processing continues in the background."
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Schedule"
 msgstr ""
 
@@ -6098,445 +6072,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Learn more"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgctxt "Made by"
-msgid "by"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "wpmudev"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Upload file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Add file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Import"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Export"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose a file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Use this file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Stored securely in the cloud"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Keep an off-site copy separate from your site database."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Available when the site is offline"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Review site activity even when WordPress is unreachable."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Downloadable from The Hub"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Access and export your logs directly from The Hub."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Cloud"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sync audit logs with cloud"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Store audit logs securely off-site and access them when your site is offline."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Advanced issues scanner"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Detect suspicious code and vulnerabilities early."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Safe repair & quarantine"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantine files or restore plugins with clean copies."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Malicious bot detector & Firewall alerts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Block malicious bots and get real-time firewall alerts."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Session protection"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Protect user sessions from suspicious activity."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "More power, now free:"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Exit"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Welcome to Defender 6.0"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "See what's new"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Powerful WordPress security, made simple"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Defender 6.0 introduces a cleaner experience, making essential security tools easier to find, configure, and manage."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Get started"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "More info"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Remove selected item"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select item"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Copied"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Current file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Expand"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Expand editor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Original WP file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose where to sync your audit logs"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Locally"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Keep your audit logs in this site's database for easy access in WordPress."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Stored on your site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Unavailable when the site is offline"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Can't download from The Hub"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Store locally"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sync audit logs securely off-site and access them when your site is offline."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Synced securely in the cloud"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "30-days money back guarantee"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Initializing…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Checking security recommendations…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Gathering information…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Open color picker"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Clear color"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Understood, dismiss future warnings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "enabled"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "disabled"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Auto-saved changes"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "An error occurred while saving these settings. Please try again."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to turn on Advanced Site Scanning"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Run basic scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disconnect this site?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This will stop all WPMU DEV services for this site. Your site will no longer be manageable from the WPMU DEV Hub."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Keep site connected"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disconnect site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Documentation"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Product Roadmap"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Profile menu"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disconnecting…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disconnect"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to use all free features"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sign in with your WPMU DEV account"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Continue with Google"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Help & Support"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Activity Log"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide notifications"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Show notifications"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Pro Features"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No Activity log"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Just now"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Today"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Yesterday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "All in One WordPress Toolkit"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Get the most out of this plugin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "The Hub"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Plugins"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Community"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Terms"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Privacy Policy"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Made with"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "by WPMU DEV"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%1$s %2$s is here"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "A new version of %s is available"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Not now"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Update"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Update now for the latest improvements."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "AntiBot Global Firewall is off"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Do you want to turn it on?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Turn on"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Two-Factor Authentication is off"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Session Security is off"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide Login URL is off"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reports now share one schedule"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Set a time that works best for you."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Set time"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scanning…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "OK"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6613,6 +6148,10 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Cloud sync is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Turn on"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6704,15 +6243,954 @@ msgid "Use cloud storage"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Malicious IPs blocked"
+msgid "Restore"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Turn on AntiBot"
+#: assets/js/webauthn.js:1
+msgid "Delete"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Repair"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Safe Repair"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Update"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete plugin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Compare your file with the original file in the WordPress repository. Text in red will be removed when you patch the file, and text in green will be added."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Defender found this stray file in your WordPress site directory. The current version of WordPress doesn't require it and as far as we can tell it's harmless (maybe even from an older WordPress install), so you can delete it or ignore it. Before deleting any files, be sure to back up your website."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "We found this folder in your WordPress file list. Your current version of WordPress doesn't use this folder so it might belong to another application. If you don't recognize it, you can delete this folder (don't forget to back up your website first!) or get in touch with the WPMU DEV support team for more information."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "We've uncovered suspicious code in %s. The red highlighted code is the flagged code. Note that these warnings can be false positives, so consult your developer before taking action."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This plugin has been removed from wordpress.org but is still installed on your site."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This suspicious file was replaced with a clean version from the official WordPress repository and moved to quarantine. It will be permanently deleted once the quarantine retention period ends."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Core files"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Plugin files"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Outdated plugins"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Removed plugins"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantined"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Deselect all issues"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select all issues"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Selected"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select all"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No scan types selected."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enable at least one in settings to run a scan."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan filters"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "View details for"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Toggle issue selection for"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No issues were found, and no risks have been detected on your site."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No files have been quarantined."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No issues have been ignored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan issues"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Code viewer"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Collapse"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Collapse editor"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "File info"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Plugin URL"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Location"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Size"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Developer"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please contact the plugin developer to fix this"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Plugin state"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Theme state"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Plugin Name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Last updated"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Current Plugin Version"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reason"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "File Name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Path"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Modified On"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantined By"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantined Filename"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantined On"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "View file info"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Issue details"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "CVSS Score"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Loading file…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Potential risk"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>This plugin has unpatched security issues</strong><br />and may not work with your current WordPress version."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Recommendation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Deactivate plugin & delete</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore this recommendation if it's not needed. You can revert it at any time."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore all"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete all"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Unignore all"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan bulk actions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Safe repair file?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This will restore the affected file using an original version from WordPress.org."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note:"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "The file will be moved to Quarantine for 30 days before it's permanently deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Confirm"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete all files?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This action will permanently remove the selected items and can't be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete this file?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This action will permanently remove this item and can't be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan started."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan cancelled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "OK"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Defender needs permission to remove these files."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Defender needs permission to remove: <file>%s</file>."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Unable to remove files"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Unable to remove file"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Defender needs permission to remove this file."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to use Safe Repair"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Enjoying %s?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "We love developing free plugins, and a five-star review helps us improve."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Rate %s"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No thanks"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No card selected"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Initializing…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Monday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Tuesday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Wednesday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Thursday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Friday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Saturday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sunday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Mon"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Tue"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Wed"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Thu"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Fri"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sat"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sun"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "AM"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "PM"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Not scheduled"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Daily"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Monthly"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Every"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "At least one Malware Scan type must remain enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Review"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Schedule Scan %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "enabled"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "disabled"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Unable to update Scheduled Scanning."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to turn on Advanced Site Scanning"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Run basic scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No scan types selected. Enable at least one in settings to run a scan."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select all hardening items"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hardening filters"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Authentication & Security"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Updates & Versions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Access & Permissions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Error & Info Handling"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Network & External Access"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn off XML-RPC</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Update WordPress to the latest version </strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn off error reporting</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Update duration to 60 days and turn on auto-regenerate keys.</strong>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Set login duration to 7 days.</strong>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn off Trackbacks/pingbacks</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn on all recommendation settings to stay secure.</strong>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn off file editor</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Update PHP to the latest version</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Create a new admin username</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Lock down sensitive files</strong> to stay secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn off PHP execution</strong> by adding an .htaccess file."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>XML-RPC is turned on</strong> and may pose a security risk.<br /> Consider disabling if you don't require remote access."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>WordPress is out of date</strong> and may expose details hackers can use."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "WordPress is up to date."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Your security keys are outdated</strong><br />and one or more security salts are missing in wp-config.php."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Your login duration is 14 days.</strong> <br /> Reduce it to 7 days or less to protect your account."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>PHP version is out of date</strong> and may expose details hackers can use."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Sensitive files are not protected</strong> and may expose details attackers can use."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>PHP execution is not restricted</strong> and may allow harmful files to run."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "View hardening details for"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Toggle hardening selection for"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Action recommendation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore recommendation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No hardening were found, and no risks have been detected on your site."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No actioned items yet"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No ignored items yet"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hardening items"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Login duration"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enter duration"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "days"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Follow the instructions below to turn off PHP execution."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Create an .htaccess file in /wp-content directory."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Copy the generated code into that .htaccess file and save."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Copy the generated code into your site specific .conf file usually located in a subdirectory under /etc/nginx/… or /usr/local/nginx/conf/…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<a>Copy</a> the generated code into your site specific .conf file usually located in a subdirectory under /etc/nginx/… or /usr/local/nginx/conf/…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Copy code"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Add the code below inside the server section in the file, right before the php location block. Looks something like: <strong>location ~ \\.php$ {</strong>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reload NGINX."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Return to this page to re-check status."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<a>Copy</a> the generated code into that .htaccess file and save."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note: If you do not have access to your Apache config files, you will need to contact your hosting provider to make these changes."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore this recommendation if it's not needed. You can revert it at any time.<br /> Still having trouble? <a>Try manual setup</a>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Try manual setup"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automatic"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Manual"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note: Contact your hosting provider if you don't have access to LiteSpeed config files. <br /> Ignore this recommendation if it's not needed. You can revert it at any time."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note: Contact your hosting provider if you don't have access to NGINX config files. <br /> Ignore this recommendation if it's not needed. You can revert it at any time."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note: Contact your hosting provider if you don't have access to NGINX config files. <br /> Ignore this recommendation if it's not needed. You can revert it at any time.<br /> Still having trouble? <a>Try manual setup</a>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Turn off PHP execution</strong> by adding a web.config file <br /> to the uploads folder to lock down files and folders."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore this recommendation if it's not needed. You can revert it at any time.<br /> Learn more on <a>Microsoft TechNet</a>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Microsoft TechNet"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Follow the instructions below to protect sensitive files."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Open your root .htaccess file, or create one if it doesn't exist."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Copy the generated code into the file and save."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note: If you do not have access to your .htaccess file, you will need to contact your hosting provider to make these changes."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>Protect sensitive files</strong> by adding a web.config file <br /> to the uploads folder to restrict access."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Stop REST API user calls"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Prevents unauthenticated REST API requests that expose user information."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hide user IDs from oEmbed."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Removes the author ID from oEmbed responses to protect user enumeration."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disable author sitemaps"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Removes author archive sitemaps that expose usernames."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Show more information about this setting"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security key reminder"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Auto-regenerate keys."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Re-check status"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ensure you backup your database before performing this recommendation."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enter new user name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "<strong>XML-RPC is turned on</strong> and may pose a security risk.<br />Consider disabling if you don't require remote access."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "<strong>Your login duration is %d days.</strong><br />Reduce it to 7 days or less to protect your account."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "You can manage XML-RPC settings from Hosting Settings by going to <a>this link</a>."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Overview"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Read documentation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Update username"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hardening bulk actions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Bulk actions applied to %d security recommendations."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Review the remaining items below."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation actioned."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation applied. You can review it in the Actioned tab."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Bulk actions reverted for %d security recommendations."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation moved back to the Hardening tab."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Bulk restored %d security recommendations."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation restored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation restored. It is now in the Hardening tab."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Bulk ignored %d security recommendations."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation ignored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security recommendation ignored. You can review it in the Ignored tab."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "An error occurred while applying this action. Please try again."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Action all recommendations"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Action recommendations"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore all recommendations"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignore recommendations"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Restore all"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Revert recommendations"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Revert recommendation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Actions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Ignoring"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reverting"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Restoring"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Processing"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Actions all recommendations in bulk."
 msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Stop this process?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Are you sure you want to stop the bulk action? Any remaining items will not be processed."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Continue"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Stop"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hardening item details"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Auto-saved changes"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6732,182 +7210,606 @@ msgid "Stop scan"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Local Firewall"
+msgid "1 lockout"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Monitoring your site"
+msgid "3 lockouts"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Local firewall is off"
+msgid "5 lockouts"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Storage"
+msgid "10 lockouts"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Events logged in last 7d"
+msgid "15 minutes"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Last event"
+msgid "30 minutes"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Track every site change. Spot suspicious activity and stop security threats fast."
+msgid "1 hour"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Session Security"
+msgid "2 hours"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Protect every user session. Block hijacking with session lock and idle timeout."
+msgid "6 hours"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Hosting"
+msgid "12 hours"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Your site is protected with fully managed server security for faster, safer performance."
+msgid "24 hours"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Fully managed server protection for faster, safer sites. Switch to WPMU DEV Hosting."
+msgid "36 hours"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Manage"
+msgid "Alert"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Switch Hosting"
+msgid "Send an alert when firewall lockouts spike."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Site status: Scanning"
+msgid "Firewall Alert"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Site status: No scans yet"
+msgid "Toggle firewall alert"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Secure"
+msgid "Threshold"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security actions required"
+msgid "The number of lockouts before we turn off emails"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "At least one Malware Scan type must remain enabled."
+msgid "Alert threshold"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Review"
+msgid "Cooldown period"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "For how long should we turn them off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit Recipient"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Profile"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reports"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Firewall lockout alert"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Receive an alert when firewall lockouts are triggered."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Toggle firewall lockout alert"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "First name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Last name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Email"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete recipient"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Failed to add recipient."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "New Recipient"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Invite by email"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Search WordPress user"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Send verification email"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Search"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enter at least three characters to search by name or email."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Add"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit recipient"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Re-send verification email"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit info"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Recipient settings"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Awaiting recipient confirmation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Issues Report"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Re-send verification"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Awaiting email verification from"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "New recipient"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Verification email sent to"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete recipient?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This will remove the recipient from all notification modules. This action cannot be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Close"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scheduled security scans"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan for malware, vulnerabilities, and issues automatically."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automated security reports"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Receive regular summaries and threat updates."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Audit log reports"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Get scheduled summaries of security events and site changes."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security alerts"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Get notified when security recommendations need attention."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Schedule Scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security on autopilot"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automatically scan for threats and get security updates by email."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Time of the day"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select the time of day for the scheduled scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enter a valid time between 1:00 and 12:59 (e.g. 9:30)"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "AM or PM"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select the day of the week for the scheduled scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select the day of the month for the scheduled scan. If a month has fewer days than the selected day, the scan will run on the last day of that month."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan frequency"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Set schedule"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Configure scheduled Defender reports."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Report modules"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Schedule scans and get email updates."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Learn more."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security Recommendations"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Untitled Config"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "Schedule Scan %s."
+msgid "%s config saved."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Unable to update Scheduled Scanning."
+msgid "No file selected. Please choose a valid JSON config file."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "No scans yet"
+msgid "Config imported."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Scan site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "See issues"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security risks detected on your site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Recommended security improvements"
+msgid "An error occurred while uploading the config. Please try again."
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "to turn on %s"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "User Security"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Login to Dashboard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Activate Dashboard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Install Dashboard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Dashboard plugin required"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Ensure you have installed, activated and logged into the WPMU DEV Dashboard."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to run a security scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan cancelled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan completed."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan started."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Nothing new found"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Everything looks good — no new issues or hardening items detected."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Deep scan"
+msgid "%s config applied."
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "Welcome to %s."
+msgid "<strong>\"%s\"</strong> applied successfully."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Resume set up wizard?"
+msgid "Couldn't apply configuration. Please try again."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Share Usage Data?"
+#, js-format
+msgid "%s config edited."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s config deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Toggle all config selection"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Upload"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Save New"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Download all"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Download selected"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete selected"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config list actions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Configs"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Toggle config selection"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config options"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config bulk actions"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Save config"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config name is required."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#: assets/js/webauthn.js:1
+msgid "Save"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Save your current settings. Download and apply them to your other sites."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete this config?"
+msgid_plural "Delete these configs?"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/js/core-ui.js:1
+msgid "This will permanently remove the selected item. Default configurations cannot be deleted."
+msgid_plural "This will permanently remove the selected items. Default configurations cannot be deleted."
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/js/core-ui.js:1
+msgid "Info"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Apply this config"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Download"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit config name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Are you sure you want to apply the %s settings to this site? We recommend you have a backup available as your existing settings configuration will be overridden."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Apply"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This action will permanently remove the selected item and can't be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit Name & Description"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config description"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit Config Name"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Edit Note"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Add Note"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete Note"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "On"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Configured"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No config selected"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Modules"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Options"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Use default configs"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Start with our recommended %s setup, pre-configured for maximum security."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Start with WPMU DEV's recommended %s setup, pre-configured for maximum security."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Create your own"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Build custom configs and roll them out across all your sites"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scale across every site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Keep Defender settings consistent and skip repetitive setups"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Works with all WPMU DEV plugins"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Create and deploy configs for every plugin from one place"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Exit"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s Configuration"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Set up %s once. Apply it everywhere."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Got it"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Config details"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Default (AA)"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "High (AAA)"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Accessibility"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Increase the visibility and accessibility of elements and components of this plugin's interface to meet WCAG AAA requirements."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "More information about accessibility settings"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Version"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Release date"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Defender plugin information"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Share Usage Data"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6915,11 +7817,627 @@ msgid "Help us improve by sending anonymous usage data. This is recommended."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Do not share"
+msgid "More information about usage data sharing"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Share"
+msgid "Keeps your Defender configurations saved in the database for easy re-installation. Switch this off if you want a complete data wipe upon uninstallation."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Preserve settings"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Keep your configurations saved even if the plugin is uninstalled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reset to factory settings"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reset"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Share Usage Data enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Share Usage Data disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "High Contrast mode is on."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "High Contrast mode is off."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Preserve settings enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Preserve settings disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reset to factory settings?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "All settings will be reset, and your data will be removed. This action can't be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%1$s changed to %2$s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "7 days"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "3 months"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "2 years"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Force browsers to prefer HTTPS and define how long that preference should be cached."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Submit your domain to browser preload lists so HTTPS is enforced before the first visit."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose how long browsers should remember the Strict-Transport-Security policy."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "HSTS preload"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Note: Avoid enabling the preload directive by default, as removal from the preload list is slow and difficult to reverse."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Defines how long the browser enforces Strict Transport Security, with a minimum of 30 days recommended."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "no-referrer-when-downgrade"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "no-referrer"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "origin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "origin-when-cross-origin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "same-origin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "strict-origin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "strict-origin-when-cross-origin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "unsafe-url"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Control how much referrer information is shared when visitors navigate away from your site."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select the referrer directive your site should send with cross-origin requests."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Referrer-Policy"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Default browser behavior when no policy is set: the origin is sent as the referrer to equally secure destinations (HTTPS → HTTPS), but not to less secure ones (HTTPS → HTTP)."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "On site & iframe"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Allows the page to be displayed in a frame only on the same origin, with enforcement varying by browser."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Allows the feature in the document and across all nested iframes, regardless of their origin."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Specific origins"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "The feature is allowed for specific origins. E.g https://example.com"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "None"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disables the feature in both top-level and nested browsing contexts."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose how browser capabilities are exposed to this page and embedded content."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Restrict the feature to the current site and its iframe context."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Allow the feature for every origin, including nested iframes."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Allow the feature only for the origins listed below."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Provide one fully qualified origin per line."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Permissions policy options"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Origin URL"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enter URLs, one per line."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "The feature is allowed for specific origins. E.g <strong>https://example.com</strong>"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sameorigin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Deny"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sanitize"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Block"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Controls whether your site can be embedded in frames or iframes, helping prevent clickjacking attacks."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Only allow your site to be displayed in frames on pages from the same domain."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Block your site from being displayed in any frame or iframe."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Stops pages from loading when reflected cross-site scripting (XSS) attacks are detected in supported browsers."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sanitizes the page by removing unsafe content when a cross-site scripting attack is detected."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Prevents the page from rendering entirely if a cross-site scripting attack is detected, enhancing security."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Helps prevent MIME sniffing attacks, where files are disguised as different types during upload."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Browser caching duration"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "File Change Detection"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Outdated & Removed Plugins scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Known Vulnerabilities scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Suspicious Code scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Manual IP Detection"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "REMOTE_ADDR built-in PHP"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "X-Forwarded-For HTTP header"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "X-Real-IP HTTP header"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Cloudflare CF-Connecting-IP HTTP header"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Max included file size changed to %s MB."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "File retention period changed to %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Clear temporary IP block list changed to %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Logs storage changed to %s days."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Audit log retention changed to %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "IP detection method changed to %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enable Audit Logging to configure audit log retention."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "All logs deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "All lockouts deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to use File retention period"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose which issue scanners Defender should keep active inside the tools workflow."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Set the maximum size of files scanned by Defender."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Manage how suspicious files are retained and where they are stored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose how long quarantined files should remain before removal."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This is the storage location Defender uses for quarantined files."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Configure how Defender identifies the visitor IP address."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Select how long temporary firewall lockouts should be retained."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose how long logs are kept before Defender rotates them."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This removes all stored log entries from Defender."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This removes all current and historical firewall lockout records."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Add trusted proxy IP addresses, one per line."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Apply a preset list of trusted proxy headers."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "12 months"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Alerts you when core, plugin, or theme files change unexpectedly."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Highlights plugins that are removed from the WordPress directory or outdated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scans installed software against Defender vulnerability intelligence."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Connect to WPMU DEV"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Looks for risky or obfuscated code patterns inside site files."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Uses the built-in PHP server variable for the visitor IP address."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Useful when your traffic is routed through a load balancer or proxy."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Common when a reverse proxy forwards the original client IP."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Use this when Cloudflare is responsible for forwarding visitor IPs."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please refer to <link>blocklist article</link> for guidance on how to resolve the issue."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "blocklist article"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Google scan shows your site is clean."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "We'll check again in 6 hours."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Your domain is currently listed on Google's blocklist."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Unable to check your blocklist status."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automatically checks whether your site is on Google’s blocklist every six hours and notifies you if any issues are detected."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Checking in progress"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Check now"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Issues scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan type"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "MB"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantine"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "File retention period"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantine directory URL"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Access to your quarantine folder is currently forbidden."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%1$s The quarantine directory is currently accessible. For security best practices, please update its permissions to %2$s"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Attention:"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Detected IP(s)"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "IP settings"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Custom trusted proxies"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enter IP addresses, one per line."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Trusted IP presets"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automatic is a recommended setting. The most secure IP detection is used automatically. If your IP isn't listed, use Manual IP Detection."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Clear temporary IP block list"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Logs storage"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete all logs"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Permanently remove all log records."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete logs"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete all lockouts"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Permanently remove all existing lockout records."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Delete lockouts"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Enable Audit Logging to configure log retention"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Choose how long audit log events are kept before they are automatically removed."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Logs Retention"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Others"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automatically check if you’re on Google’s blocklist every 6 hours. If something’s wrong, we’ll let you know via email."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Blocklist monitor"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to turn on Blocklist monitor"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Connect Hub to turn on Blocklist monitor"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "All log records will be permanently removed. This action cannot be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "All lockout records will be permanently removed. This action cannot be undone."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Tools"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reports & Alerts"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Other Settings"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Settings sections"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Open color picker"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Clear color"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Understood, dismiss future warnings"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7029,10 +8547,6 @@ msgid "as trusted IP"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Email"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "We’ll contact you here if we need more info."
 msgstr ""
 
@@ -7054,6 +8568,10 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Submit request"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hosting"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7122,10 +8640,6 @@ msgid "Status tracking"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "On"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Sync schedule"
 msgstr ""
 
@@ -7158,6 +8672,10 @@ msgid "This user agent is considered bad bots and may harm your site."
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Today"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Last 7 days"
 msgstr ""
 
@@ -7170,11 +8688,11 @@ msgid "Select all logs"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Select all"
+msgid "Export logs"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Export logs"
+msgid "Export"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7461,7 +8979,7 @@ msgid "Enable <link>404 lockout</link> to use file rules."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Enter files, folders and file types"
+msgid "Enter files, folders and file types, one per line."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7490,10 +9008,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Learn how we detect your IP."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enter IP address one per line."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7549,6 +9063,14 @@ msgid "Upload IP list file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Add file"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Import"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Block or allow access based on browser user agent strings."
 msgstr ""
 
@@ -7584,11 +9106,11 @@ msgid "Custom user agents"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Enter one user agent per line."
+msgid "Enter user agents one per line."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Enter one user agent per line. Common trusted bots are included by default."
+msgid "Enter user agents one per line. Common trusted bots are included by default."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7636,6 +9158,14 @@ msgid "To turn on this feature, your site must be hosted with us."
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Not now"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Do you want to turn it on?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Web Application Firewall"
 msgstr ""
 
@@ -7665,10 +9195,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Place license key here"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Download"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7729,6 +9255,10 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Your site is connected to the above MaxMind license key. Defender automatically downloads the latest GeoLite2 data weekly."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disconnect"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7820,10 +9350,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Toggle login protection"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Threshold"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -8038,6 +9564,10 @@ msgid "WAF"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Local Firewall"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Custom Rules"
 msgstr ""
 
@@ -8050,484 +9580,700 @@ msgid "Firewalls sections"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Select all hardening items"
+msgid "Sign in"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Hardening filters"
+msgid "Create free account"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Authentication & Security"
+msgid "or"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Updates & Versions"
+msgctxt "Made by"
+msgid "by"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Access & Permissions"
+msgid "wpmudev"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Error & Info Handling"
+msgid "Upload file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Network & External Access"
+msgid "Choose a file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn off XML-RPC</strong> to stay secure."
+msgid "Use this file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Update WordPress to the latest version </strong> to stay secure."
+msgid "Stored securely in the cloud"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn off error reporting</strong> to stay secure."
+msgid "Keep an off-site copy separate from your site database."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Update duration to 60 days and turn on auto-regenerate keys.</strong>"
+msgid "Available when the site is offline"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Set login duration to 7 days.</strong>"
+msgid "Review site activity even when WordPress is unreachable."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn off Trackbacks/pingbacks</strong> to stay secure."
+msgid "Downloadable from The Hub"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn on all recommendation settings to stay secure.</strong>"
+msgid "Access and export your logs directly from The Hub."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn off file editor</strong> to stay secure."
+msgid "Cloud"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Update PHP to the latest version</strong> to stay secure."
+msgid "Sync audit logs with cloud"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Create a new admin username</strong> to stay secure."
+msgid "Store audit logs securely off-site and access them when your site is offline."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Lock down sensitive files</strong> to stay secure."
+msgid "Advanced issues scanner"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn off PHP execution</strong> by adding an .htaccess file."
+msgid "Detect suspicious code and vulnerabilities early."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>XML-RPC is turned on</strong> and may pose a security risk.<br /> Consider disabling if you don't require remote access."
+msgid "Safe repair & quarantine"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>WordPress is out of date</strong> and may expose details hackers can use."
+msgid "Quarantine files or restore plugins with clean copies."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "WordPress is up to date."
+msgid "Malicious bot detector & Firewall alerts"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Your security keys are outdated</strong><br />and one or more security salts are missing in wp-config.php."
+msgid "Block malicious bots and get real-time firewall alerts."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Your login duration is 14 days.</strong> <br /> Reduce it to 7 days or less to protect your account."
+msgid "Session protection"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>PHP version is out of date</strong> and may expose details hackers can use."
+msgid "Protect user sessions from suspicious activity."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Sensitive files are not protected</strong> and may expose details attackers can use."
+msgid "More power, now free:"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>PHP execution is not restricted</strong> and may allow harmful files to run."
+msgid "Welcome to Defender 6.0"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "View hardening details for"
+msgid "See what's new"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Toggle hardening selection for"
+msgid "Powerful WordPress security, made simple"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Action recommendation"
+msgid "Defender 6.0 introduces a cleaner experience, making essential security tools easier to find, configure, and manage."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignore recommendation"
+msgid "Get started"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Restore"
+msgid "More info"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "No hardening were found, and no risks have been detected on your site."
+msgid "Remove selected item"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "No actioned items yet"
+msgid "Select item"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "No ignored items yet"
+msgid "Copied"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Hardening items"
+msgid "Current file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Login duration"
+msgid "Expand"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Enter duration"
+msgid "Expand editor"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "days"
+msgid "Original WP file"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Follow the instructions below to turn off PHP execution."
+msgid "Choose where to sync your audit logs"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Create an .htaccess file in /wp-content directory."
+msgid "Locally"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Copy the generated code into that .htaccess file and save."
+msgid "Keep your audit logs in this site's database for easy access in WordPress."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Copy the generated code into your site specific .conf file usually located in a subdirectory under /etc/nginx/… or /usr/local/nginx/conf/…"
+msgid "Stored on your site"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<a>Copy</a> the generated code into your site specific .conf file usually located in a subdirectory under /etc/nginx/… or /usr/local/nginx/conf/…"
+msgid "Unavailable when the site is offline"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Copy code"
+msgid "Can't download from The Hub"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Add the code below inside the server section in the file, right before the php location block. Looks something like: <strong>location ~ \\.php$ {</strong>"
+msgid "Store locally"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Reload NGINX."
+msgid "Sync audit logs securely off-site and access them when your site is offline."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Return to this page to re-check status."
+msgid "Synced securely in the cloud"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<a>Copy</a> the generated code into that .htaccess file and save."
+msgid "30-days money back guarantee"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Note: If you do not have access to your Apache config files, you will need to contact your hosting provider to make these changes."
+msgid "An error occurred while saving these settings. Please try again."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignore this recommendation if it's not needed. You can revert it at any time."
+msgid "Malicious IPs blocked"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignore this recommendation if it's not needed. You can revert it at any time.<br /> Still having trouble? <a>Try manual setup</a>"
+msgid "Turn on AntiBot"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Try manual setup"
+msgid "Monitors changes to keep your site visible and secure."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Automatic"
+msgid "Finish setup"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Manual"
+msgid "Disable XML-RPC & hide error reporting"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Note: Contact your hosting provider if you don't have access to LiteSpeed config files. <br /> Ignore this recommendation if it's not needed. You can revert it at any time."
+msgid "Hide detailed errors so sensitive paths and server data are not exposed."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Note: Contact your hosting provider if you don't have access to NGINX config files. <br /> Ignore this recommendation if it's not needed. You can revert it at any time."
+msgid "Disable trackbacks pingbacks"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Note: Contact your hosting provider if you don't have access to NGINX config files. <br /> Ignore this recommendation if it's not needed. You can revert it at any time.<br /> Still having trouble? <a>Try manual setup</a>"
+msgid "Turn off trackbacks and pingbacks to reduce spam and abuse."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Turn off PHP execution</strong> by adding a web.config file <br /> to the uploads folder to lock down files and folders."
+msgid "Turn off the file editor"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignore this recommendation if it's not needed. You can revert it at any time.<br /> Learn more on <a>Microsoft TechNet</a>"
+msgid "Disable the built-in file editor to prevent unauthorized code changes."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Microsoft TechNet"
+msgid "Manage the duration of user login sessions to enhance security."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Follow the instructions below to protect sensitive files."
+msgid "Automatically regenerate keys"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Open your root .htaccess file, or create one if it doesn't exist."
+msgid "Refresh WordPress security keys to invalidate old sessions."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Copy the generated code into the file and save."
+msgid "WordPress Hardening"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Note: If you do not have access to your .htaccess file, you will need to contact your hosting provider to make these changes."
+msgid "Strengthens your site by reducing potential vulnerabilities."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "<strong>Protect sensitive files</strong> by adding a web.config file <br /> to the uploads folder to restrict access."
+msgid "Stops malicious traffic before it reaches your site."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Stop REST API user calls"
+msgid "Quick scan your site"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Prevents unauthenticated REST API requests that expose user information."
+msgid "Scanning in progress"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Hide user IDs from oEmbed."
+msgid "Quick scan complete!"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Removes the author ID from oEmbed responses to protect user enumeration."
+msgid "Security actions required"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Disable author sitemaps"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Removes author archive sitemaps that expose usernames."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Show more information about this setting"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security key reminder"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Auto-regenerate keys."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Ignore"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Re-check status"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Ensure you backup your database before performing this recommendation."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enter new user name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "<strong>XML-RPC is turned on</strong> and may pose a security risk.<br />Consider disabling if you don't require remote access."
+msgid "View results"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "<strong>Your login duration is %d days.</strong><br />Reduce it to 7 days or less to protect your account."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "You can manage XML-RPC settings from Hosting Settings by going to <a>this link</a>."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Overview"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Potential risk"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Read documentation"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Recommendation"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Update username"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hardening bulk actions"
+msgid "Welcome to %s"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "Bulk actions applied to %d security recommendations."
+msgid "Configure %s with recommended settings for optimal protection."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Review the remaining items below."
+msgid "Start wizard"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security recommendation actioned."
+msgid "Skip start up wizard"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security recommendation applied. You can review it in the Actioned tab."
+msgid "Sign in with your"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "WPMU DEV account"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to run a security scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Continue with Google"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Exit wizard"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disconnect this site?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "This will stop all WPMU DEV services for this site. Your site will no longer be manageable from the WPMU DEV Hub."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Keep site connected"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disconnect site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Documentation"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Product Roadmap"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Profile menu"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disconnecting…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to use all free features"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sign in with your WPMU DEV account"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Help & Support"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Activity Log"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hide notifications"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Show notifications"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Pro Features"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No Activity log"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Just now"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Yesterday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Close panel"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hide"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "All in One WordPress Toolkit"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Get the most out of this plugin"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "The Hub"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Plugins"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Community"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Terms"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Privacy Policy"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Made with"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "by WPMU DEV"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "Bulk actions reverted for %d security recommendations."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security recommendation moved back to the Hardening tab."
+msgid "%1$s %2$s is here"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "Bulk restored %d security recommendations."
+msgid "A new version of %s is available"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security recommendation restored."
+msgid "Update now for the latest improvements."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security recommendation restored. It is now in the Hardening tab."
+msgid "AntiBot Global Firewall is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Session Security is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hide Login URL is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reports now share one schedule"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Set a time that works best for you."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Set time"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scanning…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Monitoring your site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Local firewall is off"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Storage"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Events logged in last 7d"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Last event"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Track every site change. Spot suspicious activity and stop security threats fast."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Session Security"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Protect every user session. Block hijacking with session lock and idle timeout."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Your site is protected with fully managed server security for faster, safer performance."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Fully managed server protection for faster, safer sites. Switch to WPMU DEV Hosting."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Manage"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Switch Hosting"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Site status: Scanning"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Site status: No scans yet"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Secure"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "No scans yet"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "See issues"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security risks detected on your site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Recommended security improvements"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 #, js-format
-msgid "Bulk ignored %d security recommendations."
+msgid "to turn on %s"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security recommendation ignored."
+msgid "User Security"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Security recommendation ignored. You can review it in the Ignored tab."
+msgid "Login to Dashboard"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "An error occurred while applying this action. Please try again."
+msgid "Activate Dashboard"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Action all recommendations"
+msgid "Install Dashboard"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Action recommendations"
+msgid "Dashboard plugin required"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignore all recommendations"
+msgid "Ensure you have installed, activated and logged into the WPMU DEV Dashboard."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignore recommendations"
+msgid "Scan completed."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Restore all"
+msgid "Nothing new found"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Revert recommendations"
+msgid "Everything looks good — no new issues or hardening items detected."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Revert recommendation"
+msgid "Deep scan"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Actions"
+#, js-format
+msgid "Welcome to %s."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Ignoring"
+msgid "Resume set up wizard?"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Reverting"
+msgid "Share Usage Data?"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Restoring"
+msgid "Do not share"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Processing"
+msgid "Share"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Actions all recommendations in bulk."
+msgid "Scanning"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Are you sure you want to stop the bulk action? Any remaining items will not be processed."
+msgid "Processing continues in the background."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Continue"
+msgid "Checking security recommendations…"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Hardening item details"
+msgid "Gathering information…"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "No card selected"
+msgid "Please enter your password."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please enter your email address."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Signing in…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Forgot password?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Deep scan complete"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan complete"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%d issue"
+msgid_plural "%d issues"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%d hardening item"
+msgid_plural "%d hardening items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/js/core-ui.js:1
+msgid "You have <issue></issue> and <hardening></hardening>."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "You have <issue></issue>."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Your site has been scanned successfully."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -9187,10 +10933,6 @@ msgid "Send test email"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Upload"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "URL"
 msgstr ""
 
@@ -9263,10 +11005,6 @@ msgid "Note: This is shown in the users Profile area indicating they must use tw
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Others"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Force authentication"
 msgstr ""
 
@@ -9320,1874 +11058,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Login & Access sections"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Monitors changes to keep your site visible and secure."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Finish setup"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disable XML-RPC & hide error reporting"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide detailed errors so sensitive paths and server data are not exposed."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disable trackbacks pingbacks"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Turn off trackbacks and pingbacks to reduce spam and abuse."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Turn off the file editor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disable the built-in file editor to prevent unauthorized code changes."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Manage the duration of user login sessions to enhance security."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automatically regenerate keys"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Refresh WordPress security keys to invalidate old sessions."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "WordPress Hardening"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Strengthens your site by reducing potential vulnerabilities."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Stops malicious traffic before it reaches your site."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quick scan your site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scanning in progress"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quick scan complete!"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "View results"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Welcome to %s"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Configure %s with recommended settings for optimal protection."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Start wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Skip start up wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sign in with your"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "WPMU DEV account"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Exit wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please enter your password."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please enter a valid email address."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please enter your email address."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Signing in…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Forgot password?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#: assets/js/webauthn.js:1
-msgid "Delete"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Repair"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Safe Repair"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete plugin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Compare your file with the original file in the WordPress repository. Text in red will be removed when you patch the file, and text in green will be added."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Defender found this stray file in your WordPress site directory. The current version of WordPress doesn't require it and as far as we can tell it's harmless (maybe even from an older WordPress install), so you can delete it or ignore it. Before deleting any files, be sure to back up your website."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "We found this folder in your WordPress file list. Your current version of WordPress doesn't use this folder so it might belong to another application. If you don't recognize it, you can delete this folder (don't forget to back up your website first!) or get in touch with the WPMU DEV support team for more information."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "We've uncovered suspicious code in %s. The red highlighted code is the flagged code. Note that these warnings can be false positives, so consult your developer before taking action."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This plugin has been removed from wordpress.org but is still installed on your site."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This suspicious file was replaced with a clean version from the official WordPress repository and moved to quarantine. It will be permanently deleted once the quarantine retention period ends."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Core files"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Plugin files"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Outdated plugins"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Removed plugins"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantined"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Deselect all issues"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select all issues"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Selected"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No scan types selected."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enable at least one in settings to run a scan."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan filters"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "View details for"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Toggle issue selection for"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No issues were found, and no risks have been detected on your site."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No files have been quarantined."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No issues have been ignored."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan issues"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Code viewer"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Collapse"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Collapse editor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "File info"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Plugin URL"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Location"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Size"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Developer"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please contact the plugin developer to fix this"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Plugin state"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Theme state"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Plugin Name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Last updated"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Current Plugin Version"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reason"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "File Name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Path"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Modified On"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantined By"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantined Filename"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantined On"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "View file info"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Issue details"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "CVSS Score"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Loading file…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "<strong>This plugin has unpatched security issues</strong><br />and may not work with your current WordPress version."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "<strong>Deactivate plugin & delete</strong> to stay secure."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Ignore all"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete all"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Unignore all"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan bulk actions"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Safe repair file?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This will restore the affected file using an original version from WordPress.org."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Note:"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "The file will be moved to Quarantine for 30 days before it's permanently deleted."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Confirm"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete all files?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This action will permanently remove the selected items and can't be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete this file?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This action will permanently remove this item and can't be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Unable to remove files"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Defender needs permission to remove: <file>%s</file>."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Defender needs permission to remove these files."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Unable to remove file"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Defender needs permission to remove this file."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to use Safe Repair"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Enjoying %s?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "We love developing free plugins, and a five-star review helps us improve."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Rate %s"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No thanks"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Monday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Tuesday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Wednesday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Thursday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Friday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Saturday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sunday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Mon"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Tue"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Wed"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Thu"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Fri"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sat"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sun"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "AM"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "PM"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Not scheduled"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Daily"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Monthly"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Every"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "1 lockout"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "3 lockouts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "5 lockouts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "10 lockouts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "15 minutes"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "30 minutes"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "1 hour"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "2 hours"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "6 hours"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "12 hours"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "24 hours"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "36 hours"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Alert"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Send an alert when firewall lockouts spike."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Firewall Alert"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Toggle firewall alert"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "The number of lockouts before we turn off emails"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Alert threshold"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Cooldown period"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "For how long should we turn them off"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit Recipient"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Profile"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reports"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Firewall lockout alert"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Receive an alert when firewall lockouts are triggered."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Toggle firewall lockout alert"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "First name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Last name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete recipient"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Failed to add recipient."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "New Recipient"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Invite by email"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Search WordPress user"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Send verification email"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Search"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enter at least three characters to search by name or email."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Add"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit recipient"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Re-send verification email"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit info"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Recipient settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Awaiting recipient confirmation"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Issues Report"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Re-send verification"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Awaiting email verification from"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "New recipient"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Verification email sent to"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete recipient?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This will remove the recipient from all notification modules. This action cannot be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scheduled security scans"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan for malware, vulnerabilities, and issues automatically."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automated security reports"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Receive regular summaries and threat updates."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Audit log reports"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Get scheduled summaries of security events and site changes."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security alerts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Get notified when security recommendations need attention."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Schedule Scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security on autopilot"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automatically scan for threats and get security updates by email."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Time of the day"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select the time of day for the scheduled scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enter a valid time between 1:00 and 12:59 (e.g. 9:30)"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "AM or PM"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select the day of the week for the scheduled scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select the day of the month for the scheduled scan. If a month has fewer days than the selected day, the scan will run on the last day of that month."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan frequency"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Set schedule"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Configure scheduled Defender reports."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Report modules"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Schedule scans and get email updates."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Learn more."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security Recommendations"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Untitled Config"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%s config saved."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No file selected. Please choose a valid JSON config file."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config imported."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "An error occurred while uploading the config. Please try again."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%s config applied."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "<strong>\"%s\"</strong> applied successfully."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Couldn't apply configuration. Please try again."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%s config edited."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%s config deleted."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Toggle all config selection"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Save New"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Download all"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Download selected"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete selected"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config list actions"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Configs"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Toggle config selection"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config options"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config bulk actions"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Save config"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Note"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config name is required."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#: assets/js/webauthn.js:1
-msgid "Save"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Save your current settings. Download and apply them to your other sites."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete this config?"
-msgid_plural "Delete these configs?"
-msgstr[0] ""
-msgstr[1] ""
-
-#: assets/js/core-ui.js:1
-msgid "This will permanently remove the selected item. Default configurations cannot be deleted."
-msgid_plural "This will permanently remove the selected items. Default configurations cannot be deleted."
-msgstr[0] ""
-msgstr[1] ""
-
-#: assets/js/core-ui.js:1
-msgid "Info"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Apply this config"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit config name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Are you sure you want to apply the %s settings config to this site? We recommend you have a backup available as your existing settings configuration will be overridden."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Apply"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This action will permanently remove the selected item and can't be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit Name & Description"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config description"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit Config Name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Edit Note"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Add Note"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete Note"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Configured"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "No config selected"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Modules"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Options"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Use default configs"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Start with our recommended %s setup, pre-configured for maximum security."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Start with WPMU DEV's recommended %s setup, pre-configured for maximum security."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Create your own"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Build custom configs and roll them out across all your sites"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scale across every site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Keep Defender settings consistent and skip repetitive setups"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Works with all WPMU DEV plugins"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Create and deploy configs for every plugin from one place"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%s Configuration"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Set up %s once. Apply it everywhere."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Got it"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Config details"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Default (AA)"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "High (AAA)"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Accessibility"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Increase the visibility and accessibility of elements and components of this plugin's interface to meet WCAG AAA requirements."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "More information about accessibility settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Version"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Release date"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Defender plugin information"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Share Usage Data"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "More information about usage data sharing"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Keeps your Defender configurations saved in the database for easy re-installation. Switch this off if you want a complete data wipe upon uninstallation."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Preserve settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Keep your configurations saved even if the plugin is uninstalled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reset to factory settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reset"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Share Usage Data enabled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Share Usage Data disabled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "High Contrast mode is on."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "High Contrast mode is off."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Preserve settings enabled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Preserve settings disabled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reset to factory settings?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "All settings will be reset, and your data will be removed. This action can't be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%1$s changed to %2$s."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "7 days"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "3 months"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "2 years"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Force browsers to prefer HTTPS and define how long that preference should be cached."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Submit your domain to browser preload lists so HTTPS is enforced before the first visit."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose how long browsers should remember the Strict-Transport-Security policy."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "HSTS preload"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Note: Avoid enabling the preload directive by default, as removal from the preload list is slow and difficult to reverse."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Defines how long the browser enforces Strict Transport Security, with a minimum of 30 days recommended."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "no-referrer-when-downgrade"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "no-referrer"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "origin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "origin-when-cross-origin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "same-origin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "strict-origin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "strict-origin-when-cross-origin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "unsafe-url"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Control how much referrer information is shared when visitors navigate away from your site."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select the referrer directive your site should send with cross-origin requests."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Referrer-Policy"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Default browser behavior when no policy is set: the origin is sent as the referrer to equally secure destinations (HTTPS → HTTPS), but not to less secure ones (HTTPS → HTTP)."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "On site & iframe"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Allows the page to be displayed in a frame only on the same origin, with enforcement varying by browser."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Allows the feature in the document and across all nested iframes, regardless of their origin."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Specific origins"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "The feature is allowed for specific origins. E.g https://example.com"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "None"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disables the feature in both top-level and nested browsing contexts."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose how browser capabilities are exposed to this page and embedded content."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Restrict the feature to the current site and its iframe context."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Allow the feature for every origin, including nested iframes."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Allow the feature only for the origins listed below."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Provide one fully qualified origin per line."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Permissions policy options"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Origin URL"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enter URLs, one per line."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "The feature is allowed for specific origins. E.g <strong>https://example.com</strong>"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sameorigin"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Deny"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sanitize"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Block"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Controls whether your site can be embedded in frames or iframes, helping prevent clickjacking attacks."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Only allow your site to be displayed in frames on pages from the same domain."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Block your site from being displayed in any frame or iframe."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Stops pages from loading when reflected cross-site scripting (XSS) attacks are detected in supported browsers."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sanitizes the page by removing unsafe content when a cross-site scripting attack is detected."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Prevents the page from rendering entirely if a cross-site scripting attack is detected, enhancing security."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Helps prevent MIME sniffing attacks, where files are disguised as different types during upload."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Browser caching duration"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "File Change Detection"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Outdated & Removed Plugins scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Known Vulnerabilities scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Suspicious Code scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Manual IP Detection"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "REMOTE_ADDR built-in PHP"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "X-Forwarded-For HTTP header"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "X-Real-IP HTTP header"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Cloudflare CF-Connecting-IP HTTP header"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Max included file size changed to %s MB."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "File retention period changed to %s."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Clear temporary IP block list changed to %s."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Logs storage changed to %s days."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Audit log retention changed to %s."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "IP detection method changed to %s."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enable Audit Logging to configure audit log retention."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "All logs deleted."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "All lockouts deleted."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to use File retention period"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose which issue scanners Defender should keep active inside the tools workflow."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Set the maximum size of files scanned by Defender."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Manage how suspicious files are retained and where they are stored."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose how long quarantined files should remain before removal."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This is the storage location Defender uses for quarantined files."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Configure how Defender identifies the visitor IP address."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Select how long temporary firewall lockouts should be retained."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose how long logs are kept before Defender rotates them."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This removes all stored log entries from Defender."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This removes all current and historical firewall lockout records."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Add trusted proxy IP addresses, one per line."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Apply a preset list of trusted proxy headers."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "12 months"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Alerts you when core, plugin, or theme files change unexpectedly."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Highlights plugins that are removed from the WordPress directory or outdated."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scans installed software against Defender vulnerability intelligence."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Looks for risky or obfuscated code patterns inside site files."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Uses the built-in PHP server variable for the visitor IP address."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Useful when your traffic is routed through a load balancer or proxy."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Common when a reverse proxy forwards the original client IP."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Use this when Cloudflare is responsible for forwarding visitor IPs."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please refer to <link>blocklist article</link> for guidance on how to resolve the issue."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "blocklist article"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Google scan shows your site is clean."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "We'll check again in 6 hours."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Your domain is currently listed on Google's blocklist."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Unable to check your blocklist status."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automatically checks whether your site is on Google’s blocklist every six hours and notifies you if any issues are detected."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Checking in progress"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Check now"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Issues scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan type"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "MB"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantine"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "File retention period"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quarantine directory URL"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Access to your quarantine folder is currently forbidden."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%1$s The quarantine directory is currently accessible. For security best practices, please update its permissions to %2$s"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Attention:"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Detected IP(s)"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "IP settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Custom trusted proxies"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enter IP addresses, one per line."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Trusted IP presets"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automatic is a recommended setting. The most secure IP detection is used automatically. If your IP isn't listed, use Manual IP Detection."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Clear temporary IP block list"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Logs storage"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete all logs"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Permanently remove all log records."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete logs"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete all lockouts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Permanently remove all existing lockout records."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Delete lockouts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Enable Audit Logging to configure log retention"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Choose how long audit log events are kept before they are automatically removed."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Logs Retention"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automatically check if you’re on Google’s blocklist every 6 hours. If something’s wrong, we’ll let you know via email."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Blocklist monitor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to turn on Blocklist monitor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Connect Hub to turn on Blocklist monitor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "All log records will be permanently removed. This action cannot be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "All lockout records will be permanently removed. This action cannot be undone."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Tools"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Reports & Alerts"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Other Settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Settings sections"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Made by WPMU DEV"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Lazy Load"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Pre-Load"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "CDN"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Next-Gen Formats"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Integrations"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Data & Settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Custom Active icon"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Text Only"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Link"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Popover Title"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This is a description for the popover showcase."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide Popover"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Show Popover"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Target Element"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Step 1"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This is the first step of the tour."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Next"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Step 2"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This is the second step of the tour."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Previous"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Step 3"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This is the third step of the tour."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Finish"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "This is a default tooltip!"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hover me"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Tooltip on top right"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Tooltip on bottom left"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "I'm a button with default constrained tooltip set to 170px width."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "I'm a button with default constrained tooltip with custom background color."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Bold"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "and italic"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Advanced Settings"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Are you sure you want to exit the onboarding wizard?"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Onboarding Wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Deep scan complete"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan complete"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%d issue"
-msgid_plural "%d issues"
-msgstr[0] ""
-msgstr[1] ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "%d hardening item"
-msgid_plural "%d hardening items"
-msgstr[0] ""
-msgstr[1] ""
-
-#: assets/js/core-ui.js:1
-msgid "You have <issue></issue> and <hardening></hardening>."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "You have <issue></issue>."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Your site has been scanned successfully."
 msgstr ""
 
 #: assets/js/webauthn.js:1

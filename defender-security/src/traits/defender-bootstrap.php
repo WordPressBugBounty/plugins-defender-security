@@ -474,10 +474,10 @@ SQL;
 		);
 
 		$css_files = array(
-			'defender'     => WP_DEFENDER_BASE_URL . 'assets/css/styles.css',
-			'def-sui'      => WP_DEFENDER_BASE_URL . 'assets/css/shared-ui.css',
-			'def-admin'    => WP_DEFENDER_BASE_URL . 'assets/css/admin.css',
-			'def-showcase' => WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			'defender'          => WP_DEFENDER_BASE_URL . 'assets/css/styles.css',
+			'def-sui'           => WP_DEFENDER_BASE_URL . 'assets/css/shared-ui.css',
+			'def-admin'         => WP_DEFENDER_BASE_URL . 'assets/css/admin.css',
+			'def-core-ui-style' => WP_DEFENDER_BASE_URL . 'assets/css/core-ui.css',
 		);
 
 		foreach ( $css_files as $slug => $file ) {
@@ -519,10 +519,6 @@ SQL;
 				array( 'def-vue', 'def-manifest' ),
 			),
 			// React files.
-			'def-showcase'            => array(
-				$base_url . 'assets/js/showcase.js',
-				$dependencies,
-			),
 			'def-setup-wizard'        => array(
 				$base_url . 'assets/js/setup-wizard.js',
 				$dependencies,

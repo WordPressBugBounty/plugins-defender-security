@@ -373,6 +373,20 @@ class Vuln_Result extends Behavior {
 	 * @return array The result of the removal operation.
 	 */
 	private function remove_theme( array $data ): array {
+		if ( ! isset( $data['base_slug'] ) || ! is_string( $data['base_slug'] ) || '' === $data['base_slug'] || 0 !== validate_file( $data['base_slug'] ) ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => esc_html__( 'Invalid theme path.', 'defender-security' ),
+			);
+		}
+
+		if ( ! array_key_exists( $data['base_slug'], wp_get_themes() ) ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => esc_html__( 'The requested theme is not installed.', 'defender-security' ),
+			);
+		}
+
 		$active = $this->is_active_theme( $data['base_slug'] );
 		if ( $active ) {
 			return array(
@@ -381,8 +395,20 @@ class Vuln_Result extends Behavior {
 			);
 		}
 
-		$abs_path = $this->get_path_of_themes_dir() . $data['base_slug'];
-		if ( file_exists( $abs_path ) && ! $this->remove_vulnerability( $abs_path ) ) {
+		$abs_path   = $this->get_path_of_themes_dir() . $data['base_slug'];
+		$themes_dir = realpath( $this->get_path_of_themes_dir() );
+		$real_path  = realpath( $abs_path );
+		if ( false === $themes_dir || false === $real_path || ! str_starts_with(
+			$real_path,
+			rtrim( $themes_dir, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR
+		) ) {
+			return array(
+				'type_notice' => 'error',
+				'message'     => esc_html__( 'Invalid theme path.', 'defender-security' ),
+			);
+		}
+
+		if ( file_exists( $real_path ) && ! $this->remove_vulnerability( $real_path ) ) {
 			return array(
 				'type_notice' => 'error',
 				'message'     => esc_html__(

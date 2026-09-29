@@ -35,7 +35,6 @@ trait Setting {
 		}
 
 		/* translators: %s: Module name. */
-
 		return sprintf( esc_html__( '%s has been deactivated.', 'defender-security' ), $module_name );
 	}
 }

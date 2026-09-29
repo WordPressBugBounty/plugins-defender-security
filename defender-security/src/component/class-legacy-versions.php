@@ -50,18 +50,36 @@ class Legacy_Versions extends Component {
 	private function find_all_scan_ignored_items( $ids ) {
 		global $wpdb;
 
-		if ( is_array( $ids ) && count( $ids ) > 0 ) {
-			$sql  = 'SELECT t0.ID AS id,t0.post_parent AS parentId,t1.meta_value AS type,t2.meta_value AS raw';
-			$sql .= ' FROM ' . $wpdb->posts . ' AS t0';
-			$sql .= ' LEFT JOIN ' . $wpdb->postmeta . " as t1 ON t1.post_id=ID AND t1.meta_key='type'";
-			$sql .= ' LEFT JOIN ' . $wpdb->postmeta . " as t2 ON t2.post_id=ID AND t2.meta_key='raw'";
-			$sql .= " WHERE t0.post_type='wdf_scan_item' AND t0.post_status = 'ignored'";
-			$sql .= ' AND t0.ID IN (' . implode( ', ', $ids ) . ')';
-			// SQL is prepared above. so we will ignore prepare warning.
-			return $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		if ( ! is_array( $ids ) ) {
+			return array();
 		}
 
-		return array();
+		$valid_ids = array();
+		foreach ( $ids as $id ) {
+			if ( ! is_int( $id ) && ! ( is_string( $id ) && ctype_digit( $id ) ) ) {
+				continue;
+			}
+
+			$id = filter_var( $id, FILTER_VALIDATE_INT );
+			if ( false !== $id && 0 < $id ) {
+				$valid_ids[ $id ] = $id;
+			}
+		}
+		$ids = array_values( $valid_ids );
+		if ( array() === $ids ) {
+			return array();
+		}
+
+		$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+		$sql          = 'SELECT t0.ID AS id,t0.post_parent AS parentId,t1.meta_value AS type,t2.meta_value AS raw';
+		$sql         .= ' FROM ' . $wpdb->posts . ' AS t0';
+		$sql         .= ' LEFT JOIN ' . $wpdb->postmeta . " as t1 ON t1.post_id=ID AND t1.meta_key='type'";
+		$sql         .= ' LEFT JOIN ' . $wpdb->postmeta . " as t2 ON t2.post_id=ID AND t2.meta_key='raw'";
+		$sql         .= " WHERE t0.post_type='wdf_scan_item' AND t0.post_status = 'ignored'";
+		$sql         .= " AND t0.ID IN ({$placeholders})";
+
+		// SQL is prepared above. so we will ignore prepare warning.
+		return $wpdb->get_results( $wpdb->prepare( $sql, $ids ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

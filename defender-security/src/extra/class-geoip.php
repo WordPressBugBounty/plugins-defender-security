@@ -7,7 +7,7 @@
 
 namespace WP_Defender\Extra;
 
-use MaxMind\Db\Reader;
+use WP_DEFENDER_VENDOR\MaxMind\Db\Reader;
 
 /**
  * GeoIP class for IP geolocation functionality.

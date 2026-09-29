@@ -1045,7 +1045,7 @@ class Cli {
 		} elseif ( 'maxmind' === $type ) {
 			try {
 				$model = wd_di()->get( \WP_Defender\Model\Setting\Blacklist_Lockout::class );
-				if ( ! is_null( $model->geodb_path ) && is_file( $model->geodb_path ) ) {
+				if ( is_string( $model->geodb_path ) && is_file( $model->geodb_path ) ) {
 					wp_delete_file( $model->geodb_path );
 				}
 				$model->maxmind_license_key = '';

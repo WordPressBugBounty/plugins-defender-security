@@ -99,7 +99,6 @@ class Scan extends Setting {
 	 * This is for when user select scheduled scan as monthly, we will have the day number, instead of text.
 	 *
 	 * @var int
-	 * @sanitize_text_field
 	 * @defender_property
 	 */
 	public int $day_n = 1;

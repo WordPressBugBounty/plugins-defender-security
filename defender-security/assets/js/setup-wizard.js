@@ -1,1 +1,1 @@
-"use strict";(self.webpackChunkwp_defender=self.webpackChunkwp_defender||[]).push([[749,907,400,212,653,8,29,852],{8003:e=>{e.exports=wp.i18n}},e=>{e.O(0,[554,931],()=>{return p=2186,e(e.s=p);var p});e.O()}]);
+"use strict";(self.webpackChunkwp_defender=self.webpackChunkwp_defender||[]).push([[38,165,172,249,310,601,890],{2470(e){e.exports=wp.i18n}},e=>{e.O(0,[493,270],()=>{return p=6838,e(e.s=p);var p});e.O()}]);

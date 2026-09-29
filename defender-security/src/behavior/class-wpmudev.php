@@ -80,15 +80,6 @@ class WPMUDEV extends Behavior implements WPMUDEV_Const_Interface {
 	}
 
 	/**
-	 * Check if WPMUDEV Dashboard remote access is enabled.
-	 *
-	 * @return bool
-	 */
-	public function is_remote_access_enabled(): bool {
-		return false;
-	}
-
-	/**
 	 * Show support links if:
 	 * plugin version isn't Free,
 	 * Whitelabel is disabled.

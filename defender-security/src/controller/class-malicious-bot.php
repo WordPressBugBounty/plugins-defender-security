@@ -27,7 +27,7 @@ class Malicious_Bot extends Controller {
 	 *
 	 * @var Malicious_Bot_Component
 	 */
-	protected $service;
+	public $service;
 
 	/**
 	 * Constructor for the Malicious_Bot class.
@@ -109,6 +109,10 @@ class Malicious_Bot extends Controller {
 		$valid_hash = $this->service->get_hash();
 
 		if ( $used_hash === $valid_hash ) {
+			if ( $this->is_cross_site_request() ) {
+				return;
+			}
+
 			$known_bots = Known_Bots_Factory::create();
 			$bot_ips    = $known_bots->get_all_bot_ips();
 
@@ -166,6 +170,53 @@ class Malicious_Bot extends Controller {
 	}
 
 	/**
+	 * Checks if the current request is a cross-site or embedded request.
+	 *
+	 * @return bool True if cross-site or embedded, false otherwise.
+	 */
+	public function is_cross_site_request(): bool {
+		$sec_fetch_site = defender_get_data_from_request( 'HTTP_SEC_FETCH_SITE', 's' );
+		if ( is_string( $sec_fetch_site ) && 'cross-site' === strtolower( $sec_fetch_site ) ) {
+			return true;
+		}
+
+		$sec_fetch_dest = defender_get_data_from_request( 'HTTP_SEC_FETCH_DEST', 's' );
+		if ( is_string( $sec_fetch_dest ) && in_array( strtolower( $sec_fetch_dest ), array( 'image', 'iframe', 'frame', 'embed', 'object', 'audio', 'video', 'track', 'style', 'script', 'font' ), true ) ) {
+			return true;
+		}
+
+		$sec_fetch_mode = defender_get_data_from_request( 'HTTP_SEC_FETCH_MODE', 's' );
+		if ( is_string( $sec_fetch_mode ) && 'no-cors' === strtolower( $sec_fetch_mode ) ) {
+			return true;
+		}
+
+		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
+		$site_host = is_string( $site_host ) ? strtolower( $site_host ) : '';
+
+		$http_host = defender_get_data_from_request( 'HTTP_HOST', 's' );
+		if ( is_string( $http_host ) && '' !== $http_host ) {
+			$http_host = strtolower( explode( ':', $http_host )[0] );
+		} else {
+			$http_host = '';
+		}
+
+		foreach ( array( 'HTTP_REFERER', 'HTTP_ORIGIN' ) as $header ) {
+			$header_val = defender_get_data_from_request( $header, 's' );
+			if ( is_string( $header_val ) && '' !== $header_val ) {
+				$header_host = wp_parse_url( $header_val, PHP_URL_HOST );
+				if ( is_string( $header_host ) && '' !== $header_host ) {
+					$header_host_lower = strtolower( $header_host );
+					if ( $header_host_lower !== $site_host && ( '' === $http_host || $header_host_lower !== $http_host ) ) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Injects the malicious bot URL into the footer of frontend pages.
 	 * This URL is hidden.
 	 */
@@ -189,17 +240,16 @@ class Malicious_Bot extends Controller {
 			return false;
 		}
 
-		$uri = defender_get_data_from_request( 'REQUEST_URI', 's' );
-		if ( ! is_string( $uri ) || '' === $uri ) {
+		$uri  = defender_get_data_from_request( 'REQUEST_URI', 's' );
+		$path = is_string( $uri ) ? wp_parse_url( $uri, PHP_URL_PATH ) : null;
+		if ( ! is_string( $path ) || '' === $path ) {
 			return false;
 		}
 
-		// Get request path.
-		$uri = wp_parse_url( $uri, PHP_URL_PATH );
-		$uri = trim( $uri, '/' );
+		$path = trim( $path, '/' );
 
 		// Always check last segment only.
-		$segments = explode( '/', $uri );
+		$segments = explode( '/', $path );
 		$last     = end( $segments );
 
 		return $last === $hash;

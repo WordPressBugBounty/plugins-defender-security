@@ -1,1 +1,1 @@
-"use strict";(self.webpackChunkwp_defender=self.webpackChunkwp_defender||[]).push([[907,400,212,653,8,29,852,749],{8003:e=>{e.exports=wp.i18n}},e=>{e.O(0,[554,931],()=>{return p=845,e(e.s=p);var p});e.O()}]);
+"use strict";(self.webpackChunkwp_defender=self.webpackChunkwp_defender||[]).push([[38,165,172,249,310,599,601,890],{775(){},1852(){},2470(e){e.exports=wp.i18n},2678(){},3536(){},6369(){},7799(){},9173(){}},e=>{var p=p=>e(e.s=p);e.O(0,[493,261,997,551,595,224,374,428,151,270],()=>(p(7428),p(9173),p(2678),p(7799),p(775),p(1852),p(3536),p(6369),p(8814),p(8360)));e.O()}]);

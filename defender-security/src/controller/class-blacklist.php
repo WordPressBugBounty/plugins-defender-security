@@ -19,7 +19,7 @@ use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Lockout_Ip;
 use WP_Defender\Traits\Continent;
 use WP_Defender\Component\Blacklist_Lockout;
-use MaxMind\Db\Reader\InvalidDatabaseException;
+use WP_DEFENDER_VENDOR\MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Integrations\MaxMind_Geolocation;
 use WP_Defender\Component\Config\Config_Hub_Helper;
@@ -613,7 +613,7 @@ class Blacklist extends Controller {
 			'ip_whitelist'       => $data['ip_whitelist'],
 			'ip_lockout_message' => $data['ip_lockout_message'],
 		);
-		if ( isset( $data['geoIP_db'] ) && file_exists( $data['geoIP_db'] ) ) {
+		if ( isset( $data['geoIP_db'] ) && is_string( $data['geoIP_db'] ) && file_exists( $data['geoIP_db'] ) ) {
 			$adapted_data['geodb_path'] = $data['geoIP_db'];
 			if ( isset( $data['country_blacklist'] ) ) {
 				$adapted_data['country_blacklist'] = $data['country_blacklist'];

@@ -278,8 +278,8 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 		);
 		$text = sprintf(
 			$text,
-			'<strong>' . $model->ip . '</strong>',
-			'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
+			'<strong>' . esc_html( $model->ip ) . '</strong>',
+			'<a href="' . esc_url( $network_site_url ) . '">' . esc_html( $network_site_url ) . '</a>',
 			'<strong>' . $attempt_limit . '</strong>',
 			$type,
 			$this->get_lockout_duration_text( $settings->lockout_type, $time_limit )
@@ -306,8 +306,8 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 		$text    = sprintf(
 			/* translators: 1: User agent, 2: Site URL */
 			__( 'The %1$s has been locked out of %2$s.', 'defender-security' ),
-			'<strong>' . $model->user_agent . '</strong>',
-			'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
+			'<strong>' . esc_html( $model->user_agent ) . '</strong>',
+			'<a href="' . esc_url( $network_site_url ) . '">' . esc_html( $network_site_url ) . '</a>'
 		);
 
 		return compact( 'subject', 'text' );
@@ -333,10 +333,10 @@ class Firewall_Notification extends \WP_Defender\Model\Notification {
 		);
 		$text = sprintf(
 			$text,
-			'<strong>' . $model->ip . '</strong>',
-			'<a href="' . $network_site_url . '">' . $network_site_url . '</a>',
+			'<strong>' . esc_html( $model->ip ) . '</strong>',
+			'<a href="' . esc_url( $network_site_url ) . '">' . esc_html( $network_site_url ) . '</a>',
 			'<strong>' . $settings->attempt . '</strong>',
-			'<strong>' . $model->tried . '</strong>',
+			'<strong>' . esc_html( $model->tried ) . '</strong>',
 			$this->get_lockout_duration_text( $settings->lockout_type, $settings->duration . ' ' . $settings->duration_unit )
 		);
 

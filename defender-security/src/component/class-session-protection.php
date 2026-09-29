@@ -147,14 +147,47 @@ class Session_Protection extends Component {
 	}
 
 	/**
+	 * Get transient key for server-side session last activity.
+	 *
+	 * @param int|null $user_id User ID.
+	 * @return string|null
+	 */
+	private function get_session_activity_key( $user_id = null ): ?string {
+		$user_id = $user_id ?? get_current_user_id();
+		if ( ! $user_id ) {
+			return null;
+		}
+
+		$token = wp_get_session_token();
+		if ( ! $token ) {
+			return 'wpdef_last_act_' . $user_id;
+		}
+
+		return 'wpdef_last_act_' . $user_id . '_' . substr( md5( $token ), 0, 16 );
+	}
+
+	/**
 	 * Retrieves the last activity timestamp.
 	 *
 	 * @return int|null Last activity timestamp or null if not set.
 	 */
 	private function get_last_activity() {
-		// Check for client-side cookie first to avoid unnecessary database queries.
+		// First check server-side session state if available to prevent client tampering.
+		$key = $this->get_session_activity_key();
+		if ( $key ) {
+			$server_activity = get_transient( $key );
+			if ( is_numeric( $server_activity ) && (int) $server_activity > 0 ) {
+				return (int) $server_activity;
+			}
+		}
+
+		// Fallback to client-side cookie if server transient is missing.
 		if ( isset( $_COOKIE['wpdef_last_activity'] ) && is_numeric( $_COOKIE['wpdef_last_activity'] ) ) {
-			return (int) $_COOKIE['wpdef_last_activity'];
+			$timestamp = (int) $_COOKIE['wpdef_last_activity'];
+			$now       = time();
+
+			// Clamp future timestamps to current server time to prevent session timeout bypass.
+			return min( $timestamp, $now );
 		}
 
 		return null;
@@ -179,6 +212,12 @@ class Session_Protection extends Component {
 				// Fires during session timeout.
 				do_action( 'wpdef_session_timeout', $user_id );
 			}
+
+			$key = $this->get_session_activity_key( $user_id );
+			if ( $key ) {
+				delete_transient( $key );
+			}
+
 			// Get current session token.
 			$current_session_token = wp_get_session_token();
 			if ( $current_session_token ) {
@@ -301,7 +340,13 @@ class Session_Protection extends Component {
 	 * @return void
 	 */
 	public function update_last_activity() {
-		$current_time  = time();
+		$current_time = time();
+
+		$key = $this->get_session_activity_key();
+		if ( $key ) {
+			set_transient( $key, $current_time, DAY_IN_SECONDS );
+		}
+
 		$last_activity = $this->get_last_activity();
 
 		// Only update the cookie if minutes have passed since the last update.

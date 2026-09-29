@@ -210,7 +210,7 @@ class Main_Setting extends Event {
 
 		wp_enqueue_style(
 			$handle,
-			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			WP_DEFENDER_BASE_URL . 'assets/css/core-ui.css',
 			array(),
 			DEFENDER_VERSION
 		);
@@ -418,7 +418,27 @@ class Main_Setting extends Event {
 	 * @return bool Returns true if the importer data is valid, false otherwise.
 	 */
 	private function validate_importer( $importer ): bool {
-		return $this->service->verify_config_data( $importer );
+		if ( ! $this->service->verify_config_data( $importer ) || ! is_array( $importer['configs'] ) ) {
+			return false;
+		}
+
+		$sample = $this->service->gather_data();
+		foreach ( $importer['configs'] as $slug => $module ) {
+			// Ignore whole modules unavailable on this site, such as Pro-only modules in Free builds.
+			if ( ! isset( $sample[ $slug ] ) ) {
+				continue;
+			}
+
+			if (
+				! is_array( $module )
+				|| ! is_array( $sample[ $slug ] )
+				|| array() !== array_diff_key( $module, $sample[ $slug ] )
+			) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

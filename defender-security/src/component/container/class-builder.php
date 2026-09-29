@@ -83,7 +83,8 @@ final class Builder {
 			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 			throw $exception;
 		} catch ( Throwable $exception ) {
-			throw new RuntimeException( esc_html( sprintf( 'Unable to resolve container entry "%s".', $id ) ), 0, $exception );
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+			throw new RuntimeException( sprintf( 'Unable to resolve container entry "%s".', $id ), 0, $exception );
 		} finally {
 			unset( $this->resolving[ $id ] );
 		}

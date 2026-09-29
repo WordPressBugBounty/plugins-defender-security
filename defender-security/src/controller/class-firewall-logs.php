@@ -9,6 +9,7 @@ namespace WP_Defender\Controller;
 
 use DateTime;
 use Exception;
+use Generator;
 use Valitron\Validator;
 use Calotes\Helper\HTTP;
 use WP_Defender\Controller;
@@ -19,10 +20,10 @@ use WP_Defender\Traits\Country;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Model\Lockout_Log;
 use WP_Defender\Component\User_Agent;
-use WP_Defender\Component\IP\Global_IP;
 use WP_Defender\Component\Table_Lockout;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Integrations\Antibot_Global_Firewall_Client;
+use WP_Defender\Component\Export\Csv;
 use WP_Defender\Model\Setting\Blacklist_Lockout;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
 use WP_Defender\Component\Firewall_Logs as Firewall_Logs_Component;
@@ -177,24 +178,6 @@ class Firewall_Logs extends Controller {
 			'ban_status' => 'all' === $ban_status ? '' : $ban_status,
 		);
 
-		$logs = Lockout_Log::query_logs( $filters, 1, $sort_params['order_by'], $sort_params['order'], -1 );
-
-		$tl_component = new Table_Lockout();
-
-		$ua_component = wd_di()->get( User_Agent::class );
-
-		$filename = 'wdf-lockout-logs-export-' . wp_date( 'ymdHis' ) . '.csv';
-
-		header( 'Expires: 0' );
-		header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
-		header( 'Cache-Control: private', false );
-		header( 'Content-Type: application/octet-stream' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '";' );
-		header( 'Content-Transfer-Encoding: binary' );
-
-		extension_loaded( 'zlib' ) ? ob_start( 'ob_gzhandler' ) : ob_start();
-
-		$fp      = fopen( 'php://output', 'w' );
 		$headers = array(
 			esc_html__( 'Log', 'defender-security' ),
 			esc_html__( 'Date / Time', 'defender-security' ),
@@ -204,29 +187,52 @@ class Firewall_Logs extends Controller {
 			esc_html__( 'User Agent Name', 'defender-security' ),
 			esc_html__( 'User Agent Status', 'defender-security' ),
 		);
-		fputcsv( $fp, $headers, ',', '"', '\\' );
 
-		$flush_limit = Lockout_Log::INFINITE_SCROLL_SIZE;
-		foreach ( $logs as $key => $log ) {
-			$item = array(
-				$log->log,
-				$this->format_date_time( $log->date ),
-				$tl_component->get_type( $log->type ),
-				$log->ip,
-				$tl_component->get_ip_status_text( $log->ip ),
-				$log->user_agent,
-				$ua_component->get_status_text( $log->type, $log->tried ),
-			);
-			fputcsv( $fp, $item, ',', '"', '\\' );
-
-			if ( 0 === $key % $flush_limit ) {
-				ob_flush();
-				flush();
-			}
+		try {
+			Csv::to_browser( 'lockout-logs', $this->get_export_rows( $filters, $sort_params ), $headers );
+		} catch ( \RuntimeException $e ) {
+			$this->log( $e->getMessage(), 'firewall-logs' );
 		}
-		// WP_Filesystem is not suitable here because it abstracts to reading/writing files on disk, not to output streams.
-		fclose( $fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-		exit();
+	}
+
+	/**
+	 * Generates firewall log export rows in database-backed pages.
+	 *
+	 * @param array $filters     Log filters.
+	 * @param array $sort_params Sort parameters.
+	 *
+	 * @return Generator
+	 */
+	private function get_export_rows( array $filters, array $sort_params ): Generator {
+		$page         = 1;
+		$per_page     = 1000;
+		$tl_component = new Table_Lockout();
+		$ua_component = wd_di()->get( User_Agent::class );
+
+		do {
+			$logs = Lockout_Log::query_logs(
+				$filters,
+				$page,
+				$sort_params['order_by'],
+				$sort_params['order'],
+				$per_page
+			);
+
+			foreach ( $logs as $log ) {
+				yield array(
+					$log->log,
+					$this->format_date_time( $log->date ),
+					$tl_component->get_type( $log->type ),
+					$log->ip,
+					$tl_component->get_ip_status_text( $log->ip ),
+					$log->user_agent,
+					$ua_component->get_status_text( $log->type, $log->tried ),
+				);
+			}
+
+			$has_more = count( $logs ) === $per_page;
+			++$page;
+		} while ( $has_more );
 	}
 
 	/**

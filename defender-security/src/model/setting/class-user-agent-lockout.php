@@ -370,8 +370,8 @@ class User_Agent_Lockout extends Setting {
 	 * @return array
 	 */
 	public function get_access_status( $ua ): array {
-		$blocklist = str_replace( '#', '\#', $this->get_all_selected_blocklist_ua() );
-		$allowlist = str_replace( '#', '\#', $this->get_lockout_list( 'allowlist' ) );
+		$blocklist = $this->get_all_selected_blocklist_ua();
+		$allowlist = $this->get_lockout_list( 'allowlist' );
 
 		// Escape regex special characters in each item before building the pattern.
 		$blocklist_escaped = array_map( 'preg_quote', $blocklist, array_fill( 0, count( $blocklist ), '#' ) );
@@ -380,22 +380,22 @@ class User_Agent_Lockout extends Setting {
 		$blocklist_regex_pattern = '#' . implode( '|', $blocklist_escaped ) . '#i';
 		$allowlist_regex_pattern = '#' . implode( '|', $allowlist_escaped ) . '#i';
 
-		$blocklist_match = preg_match( $blocklist_regex_pattern, $ua );
-		$allowlist_match = preg_match( $allowlist_regex_pattern, $ua );
+		$blocklist_match = count( $blocklist ) > 0 && 1 === preg_match( $blocklist_regex_pattern, $ua );
+		$allowlist_match = count( $allowlist ) > 0 && 1 === preg_match( $allowlist_regex_pattern, $ua );
 
-		if ( 1 !== $blocklist_match && 1 !== $allowlist_match ) {
+		if ( ! $blocklist_match && ! $allowlist_match ) {
 			return array( 'na' );
 		}
 
 		$result = array();
 
 		// Check blocklist first - if it matches, add 'banned'.
-		if ( 1 === $blocklist_match ) {
+		if ( $blocklist_match ) {
 			$result[] = 'banned';
 		}
 
 		// Check allowlist - if it matches, add 'allowlist'.
-		if ( 1 === $allowlist_match ) {
+		if ( $allowlist_match ) {
 			$result[] = 'allowlist';
 		}
 

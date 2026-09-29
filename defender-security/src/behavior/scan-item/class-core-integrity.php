@@ -16,6 +16,7 @@ use WP_Defender\Traits\Formats;
 use WP_Defender\Model\Scan_Item;
 use WP_Defender\Traits\File_Operations;
 use WP_Defender\Controller\Scan as Scan_Controller;
+use WP_Defender\Behavior\Scan\Core_Integrity as Core_Integrity_Scan;
 use WP_Filesystem_Base;
 
 /**
@@ -67,7 +68,7 @@ class Core_Integrity extends Behavior {
 		$data            = $this->owner->raw_data;
 		$file            = wp_normalize_path( $data['file'] );
 		$relative_path   = str_replace( wp_normalize_path( ABSPATH ), '', $file );
-		$source_file_url = "http://core.svn.wordpress.org/tags/$wp_version/" . $relative_path;
+		$source_file_url = "https://core.svn.wordpress.org/tags/$wp_version/" . $relative_path;
 		$ds              = DIRECTORY_SEPARATOR;
 		if ( ! function_exists( 'download_url' ) ) {
 			require_once ABSPATH . 'wp-admin' . $ds . 'includes' . $ds . 'file.php';
@@ -78,8 +79,60 @@ class Core_Integrity extends Behavior {
 		}
 		$content = $wp_filesystem->get_contents( $tmp );
 		wp_delete_file( $tmp );
+		$trusted_checksum = $this->get_trusted_checksum( $relative_path );
+
+		if ( ! is_string( $content ) || ! is_string( $trusted_checksum ) ) {
+			return new WP_Error(
+				'defender_core_checksum_unavailable',
+				esc_html__( 'The trusted WordPress core checksum is unavailable.', 'defender-security' )
+			);
+		}
+
+		if ( ! hash_equals( strtolower( $trusted_checksum ), md5( $content ) ) ) {
+			return new WP_Error(
+				'defender_core_checksum_mismatch',
+				esc_html__( 'The downloaded WordPress core file failed checksum verification.', 'defender-security' )
+			);
+		}
 
 		return $content;
+	}
+
+	/**
+	 * Get the trusted WordPress checksum for a core file.
+	 *
+	 * New scan items persist the checksum used to identify the modification.
+	 * The temporary scan cache and the WordPress checksum API are fallbacks for
+	 * scan items created before that checksum was stored with the issue.
+	 *
+	 * @param string $relative_path Core file path relative to ABSPATH.
+	 * @return string|null
+	 */
+	private function get_trusted_checksum( $relative_path ) {
+		$data = $this->owner->raw_data;
+		if ( isset( $data['checksum'] ) && is_string( $data['checksum'] ) ) {
+			return $data['checksum'];
+		}
+
+		$checksums = get_site_option( Core_Integrity_Scan::CACHE_CHECKSUMS, array() );
+		if ( is_array( $checksums ) && isset( $checksums[ $relative_path ] ) && is_string( $checksums[ $relative_path ] ) ) {
+			return $checksums[ $relative_path ];
+		}
+
+		if ( ! function_exists( 'get_core_checksums' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/update.php';
+		}
+
+		global $wp_version, $wp_local_package;
+		$locale    = isset( $wp_local_package ) && '' !== $wp_local_package ? $wp_local_package : 'en_US';
+		$checksums = get_core_checksums( $wp_version, $locale );
+		if ( isset( $checksums[ $wp_version ] ) && is_array( $checksums[ $wp_version ] ) ) {
+			$checksums = $checksums[ $wp_version ];
+		}
+
+		return is_array( $checksums ) && isset( $checksums[ $relative_path ] ) && is_string( $checksums[ $relative_path ] )
+			? $checksums[ $relative_path ]
+			: null;
 	}
 
 	/**
@@ -225,9 +278,11 @@ class Core_Integrity extends Behavior {
 				return array( 'code' => implode( PHP_EOL, $dir_tree->get_dir_tree() ) );
 			case 'modified':
 			default:
+				$origin = $this->get_origin_code();
+
 				return array(
 					'code'   => $wp_filesystem->get_contents( $data['file'] ),
-					'origin' => $this->get_origin_code(),
+					'origin' => is_string( $origin ) ? $origin : '',
 				);
 		}
 	}

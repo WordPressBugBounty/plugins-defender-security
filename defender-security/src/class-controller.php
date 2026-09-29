@@ -224,7 +224,7 @@ abstract class Controller extends \Calotes\Base\Controller {
 			$tz_string = 'UTC' . $tz_string;
 		}
 
-		return array(
+		$data = array(
 			'defenderUrl'        => network_admin_url( 'admin.php?page=wp-defender' ),
 			'pluginUrl'          => WP_DEFENDER_BASE_URL,
 			'adminUrl'           => network_admin_url(),
@@ -234,14 +234,14 @@ abstract class Controller extends \Calotes\Base\Controller {
 			'startOfWeek'        => (int) get_option( 'start_of_week', 1 ),
 			'profileData'        => $profile_data,
 			'hubConnector'       => wd_di()->get( \WP_Defender\Controller\Hub_Connector::class )->data_frontend(),
-			'isPro'              => $wpmudev->is_pro(),
-			'isWpOrg'            => defender_is_wp_org_version(),
 			'pluginUpdate'       => $this->get_plugin_update_notice_data(),
 			'whiteLabel'         => defender_whitelabel_data(),
 			'activityLog'        => wd_di()->get( \WP_Defender\Controller\Activity_Log::class )->data_frontend(),
 			'hubApiKey'          => array(
 				'available' => $wpmudev->is_apikey_available(),
 			),
+			'isWpOrg'            => defender_is_wp_org_version(),
+			'isPro'              => $wpmudev->is_pro(),
 			'hosted'             => $wpmudev->is_wpmu_hosting(),
 			'highContrastMode'   => defender_high_contrast(),
 			'isUnlimitedHosting' => defender_is_unlimited_hosting(),
@@ -250,6 +250,8 @@ abstract class Controller extends \Calotes\Base\Controller {
 				'nonces' => $scan_api['nonces'] ?? array(),
 			),
 		);
+
+		return $data;
 	}
 
 	/**

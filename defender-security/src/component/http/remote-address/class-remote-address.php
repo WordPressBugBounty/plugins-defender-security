@@ -168,12 +168,21 @@ class Remote_Address {
 		}
 
 		$trusted_proxies = $this->get_trusted_proxies();
+		$remote_address  = $server['REMOTE_ADDR'] ?? '';
+
+		// Forwarding headers are trustworthy only when the immediate peer is a known proxy.
+		if ( ! $this->is_trusted_proxy( $remote_address, $trusted_proxies ) ) {
+			return false;
+		}
 
 		// Extract IPs.
 		$ips = array_reverse( explode( ',', $server[ $header ] ) );
 		foreach ( $ips as $ip ) {
 			// trim, so we can compare against trusted proxies properly.
 			$ip = trim( $ip );
+			if ( false === filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+				continue;
+			}
 
 			// @see http://en.wikipedia.org/wiki/X-Forwarded-For .
 			// Since we've removed any known, trusted proxy servers, the right-most
@@ -182,7 +191,7 @@ class Remote_Address {
 			// as the originating IP.
 			foreach ( $trusted_proxies as $trusted_proxy ) {
 				if (
-					( false !== strpos( $trusted_proxy, '/' ) && $this->compare_cidr( $ip, $trusted_proxy ) ) ||
+					( str_contains( $trusted_proxy, '/' ) && $this->compare_cidr( $ip, $trusted_proxy ) ) ||
 					$trusted_proxy === $ip
 				) {
 					continue 2;
@@ -200,6 +209,31 @@ class Remote_Address {
 	}
 
 	/**
+	 * Check whether an IP address belongs to a configured trusted proxy.
+	 *
+	 * @param string $ip               The IP address to check.
+	 * @param array  $trusted_proxies  Trusted proxy IP addresses or CIDR ranges.
+	 *
+	 * @return bool
+	 */
+	protected function is_trusted_proxy( string $ip, array $trusted_proxies ): bool {
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
+
+		foreach ( $trusted_proxies as $trusted_proxy ) {
+			if (
+				( str_contains( $trusted_proxy, '/' ) && $this->compare_cidr( $ip, $trusted_proxy ) ) ||
+				$trusted_proxy === $ip
+			) {
+				return true;
+			}
+		}
+
+		return $this->is_ip_in_trusted_proxy_preset( $ip );
+	}
+
+	/**
 	 * Normalize a header string.
 	 * Normalizes a header string to a format that is compatible with
 	 * $_SERVER.
@@ -212,7 +246,7 @@ class Remote_Address {
 		$header = strtoupper( $header );
 		$header = str_replace( '-', '_', $header );
 
-		if ( 0 !== strpos( $header, 'HTTP_' ) ) {
+		if ( ! str_starts_with( $header, 'HTTP_' ) ) {
 			$header = 'HTTP_' . $header;
 		}
 
@@ -245,7 +279,7 @@ class Remote_Address {
 
 		foreach ( $trusted_ips as $trusted_ip ) {
 			if (
-				( false !== strpos( $trusted_ip, '/' ) && $this->compare_cidr( $ip, $trusted_ip ) ) ||
+				( str_contains( $trusted_ip, '/' ) && $this->compare_cidr( $ip, $trusted_ip ) ) ||
 				$trusted_ip === $ip
 			) {
 				return true;

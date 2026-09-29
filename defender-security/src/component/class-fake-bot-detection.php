@@ -8,12 +8,13 @@
 namespace WP_Defender\Component;
 
 use WP_Defender\Component;
-use WP_Defender\Controller\Firewall;
-use WP_Defender\Model\Lockout_Log;
-use WP_Defender\Model\Setting\User_Agent_Lockout;
-use WP_Defender\Model\Lockout_Ip;
-use WP_Defender\Model\Notification\Firewall_Notification;
 use WP_Defender\Traits\Country;
+use WP_Defender\Model\Lockout_Ip;
+use WP_Defender\Model\Lockout_Log;
+use WP_Defender\Controller\Firewall;
+use WP_Defender\Model\Setting\User_Agent_Lockout;
+use WP_Defender\Component\Known_Bots\Bots\Facebook_Bot;
+use WP_Defender\Model\Notification\Firewall_Notification;
 
 /**
  * Class Fake_Bot_Detection
@@ -79,24 +80,20 @@ class Fake_Bot_Detection extends Component {
 	 *
 	 * @var string[]
 	 */
-	public const IP_INFO_SERVICES = array(
-		'https://ipinfo.io/%s/json',
-		'https://ipwho.is/%s',
-		'http://ip-api.com/json/%s',
-	);
+	public const IP_INFO_SERVICES = Facebook_Bot::IP_INFO_SERVICES;
 
 	/**
 	 * Prefix for site transient cache keys.
 	 *
 	 * @var string
 	 */
-	public const FB_CACHE_KEY_PREFIX = 'wpdef_ip_is_fb_';
+	public const FB_CACHE_KEY_PREFIX = Facebook_Bot::FB_CACHE_KEY_PREFIX;
 
 	/**
 	 * Cache lifetimes.
 	 */
-	public const FB_CACHE_TTL_CONFIRMED   = WEEK_IN_SECONDS;
-	public const FB_CACHE_TTL_UNCONFIRMED = HOUR_IN_SECONDS;
+	public const FB_CACHE_TTL_CONFIRMED   = Facebook_Bot::FB_CACHE_TTL_CONFIRMED;
+	public const FB_CACHE_TTL_UNCONFIRMED = Facebook_Bot::FB_CACHE_TTL_UNCONFIRMED;
 
 	/**
 	 * Fake_Bot_Detection constructor.
@@ -138,10 +135,6 @@ class Fake_Bot_Detection extends Component {
 			return;
 		}
 
-		if ( false !== stripos( $agent, 'facebook' ) && false !== stripos( $agent, 'twitter' ) ) {
-			return;
-		}
-
 		foreach ( $this->crawlers as $name => $data ) {
 			// 1. User-Agent check.
 			if ( ! $this->match_user_agent( $agent, $data['user_agents'] ?? array() ) ) {
@@ -161,13 +154,8 @@ class Fake_Bot_Detection extends Component {
 				}
 
 				// Facebook specific IP verification.
-				if ( 'facebook' === strtolower( $name ) ) {
-					if ( $this->is_facebook_ip( $ip ) ) {
-						return; // Confirmed legit Facebook bot.
-					}
-
-					$this->block_ip( $ip, $agent, $name );
-					return;
+				if ( 'facebook' === strtolower( $name ) && $this->is_facebook_ip( $ip ) ) {
+					return; // Confirmed legit Facebook bot.
 				}
 
 				// 3. Reverse DNS lookup.
@@ -190,7 +178,9 @@ class Fake_Bot_Detection extends Component {
 				}
 			}
 
-			$this->block_ip( $ip, $agent, $name );
+			if ( isset( $ip ) ) {
+				$this->block_ip( $ip, $agent, $name );
+			}
 			return; // UA matched, but DNS validation failed.
 		}
 	}
@@ -301,19 +291,7 @@ class Fake_Bot_Detection extends Component {
 	 * @param  string $bot_name  The name of the bot being impersonated.
 	 */
 	public function log_event( $ip, $scenario, $bot_name ) {
-		$model             = new Lockout_Log();
-		$model->ip         = $ip;
-		$user_agent        = defender_get_data_from_request( 'HTTP_USER_AGENT', 's' );
-		$model->user_agent = isset( $user_agent ) ? User_Agent::fast_cleaning( $user_agent ) : null;
-		$model->date       = time();
-		$model->tried      = $user_agent;
-		$model->blog_id    = get_current_blog_id();
-
-		$ip_to_country = $this->ip_to_country( $ip );
-
-		if ( isset( $ip_to_country['iso'] ) ) {
-			$model->country_iso_code = $ip_to_country['iso'];
-		}
+		$model = Lockout_Log::create( $ip );
 
 		switch ( $scenario ) {
 			case self::SCENARIO_FAKE_BOT:
@@ -351,88 +329,13 @@ class Fake_Bot_Detection extends Component {
 	 * @return bool True if owned by Facebook, false otherwise.
 	 */
 	public function is_facebook_ip( string $ip ): bool {
-		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			return false;
-		}
-
-		$cache_key = self::FB_CACHE_KEY_PREFIX . md5( $ip );
-
-		$cached = get_site_transient( $cache_key );
-		if ( false !== $cached ) {
-			return (bool) $cached;
-		}
-
-		$is_fb = false;
-
-		// Fetch from APIs.
-		foreach ( self::IP_INFO_SERVICES as $endpoint ) {
-			$url = sprintf( $endpoint, $ip );
-
-			$response = wp_remote_get(
-				$url,
-				array(
-					'timeout' => 3,
-					'headers' => array( 'Accept' => 'application/json' ),
-				)
-			);
-
-			if ( is_wp_error( $response ) ) {
-				continue;
-			}
-
-			$body = wp_remote_retrieve_body( $response );
-			$data = json_decode( $body, true );
-
-			if ( ! is_array( $data ) ) {
-				continue;
-			}
-
-			$org = $data['org'] ?? $data['connection']['org'] ?? null;
-			$isp = $data['isp'] ?? $data['connection']['isp'] ?? null;
-
-			if (
-				preg_match( '/facebook|meta/i', $org ?? '' ) ||
-				preg_match( '/facebook|meta/i', $isp ?? '' )
-			) {
-				$is_fb = true;
-				break;
-			}
-		}
-
-		set_site_transient(
-			$cache_key,
-			$is_fb ? 1 : 0,
-			$is_fb ? self::FB_CACHE_TTL_CONFIRMED : self::FB_CACHE_TTL_UNCONFIRMED
-		);
-
-		return $is_fb;
+		return ( new Facebook_Bot() )->is_ip( $ip );
 	}
 
 	/**
 	 * Clear all Facebook IP check transients.
 	 */
 	public function clear_fb_transients(): void {
-		global $wpdb;
-
-		$cache_key       = self::FB_CACHE_KEY_PREFIX;
-		$like_pattern    = "_site_transient_{$cache_key}_%";
-		$timeout_pattern = "_site_transient_timeout_{$cache_key}_%";
-
-		if ( is_multisite() ) {
-			$table      = $wpdb->sitemeta;
-			$key_column = 'meta_key';
-		} else {
-			$table      = $wpdb->options;
-			$key_column = 'option_name';
-		}
-
-		// Delete Facebook IP check transients.
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"DELETE FROM {$table} WHERE {$key_column} LIKE %s OR {$key_column} LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$like_pattern,
-				$timeout_pattern
-			)
-		);
+		( new Facebook_Bot() )->clear_fb_transients();
 	}
 }

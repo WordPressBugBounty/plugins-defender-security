@@ -9,9 +9,8 @@ namespace WP_Defender\Controller;
 
 use DateTime;
 use Exception;
-use DateInterval;
+use Generator;
 use WP_Defender\Event;
-use Calotes\Helper\HTTP;
 use WP_Defender\Traits\User;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
@@ -22,6 +21,7 @@ use WP_Defender\Model\Audit_Log;
 use WP_Defender\Behavior\WPMUDEV;
 use WP_Defender\Component\Network_Cron_Manager;
 use WP_Defender\Model\Notification\Audit_Report;
+use WP_Defender\Component\Export\Csv;
 use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Model\Setting\Audit_Logging as Model_Audit_Logging;
 
@@ -200,7 +200,9 @@ class Audit_Logging extends Event {
 	 * @defender_route
 	 */
 	public function export_as_csv(): void {
-		$result = $this->fetch_logs( defender_get_data_from_request( null, 'g' ), false );
+		$params  = defender_get_data_from_request( null, 'g' );
+		$user_id = '';
+		$result  = $this->fetch_logs( $params, 1, $user_id, 1000 );
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error(
@@ -210,8 +212,6 @@ class Audit_Logging extends Event {
 			);
 		}
 
-		// WP_Filesystem class doesn't directly provide a function for opening a stream to php://memory with the 'w' mode.
-		$fp      = fopen( 'php://memory', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$headers = array(
 			esc_html__( 'Summary', 'defender-security' ),
 			esc_html__( 'Date / Time', 'defender-security' ),
@@ -220,27 +220,51 @@ class Audit_Logging extends Event {
 			esc_html__( 'IP address', 'defender-security' ),
 			esc_html__( 'User', 'defender-security' ),
 		);
-		fputcsv( $fp, $headers, ',', '"', '\\' );
-		foreach ( $this->format_log_rows( $result ) as $row ) {
-			$vars = array(
-				$row['msg'],
-				is_array( $row['timestamp'] )
-					? $this->format_date_time( $row['timestamp'][0] )
-					: $this->format_date_time( $row['timestamp'] ),
-				$row['context'],
-				$row['action_type'],
-				$row['ip'],
-				$row['user'],
-			);
-			fputcsv( $fp, $vars, ',', '"', '\\' );
+		try {
+			Csv::to_browser( 'audit-logs', $this->get_export_rows( $params, $result ), $headers );
+		} catch ( \RuntimeException $e ) {
+			$this->log( $e->getMessage(), 'audit-logging' );
 		}
-		$filename = 'wdf-audit-logs-export-' . wp_date( 'ymdHis' ) . '.csv';
-		fseek( $fp, 0 );
-		header( 'Content-Type: text/csv' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '";' );
-		// Make php send the generated csv lines to the browser.
-		fpassthru( $fp );
-		exit();
+	}
+
+	/**
+	 * Generates audit log export rows in database-backed pages.
+	 *
+	 * @param array $params Request filters.
+	 * @param array $logs   First page of audit logs.
+	 *
+	 * @return Generator
+	 * @throws Exception If there is an error while fetching logs.
+	 */
+	private function get_export_rows( array $params, array $logs ): Generator {
+		$page     = 1;
+		$per_page = 1000;
+		$user_id  = '';
+
+		do {
+			if ( 1 < $page ) {
+				$logs = $this->fetch_logs( $params, $page, $user_id, $per_page );
+				if ( is_wp_error( $logs ) ) {
+					throw new Exception( esc_html( $logs->get_error_message() ) );
+				}
+			}
+
+			foreach ( $this->format_log_rows( $logs ) as $row ) {
+				yield array(
+					$row['msg'],
+					is_array( $row['timestamp'] )
+						? $this->format_date_time( $row['timestamp'][0] )
+						: $this->format_date_time( $row['timestamp'] ),
+					$row['context'],
+					$row['action_type'],
+					$row['ip'],
+					$row['user'],
+				);
+			}
+
+			$has_more = count( $logs ) === $per_page;
+			++$page;
+		} while ( $has_more );
 	}
 
 	/**
@@ -395,7 +419,7 @@ class Audit_Logging extends Event {
 
 		wp_enqueue_style(
 			$handle,
-			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			WP_DEFENDER_BASE_URL . 'assets/css/core-ui.css',
 			array(),
 			DEFENDER_VERSION
 		);

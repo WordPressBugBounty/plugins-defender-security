@@ -2,7 +2,8 @@
   "name": "incsub/wp-defender-lib",
   "description": "A package for prefixing dependencies namespace",
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.0",
+    "maxmind-db/reader": "1.11.0"
   },
   "require-dev": {
     "nyholm/psr7": "^1.8",
@@ -19,6 +20,7 @@
       "dep_namespace": "WP_DEFENDER_VENDOR\\",
       "dep_directory": "/packages/",
       "packages": [
+        "maxmind-db/reader",
         "nyholm/psr7",
         "nyholm/psr7-server",
         "web-auth/webauthn-lib"

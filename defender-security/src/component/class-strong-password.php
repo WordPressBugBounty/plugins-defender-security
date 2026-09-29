@@ -310,12 +310,12 @@ class Strong_Password extends Component {
 	 * Generate a strong password with a mix of character types.
 	 *
 	 * @param string $password The password to be generated.
-	 * @param int    $length   The length of the password to be generated (12 or 24).
+	 * @param int    $length   The length of the password to be generated (12).
 	 *
 	 * @return string Strong password.
 	 */
 	public function generate_password( $password, $length ) {
-		if ( ! in_array( $length, array( 12, 24 ), true ) ) {
+		if ( 12 !== $length ) {
 			return $password;
 		}
 

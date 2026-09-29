@@ -692,41 +692,6 @@ function defender_is_rest_api_request(): bool {
 	return false !== strpos( $request_uri, $rest_prefix );
 }
 
-/**
- * Handle deprecated functions by logging or triggering actions.
- * This function is a wrapper for WordPress's _deprecated_function() function.
- * It is used to handle deprecated functions by either logging a deprecation
- * message or triggering an action. It checks if the current request is an AJAX
- * request or a REST API request and acts accordingly.
- *
- * @param  string $function_name  The function that was called.
- * @param  string $version  The version number that deprecated the function.
- * @param  string $replacement  (Optional) The function that should be used instead.
- *
- * @return void
- * @since 4.2.0
- */
-function defender_deprecated_function( string $function_name, string $version, string $replacement = '' ): void {
-	/**
-	 * Filters whether to trigger an error for deprecated functions.
-	 *
-	 * @param  bool  $trigger  Whether to trigger the error for deprecated functions. Default false.
-	 *
-	 * @since 4.2.1
-	 */
-	if ( WP_DEBUG && apply_filters( 'defender_deprecated_function_trigger_error', false ) ) {
-		if ( wp_doing_ajax() || defender_is_rest_api_request() ) {
-			do_action( 'deprecated_function_run', $function_name, $replacement, $version );
-
-			$log_string  = "Function {$function_name} is deprecated since version {$version}!";
-			$log_string .= '' !== $replacement ? " Use {$replacement} instead." : '';
-			wp_die( esc_html( $log_string ) );
-		} else {
-			_deprecated_function( esc_html( $function_name ), esc_html( $version ), esc_html( $replacement ) );
-		}
-	}
-}
-
 if ( ! function_exists( 'defender_get_data_from_request' ) ) {
 	/**
 	 * Retrieves the value of a specific server data key after sanitizing it.

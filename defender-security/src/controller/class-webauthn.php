@@ -542,7 +542,7 @@ class Webauthn extends Controller {
 			}
 
 			$decoded_response = json_decode( $response_data, true );
-			if ( ! is_array( $decoded_response ) || empty( $decoded_response['rawId'] ) ) {
+			if ( ! is_array( $decoded_response ) || ! isset( $decoded_response['rawId'] ) || ! is_string( $decoded_response['rawId'] ) || '' === $decoded_response['rawId'] ) {
 				throw new Exception( esc_html__( 'Invalid assertion payload.', 'defender-security' ) );
 			}
 

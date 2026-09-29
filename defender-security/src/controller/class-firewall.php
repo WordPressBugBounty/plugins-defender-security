@@ -27,7 +27,7 @@ use WP_Defender\Component\IP\Antibot_Global_Firewall as Antibot_Global_Firewall_
 use WP_Defender\Component\IP\Global_IP as Global_IP_Component;
 use WP_Defender\Component\Blacklist_Lockout;
 use WP_Defender\Component\Http\Remote_Address;
-use MaxMind\Db\Reader\InvalidDatabaseException;
+use WP_DEFENDER_VENDOR\MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Model\Setting\Notfound_Lockout;
 use WP_Defender\Model\Setting\Global_Ip_Lockout;
 use WP_Defender\Model\Setting\User_Agent_Lockout;
@@ -424,7 +424,7 @@ class Firewall extends Event {
 
 		wp_enqueue_style(
 			$handle,
-			WP_DEFENDER_BASE_URL . 'assets/css/showcase.css',
+			WP_DEFENDER_BASE_URL . 'assets/css/core-ui.css',
 			array(),
 			DEFENDER_VERSION
 		);
@@ -530,15 +530,21 @@ class Firewall extends Event {
 			)
 		);
 		$maybe_email = isset( $data['user_data'] ) ? $data['user_data'] : '';
-		if ( ! is_string( $maybe_email ) || '' === trim( $maybe_email ) ) {
-			return new Response( false, array() );
-		}
-		$ips = $this->get_user_ip();
+		$ips         = $this->get_user_ip();
 		// Check if at least one IP is blocked.
 		$blocked_ip = $this->service->get_blocked_ip( $ips );
 		// If nothing, just return.
 		if ( '' === $blocked_ip ) {
 			return new Response( false, array() );
+		}
+		// Count every verification attempt and stop before account lookup or side effects when the limit is reached.
+		if ( $this->check_attempt_counter_by( $blocked_ip ) ) {
+			return new Response( false, array() );
+		}
+
+		// Always return the same response for accepted attempts to avoid exposing account existence or role.
+		if ( ! is_string( $maybe_email ) || '' === trim( $maybe_email ) ) {
+			return new Response( true, array() );
 		}
 		// Maybe is it a user email?
 		$user = get_user_by( 'email', $maybe_email );
@@ -546,19 +552,19 @@ class Firewall extends Event {
 			// Maybe is it a username?
 			$user = get_user_by( 'login', $maybe_email );
 			if ( ! is_object( $user ) ) {
-				$this->check_attempt_counter_by( $blocked_ip );
-
-				return new Response( false, array() );
+				return new Response( true, array() );
 			}
 		}
 		// Send email only for admins.
 		if ( ! $this->is_admin( $user ) ) {
-			// No need to count attempts for existed user but non-admin.
-			return new Response( false, array() );
+			return new Response( true, array() );
 		}
 		// Create Unlockout records.
 		$arr_uids = array();
 		foreach ( $ips as $ip ) {
+			if ( Unlockout::has_pending_request( $ip, $user->user_email ) ) {
+				continue;
+			}
 			// Collect blocked IP's.
 			$created_id = wd_di()->get( Unlockout::class )->create( $ip, $user->user_email );
 			if ( $created_id ) {
@@ -566,7 +572,9 @@ class Firewall extends Event {
 			}
 		}
 
-		$this->send_unlock_email( $user->user_email, $user->user_login, $arr_uids );
+		if ( array() !== $arr_uids ) {
+			$this->send_unlock_email( $user->user_email, $user->user_login, $arr_uids );
+		}
 
 		return new Response( true, array() );
 	}

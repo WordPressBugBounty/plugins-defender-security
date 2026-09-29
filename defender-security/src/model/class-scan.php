@@ -184,26 +184,18 @@ class Scan extends DB {
 
 		$scan_item_group_total = wd_di()->get( Scan_Item::class )->get_types_total( $this->id, Scan_Item::STATUS_ACTIVE );
 
-		$count_issues  = isset( $scan_item_group_total['all'] ) ?
-			$scan_item_group_total['all'] : 0;
-		$count_core    = isset( $scan_item_group_total[ Scan_Item::TYPE_INTEGRITY ] ) ?
-			$scan_item_group_total[ Scan_Item::TYPE_INTEGRITY ] : 0;
-		$count_plugin  = isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CHECK ] ) ?
-			$scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CHECK ] : 0;
-		$count_malware = isset( $scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ] ) ?
-			$scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ] : 0;
-		$count_vuln    = isset( $scan_item_group_total[ Scan_Item::TYPE_VULNERABILITY ] ) ?
-			$scan_item_group_total[ Scan_Item::TYPE_VULNERABILITY ] : 0;
+		$count_issues  = $scan_item_group_total['all'] ?? 0;
+		$count_core    = $scan_item_group_total[ Scan_Item::TYPE_INTEGRITY ] ?? 0;
+		$count_plugin  = $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CHECK ] ?? 0;
+		$count_malware = $scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ] ?? 0;
+		$count_vuln    = $scan_item_group_total[ Scan_Item::TYPE_VULNERABILITY ] ?? 0;
 		// New counts since v5.5.0.
-		$count_outdated_plugin = isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_OUTDATED ] ) ?
-			$scan_item_group_total[ Scan_Item::TYPE_PLUGIN_OUTDATED ] : 0;
-		$count_closed_plugin   = isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CLOSED ] ) ?
-			$scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CLOSED ] : 0;
+		$count_outdated_plugin = $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_OUTDATED ] ?? 0;
+		$count_closed_plugin   = $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CLOSED ] ?? 0;
 
 		$scan_item_ignore_total = wd_di()->get( Scan_Item::class )->get_types_total( $this->id, Scan_Item::STATUS_IGNORE );
 
-		$count_ignored = isset( $scan_item_ignore_total['all'] ) ?
-			$scan_item_ignore_total['all'] : 0;
+		$count_ignored = $scan_item_ignore_total['all'] ?? 0;
 
 		foreach ( $ignored_models as $model ) {
 			$ignored[] = $model->to_array();
@@ -357,6 +349,7 @@ class Scan extends DB {
 		return $builder->count();
 	}
 
+
 	/**
 	 * Allow a specific issue by updating its status and removing it from the global ignore indexer.
 	 *
@@ -365,35 +358,7 @@ class Scan extends DB {
 	 * @return bool
 	 */
 	public function unignore_issue( $id ): bool {
-		$issue = $this->get_issue( $id );
-		if ( ! is_object( $issue ) ) {
-			return false;
-		}
-		// Check if the current issue already exists in the Issues list, there is no need to add a duplicate.
-		$current_issue_arr = $issue->to_array();
-		foreach ( $this->get_issues( null, Scan_Item::STATUS_ACTIVE ) as $active_issue ) {
-			$active_issue_arr = $active_issue->to_array();
-			if (
-				$current_issue_arr['type'] === $active_issue_arr['type']
-				&& $current_issue_arr['full_path'] === $active_issue_arr['full_path']
-			) {
-				return false;
-			}
-		}
-
-		$issue->status = Scan_Item::STATUS_ACTIVE;
-		$issue->save();
-
-		$ignore_lists = get_site_option( self::IGNORE_INDEXER, array() );
-		$data         = $issue->raw_data;
-		if ( isset( $data['file'] ) ) {
-			unset( $ignore_lists[ array_search( $data['file'], $ignore_lists, true ) ] );
-		} elseif ( isset( $data['slug'] ) ) {
-			unset( $ignore_lists[ array_search( $data['slug'], $ignore_lists, true ) ] );
-		}
-		$this->update_ignore_list( $ignore_lists );
-
-		return true;
+		return $this->update_issue_status( (int) $id, Scan_Item::STATUS_ACTIVE, Scan_Item::STATUS_ACTIVE );
 	}
 
 	/**
@@ -418,30 +383,7 @@ class Scan extends DB {
 	 * @return bool
 	 */
 	public function ignore_issue( $id ): bool {
-		$issue = $this->get_issue( $id );
-		if ( ! is_object( $issue ) ) {
-			return false;
-		}
-		// Check if the current issue already exists in the Ignored list, there is no need to add a duplicate.
-		$current_issue_arr = $issue->to_array();
-		foreach ( $this->get_issues( null, Scan_Item::STATUS_IGNORE ) as $ignore_issue ) {
-			$ignore_issue_arr = $ignore_issue->to_array();
-			if ( $current_issue_arr['type'] === $ignore_issue_arr['type'] &&
-				$current_issue_arr['full_path'] === $ignore_issue_arr['full_path']
-			) {
-				return false;
-			}
-		}
-
-		$issue->status = Scan_Item::STATUS_IGNORE;
-		$issue->save();
-
-		// Add this into a global ignored index and update the ignored list.
-		$ignore_lists   = get_site_option( self::IGNORE_INDEXER, array() );
-		$ignore_lists[] = $current_issue_arr['full_path'];
-		$this->update_ignore_list( $ignore_lists );
-
-		return true;
+		return $this->update_issue_status( (int) $id, Scan_Item::STATUS_IGNORE, Scan_Item::STATUS_IGNORE );
 	}
 
 	/**
@@ -555,8 +497,7 @@ class Scan extends DB {
 			$scan_item_ignore_total = wd_di()->get( Scan_Item::class )
 				->get_types_total( $this->id, Scan_Item::STATUS_IGNORE );
 
-			$count_ignored          = isset( $scan_item_ignore_total['all'] ) ?
-				$scan_item_ignore_total['all'] : 0;
+			$count_ignored          = $scan_item_ignore_total['all'] ?? 0;
 			$count_ignored_filtered = (int) $this->count( $type, Scan_Item::STATUS_IGNORE );
 
 			$total_issue_pages   = 1;
@@ -581,25 +522,6 @@ class Scan extends DB {
 				$data = $this->prepare_issues( null, null, $type, $scenario );
 			}
 
-			$scan_item_group_total = wd_di()->get( Scan_Item::class )
-				->get_types_total( $this->id, Scan_Item::STATUS_ACTIVE );
-
-			$count_issues  = isset( $scan_item_group_total['all'] ) ?
-				$scan_item_group_total['all'] : 0;
-			$count_core    = isset( $scan_item_group_total[ Scan_Item::TYPE_INTEGRITY ] ) ?
-				$scan_item_group_total[ Scan_Item::TYPE_INTEGRITY ] : 0;
-			$count_plugin  = isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CHECK ] ) ?
-				$scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CHECK ] : 0;
-			$count_malware = isset( $scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ] ) ?
-				$scan_item_group_total[ Scan_Item::TYPE_SUSPICIOUS ] : 0;
-			$count_vuln    = isset( $scan_item_group_total[ Scan_Item::TYPE_VULNERABILITY ] ) ?
-				$scan_item_group_total[ Scan_Item::TYPE_VULNERABILITY ] : 0;
-			// New counts since v5.5.0.
-			$count_outdated_plugin = isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_OUTDATED ] ) ?
-				$scan_item_group_total[ Scan_Item::TYPE_PLUGIN_OUTDATED ] : 0;
-			$count_closed_plugin   = isset( $scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CLOSED ] ) ?
-				$scan_item_group_total[ Scan_Item::TYPE_PLUGIN_CLOSED ] : 0;
-
 			return array(
 				'status'          => $this->status,
 				'issues_items'    => $data['issues'],
@@ -614,15 +536,15 @@ class Scan extends DB {
 				'count'           => array(
 					'total'                  => is_array( $data['issues'] ) || $data['issues'] instanceof Countable ? count( $data['issues'] ) : 0,
 					'total_filtered'         => $total_filtered,
-					'issues_total'           => $count_issues,
+					'issues_total'           => $data['count_issues'],
 					'issues_total_filtered'  => $count_issues_filtered,
 					'ignored_total'          => $count_ignored,
 					'ignored_total_filtered' => $count_ignored_filtered,
-					'core'                   => $count_core + $count_plugin,
-					'content'                => $count_malware,
-					'vuln'                   => $count_vuln,
-					'outdated_plugin'        => $count_outdated_plugin,
-					'closed_plugin'          => $count_closed_plugin,
+					'core'                   => $data['count_core'] + $data['count_plugin'],
+					'content'                => $data['count_malware'],
+					'vuln'                   => $data['count_vuln'],
+					'outdated_plugin'        => $data['count_outdated_plugin'],
+					'closed_plugin'          => $data['count_closed_plugin'],
 				),
 				'paging'          => array(
 					'issue'    => array(
@@ -982,15 +904,30 @@ class Scan extends DB {
 	/**
 	 * Check if a slug is whitelisted.
 	 *
+	 * File entries are matched only when the slug's base name equals the entry
+	 * (case-insensitive), so paths like "robots.txt.backdoor" or
+	 * "robots.txt/malware.php" are never falsely accepted.
+	 *
+	 * Directory entries are matched as complete path segments, preventing
+	 * substring bypasses like ".git-malware/payload.php" or "not.git/payload.php".
+	 *
 	 * @param  string $slug The path to file.
 	 *
 	 * @return bool
 	 */
 	public function is_issue_whitelisted( string $slug ): bool {
-		$whitelisted_files = $this->whitelisted_files();
-		foreach ( $whitelisted_files as $file ) {
-			if ( false !== stristr( $slug, $file ) ) {
-				return true;
+		$whitelisted_files       = $this->whitelisted_files();
+		$whitelisted_directories = array( '.well-known', '.idea', '.svn', '.git', '.quarantine', '.tmb', '.vscode' );
+		$normalized_slug         = str_replace( '\\', '/', $slug );
+		$bounded_slug            = '/' . trim( $normalized_slug, '/' ) . '/';
+
+		foreach ( $whitelisted_files as $entry ) {
+			if ( ! in_array( $entry, $whitelisted_directories, true ) ) {
+				if ( 0 === strcasecmp( basename( $normalized_slug ), $entry ) ) {
+					return true;
+				}
+			} elseif ( false !== stripos( $bounded_slug, '/' . $entry . '/' ) ) {
+					return true;
 			}
 		}
 
@@ -1084,5 +1021,75 @@ class Scan extends DB {
 	 */
 	private function is_positive_int( $id ): bool {
 		return is_int( $id ) && $id > 0;
+	}
+
+	/**
+	 * Check if an issue with the given type and full_path already exists under a specific status.
+	 * Used to prevent adding duplicate entries to the ignored or active lists.
+	 *
+	 * @param array  $current_issue_arr Associative array representation of the issue to check.
+	 * @param string $status            The status to search within (e.g. Scan_Item::STATUS_ACTIVE or STATUS_IGNORE).
+	 *
+	 * @return bool True if a matching issue already exists with that status.
+	 */
+	private function issue_exists_with_status( array $current_issue_arr, string $status ): bool {
+		foreach ( $this->get_issues( null, $status ) as $existing_issue ) {
+			$existing_arr = $existing_issue->to_array();
+			if (
+				$current_issue_arr['type'] === $existing_arr['type']
+				&& $current_issue_arr['full_path'] === $existing_arr['full_path']
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Update the status of an issue and sync the global ignore indexer accordingly.
+	 *
+	 * When $new_status is STATUS_IGNORE the issue's full_path is appended to the indexer.
+	 * When $new_status is STATUS_ACTIVE the issue's file/slug key is removed from the indexer.
+	 *
+	 * @param int    $id           The ID of the issue to update.
+	 * @param string $new_status   The target status (Scan_Item::STATUS_IGNORE or STATUS_ACTIVE).
+	 * @param string $guard_status The status to check for existing duplicates before updating.
+	 *
+	 * @return bool True on success, false if the issue does not exist or a duplicate was found.
+	 */
+	private function update_issue_status( int $id, string $new_status, string $guard_status ): bool {
+		$issue = $this->get_issue( $id );
+		if ( ! is_object( $issue ) ) {
+			return false;
+		}
+
+		$current_issue_arr = $issue->to_array();
+		// Bail out if an identical issue already exists under the target status.
+		if ( $this->issue_exists_with_status( $current_issue_arr, $guard_status ) ) {
+			return false;
+		}
+
+		$issue->status = $new_status;
+		$issue->save();
+
+		$ignore_lists = get_site_option( self::IGNORE_INDEXER, array() );
+
+		if ( Scan_Item::STATUS_IGNORE === $new_status ) {
+			// Add this into a global ignored index and update the ignored list.
+			$ignore_lists[] = $current_issue_arr['full_path'];
+		} else {
+			// Remove the entry from the global ignored index.
+			$data = $issue->raw_data;
+			if ( isset( $data['file'] ) ) {
+				unset( $ignore_lists[ array_search( $data['file'], $ignore_lists, true ) ] );
+			} elseif ( isset( $data['slug'] ) ) {
+				unset( $ignore_lists[ array_search( $data['slug'], $ignore_lists, true ) ] );
+			}
+		}
+
+		$this->update_ignore_list( $ignore_lists );
+
+		return true;
 	}
 }

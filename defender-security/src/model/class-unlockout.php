@@ -91,6 +91,24 @@ class Unlockout extends DB {
 	}
 
 	/**
+	 * Checks whether a pending unlock request already exists.
+	 *
+	 * @param  string $ip  The IP address to check.
+	 * @param  string $email  The email address to check.
+	 *
+	 * @return bool
+	 */
+	public static function has_pending_request( $ip, $email ): bool {
+		$model = self::get_orm()->get_repository( self::class )
+			->where( 'ip', $ip )
+			->where( 'email', $email )
+			->where( 'status', self::STATUS_PENDING )
+			->first();
+
+		return is_object( $model );
+	}
+
+	/**
 	 * Remove data by given data.
 	 *
 	 * @param  int $timestamp  The timestamp to compare against.
@@ -132,6 +150,7 @@ class Unlockout extends DB {
 		$model = $orm->get_repository( self::class )
 					->where( 'id', $id )
 					->where( 'email', $email )
+					->where( 'status', self::STATUS_PENDING )
 					->first();
 
 		if ( ! is_object( $model ) ) {

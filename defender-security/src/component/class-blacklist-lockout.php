@@ -14,7 +14,7 @@ use Calotes\Helper\Array_Cache;
 use WP_Defender\Traits\Country;
 use WP_Defender\Traits\Continent;
 use WP_Defender\Model\Lockout_Log;
-use MaxMind\Db\Reader\InvalidDatabaseException;
+use WP_DEFENDER_VENDOR\MaxMind\Db\Reader\InvalidDatabaseException;
 use WP_Defender\Integrations\MaxMind_Geolocation;
 use WP_Defender\Model\Setting\Blacklist_Lockout as Model_Blacklist_Lockout;
 use WP_Defender\Integrations\Main_Wp;
@@ -76,23 +76,15 @@ class Blacklist_Lockout extends Component {
 		}
 		$model     = new Model_Blacklist_Lockout();
 		$whitelist = $model->get_country_whitelist();
-		if ( ! is_array( $whitelist ) || array() === $whitelist ) {
+		if ( array() === $whitelist ) {
 			return false;
 		}
 
 		if ( isset( $country['iso'] ) && '' !== $country['iso'] ) {
 			$country_iso = strtoupper( $country['iso'] );
 
-			// Check if the specific country is in the whitelist.
-			if ( in_array( $country_iso, $whitelist, true ) ) {
+			if ( $this->is_country_iso_in_list( $country_iso, $whitelist ) ) {
 				return true;
-			}
-
-			// Check if any continent containing this country is in the whitelist.
-			foreach ( $whitelist as $allowed_code ) {
-				if ( $this->is_country_in_continent( $country_iso, $allowed_code ) ) {
-					return true;
-				}
 			}
 		}
 
@@ -110,7 +102,7 @@ class Blacklist_Lockout extends Component {
 		$ips         = array(
 			...self::fetch_latest_ips(),
 			'127.0.0.1',
-			isset( $server_addr ) ? $server_addr : $remote_addr,
+			$server_addr ?? $remote_addr,
 		);
 
 		$whitelist_ips = apply_filters( 'ip_lockout_default_whitelist_ip', $ips );
@@ -236,16 +228,8 @@ class Blacklist_Lockout extends Component {
 		if ( isset( $country['iso'] ) && '' !== $country['iso'] ) {
 			$country_iso = strtoupper( $country['iso'] );
 
-			// Check if the specific country is in the blacklist.
-			if ( in_array( $country_iso, $blacklisted, true ) ) {
+			if ( $this->is_country_iso_in_list( $country_iso, $blacklisted ) ) {
 				return true;
-			}
-
-			// Check if any continent containing this country is in the blacklist.
-			foreach ( $blacklisted as $blocked_code ) {
-				if ( $this->is_country_in_continent( $country_iso, $blocked_code ) ) {
-					return true;
-				}
 			}
 		}
 
@@ -313,7 +297,7 @@ class Blacklist_Lockout extends Component {
 		$model       = new Model_Blacklist_Lockout();
 		$license_key = $model->maxmind_license_key;
 		// Using Geo DB without a license key is not advisable.
-		if ( '' === $license_key && is_file( $model->geodb_path ) ) {
+		if ( '' === $license_key && is_string( $model->geodb_path ) && is_file( $model->geodb_path ) ) {
 			$service_geo = wd_di()->get( MaxMind_Geolocation::class );
 			$service_geo->delete_database();
 			$model->geodb_path = '';
@@ -325,7 +309,7 @@ class Blacklist_Lockout extends Component {
 		// Likely the case after the config import with the existed MaxMind license key.
 		if (
 			'' !== $license_key
-			&& ( is_null( $model->geodb_path ) || ! is_file( $model->geodb_path ) )
+			&& ( ! is_string( $model->geodb_path ) || ! is_file( $model->geodb_path ) )
 		) {
 			$service_geo = wd_di()->get( MaxMind_Geolocation::class );
 			$tmp         = $service_geo->get_downloaded_url( $license_key );
@@ -364,7 +348,7 @@ class Blacklist_Lockout extends Component {
 		}
 
 		// Check again.
-		if ( is_null( $model->geodb_path ) || ! is_file( $model->geodb_path ) ) {
+		if ( ! is_string( $model->geodb_path ) || ! is_file( $model->geodb_path ) ) {
 			return false;
 		}
 
@@ -382,7 +366,7 @@ class Blacklist_Lockout extends Component {
 			$rel_path = $abs_path . DIRECTORY_SEPARATOR . $path_parts['basename'];
 			if ( file_exists( $rel_path ) ) {
 				return true;
-			} elseif ( ! is_null( $model->geodb_path ) && '' !== $model->geodb_path && file_exists( $model->geodb_path ) ) {
+			} elseif ( '' !== $model->geodb_path && file_exists( $model->geodb_path ) ) {
 				// The case if ABSPATH was changed e.g. in wp-config.php.
 				return true;
 			}
@@ -518,5 +502,57 @@ class Blacklist_Lockout extends Component {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check whether a code identifies a continent without also identifying a country.
+	 *
+	 * @param string $code The code to check.
+	 * @return bool True when the code identifies only a continent.
+	 */
+	private function is_continent_code( $code ): bool {
+		$countries_with_continents = $this->get_countries_with_continents();
+
+		if ( ! isset( $countries_with_continents[ $code ] ) ) {
+			return false;
+		}
+
+		foreach ( $countries_with_continents as $continent ) {
+			if ( ! isset( $continent['area'] ) ) {
+				continue;
+			}
+
+			foreach ( $continent['area'] as $area ) {
+				if ( isset( $area['countries'][ $code ] ) ) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Checks whether a country ISO code (or any continent it belongs to) is present in the given list.
+	 *
+	 * @param  string $country_iso  The upcased two-letter ISO country code.
+	 * @param  array  $iso_list     The list of country/continent codes to check against.
+	 *
+	 * @return bool True if the country or one of its continents is found in the list.
+	 */
+	private function is_country_iso_in_list( string $country_iso, array $iso_list ): bool {
+		// Check if the specific country is in the list.
+		if ( in_array( $country_iso, $iso_list, true ) ) {
+			return true;
+		}
+
+		// Check if any continent containing this country is in the list.
+		foreach ( $iso_list as $code ) {
+			if ( $this->is_continent_code( $code ) && $this->is_country_in_continent( $country_iso, $code ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

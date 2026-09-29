@@ -113,8 +113,9 @@ class Core_Integrity extends Behavior {
 					$model->add_item(
 						Scan_Item::TYPE_INTEGRITY,
 						array(
-							'file' => $file,
-							'type' => 'modified',
+							'file'     => $file,
+							'type'     => 'modified',
+							'checksum' => $checksums[ $rev_file ],
 						)
 					);
 				}

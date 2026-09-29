@@ -365,12 +365,6 @@ class Captcha extends Component {
 		if ( $this->provider->should_skip_check( $this->woo, $this->buddypress ) ) {
 			return $user;
 		}
-		// Is Recaptcha-request from 'Ultimate Member' plugin?
-		$um_request = defender_get_data_from_request( 'um_request', 'p' );
-		if ( is_string( $um_request ) && '' !== $um_request && function_exists( 'um_recaptcha_validate' ) ) {
-			return $user;
-		}
-
 		if ( ! $this->provider->verify_response( 'default_login' ) ) {
 			if ( is_wp_error( $user ) ) {
 				$user->add( 'invalid_captcha', $this->provider->error_message() );

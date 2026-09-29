@@ -81,16 +81,13 @@ class Menu_Audit extends Audit_Event {
 			$items = wp_get_nav_menu_items( $menu_obj->term_id );
 			if ( is_array( $items ) && array() !== $items ) {
 				foreach ( $items as $item ) {
-					array_push(
-						$menu['items'],
-						array(
-							'item_id'          => $item->ID,
-							'title'            => $item->title,
-							'url'              => $item->url,
-							'object'           => $item->object,
-							'menu_order'       => $item->menu_order,
-							'menu_item_parent' => $item->menu_item_parent,
-						)
+					$menu['items'][] = array(
+						'item_id'          => $item->ID,
+						'title'            => $item->title,
+						'url'              => $item->url,
+						'object'           => $item->object,
+						'menu_order'       => $item->menu_order,
+						'menu_item_parent' => $item->menu_item_parent,
 					);
 				}
 			}
@@ -286,7 +283,10 @@ class Menu_Audit extends Audit_Event {
 		$post_array = filter_input_array( INPUT_POST );
 		$new_items  = isset( $post_array['menu-item-title'] ) ? array_keys( $post_array['menu-item-title'] ) : array();
 		$old_menu   = $this->get_cached_menu( $menu_id );
-		$old_items  = array_column( $old_menu['items'], 'item_id' );
+		if ( ! is_array( $old_menu ) || ! isset( $old_menu['items'] ) || ! is_array( $old_menu['items'] ) ) {
+			return false;
+		}
+		$old_items = array_column( $old_menu['items'], 'item_id' );
 
 		sort( $new_items );
 		sort( $old_items );
@@ -313,7 +313,7 @@ class Menu_Audit extends Audit_Event {
 						esc_html__( '%1$s %2$s updated menu "%3$s"', 'defender-security' ),
 						$blog_name,
 						$this->get_user_display( get_current_user_id() ),
-						$menu_data['menu-name']
+						$menu_data['menu-name'] ?? $old_menu['name']
 					),
 					$this->type,
 				);
@@ -340,7 +340,7 @@ class Menu_Audit extends Audit_Event {
 				esc_html__( '%1$s %2$s deleted menu "%3$s"', 'defender-security' ),
 				$blog_name,
 				$this->get_user_display( get_current_user_id() ),
-				$old_menu['name']
+				$old_menu['name'] ?? '',
 			),
 			$this->type,
 		);

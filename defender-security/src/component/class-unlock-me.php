@@ -100,9 +100,11 @@ class Unlock_Me extends Component {
 			}
 		}
 
-		// All is good. IP's were unblocked.
+		// No valid or pending tokens found.
 		if ( array() === $ips ) {
-			return true;
+			$this->log( 'Unlock Me. Incorrect result. No pending tokens.', Firewall::FIREWALL_LOG );
+
+			return false;
 		}
 		// Work with IP's.
 		$ips      = array_unique( $ips );
