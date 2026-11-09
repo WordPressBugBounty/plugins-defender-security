@@ -878,10 +878,25 @@ class Notification extends Event {
 	 * @return array An array of data for the frontend.
 	 */
 	public function data_frontend(): array {
+		$zone = get_option( 'timezone_string' );
+		if ( ! is_string( $zone ) || '' === $zone ) {
+			// Sign comes from the float, not the hours: (int) -0.5 is 0, which would print UTC+0:30.
+			$offset    = (float) get_option( 'gmt_offset' );
+			$minutes   = (int) round( abs( $offset ) * 60 );
+			$remainder = $minutes % 60;
+			$zone      = \sprintf(
+				'UTC%s%d%s',
+				$offset < 0 ? '-' : '+',
+				\intdiv( $minutes, 60 ),
+				$remainder > 0 ? \sprintf( ':%02d', $remainder ) : ''
+			);
+		}
+
 		return array_merge(
 			array(
 				'alert_model'   => $this->service->get_alert_model(),
 				'reports_model' => $this->service->get_reports_model(),
+				'timezone'      => $zone,
 				'active_count'  => $this->service->count_active(),
 				'hub_connector' => wd_di()->get( Hub_Connector::class )->data_frontend(),
 				'antibot'       => wd_di()->get( Antibot_Global_Firewall::class )->data_frontend(),

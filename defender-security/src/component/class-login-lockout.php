@@ -79,7 +79,6 @@ class Login_Lockout extends Component {
 
 		add_filter( 'authenticate', array( $this, 'show_attempt_left' ), 9999, 2 );
 		add_action( 'wp_login', array( $this, 'clear_login_attempt' ) );
-		add_action( 'wd_2fa_lockout', array( $this, 'two_factor_lockout' ), 10, 3 );
 	}
 
 	/**
@@ -303,8 +302,9 @@ class Login_Lockout extends Component {
 				return ! $this->service->is_ip_whitelisted( $ip );
 			}
 		);
-		$models = Lockout_Ip::get_bulk( '', $ips );
-		foreach ( $models as $model ) {
+		foreach ( $ips as $ip ) {
+			// Creates the record if the IP has none, e.g. when Login Lockout was disabled during the failed attempts.
+			$model                  = Lockout_Ip::get( $ip );
 			$model->status          = Lockout_Ip::STATUS_BLOCKED;
 			$model->lock_time       = $start_time;
 			$model                  = $this->check_meta_data( $model );

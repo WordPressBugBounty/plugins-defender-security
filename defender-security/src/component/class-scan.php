@@ -162,9 +162,11 @@ class Scan extends Component {
 		// Find the current task.
 		$offset = array_search( $task, array_values( $tasks ), true );
 		if ( false === $offset ) {
-			$this->log( sprintf( 'offset is not found, search %s', $task ), Scan_Controller::SCAN_LOG );
+			$this->log( sprintf( 'offset is not found for task %s, marking scan as error', $task ), Scan_Controller::SCAN_LOG );
+			$this->scan->status = Scan_Model::STATUS_ERROR;
+			$this->scan->save();
 
-			return false;
+			return true; // Signal "stop" so the controller loop exits instead of retrying identical state.
 		}
 		// Reset the tasks to current.
 		$runner->seek( $offset );

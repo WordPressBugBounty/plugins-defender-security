@@ -296,10 +296,25 @@ final class TPMAttestationStatementSupport implements AttestationStatementSuppor
 
         //Check extendedKeyUsage
         Assertion::false(!isset($parsed['extensions']['extendedKeyUsage']), 'The "subjectAltName" is missing');
-        Assertion::eq($parsed['extensions']['extendedKeyUsage'], '2.23.133.8.3', 'The "extendedKeyUsage" is invalid');
+        // OpenSSL renders this OID using whichever name its object table holds,
+        // so accept the known aliases of tcg-kp-AIKCertificate alongside the OID.
+        Assertion::inArray($parsed['extensions']['extendedKeyUsage'], ['2.23.133.8.3', 'tcgkp-AIKCertificate', 'Attestation Identity Key Certificate'], 'The "extendedKeyUsage" is invalid');
 
         // id-fido-gen-ce-aaguid OID check
-        Assertion::false(in_array('1.3.6.1.4.1.45724.1.1.4', $parsed['extensions'], true) && !hash_equals($authenticatorData->getAttestedCredentialData()->getAaguid()->getBytes(), $parsed['extensions']['1.3.6.1.4.1.45724.1.1.4']), 'The value of the "aaguid" does not match with the certificate');
+        Assertion::false(array_key_exists('1.3.6.1.4.1.45724.1.1.4', $parsed['extensions']) && !hash_equals($authenticatorData->getAttestedCredentialData()->getAaguid()->getBytes(), $this->extractAaguidFromExtension($parsed['extensions']['1.3.6.1.4.1.45724.1.1.4'])), 'The value of the "aaguid" does not match with the certificate');
+    }
+
+    /**
+     * The id-fido-gen-ce-aaguid extension wraps the 16 AAGUID bytes in a DER
+     * OCTET STRING. Unwrap it when present so the comparison sees raw bytes.
+     */
+    private function extractAaguidFromExtension(string $extension): string
+    {
+        if (18 === mb_strlen($extension, '8bit') && "\x04\x10" === mb_substr($extension, 0, 2, '8bit')) {
+            return mb_substr($extension, 2, 16, '8bit');
+        }
+
+        return $extension;
     }
 
     private function processWithECDAA(): bool

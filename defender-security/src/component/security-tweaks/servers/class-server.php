@@ -6,6 +6,8 @@
  * @package WP_Defender\Component\Security_Tweaks\Servers
  */
 
+declare( strict_types=1 );
+
 namespace WP_Defender\Component\Security_Tweaks\Servers;
 
 /**
@@ -19,59 +21,12 @@ class Server {
 	/**
 	 * Create a new instance of the Server_Factory class.
 	 *
-	 * @param  mixed $server  The server type.
+	 * @param mixed $server The server type.
 	 *
 	 * @return Server_Factory Returns an instance of Server_Factory.
 	 */
 	public static function create( $server ) {
 		return new Server_Factory( $server );
-	}
-
-	/**
-	 * Determine the server software by making a self-ping request to the home URL.
-	 *
-	 * @param  string $default_server_name  The default server name to return if detection fails. Defaults to 'apache'.
-	 *
-	 * @return string Returns the server software type or the default server name if detection fails.
-	 */
-	public static function get_software_by_self_ping( $default_server_name = 'apache' ) {
-		$request = wp_remote_head(
-			home_url(),
-			array(
-				'user-agent' => defender_get_user_agent( 'Defender Self Ping' ),
-				// Most hosts don't really have valid ssl or ssl still pending.
-				'sslverify'  => apply_filters( 'defender_ssl_verify', true ),
-			)
-		);
-		$server  = wp_remote_retrieve_header( $request, 'server' );
-		$server  = explode( '/', $server );
-
-		if ( isset( $server[0] ) ) {
-			$server = strtolower( $server[0] );
-		} else {
-			$server = $default_server_name;
-		}
-
-		return $server;
-	}
-
-	/**
-	 * Get the server software from the SERVER_SOFTWARE server variable or by self-ping if not available.
-	 *
-	 * @return string Returns the server software type.
-	 */
-	public static function get_software() {
-		$software = defender_get_data_from_request( 'SERVER_SOFTWARE', 's' );
-		if ( ! is_string( $software ) || '' === $software ) {
-			return self::get_software_by_self_ping();
-		}
-
-		$software = explode( ' ', $software );
-		$software = explode( '/', reset( $software ) );
-		if ( isset( $software[0] ) ) {
-			return strtolower( $software[0] );
-		}
-		return self::get_software_by_self_ping();
 	}
 
 	/**
@@ -94,20 +49,13 @@ class Server {
 		// Url should end with php.
 		global $is_apache, $is_nginx, $is_IIS, $is_iis7;
 
-		if ( $is_nginx ) {
-			$server = 'nginx';
-		} elseif ( $is_apache ) {
-			// Case the url is detecting php file.
-			if ( 'php' === pathinfo( $url, PATHINFO_EXTENSION ) ) {
-				$server = 'apache';
-			} else {
-				$server = self::get_software();
-			}
-		} elseif ( $is_iis7 || $is_IIS ) {
-			$server = 'iis-7';
-		} else {
-			$server = self::get_software();
-		}
+		$server = match ( true ) {
+			(bool) $is_nginx => 'nginx',
+			$is_apache && 'php' !== pathinfo( $url, PATHINFO_EXTENSION ) => self::get_software(),
+			(bool) $is_apache => 'apache',
+			$is_iis7 || $is_IIS => 'iis-7',
+			default => self::get_software(),
+		};
 
 		$server_type[ $url ] = $server;
 		set_site_transient( self::CACHE_CURRENT_SERVER, $server_type, 3600 );
@@ -116,9 +64,69 @@ class Server {
 	}
 
 	/**
+	 * Get the server software from the SERVER_SOFTWARE server variable or by self-ping if not available.
+	 *
+	 * @return string Returns the server software type.
+	 */
+	public static function get_software() {
+		$software = defender_get_data_from_request( 'SERVER_SOFTWARE', 's' );
+		if ( ! is_string( $software ) || '' === $software ) {
+			return self::get_software_by_self_ping();
+		}
+
+		$software = explode( ' ', $software );
+		$software = explode( '/', reset( $software ) );
+		if ( isset( $software[0] ) ) {
+			return strtolower( $software[0] );
+		}
+
+		return self::get_software_by_self_ping();
+	}
+
+	/**
+	 * Determine the server software by making a self-ping request to the home URL.
+	 *
+	 * @param string $default_server_name The default server name to return if detection fails. Defaults to 'apache'.
+	 *
+	 * @return string Returns the server software type or the default server name if detection fails.
+	 */
+	public static function get_software_by_self_ping( $default_server_name = 'apache' ) {
+		static $in_progress = false;
+
+		// Re-entry guard: the self-ping boots WordPress again, which can call this
+		// method recursively and issue an unbounded number of nested requests.
+		if ( $in_progress ) {
+			return $default_server_name;
+		}
+
+		$in_progress = true;
+
+		try {
+			$request = wp_remote_head(
+				home_url(),
+				array(
+					'user-agent' => defender_get_user_agent( 'Defender Self Ping' ),
+					// Most hosts don't really have valid ssl or ssl still pending.
+					'sslverify'  => apply_filters( 'defender_ssl_verify', true ),
+				)
+			);
+			$server  = wp_remote_retrieve_header( $request, 'server' );
+			$server  = explode( '/', $server );
+
+			if ( ! isset( $server[0] ) ) {
+				return $default_server_name;
+			}
+
+			return strtolower( $server[0] );
+		} finally {
+			$in_progress = false;
+		}
+	}
+
+	/**
 	 * Check whether ping test failed or not.
 	 *
-	 * @param  string $url  The URL to ping.
+	 * @param string $url The URL to ping.
 	 *
 	 * @return bool
 	 */

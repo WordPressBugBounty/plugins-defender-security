@@ -23,7 +23,7 @@ abstract class Two_Factor_Provider extends Component {
 	 *
 	 * @var string
 	 */
-	protected static $slug;
+	public static $slug;
 
 	/**
 	 * Use for cache.

@@ -7,10 +7,12 @@
 
 namespace WP_Defender\Component;
 
+use WP_Error;
 use WP_Defender\Component;
 use WP_Defender\Controller\Firewall;
 use WP_Defender\Model\Setting\Firewall as Model_Firewall;
-use WP_Error;
+use WP_Defender\Component\Http\Remote_Address\Remote_Address;
+use WP_Defender\Component\Trusted_Proxy_Preset\Cloudflare_Proxy;
 
 /**
  * Handles the functionality for detecting the IP header to be used on the site.
@@ -196,45 +198,45 @@ class Smart_Ip_Detection extends Component {
 	/**
 	 * Get the details of the Smart IP Detection.
 	 *
+	 * Context: the saved header is written by smart_ip_detect_header() (this class) during the detection ping; it may
+	 * be any header the ping matched, including REMOTE_ADDR. only headers in
+	 * Component\Firewall::custom_http_headers() (src/component/class-firewall.php) are read, through
+	 * Remote_Address::get_ip_address() (src/component/http/remote-address/class-remote-address.php), which uses the
+	 * header only when REMOTE_ADDR is a trusted proxy (manual list after the wpdef_firewall_trusted_proxies filter, or
+	 * preset) and walks it right to left. with no preset set, CF-Connecting-IP trusts Cloudflare's ranges;
+	 * Cloudflare_Proxy::get_ips() (src/component/trusted-proxy-preset/class-cloudflare-proxy.php) reads them from the
+	 * wpdef_cloudflare_ips site option and fetches them over HTTP when the option is missing. callers are
+	 * get_user_ip() and get_user_ip_header() (src/traits/ip.php) and Controller\Firewall::sync_ip_header();
+	 * get_user_ip() feeds Login Lockout, bans, the allowlist and logs, so this returns exactly one IP. with
+	 * no REMOTE_ADDR (CLI, cron) it returns 127.0.0.1.
+	 *
 	 * @return array The details of the IP and header.
 	 */
 	public function get_smart_ip_detection_details(): array {
-		$ip_details         = array();
-		$recommended_header = get_site_option( self::SMART_IP_DETECTION_HEADER );
-
-		$server = defender_get_data_from_request( null, 's' );
-		if ( isset( $server[ $recommended_header ] ) ) {
-			$ip_details[] = array( $server[ $recommended_header ], $recommended_header );
+		$header = (string) get_site_option( self::SMART_IP_DETECTION_HEADER, '' );
+		$model  = wd_di()->get( Model_Firewall::class );
+		$preset = $model->get_trusted_proxy_preset();
+		// Cloudflare sites rarely configure trusted proxies, so trust its published ranges for its own header.
+		if ( '' === $preset && 'HTTP_CF_CONNECTING_IP' === $header ) {
+			$preset = Cloudflare_Proxy::PROXY_SLUG;
 		}
 
-		$ip_details[] = array_key_exists( 'REMOTE_ADDR', $server )
-			? array( $server['REMOTE_ADDR'], 'REMOTE_ADDR' )
-			: array( '127.0.0.1', 'REMOTE_ADDR' );
-
-		if ( isset( $server['HTTP_X_FORWARDED_FOR'] ) ) {
-			$ip_details[] = array( $server['HTTP_X_FORWARDED_FOR'], 'HTTP_X_FORWARDED_FOR' );
+		// The saved header is honoured only when REMOTE_ADDR is a trusted proxy, as in manual mode.
+		$use_proxy = in_array( $header, Component\Firewall::custom_http_headers(), true );
+		$resolver  = ( new Remote_Address() )
+			->set_use_proxy( $use_proxy )
+			->set_trusted_proxies( $model->get_trusted_proxies_ip() )
+			->set_trusted_proxy_preset( $preset );
+		if ( $use_proxy ) {
+			$resolver->set_proxy_header( $header );
 		}
 
-		if ( isset( $server['HTTP_X_REAL_IP'] ) ) {
-			$ip_details[] = array( $server['HTTP_X_REAL_IP'], 'HTTP_X_REAL_IP' );
+		$ip = $resolver->get_ip_address();
+		if ( '' === $ip ) {
+			return array( '127.0.0.1', 'REMOTE_ADDR' );
 		}
 
-		$private_ip = array();
-		foreach ( $ip_details as $ip_detail ) {
-			$ip_array = array_reverse( array_map( 'trim', preg_split( '/[\s,]+/', $ip_detail[0] ) ) );
-
-			foreach ( $ip_array as $ip ) {
-				if ( ! $this->is_private_ip( $ip ) ) {
-					// Immediately return the first public IP found.
-					return array( $ip, $ip_detail[1] );
-				} else {
-					$private_ip[] = array( $ip, $ip_detail[1] );
-				}
-			}
-		}
-
-		// If public IP was not found then return the first private IP.
-		return isset( $private_ip[0] ) ? $private_ip[0] : array();
+		return array( $ip, defender_get_data_from_request( 'REMOTE_ADDR', 's' ) === $ip ? 'REMOTE_ADDR' : $header );
 	}
 
 	/**

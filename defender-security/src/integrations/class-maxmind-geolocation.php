@@ -9,7 +9,7 @@ namespace WP_Defender\Integrations;
 
 use WP_Error;
 use PharData;
-use Exception;
+use Throwable;
 use WP_Defender\Traits\IO;
 use WP_Filesystem_Base;
 
@@ -75,7 +75,7 @@ class MaxMind_Geolocation {
 	}
 
 	/**
-	 * Get database base path.
+	 * Get a database base path.
 	 *
 	 * @return string
 	 * @since 2.8.0
@@ -94,19 +94,55 @@ class MaxMind_Geolocation {
 	 */
 	public function extract_db_archive( $temp_path ) {
 		try {
-			$phar = new PharData( $temp_path );
+			$phar         = new PharData( $temp_path );
+			$db_full_name = $this->get_db_full_name();
+			$rel_db_path  = null;
+
+			// Validate every archive entry before extracting. Reject path traversal,
+			// absolute paths, and symlinks to prevent zip-slip / arbitrary file write.
+			$iterator = new \RecursiveIteratorIterator( $phar );
+			foreach ( $iterator as $entry ) {
+				// Normalize separators so checks work cross-platform and against tar internals.
+				$subpath = str_replace( '\\', '/', $iterator->getSubPathname() );
+
+				$segments = explode( '/', $subpath );
+				if (
+					in_array( '..', $segments, true ) ||
+					( isset( $subpath[0] ) && '/' === $subpath[0] ) ||
+					$entry->isLink()
+				) {
+					return new WP_Error(
+						'wpdef_maxmind_geolocation_invalid_archive',
+						esc_html__( 'MaxMind archive contains unsafe paths and was not extracted.', 'defender-security' )
+					);
+				}
+				// Locate the expected .mmdb file; record its full relative path (any nesting depth).
+				if ( null === $rel_db_path && end( $segments ) === $db_full_name ) {
+					$rel_db_path = $subpath;
+				}
+			}
+			// Reject the archive if the expected database file was not found inside.
+			if ( null === $rel_db_path ) {
+				return new WP_Error(
+					'wpdef_maxmind_geolocation_invalid_archive',
+					esc_html__( 'MaxMind archive does not contain the expected database file.', 'defender-security' )
+				);
+			}
+			// Archive is valid — safe to clear out any previous database (stale-dated folders, partial extractions) before writing the new one.
+			$this->delete_database();
 
 			$base_path = $this->get_db_base_path();
 			if ( ! is_dir( $base_path ) ) {
 				wp_mkdir_p( $base_path );
 			}
 
+			// Enable overwriting so updates and retries succeed.
 			$phar->extractTo( $base_path, null, true );
-			$geodb_path = $base_path . DIRECTORY_SEPARATOR . $phar->current()->getFileName() . DIRECTORY_SEPARATOR . $this->get_db_full_name();
-		} catch ( Exception $exception ) {
+			$geodb_path = $base_path . DIRECTORY_SEPARATOR . str_replace( '/', DIRECTORY_SEPARATOR, $rel_db_path );
+		} catch ( Throwable $exception ) {
 			return new WP_Error( 'wpdef_maxmind_geolocation_database_archive', $exception->getMessage() );
 		} finally {
-			// Archive file is not needed.
+			// Archive file is not needed regardless of outcome.
 			wp_delete_file( $temp_path );
 		}
 

@@ -163,6 +163,22 @@ class Two_Fa extends Setting {
 	public $detect_woo = false;
 
 	/**
+	 * Enable/disable the custom app title form.
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public $custom_app_title = false;
+
+	/**
+	 * Enable/disable custom authentication emails.
+	 *
+	 * @var bool
+	 * @defender_property
+	 */
+	public $custom_auth_emails = false;
+
+	/**
 	 * Get default values.
 	 *
 	 * @return array
@@ -224,6 +240,30 @@ To complete your login, copy and paste the temporary password into the Password 
 	 * @return void
 	 */
 	protected function after_load(): void {
+		$old_settings   = $this->get_old_settings();
+		$default_values = $this->get_default_values();
+
+		// Preserve the state inferred by releases that predate the persisted toggles.
+		if ( ! array_key_exists( 'custom_app_title', $old_settings ) ) {
+			$this->custom_app_title = '' !== $this->app_title && $default_values['app_title'] !== $this->app_title;
+		}
+		if ( ! array_key_exists( 'custom_auth_emails', $old_settings ) ) {
+			$this->custom_auth_emails = $default_values['email_subject'] !== $this->email_subject
+				|| $default_values['email_sender'] !== $this->email_sender
+				|| $default_values['email_body'] !== $this->email_body;
+		}
+
+		if ( ! $this->custom_app_title ) {
+			$this->app_title = '' === $default_values['app_title']
+				? wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
+				: $default_values['app_title'];
+		}
+		if ( ! $this->custom_auth_emails ) {
+			$this->email_subject = $default_values['email_subject'];
+			$this->email_sender  = $default_values['email_sender'];
+			$this->email_body    = $default_values['email_body'];
+		}
+
 		$this->user_roles       = array_values( $this->user_roles );
 		$this->force_auth_roles = array_values( array_intersect( $this->force_auth_roles, $this->user_roles ) );
 		$this->force_auth       = array() !== $this->force_auth_roles;

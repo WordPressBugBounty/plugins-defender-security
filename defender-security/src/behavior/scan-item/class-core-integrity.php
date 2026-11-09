@@ -188,7 +188,7 @@ class Core_Integrity extends Behavior {
 	public function ignore(): array {
 		$scan       = Scan::get_last();
 		$data       = $this->owner->raw_data;
-		$issue_name = '<b>' . pathinfo( $data['file'], PATHINFO_BASENAME ) . '</b>';
+		$issue_name = '<b>' . esc_html( pathinfo( $data['file'], PATHINFO_BASENAME ) ) . '</b>';
 		$res        = $scan->ignore_issue( $this->owner->id );
 		if ( ! $res ) {
 			return array(

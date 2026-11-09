@@ -7,7 +7,6 @@
 
 namespace WP_Defender\Controller;
 
-use PharData;
 use Exception;
 use Countable;
 use WP_Defender\Traits\IP;
@@ -325,20 +324,26 @@ class Blacklist extends Controller {
 		$service_geo = wd_di()->get( MaxMind_Geolocation::class );
 		$tmp         = $service_geo->get_downloaded_url( $license_key );
 		if ( ! is_wp_error( $tmp ) ) {
-			$phar = new PharData( $tmp );
-			$path = $service_geo->get_db_base_path();
-			if ( ! is_dir( $path ) ) {
-				wp_mkdir_p( $path );
+			// Delegate extraction to the validated helper: it checks for path traversal,
+			// absolute paths, and symlinks before extracting, and cleans up $tmp itself.
+			$geodb_path = $service_geo->extract_db_archive( $tmp );
+			if ( is_wp_error( $geodb_path ) ) {
+				$this->log( 'Error extracting MaxMind archive: ' . $geodb_path->get_error_message(), Firewall::FIREWALL_LOG );
+
+				return new Response(
+					false,
+					array(
+						'invalid_text' => esc_html__(
+							'Failed to extract the Geo IP database. The archive may be corrupted or contain unsafe content.',
+							'defender-security'
+						),
+					)
+				);
 			}
-			$phar->extractTo( $path, null, true );
-			// Todo: move logic for the path to MaxMind_Geolocation class.
-			$this->model->geodb_path = $path . DIRECTORY_SEPARATOR . $phar->current()->getFileName() . DIRECTORY_SEPARATOR . $service_geo->get_db_full_name();
+			$this->model->geodb_path          = $geodb_path;
+			$this->model->maxmind_license_key = $license_key;
 			// Save because we'll check for a saved path.
 			$this->model->save();
-
-			if ( file_exists( $tmp ) ) {
-				wp_delete_file( $tmp );
-			}
 
 			foreach ( $this->get_user_ip() as $ip ) {
 				$country = $this->get_current_country( $ip );
@@ -346,17 +351,19 @@ class Blacklist extends Controller {
 					$this->model = $this->service->add_default_whitelisted_country( $this->model, $country['iso'] );
 				}
 			}
-			$this->model->maxmind_license_key = $license_key;
 			$this->model->save();
 
 			return new Response(
 				true,
-				array(
-					'message'             => esc_html__(
-						'You have successfully downloaded Geo IP Database. You can now use this feature to ban any countries to access any area of your website.',
-						'defender-security'
+				array_merge(
+					array(
+						'message'             => esc_html__(
+							'You have successfully downloaded Geo IP Database. You can now use this feature to ban any countries to access any area of your website.',
+							'defender-security'
+						),
+						'is_geodb_downloaded' => $this->service->is_geodb_downloaded(),
 					),
-					'is_geodb_downloaded' => $this->service->is_geodb_downloaded(),
+					$this->data_frontend()
 				)
 			);
 		} else {
@@ -396,12 +403,15 @@ class Blacklist extends Controller {
 
 		return new Response(
 			true,
-			array(
-				'message'          => esc_html__(
-					'Maxmind GeoLite2 database license successfully disconnected.',
-					'defender-security'
+			array_merge(
+				array(
+					'message'          => esc_html__(
+						'Maxmind GeoLite2 database license successfully disconnected.',
+						'defender-security'
+					),
+					'is_geodb_deleted' => $this->service->is_geodb_downloaded(),
 				),
-				'is_geodb_deleted' => $this->service->is_geodb_downloaded(),
+				$this->data_frontend()
 			)
 		);
 	}

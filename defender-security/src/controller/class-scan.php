@@ -224,18 +224,95 @@ class Scan extends Event {
 			return;
 		}
 
-		// Check if the ping is from self or not.
-		$ret = $this->service->process();
-		$this->log( 'process done, queue for next', self::SCAN_LOG );
-		if ( false === $ret ) {
-			// Ping self.
-			$this->log( 'Scan not done, pinging', self::SCAN_LOG );
-			$this->service->remove_lock( $lock_filename );
-			$this->process();
-		} else {
-			$this->queue_to_sync_with_hub();
-			$this->service->remove_lock( $lock_filename );
+		$max_iterations = $this->get_max_scan_attempts();
+		$max_seconds    = $this->get_max_scan_seconds();
+		$start_time     = microtime( true );
+		$attempts       = 0;
+		$ret            = false;
+
+		while ( false === $ret ) {
+			++$attempts;
+
+			$ret = $this->service->process();
+			$this->log( sprintf( 'process attempt %d done', $attempts ), self::SCAN_LOG );
+
+			if ( false === $ret ) {
+				if ( $attempts >= $max_iterations || ( microtime( true ) - $start_time ) >= $max_seconds ) {
+					$this->log(
+						sprintf(
+							'Scan aborted: exceeded max attempts (%d/%d) or time budget (%.1fs/%ds) without completing. Re-queuing to resume.',
+							$attempts,
+							$max_iterations,
+							microtime( true ) - $start_time,
+							$max_seconds
+						),
+						self::SCAN_LOG
+					);
+					$this->service->remove_lock( $lock_filename );
+					$this->do_async_scan( 'scan' );
+
+					return;
+				}
+
+				$this->log( 'Scan not done, continuing in loop', self::SCAN_LOG );
+			}
 		}
+
+		$this->queue_to_sync_with_hub();
+		$this->service->remove_lock( $lock_filename );
+	}
+
+	/**
+	 * Maximum number of chunk-processing attempts allowed in a single process() call
+	 * before the scan is re-queued instead of continuing to loop.
+	 *
+	 * Override via the WPDEF_SCAN_MAX_ATTEMPTS constant or the `wpdef_scan_max_attempts` filter.
+	 *
+	 * @since 6.4.0
+	 * @return int
+	 */
+	private function get_max_scan_attempts(): int {
+		$default = 300;
+
+		if ( defined( 'WPDEF_SCAN_MAX_ATTEMPTS' ) && is_numeric( WPDEF_SCAN_MAX_ATTEMPTS ) ) {
+			$default = (int) WPDEF_SCAN_MAX_ATTEMPTS;
+		}
+
+		/**
+		 * Filters the maximum number of scan-processing attempts per request.
+		 *
+		 * @param int $default Default/constant-derived max attempts.
+		 */
+		$max = (int) apply_filters( 'wpdef_scan_max_attempts', $default );
+
+		return max( 1, $max );
+	}
+
+	/**
+	 * Maximum wall-clock seconds allowed for a single process() call before the
+	 * scan is re-queued instead of continuing to loop.
+	 *
+	 * Override via the WPDEF_SCAN_MAX_SECONDS constant or the `wpdef_scan_max_seconds` filter, and pay attention:
+	 * the constant's OR hook's values should be set below the host's PHP execution timeout.
+	 *
+	 * @since 6.4.0
+	 * @return int
+	 */
+	private function get_max_scan_seconds(): int {
+		$default = 25;
+
+		if ( defined( 'WPDEF_SCAN_MAX_SECONDS' ) && is_numeric( WPDEF_SCAN_MAX_SECONDS ) ) {
+			$default = (int) WPDEF_SCAN_MAX_SECONDS;
+		}
+
+		/**
+		 * Filters the maximum wall-clock seconds for a single scan-processing request.
+		 *
+		 * @param int $default Default/constant-derived max seconds.
+		 */
+		$max = (int) apply_filters( 'wpdef_scan_max_seconds', $default );
+
+		return max( 1, $max );
 	}
 
 	/**
@@ -509,6 +586,10 @@ class Scan extends Event {
 	/**
 	 * Process for bulk action.
 	 * There is no Update-intention because it is a lengthy process. There may not be enough execution time.
+	 *
+	 * Note: Capability checks and nonce verification for bulk actions (including ignore_issue(),
+	 * unignore_issue(), and delete()) are enforced centrally upstream by WP_Defender\Central::routing()
+	 * before this method is called.
 	 *
 	 * @param  Request $request  Request object.
 	 *

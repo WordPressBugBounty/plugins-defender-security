@@ -529,9 +529,8 @@ trait IP {
 		 */
 		$trusted_ips = apply_filters( 'wp_defender_server_ips', array_unique( $trusted_ips ) );
 		$trusted_ips = ! is_array( $trusted_ips ) ? (array) $trusted_ips : $trusted_ips;
-		// Only return true if the request IP is in the trusted list.
-		if ( array() !== array_intersect( $user_ips, $trusted_ips ) ) {
-			return true;
+		if ( array() === array_intersect( $user_ips, $trusted_ips ) ) {
+			return false;
 		}
 
 		// User-Agent missing? Not a valid loopback.
@@ -541,7 +540,7 @@ trait IP {
 		}
 
 		// User-Agent must match WordPress loopback format.
-		$expected_ua = 'WordPress/' . wp_get_wp_version() . '; ' . home_url( '/' );
+		$expected_ua = 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url( '/' );
 
 		return $server_agent === $expected_ua;
 	}

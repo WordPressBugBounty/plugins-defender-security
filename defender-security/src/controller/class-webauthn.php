@@ -406,6 +406,41 @@ class Webauthn extends Controller {
 	}
 
 	/**
+	 * Resolve the account a credential request may target.
+	 *
+	 * Either the already logged-in user, or the user whose password has been
+	 * verified and is waiting at the 2FA screen (proven by the temporary login
+	 * token minted in Two_Factor::get_token()).
+	 *
+	 * @param  array $posted_data  Posted request data.
+	 *
+	 * @return WP_User|null
+	 */
+	private function get_bound_user( array $posted_data ): ?WP_User {
+		if ( is_user_logged_in() ) {
+			return wp_get_current_user();
+		}
+
+		$user_id = isset( $posted_data['requested_user'] ) ? (int) $posted_data['requested_user'] : 0;
+		$token   = isset( $posted_data['login_token'] ) && is_string( $posted_data['login_token'] )
+			? $posted_data['login_token']
+			: '';
+		if ( $user_id <= 0 || '' === $token ) {
+			return null;
+		}
+
+		$hashed_token = get_user_meta( $user_id, Two_Fa_Component::TOKEN_USER_KEY, true );
+		if ( ! is_string( $hashed_token ) || '' === $hashed_token
+			|| ! hash_equals( $hashed_token, wp_hash( $user_id . $token ) ) ) {
+			return null;
+		}
+
+		$user = get_user_by( 'id', $user_id );
+
+		return $user instanceof WP_User ? $user : null;
+	}
+
+	/**
 	 * Get credential request option.
 	 *
 	 * @return void
@@ -433,15 +468,19 @@ class Webauthn extends Controller {
 				null
 			);
 
-			$user_entity = false;
-			$username    = sanitize_text_field( $posted_data['username'] );
-			$user        = get_user_by( 'login', $username );
-			if ( is_object( $user ) ) {
-				$user_entity = $this->get_user_entity( $user->ID );
+			$username = sanitize_text_field( $posted_data['username'] );
+
+			// A valid nonce is not proof of identity. Resolve the account from the
+			// caller's own context (logged-in user, or the pending-2FA login token)
+			// instead of from the posted username, so usernames cannot be probed.
+			$user = $this->get_bound_user( $posted_data );
+			if ( ! $user instanceof WP_User || ! hash_equals( $user->user_login, $username ) ) {
+				throw new Exception( esc_html__( 'Invalid request.', 'defender-security' ) );
 			}
 
+			$user_entity = $this->get_user_entity( $user->ID );
 			if ( false === $user_entity ) {
-				throw new Exception( esc_html__( 'User does not exist.', 'defender-security' ) );
+				throw new Exception( esc_html__( 'Invalid request.', 'defender-security' ) );
 			}
 
 			$auth_type = isset( $posted_data['type'] ) && '' !== $posted_data['type'] ? sanitize_text_field( $posted_data['type'] ) : null;
@@ -525,11 +564,18 @@ class Webauthn extends Controller {
 				throw new Exception( esc_html__( 'Missing field(s).', 'defender-security' ) );
 			}
 			$client_id = sanitize_text_field( $posted_data['client_id'] );
+			$username  = sanitize_text_field( $posted_data['username'] );
 			// Check expected user.
 			if ( $expected_user instanceof WP_User ) {
 				$user = $expected_user;
 			} else {
-				$user = wp_get_current_user();
+				// A valid nonce is not proof of identity. Resolve the account from the
+				// caller's own context, matching get_credential_request_option(), so an
+				// unbound guest is rejected before any credential lookup.
+				$user = $this->get_bound_user( $posted_data );
+				if ( ! $user instanceof WP_User || ! hash_equals( $user->user_login, $username ) ) {
+					throw new Exception( esc_html__( 'Invalid request.', 'defender-security' ) );
+				}
 			}
 
 			// Establish a trusted scope BEFORE any access to the repository —
@@ -700,6 +746,9 @@ class Webauthn extends Controller {
 	 * @since 3.4.0
 	 */
 	public function disable_user_handle_match_failed_notice(): void {
+		if ( ! $this->verify_nonce( 'wpdef_webauthn', 'post' ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Bad nonce.', 'defender-security' ) ) );
+		}
 		$this->service->disableUserHandleMatchFailedNotice( get_current_user_id() );
 		wp_send_json_success( esc_html__( 'Notice disabled!', 'defender-security' ) );
 	}
@@ -709,7 +758,7 @@ class Webauthn extends Controller {
 	 */
 	public function remove_data(): void {
 		global $wpdb;
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s;", "%{$this->option_prefix}%" ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s;", '%' . $wpdb->esc_like( $this->option_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

@@ -984,6 +984,7 @@ class ComposerStaticInitdb8e2a479c983870846afbe970e4f0af
         'WP_Defender\\Component\\Audit\\Post_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-post-audit.php',
         'WP_Defender\\Component\\Audit\\Theme_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-theme-audit.php',
         'WP_Defender\\Component\\Audit\\User_Audit' => __DIR__ . '/../..' . '/src/component/audit/class-user-audit.php',
+        'WP_Defender\\Component\\Audit_Log_Recovery' => __DIR__ . '/../..' . '/src/component/class-audit-log-recovery.php',
         'WP_Defender\\Component\\Backup_Settings' => __DIR__ . '/../..' . '/src/component/class-backup-settings.php',
         'WP_Defender\\Component\\Blacklist_Lockout' => __DIR__ . '/../..' . '/src/component/class-blacklist-lockout.php',
         'WP_Defender\\Component\\Captcha' => __DIR__ . '/../..' . '/src/component/class-captcha.php',

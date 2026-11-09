@@ -186,6 +186,7 @@ SQL;
  `blog_id` int NOT NULL,
  `synced` int NOT NULL,
  `ttl` int NOT NULL,
+ `fractional_timestamp` varchar(32) DEFAULT NULL,
  PRIMARY KEY  (`id`),
  KEY `event_type` (`event_type`),
  KEY `action_type` (`action_type`),

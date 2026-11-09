@@ -95,6 +95,30 @@ class Woocommerce {
 	}
 
 	/**
+	 * Detects if the executing call stack is the Woo lost password handler.
+	 *
+	 * @return bool
+	 */
+	public function is_wc_lost_password_context(): bool {
+		if ( ! $this->is_activated() ) {
+			return false;
+		}
+
+		$traces = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
+		foreach ( $traces as $trace ) {
+			if (
+				isset( $trace['class'], $trace['function'] ) &&
+				'WC_Shortcode_My_Account' === $trace['class'] &&
+				'retrieve_password' === $trace['function']
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Detects if current request originates from WooCommerce code path.
 	 *
 	 * @return bool

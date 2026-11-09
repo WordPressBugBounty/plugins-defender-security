@@ -7,6 +7,7 @@
 
 namespace WP_Defender\Controller;
 
+use WP_Error;
 use WP_Defender\Event;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
@@ -152,7 +153,7 @@ class Captcha extends Event {
 		if ( in_array( Captcha_Component::DEFAULT_LOST_PASSWORD_FORM, $locations, true ) ) {
 			add_action( 'lostpassword_form', array( $this->service, 'display_login_captcha' ) );
 			if ( $this->maybe_validate_captcha_for_lostpassword() ) {
-				add_action( 'lostpassword_post', array( $this->service, 'validate_captcha_field_on_lostpassword' ) );
+				add_action( 'lostpassword_post', array( $this, 'validate_captcha_field_on_lostpassword' ) );
 			}
 		}
 		// Default comment form.
@@ -202,8 +203,8 @@ class Captcha extends Event {
 					add_action(
 						'lostpassword_post',
 						array(
-							$this->service,
-							'validate_captcha_field_on_lostpassword',
+							$this,
+							'validate_captcha_field_on_woo_lostpassword',
 						)
 					);
 				}
@@ -288,27 +289,43 @@ class Captcha extends Event {
 		$post_data = defender_get_data_from_request( null, 'p' );
 		$action    = $post_data['action'] ?? '';
 
-		return ! $this->is_woocommerce_page() && ! isset( $post_data['wc_reset_password'], $post_data['user_login'] ) && ! ( is_admin() && 'send-password-reset' === $action ) && 'pp_ajax_passwordreset' !== $action;
+		return ! ( is_admin() && 'send-password-reset' === $action ) && 'pp_ajax_passwordreset' !== $action;
 	}
 
 	/**
-	 * Check the current page from is from the Woo plugin.
+	 * Validate reCaptcha on the default lost password form.
 	 *
-	 * @return bool
+	 * Skipped when the request is an actual WooCommerce lost password submission,
+	 * which has its own protection setting and validator.
+	 *
+	 * @param  WP_Error $errors  Error object.
+	 *
+	 * @return void
 	 */
-	protected function is_woocommerce_page(): bool {
-		if ( ! $this->is_woo_activated ) {
-			return false;
+	public function validate_captcha_field_on_lostpassword( WP_Error $errors ): void {
+		if ( $this->woo->is_wc_lost_password_context() ) {
+			return;
 		}
 
-		$traces = debug_backtrace(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
-		foreach ( $traces as $trace ) {
-			if ( isset( $trace['file'] ) && false !== strpos( $trace['file'], 'woocommerce' ) ) {
-				return true;
-			}
+		$this->service->validate_captcha_field_on_lostpassword( $errors );
+	}
+
+	/**
+	 * Validate reCaptcha on the Woo lost password form.
+	 *
+	 * Registered on the default WP hook because Woo doesn't have own hook, so
+	 * validation runs only when the request is an actual Woo submission.
+	 *
+	 * @param  WP_Error $errors  Error object.
+	 *
+	 * @return void
+	 */
+	public function validate_captcha_field_on_woo_lostpassword( WP_Error $errors ): void {
+		if ( ! $this->woo->is_wc_lost_password_context() ) {
+			return;
 		}
 
-		return false;
+		$this->service->validate_captcha_field_on_lostpassword( $errors );
 	}
 
 	/**

@@ -11,7 +11,6 @@ namespace WP_Defender\Component;
 use WP_Defender\Component;
 use WP_Defender\Traits\IP;
 use WP_Defender\Traits\User;
-use WP_User_Meta_Session_Tokens;
 use WP_Defender\Model\Setting\Session_Protection as Settings;
 
 /**
@@ -106,14 +105,21 @@ class Session_Protection extends Component {
 	/**
 	 * Handles session timeout logic on init hook.
 	 *
+	 * Context: runs on AJAX and REST requests too, so a cookie-only session cannot skip the lock and idle checks.
+	 * Context: AJAX/REST requests refresh last activity via update_last_activity() in this class; open idle tabs are logged out by assets/js/idle-session.js.
+	 * Context: update_last_activity() stores time() in the user meta wpdef_last_act_{sha256 of token}; user meta is network-wide and survives object cache flushes.
+	 * Context: cron and loopback requests are skipped; loopback detection is IP::request_is_from_server() in src/traits/ip.php.
+	 * Context: request_is_from_server() is true only when the client IP is localhost, SERVER_ADDR, or the stored server IP and the User-Agent is "WordPress/{version}; {home_url}".
+	 * Context: only requests that is_cookie_authenticated() (this class) confirms are checked; bearer-token logins (JWT, OAuth via determine_current_user) are skipped.
+	 * Context: get_session_token() (this class) reads the token from the validated auth cookie, then the validated logged_in cookie.
+	 *
 	 * @return void
 	 */
 	public function handle_session_timeout() {
 		if (
 			! is_user_logged_in()
-			|| wp_doing_ajax()
+			|| ! $this->is_cookie_authenticated()
 			|| wp_doing_cron()
-			|| defender_is_rest_api_request()
 			|| $this->request_is_from_server()
 		) {
 			return;
@@ -123,8 +129,7 @@ class Session_Protection extends Component {
 			return;
 		}
 
-		if ( $this->settings->has_properties() ) {
-			$this->handle_session_lock();
+		if ( $this->settings->has_properties() && ! $this->handle_session_lock() ) {
 			return;
 		}
 
@@ -147,60 +152,105 @@ class Session_Protection extends Component {
 	}
 
 	/**
-	 * Get transient key for server-side session last activity.
+	 * Whether the current user is authenticated by a valid WordPress auth cookie.
+	 *
+	 * Context: wp_validate_auth_cookie() (wp-includes/pluggable.php) checks the HMAC and session token; with no scheme it reads the auth or secure_auth cookie, as core does at determine_current_user priority 10.
+	 * Context: the logged_in scheme covers front-end requests; either cookie must resolve to the current user ID.
+	 *
+	 * @return bool
+	 */
+	private function is_cookie_authenticated(): bool {
+		$user_id = get_current_user_id();
+
+		return $user_id > 0
+			&& ( wp_validate_auth_cookie() === $user_id || wp_validate_auth_cookie( '', 'logged_in' ) === $user_id );
+	}
+
+	/**
+	 * Session token from the first cookie that passes wp_validate_auth_cookie(): auth, else logged_in.
+	 *
+	 * @return string
+	 */
+	private function get_session_token(): string {
+		foreach ( array( '', 'logged_in' ) as $scheme ) {
+			if ( wp_validate_auth_cookie( '', $scheme ) ) {
+				return (string) ( wp_parse_auth_cookie( '', $scheme )['token'] ?? '' );
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Get the user meta key for server-side session last activity.
 	 *
 	 * @param int|null $user_id User ID.
+	 * @param string   $token The session token.
+	 *
 	 * @return string|null
 	 */
-	private function get_session_activity_key( $user_id = null ): ?string {
+	private function get_session_activity_key( ?int $user_id = null, string $token = '' ): ?string {
 		$user_id = $user_id ?? get_current_user_id();
-		if ( ! $user_id ) {
+		$token   = '' !== $token ? $token : $this->get_session_token();
+		if ( ! $user_id || '' === $token ) {
 			return null;
 		}
 
-		$token = wp_get_session_token();
-		if ( ! $token ) {
-			return 'wpdef_last_act_' . $user_id;
-		}
-
-		return 'wpdef_last_act_' . $user_id . '_' . substr( md5( $token ), 0, 16 );
+		return 'wpdef_last_act_' . hash( 'sha256', $token );
 	}
 
 	/**
 	 * Retrieves the last activity timestamp.
 	 *
-	 * @return int|null Last activity timestamp or null if not set.
+	 * Context: order is user meta, the pre-6.4.0 transient wpdef_last_act_{user}_{md5 16}, then the session's login time, so a flushed cache or older session is never read as idle.
+	 * Context: the client cookie is never read; only server-side records count.
+	 *
+	 * @return int Last activity timestamp, or 1 when the request has no session.
 	 */
 	private function get_last_activity() {
-		// First check server-side session state if available to prevent client tampering.
-		$key = $this->get_session_activity_key();
-		if ( $key ) {
-			$server_activity = get_transient( $key );
-			if ( is_numeric( $server_activity ) && (int) $server_activity > 0 ) {
-				return (int) $server_activity;
-			}
+		$key     = $this->get_session_activity_key();
+		$user_id = get_current_user_id();
+		if ( ! $key ) {
+			return 1;
 		}
 
-		// Fallback to client-side cookie if server transient is missing.
-		if ( isset( $_COOKIE['wpdef_last_activity'] ) && is_numeric( $_COOKIE['wpdef_last_activity'] ) ) {
-			$timestamp = (int) $_COOKIE['wpdef_last_activity'];
-			$now       = time();
-
-			// Clamp future timestamps to current server time to prevent session timeout bypass.
-			return min( $timestamp, $now );
+		$token  = $this->get_session_token();
+		$stored = get_user_meta( $user_id, $key, true );
+		if ( ! is_numeric( $stored ) || (int) $stored <= 0 ) {
+			$stored = get_transient( 'wpdef_last_act_' . $user_id . '_' . substr( md5( $token ), 0, 16 ) );
+		}
+		if ( is_numeric( $stored ) && (int) $stored > 0 ) {
+			return (int) $stored;
 		}
 
-		return null;
+		$session = \WP_Session_Tokens::get_instance( $user_id )->get( $token );
+
+		$login = (int) ( $session['login'] ?? 0 );
+
+		return $login > 0 ? $login : 1;
 	}
 
 	/**
 	 * Logs out the current user due to inactivity.
 	 *
-	 * @param int|null $user_id User ID.
+	 * Context: logoutUser() (assets/js/idle-session.js) posts action=wpdef_logout; Controller\Session_Protection::__construct() (src/controller/class-session-protection.php) hooks this to wp_ajax_wpdef_logout, which admin-ajax.php fires with no args, so $user_id arrives as ''.
+	 * Context: null or '' runs check_ajax_referer() (wp-includes/pluggable.php), which ends with wp_die( -1, 403 ) on a bad nonce, then fires wpdef_session_timeout.
+	 * Context: handle_session_timeout(), handle_session_lock(), is_ip_allowed(), is_hostname_allowed() and is_browser_allowed() (this class) pass get_current_user_id(), so no nonce is checked; they fire wpdef_session_timeout or wpdef_session_lock themselves, logged by User_Audit (src/component/audit/class-user-audit.php).
+	 * Context: get_session_activity_key() (this class) takes ?int, so '' must not reach it.
+	 * Context: reassess if the wp_ajax_wpdef_logout registration passes arguments.
+	 *
+	 * @param int|string|null $user_id User ID; null or '' for the AJAX request.
 	 *
 	 * @return void
 	 */
 	public function logout( $user_id = null ) {
+		if ( '' === $user_id ) {
+			$user_id = null;
+		}
+		if ( is_null( $user_id ) ) {
+			check_ajax_referer( 'wpdef_logout' );
+		}
+
 		if ( is_user_logged_in() ) {
 			// Case without $user_id may be from Ajax.
 			if ( is_null( $user_id ) ) {
@@ -215,21 +265,18 @@ class Session_Protection extends Component {
 
 			$key = $this->get_session_activity_key( $user_id );
 			if ( $key ) {
-				delete_transient( $key );
+				delete_user_meta( $user_id, $key );
 			}
 
-			// Get current session token.
-			$current_session_token = wp_get_session_token();
+			// Destroy ONLY the current session; a request without a token never ends other sessions.
+			$current_session_token = $this->get_session_token();
 			if ( $current_session_token ) {
-				// Get session manager for the user.
-				$session_manager = \WP_Session_Tokens::get_instance( $user_id );
-
-				// Destroy ONLY the current session.
-				$session_manager->destroy( $current_session_token );
-			} else {
-				$manager = \WP_Session_Tokens::get_instance( $user_id );
-				$manager->destroy_all();
+				\WP_Session_Tokens::get_instance( $user_id )->destroy( $current_session_token );
 			}
+
+			// Clear auth cookies and the current user so this request is no longer authenticated.
+			wp_clear_auth_cookie();
+			wp_set_current_user( 0 );
 
 			// Reset last activity cookie.
 			setcookie( 'wpdef_last_activity', '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
@@ -239,6 +286,7 @@ class Session_Protection extends Component {
 
 			// Redirect to login page after session destruction.
 			wp_safe_redirect( wp_login_url() );
+			exit;
 		}
 	}
 
@@ -251,7 +299,7 @@ class Session_Protection extends Component {
 	 */
 	public function login_modal_message( $errors ) {
 		$interim_login = defender_get_data_from_request( 'interim-login', 'g' );
-		if ( is_null( $interim_login ) || '' === $interim_login || 1 !== get_site_transient( self::LOGOUT_MSG_TRANSIENT_KEY ) ) {
+		if ( ( ! is_null( $interim_login ) && '' !== $interim_login ) || 1 !== get_site_transient( self::LOGOUT_MSG_TRANSIENT_KEY ) ) {
 			return $errors;
 		}
 
@@ -310,6 +358,7 @@ class Session_Protection extends Component {
 					'timeout'   => $this->get_idle_timeout(),
 					'ajax_url'  => admin_url( 'admin-ajax.php' ),
 					'login_url' => wp_login_url(),
+					'nonce'     => wp_create_nonce( 'wpdef_logout' ),
 					// Exclude sending Logout-callbacks if the user is logged out and the login form is displayed in the popup.
 					'stop'      => false,
 				)
@@ -337,22 +386,35 @@ class Session_Protection extends Component {
 	/**
 	 * Updates the last activity timestamp efficiently.
 	 *
+	 * @param string   $token The session token.
+	 * @param int|null $user_id User ID.
+	 *
 	 * @return void
 	 */
-	public function update_last_activity() {
-		$current_time = time();
-
-		$key = $this->get_session_activity_key();
-		if ( $key ) {
-			set_transient( $key, $current_time, DAY_IN_SECONDS );
+	public function update_last_activity( string $token = '', ?int $user_id = null ) {
+		$key = $this->get_session_activity_key( $user_id, $token );
+		if ( ! $key ) {
+			return;
 		}
 
-		$last_activity = $this->get_last_activity();
+		$user_id       = $user_id ?? get_current_user_id();
+		$current_time  = time();
+		$last_activity = get_user_meta( $user_id, $key, true );
 
-		// Only update the cookie if minutes have passed since the last update.
-		if ( ! is_null( $last_activity ) || ( $current_time - $last_activity > MINUTE_IN_SECONDS ) ) {
-			setcookie( 'wpdef_last_activity', $current_time, time() + HOUR_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		// Write at most once a minute; idle timeouts are hours.
+		if ( is_numeric( $last_activity ) && $current_time - (int) $last_activity <= MINUTE_IN_SECONDS ) {
+			return;
 		}
+
+		$cutoff = $current_time - max( Settings::MAX_IDLE_TIMEOUT_HOURS * HOUR_IN_SECONDS, $this->get_idle_timeout() );
+		foreach ( get_user_meta( $user_id ) as $meta_key => $values ) {
+			if ( str_starts_with( $meta_key, 'wpdef_last_act_' ) && (int) $values[0] < $cutoff ) {
+				delete_user_meta( $user_id, $meta_key );
+			}
+		}
+
+		update_user_meta( $user_id, $key, $current_time );
+		setcookie( 'wpdef_last_activity', $current_time, time() + HOUR_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 	}
 
 	/**
@@ -379,41 +441,76 @@ class Session_Protection extends Component {
 	}
 
 	/**
-	 * Handles session lock logic.
+	 * Write the enabled lock values into the current user's own session.
+	 *
+	 * Context: called after lock settings are saved or imported (src/controller/class-session-protection.php), so the admin who saves a lock keeps their session.
+	 * Context: only the current session token is updated; other sessions created before the change still lack the fields and fail closed in handle_session_lock() (this class).
+	 * Context: values come from attach_session_information() (this class), the same source used at login.
 	 *
 	 * @return void
 	 */
+	public function attach_lock_data_to_current_session(): void {
+		$user_id = get_current_user_id();
+		$token   = $this->get_session_token();
+		if ( ! $user_id || '' === $token ) {
+			return;
+		}
+
+		$manager = \WP_Session_Tokens::get_instance( $user_id );
+		$session = $manager->get( $token );
+		if ( ! is_array( $session ) ) {
+			return;
+		}
+
+		$manager->update( $token, $this->attach_session_information( $session ) );
+	}
+
+	/**
+	 * Handles session lock logic.
+	 *
+	 * Context: every enabled lock is checked; a missing defender_ip / defender_hostname / defender_browser field reads as '' and fails closed.
+	 * Context: is_ip_allowed(), is_hostname_allowed(), is_browser_allowed() (this file) treat '' on either side as a mismatch and call logout().
+	 * Context: the fields are set at login by attach_session_information() (this file), hooked in src/controller/class-session-protection.php while locks are configured.
+	 * Context: session data lives in the session_tokens user meta (wp-includes/class-wp-session-tokens.php); the client cannot write it.
+	 * Context: sessions created before a lock is enabled lack the field, so they are logged out on their next request.
+	 * Context: reassess if the `?? ''` defaults below or the '' checks in the is_*_allowed() helpers change.
+	 *
+	 * @return bool True when the session remains valid, false when it is terminated.
+	 */
 	public function handle_session_lock() {
-		$token        = wp_get_session_token();
+		$token        = $this->get_session_token();
 		$user_id      = get_current_user_id();
-		$manager      = WP_User_Meta_Session_Tokens::get_instance( $user_id );
+		$manager      = \WP_Session_Tokens::get_instance( $user_id );
 		$session_data = $manager->get( $token );
 		if ( ! is_array( $session_data ) ) {
-			$this->log( 'Session data is missing or malformed. Destroying all sessions.', self::LOG_FILE_NAME );
+			$this->log( 'Session data is missing or malformed. Destroying the current session.', self::LOG_FILE_NAME );
 			$this->logout( $user_id );
-			return;
+			return false;
 		}
 		$user_ips = $this->get_user_ip();
-		// Exclude Loopback case. If condition returns true, then there is no Loopback intersection.
-		$common_ips = array_intersect( $user_ips, $this->get_localhost_ips() );
-		if ( array() !== $common_ips ) {
-			return;
-		}
 		// Work with the Session Lock options.
-		if ( $this->settings->is_property_locked( self::LOCK_IP_ADDRESS ) && isset( $session_data['defender_ip'] ) ) {
+		if ( $this->settings->is_property_locked( self::LOCK_IP_ADDRESS ) ) {
 			$ips = implode( '|', $user_ips );
-			$this->is_ip_allowed( $ips, $session_data['defender_ip'], $user_id );
+			if ( ! $this->is_ip_allowed( $ips, $session_data['defender_ip'] ?? '', $user_id ) ) {
+				return false;
+			}
 		}
 
-		if ( $this->settings->is_property_locked( self::LOCK_HOSTNAME ) && isset( $session_data['defender_hostname'] ) ) {
+		if ( $this->settings->is_property_locked( self::LOCK_HOSTNAME ) ) {
 			$hostname = defender_get_domain();
-			$this->is_hostname_allowed( $hostname, $session_data['defender_hostname'], $user_id );
+			if ( ! $this->is_hostname_allowed( $hostname, $session_data['defender_hostname'] ?? '', $user_id ) ) {
+				return false;
+			}
 		}
 
-		if ( $this->settings->is_property_locked( self::LOCK_BROWSER ) && isset( $session_data['defender_browser'] ) ) {
+		if ( $this->settings->is_property_locked( self::LOCK_BROWSER ) ) {
 			$browser = defender_get_user_agent();
-			$this->is_browser_allowed( $browser, $session_data['defender_browser'], $user_id );
+			if ( ! $this->is_browser_allowed( $browser, $session_data['defender_browser'] ?? '', $user_id ) ) {
+				return false;
+			}
 		}
+
+		return true;
 	}
 
 	/**
@@ -423,7 +520,7 @@ class Session_Protection extends Component {
 	 * @param string $session_ip Session IP address.
 	 * @param int    $user_id User ID.
 	 *
-	 * @return void
+	 * @return bool True when the IP is allowed, false when the session is terminated.
 	 */
 	private function is_ip_allowed( $ip, $session_ip, $user_id ) {
 		if ( '' === $ip || '' === $session_ip || $ip !== $session_ip ) {
@@ -443,7 +540,11 @@ class Session_Protection extends Component {
 			 */
 			do_action( 'wpdef_session_lock', $user_id, 'IP address' );
 			$this->logout( $user_id );
+
+			return false;
 		}
+
+		return true;
 	}
 
 	/**
@@ -453,7 +554,7 @@ class Session_Protection extends Component {
 	 * @param string $session_hostname Session hostname.
 	 * @param int    $user_id User ID.
 	 *
-	 * @return void
+	 * @return bool True when the hostname is allowed, false when the session is terminated.
 	 */
 	private function is_hostname_allowed( $hostname, $session_hostname, $user_id ) {
 		if ( '' === $hostname || '' === $session_hostname || strcasecmp( $hostname, $session_hostname ) !== 0 ) {
@@ -467,7 +568,11 @@ class Session_Protection extends Component {
 			);
 			do_action( 'wpdef_session_lock', $user_id, 'hostname' );
 			$this->logout( $user_id );
+
+			return false;
 		}
+
+		return true;
 	}
 
 	/**
@@ -477,7 +582,7 @@ class Session_Protection extends Component {
 	 * @param string $session_browser Session browser.
 	 * @param int    $user_id User ID.
 	 *
-	 * @return void
+	 * @return bool True when the browser is allowed, false when the session is terminated.
 	 */
 	private function is_browser_allowed( $browser, $session_browser, $user_id ) {
 		if ( '' === $browser || '' === $session_browser || strcasecmp( $browser, $session_browser ) !== 0 ) {
@@ -491,7 +596,11 @@ class Session_Protection extends Component {
 			);
 			do_action( 'wpdef_session_lock', $user_id, 'browser' );
 			$this->logout( $user_id );
+
+			return false;
 		}
+
+		return true;
 	}
 
 	/**

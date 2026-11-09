@@ -56,6 +56,218 @@ class Config_Hub_Helper {
 	}
 
 	/**
+	 * Push unsynced local configs to the Hub and merge Hub configs into local storage.
+	 *
+	 * Replaces the legacy per-option sync path: Hub IDs and Hub-originated configs are
+	 * persisted in Local_Config_Store instead of individual site options.
+	 *
+	 * @param  Local_Config_Store $local_store  Local config store.
+	 * @param  Backup_Settings    $service  Config service.
+	 *
+	 * @return array Synced configs, keyed by config key.
+	 */
+	public static function sync_with_hub( Local_Config_Store $local_store, Backup_Settings $service ): array {
+		$_this          = new self();
+		$_this->service = $service;
+		$wpmudev        = new WPMUDEV();
+		$def_details    = $_this->get_plugin_details();
+
+		$configs = $local_store->get_all();
+
+		// Push local configs that have no hub_id yet, and persist the IDs we get back.
+		$pushed_hub_ids = array();
+		foreach ( $configs as $key => &$config ) {
+			if ( ! is_array( $config ) || isset( $config['hub_id'] ) ) {
+				continue;
+			}
+
+			// Default/immortal configs are never pushed to the Hub.
+			if ( str_starts_with( (string) $key, 'wp_defender_config_default' )
+			     || ( isset( $config['immortal'] ) && true === (bool) $config['immortal'] )
+			) {
+				continue;
+			}
+
+			$hub_id = $_this->insert_to_hub( $config, $def_details, $wpmudev );
+			if ( ! $hub_id ) {
+				// Upload failed: keep the local config as-is, retry on the next sync.
+				continue;
+			}
+
+			$hub_id           = (int) $hub_id;
+			$config['hub_id'] = $hub_id;
+			$pushed_hub_ids[] = $hub_id;
+		}
+		unset( $config );
+
+		// Persist assigned Hub IDs now, so they survive a failing fetch below.
+		if ( $pushed_hub_ids ) {
+			$local_store->save_all( $configs );
+		}
+
+		if ( ! defined( WPMUDEV::class . '::API_PACKAGE_CONFIGS' ) ) {
+			return $configs;
+		}
+
+		$response = $wpmudev->make_wpmu_request(
+			WPMUDEV::API_PACKAGE_CONFIGS,
+			array( 'package_id' => $def_details['id'] ),
+			array( 'method' => 'GET' )
+		);
+
+		// Failed fetch or an error body instead of a config list: never drop local data.
+		// An empty list is valid and must still prune; a malformed one must not.
+		if ( ! self::is_hub_config_list( $response ) ) {
+			return $configs;
+		}
+
+		$merged = $_this->merge_hub_configs( $response, $configs, $pushed_hub_ids );
+
+		$local_store->save_all( $merged );
+		self::clear_config_transient();
+
+		return $merged;
+	}
+
+	/**
+	 * Check a Hub response really is a config list and not an error body.
+	 *
+	 * The Hub returns a numerically-indexed list of config objects. An error body is an
+	 * associative array, which would otherwise look like a list with no recognisable
+	 * entries and prune every synced local config. An empty list is valid.
+	 *
+	 * @param  mixed $response  Response from the Hub.
+	 *
+	 * @return bool
+	 */
+	private static function is_hub_config_list( $response ): bool {
+		if ( ! is_array( $response ) ) {
+			return false;
+		}
+
+		if ( array() === $response ) {
+			return true;
+		}
+
+		// Reject associative bodies, e.g. array( 'error' => '...' ).
+		if ( array_keys( $response ) !== range( 0, count( $response ) - 1 ) ) {
+			return false;
+		}
+
+		// Every entry must be a config object carrying an id.
+		foreach ( $response as $api_config ) {
+			if ( ! is_array( $api_config ) || ! isset( $api_config['id'] ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Merge a successful Hub config list into the local config set.
+	 *
+	 * @param  array $response  Hub config list.
+	 * @param  array $configs  Local configs keyed by config key.
+	 * @param  array $exclude_prune_hub_ids  Hub IDs protected from pruning (e.g. freshly pushed).
+	 *
+	 * @return array
+	 */
+	private function merge_hub_configs( array $response, array $configs, array $exclude_prune_hub_ids = array() ): array {
+		$deleted_hub_ids = get_site_option( self::DELETED_HUB_IDS_OPTION, array() );
+		$deleted_hub_ids = is_array( $deleted_hub_ids ) ? array_map( 'intval', $deleted_hub_ids ) : array();
+
+		// Build hub_id (int) => local key map for O(1) matching and type normalization.
+		$hub_id_to_key = array();
+		foreach ( $configs as $key => $config ) {
+			if ( ! is_array( $config ) || ! isset( $config['hub_id'] ) ) {
+				continue;
+			}
+
+			$hub_id_to_key[ (int) $config['hub_id'] ] = $key;
+		}
+
+		// Hub IDs present in the response, so we can drop locals the Hub no longer has.
+		$seen_hub_ids = array();
+
+		foreach ( $response as $api_config ) {
+			$api_id = (int) $api_config['id'];
+
+			// Honour local deletions that are not yet reflected on the Hub.
+			if ( in_array( $api_id, $deleted_hub_ids, true ) ) {
+				continue;
+			}
+
+			$seen_hub_ids[] = $api_id;
+
+			if ( isset( $hub_id_to_key[ $api_id ] ) ) {
+				$matched_key                             = $hub_id_to_key[ $api_id ];
+				$hub_config                              = $this->format_hub_config_to_save( $api_config );
+				$configs[ $matched_key ]['name']         = $hub_config['name'];
+				$configs[ $matched_key ]['description']  = $hub_config['description'];
+				$configs[ $matched_key ]['immortal']     = $hub_config['immortal'];
+				$configs[ $matched_key ]['is_removable'] = $hub_config['is_removable'];
+				continue;
+			}
+
+			// New config coming from the Hub.
+			$key               = 'wp_defender_config_hub_' . $api_id;
+			$hub_config        = $this->format_hub_config_to_save( $api_config );
+			$hub_config['key'] = $key;
+			$configs[ $key ]   = array_merge(
+				array(
+					'note_added_time' => '',
+					'is_active'       => false,
+					'date'            => (string) time(),
+				),
+				$configs[ $key ] ?? array(),
+				$hub_config
+			);
+			$hub_id_to_key[ $api_id ] = $key;
+		}
+
+		return $this->prune_unlisted_configs( $configs, $seen_hub_ids, $exclude_prune_hub_ids );
+	}
+
+	/**
+	 * Drop synced locals the Hub no longer lists.
+	 *
+	 * Untracked locals (no hub_id), freshly pushed configs, default and immortal configs are always kept.
+	 *
+	 * @param  array $configs  Local configs keyed by config key.
+	 * @param  array $seen_hub_ids  Hub IDs present in the response.
+	 * @param  array $exclude_hub_ids  Hub IDs protected from pruning.
+	 *
+	 * @return array
+	 */
+	private function prune_unlisted_configs( array $configs, array $seen_hub_ids, array $exclude_hub_ids ): array {
+		$exclude_hub_ids = array_map( 'intval', $exclude_hub_ids );
+		foreach ( $configs as $key => $config ) {
+			if ( ! is_array( $config ) || ! isset( $config['hub_id'] ) ) {
+				continue;
+			}
+
+			$local_hub_id = (int) $config['hub_id'];
+
+			if ( in_array( $local_hub_id, $seen_hub_ids, true )
+				|| in_array( $local_hub_id, $exclude_hub_ids, true )
+			) {
+				continue;
+			}
+
+			$is_removable = ! isset( $config['is_removable'] ) || (bool) $config['is_removable'];
+			$is_immortal  = isset( $config['immortal'] ) && (bool) $config['immortal'];
+			if ( ! $is_removable || $is_immortal ) {
+				continue;
+			}
+
+			unset( $configs[ $key ] );
+		}
+
+		return $configs;
+	}
+
+	/**
 	 * Get our special WDP ID header line from the file.
 	 *
 	 * @return array Plugin details: name, id.
@@ -98,7 +310,7 @@ class Config_Hub_Helper {
 		// Loop to set default config.
 		// Exclude default config from match with HUB config.
 		foreach ( $stored_configs as $sc_key => $sc_value ) {
-			if ( 0 === strpos( $sc_key, 'wp_defender_config_default' ) ) {
+			if ( str_starts_with( $sc_key, 'wp_defender_config_default' ) ) {
 				$final_configs[ $sc_key ] = $sc_value;
 				break;
 			}
@@ -125,7 +337,7 @@ class Config_Hub_Helper {
 	private function check_and_save_configs_to_hub( array $stored_configs, array $def_details, $wpmudev ): array {
 		foreach ( $stored_configs as $sc_key => &$sc_value ) {
 			// Check it is for default config.
-			if ( 0 === strpos( $sc_key, 'wp_defender_config_default' ) ) {
+			if ( str_starts_with( $sc_key, 'wp_defender_config_default' ) ) {
 				continue;
 			}
 

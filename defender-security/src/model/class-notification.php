@@ -193,12 +193,8 @@ abstract class Notification extends Setting {
 		if ( true === $this->dry_run ) {
 			// No send, but need to track as sent, so we can requeue it.
 			if ( 'report' === $this->type ) {
+				// save() recalculates est_timestamp from last_sent.
 				$this->last_sent = $this->est_timestamp;
-
-				if ( $this->get_next_run() instanceof DateTime ) {
-					$this->est_timestamp = $this->get_next_run()->getTimestamp();
-				}
-
 				$this->save();
 			}
 
@@ -251,7 +247,6 @@ abstract class Notification extends Setting {
 
 		// Est should be set as the last send. Create now timestamp.
 		$now            = new DateTime( 'now', wp_timezone() );
-		$interval       = DateInterval::createFromDateString( (string) $est->getOffset() . 'seconds' );
 		$time_parts     = array_pad( explode( ':', (string) $this->time ), 2, 0 );
 		[ $hour, $min ] = $time_parts;
 		$hour           = (int) $hour;
@@ -259,7 +254,6 @@ abstract class Notification extends Setting {
 		switch ( $this->frequency ) {
 			case 'daily':
 				// Set the time.
-				$est->add( $interval );
 				$est->setTime( $hour, $min, 0 );
 				// Convert to current timezone.
 				while ( $est->getTimestamp() < $now->getTimestamp() ) {
@@ -272,7 +266,6 @@ abstract class Notification extends Setting {
 					break;
 				}
 				$est->modify( 'this ' . $this->day );
-				$est->add( $interval );
 				$est->setTime( $hour, $min, 0 );
 				while ( $est->getTimestamp() < $now->getTimestamp() ) {
 					$est->modify( 'next ' . $this->day );

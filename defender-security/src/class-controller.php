@@ -229,6 +229,7 @@ abstract class Controller extends \Calotes\Base\Controller {
 			'pluginUrl'          => WP_DEFENDER_BASE_URL,
 			'adminUrl'           => network_admin_url(),
 			'siteUrl'            => network_site_url(),
+			'locale'             => get_user_locale(),
 			'timeZone'           => $tz_string,
 			'timeZoneOffset'     => (int) round( wp_timezone()->getOffset( new \DateTime( 'now' ) ) / 60 ),
 			'startOfWeek'        => (int) get_option( 'start_of_week', 1 ),

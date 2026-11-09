@@ -42,6 +42,20 @@ class Two_Factor extends Event {
 	use Webauthn_Trait;
 
 	/**
+	 * User meta key for the password verdict pending completion of the 2FA challenge.
+	 *
+	 * @var string
+	 */
+	public const PENDING_PASSWORD_ACTION_KEY = 'wd_2fa_pending_password_action';
+
+	/**
+	 * Lifetime in seconds of a pending password verdict.
+	 *
+	 * @var int
+	 */
+	public const PENDING_PASSWORD_ACTION_TTL = 900;
+
+	/**
 	 * The slug identifier for this controller.
 	 *
 	 * @var string
@@ -143,6 +157,8 @@ class Two_Factor extends Event {
 			// Todo: add the verify for filter 'login_redirect'.
 			if ( $this->is_woo_activated ) {
 				// Todo: move to Woocommerce class.
+				// Early call before the init hook does not prove that wp_get_current_user() returns a guest or that the captured user becomes stale.
+				// A valid problem report must show that the user identity changes during the request.
 				$this->current_user = wp_get_current_user();
 				$this->woocommerce_hooks();
 
@@ -250,10 +266,17 @@ class Two_Factor extends Event {
 	 * @is_public
 	 */
 	public function send_backup_code( Request $request ): Response {
-		$data    = $request->get_data();
-		$token   = $data['token'];
-		$user_id = (int) $data['requested_user'];
-		$ret     = $this->service->send_otp_to_email( $token, $user_id );
+		$data  = $request->get_data();
+		$token = $data['token'] ?? '';
+		// FILTER_VALIDATE_INT rejects decimals, scientific notation, arrays and objects.
+		$user_id = filter_var( $data['requested_user'] ?? null, FILTER_VALIDATE_INT );
+		if ( ! is_string( $token ) || '' === trim( $token ) || false === $user_id || $user_id <= 0 ) {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'Invalid request parameters.', 'defender-security' ) )
+			);
+		}
+		$ret = $this->service->send_otp_to_email( $token, $user_id );
 		if ( false === $ret ) {
 			return new Response(
 				false,
@@ -275,6 +298,18 @@ class Two_Factor extends Event {
 	}
 
 	/**
+	 * Reset 2FA failed attempt counters after the auth cookie is set.
+	 *
+	 * @param int $user_id  User ID.
+	 */
+	public function reset_attempts( $user_id ): void {
+		$slugs = array( Totp::$slug, Backup_Codes::$slug, Fallback_Email::$slug );
+		foreach ( $slugs as $slug ) {
+			delete_user_meta( $user_id, 'wd_2fa_attempt_' . $slug );
+		}
+	}
+
+	/**
 	 * Verify the OTP after user login successful.
 	 *
 	 * @return void
@@ -292,8 +327,7 @@ class Two_Factor extends Event {
 		$token       = HTTP::post( 'login_token' );
 		$user_id     = (int) HTTP::post( 'requested_user', 0 );
 		$auth_method = HTTP::post( 'auth_method' );
-		$password    = HTTP::post( 'password' );
-		if ( '' === $token || 0 === $user_id || '' === $auth_method || '' === $password ) {
+		if ( '' === $token || 0 === $user_id || '' === $auth_method ) {
 			wp_die( esc_html__( 'Missing parameter(s)', 'defender-security' ) );
 		}
 
@@ -309,34 +343,70 @@ class Two_Factor extends Event {
 			wp_die( esc_html__( 'Invalid request.', 'defender-security' ) );
 		}
 
-		// Base params.
-		$params = array(
-			'password'     => $this->password_protection_service->get_submitted_password(),
+		/**
+		 * Consume the verdict up front, while it is still bound to the token just
+		 * validated. Every exit below either grants the session or re-binds the verdict to
+		 * the retry token, so the state cannot be stranded by an exit that forgets to.
+		 */
+		$verdict_issued_at = 0;
+		$pending_action    = $this->consume_pending_password_action( $user->ID, $token, $verdict_issued_at );
+
+		// Base params. The token rotates here; the retry screen below carries the new one.
+		$retry_token = $this->get_token( $user_id );
+		$params      = array(
 			'user_id'      => $user->ID,
-			'token'        => $this->get_token( $user_id ),
+			'token'        => $retry_token,
 			'default_slug' => $auth_method,
 		);
+		// Any render below is a retry, so carry the verdict onto the new token.
+		$this->rebind_pending_password_action( $user_id, $pending_action, $retry_token, $verdict_issued_at );
 
 		// Get provider object.
 		$provider = $this->service->get_provider_by_slug( $auth_method );
 		if ( is_wp_error( $provider ) ) {
 			$params['error'] = $provider;
+			// Note: render_otp_screen() terminates script execution with exit;.
 			$this->render_otp_screen( $params );
 		}
 		$result = $provider->validate_authentication( $user );
 		if ( is_wp_error( $result ) ) {
 			$params['error'] = $result;
+			// Note: render_otp_screen() terminates script execution with exit;.
 			$this->render_otp_screen( $params );
 		}
 		if ( $result ) {
 			// Clean token.
 			delete_user_meta( $user->ID, Two_Fa_Component::TOKEN_USER_KEY );
 
-			$is_weak_password = $this->password_protection_service->is_weak_password( $user, $password );
-			if ( true === $is_weak_password ) {
-				$this->password_protection_service->do_weak_reset( $user, $password );
-			} elseif ( $this->password_protection_service->is_force_reset( $user ) ) {
-				$this->password_protection_service->do_force_reset( $user, $password );
+			// The retry binding written above is now moot; this attempt succeeded.
+			delete_user_meta( $user->ID, self::PENDING_PASSWORD_ACTION_KEY );
+
+			/**
+			 * The verdict was decided at primary authentication and was bound to the token
+			 * validated above. A record is written for every attempt, so missing, expired or
+			 * mismatched state means the reset requirement cannot be evaluated: restart
+			 * login rather than issue a session that may skip a required reset.
+			 * Note: trigger_redirect() terminates script execution with exit;.
+			 */
+			if ( '' === $pending_action ) {
+				wp_die(
+					esc_html__( 'Your login session has expired. Please log in again.', 'defender-security' ),
+					'',
+					array( 'response' => 403 )
+				);
+			}
+			if ( 'weak' === $pending_action ) {
+				$this->password_protection_service->trigger_redirect(
+					$user,
+					'password_protection',
+					'display_pwned_password_warning'
+				);
+			} elseif ( 'force' === $pending_action ) {
+				$this->password_protection_service->trigger_redirect(
+					$user,
+					'password_reset',
+					'display_reset_password_warning'
+				);
 			} else {
 				$user_id = $user->ID;
 				// For the Webauthn method, the check occurs inside Webauthn_Controller::verify_response().
@@ -344,6 +414,8 @@ class Two_Factor extends Event {
 				wp_set_current_user( $user_id, $user->user_login );
 				// Todo: add code for 'rememberme'-option.
 				wp_set_auth_cookie( $user_id, true );
+				// Reset all attempts of 2FA methods except WebAuthn.
+				$this->reset_attempts( $user_id );
 
 				/**
 				 * Fires after successful login via 2fa.
@@ -372,6 +444,8 @@ class Two_Factor extends Event {
 				}
 			}
 		}
+		// Providers for backup codes and fallback emails track failures themselves and return WP_Error. WebAuthn also returns WP_Error on failure.
+		// The controller renders the error and exits earlier when those errors occur. Invalid TOTP codes return false and reach this counter.
 		$lockout_message = $this->service->verify_attempt( $user->ID, Totp::$slug );
 
 		$params['error'] = new WP_Error(
@@ -396,6 +470,101 @@ class Two_Factor extends Event {
 		update_user_meta( $user_id, Two_Fa_Component::TOKEN_USER_KEY, wp_hash( $user_id . $token ) );
 
 		return $token;
+	}
+
+	/**
+	 * Record the password verdict for this login attempt, bound to its login token.
+	 *
+	 * Called at primary authentication, where the plaintext password has just been
+	 * verified, so only the verdict travels through the 2FA challenge. 'none' is recorded
+	 * explicitly: a present record is what proves the check ran, so absent state can never
+	 * be mistaken for "no reset required".
+	 *
+	 * @param  WP_User $user  Authenticated user.
+	 * @param  string  $password  Plain password, already verified by the caller.
+	 * @param  string  $token  Login token issued for this attempt.
+	 *
+	 * @return void
+	 */
+	private function store_pending_password_action( WP_User $user, string $password, string $token ): void {
+		$action = 'none';
+		if ( true === $this->password_protection_service->is_weak_password( $user, $password ) ) {
+			$action = 'weak';
+		} elseif ( $this->password_protection_service->is_force_reset( $user ) ) {
+			$action = 'force';
+		}
+
+		update_user_meta(
+			$user->ID,
+			self::PENDING_PASSWORD_ACTION_KEY,
+			array(
+				'action' => $action,
+				'time'   => time(),
+				'token'  => wp_hash( $user->ID . $token ),
+			)
+		);
+	}
+
+	/**
+	 * Re-store an already-validated verdict against a freshly issued login token.
+	 *
+	 * Each OTP submission rotates the token, so the binding has to follow it. The verdict
+	 * comes from consume_pending_password_action(), which has already checked the previous
+	 * binding and the expiry, so an empty verdict writes nothing and genuinely missing
+	 * state stays missing. The original timestamp is not restored, so the expiry window
+	 * continues to run across retries rather than being extended by each attempt.
+	 *
+	 * @param  int    $user_id  User ID.
+	 * @param  string $action  Verdict already consumed for this attempt.
+	 * @param  string $new_token  Token issued for the next attempt.
+	 * @param  int    $issued_at  Original issue time of the verdict.
+	 *
+	 * @return void
+	 */
+	private function rebind_pending_password_action( int $user_id, string $action, string $new_token, int $issued_at ): void {
+		if ( '' === $action ) {
+			return;
+		}
+
+		update_user_meta(
+			$user_id,
+			self::PENDING_PASSWORD_ACTION_KEY,
+			array(
+				'action' => $action,
+				'time'   => $issued_at,
+				'token'  => wp_hash( $user_id . $new_token ),
+			)
+		);
+	}
+
+	/**
+	 * Read and clear the password verdict bound to this login token.
+	 *
+	 * Always consumes the record, so it cannot influence a later attempt.
+	 *
+	 * @param  int    $user_id  User ID.
+	 * @param  string $token  Login token submitted with the OTP, already validated.
+	 * @param  int    $issued_at  Set to the verdict's original issue time, for re-binding.
+	 *
+	 * @return string 'weak', 'force', 'none', or '' when the state is missing, expired or
+	 *                bound to a different attempt.
+	 */
+	private function consume_pending_password_action( int $user_id, string $token, int &$issued_at = 0 ): string {
+		$pending = get_user_meta( $user_id, self::PENDING_PASSWORD_ACTION_KEY, true );
+		delete_user_meta( $user_id, self::PENDING_PASSWORD_ACTION_KEY );
+
+		if ( ! is_array( $pending ) || ! isset( $pending['action'], $pending['time'], $pending['token'] ) ) {
+			return '';
+		}
+		if ( ! Crypt::compare_lines( (string) $pending['token'], wp_hash( $user_id . $token ) ) ) {
+			return '';
+		}
+		if ( ( time() - (int) $pending['time'] ) > self::PENDING_PASSWORD_ACTION_TTL ) {
+			return '';
+		}
+		$issued_at = (int) $pending['time'];
+
+		return in_array( $pending['action'], array( 'weak', 'force', 'none' ), true ) ? $pending['action'] : '';
 	}
 
 	/**
@@ -428,9 +597,10 @@ class Two_Factor extends Event {
 			// Prevent user to login, and show otp screen.
 			wp_clear_auth_cookie();
 			// All goods, we'll need to create a unique token to mark this user.
-			$params['token']    = $this->get_token( $user->ID );
-			$params['password'] = $password;
-			$params['user_id']  = $user->ID;
+			$params['token'] = $this->get_token( $user->ID );
+			// The password is verified here, so only the resulting verdict goes any further.
+			$this->store_pending_password_action( $user, $password, $params['token'] );
+			$params['user_id'] = $user->ID;
 			// Get default provider.
 			$params['default_slug'] = $this->service->get_default_provider_slug_for_user( $user->ID );
 			if ( Fallback_Email::$slug === $params['default_slug'] ) {
@@ -451,6 +621,9 @@ class Two_Factor extends Event {
 	/**
 	 * Render the OTP screen after login successful.
 	 *
+	 * Always terminates execution via exit or wp_die(), including on errors, so
+	 * verify_otp_login_time() cannot fall through to session creation after rendering.
+	 *
 	 * @param  array $params  Additional parameters.
 	 *
 	 * @return void|null
@@ -466,12 +639,10 @@ class Two_Factor extends Event {
 		}
 
 		$this->attach_behavior( WPMUDEV::class, WPMUDEV::class );
-		$params['custom_graphic']      = '';
-		$params['custom_graphic_type'] = $this->model->custom_graphic_type;
-		$custom_graphic                = '';
-		$custom_graphic_type           = $this->model->custom_graphic_type;
-		$custom_graphic_url            = trim( $this->model->custom_graphic_url );
-		$custom_graphic_link           = trim( $this->model->custom_graphic_link );
+		$custom_graphic      = '';
+		$custom_graphic_type = $this->model->custom_graphic_type;
+		$custom_graphic_url  = trim( $this->model->custom_graphic_url );
+		$custom_graphic_link = trim( $this->model->custom_graphic_link );
 		if ( $this->model->custom_graphic ) {
 			if ( Two_Fa::CUSTOM_GRAPHIC_TYPE_UPLOAD === $custom_graphic_type && '' !== $custom_graphic_url ) {
 				$custom_graphic = $custom_graphic_url;
@@ -548,11 +719,15 @@ class Two_Factor extends Event {
 				'defender-biometric-login-script',
 				'webauthn',
 				array(
-					'admin_url'     => admin_url( 'admin-ajax.php' ),
-					'nonce'         => wp_create_nonce( 'wpdef_webauthn' ),
-					'i18n'          => $webauthn_controller->get_translations(),
-					'username'      => isset( $user->user_login ) && is_string( $user->user_login ) && '' !== trim( $user->user_login ) ? $user->user_login : '',
-					'provider_slug' => Webauthn::$slug,
+					'admin_url'      => admin_url( 'admin-ajax.php' ),
+					'nonce'          => wp_create_nonce( 'wpdef_webauthn' ),
+					'i18n'           => $webauthn_controller->get_translations(),
+					'username'       => isset( $user->user_login ) && is_string( $user->user_login ) && '' !== trim( $user->user_login ) ? $user->user_login : '',
+					'provider_slug'  => Webauthn::$slug,
+					// Proves this login attempt already passed password verification,
+					// so the credential-options endpoint can bind to this account only.
+					'login_token'    => isset( $params['token'] ) && is_string( $params['token'] ) ? $params['token'] : '',
+					'requested_user' => isset( $params['user_id'] ) ? (int) $params['user_id'] : 0,
 				)
 			);
 		}
@@ -602,6 +777,9 @@ class Two_Factor extends Event {
 	 * @is_public
 	 */
 	public function disable_totp(): Response {
+		// The @is_public tag skips the general permission checks of Central. The method verifies authentication internally.
+		// Public registration alone does not permit unauthorized access.
+		// Before you remove the tag, make sure that the capability checks of Central allow standard users to configure their own 2FA.
 		$user_id = get_current_user_id();
 		// Remove TOTP flag.
 		delete_user_meta( $user_id, Totp::TOTP_AUTH_KEY );
@@ -644,71 +822,74 @@ class Two_Factor extends Event {
 	 * @throws SodiumException Exceptions thrown by the sodium functions.
 	 */
 	public function verify_otp_for_enabling( Request $request ): Response {
-		if ( is_user_logged_in() ) {
-			$data = $request->get_data();
-			$otp  = isset( $data['otp'] ) ? sanitize_text_field( $data['otp'] ) : false;
-			if ( false === $otp || strlen( $otp ) < 6 ) {
-				return new Response(
-					false,
-					array( 'message' => esc_html__( 'Please input a valid OTP code.', 'defender-security' ) )
-				);
-			}
-			// Get the setup key.
-			$setup_key = $data['setup_key'] ?? false;
-			if ( ! $setup_key ) {
-				return new Response(
-					false,
-					array( 'message' => esc_html__( 'The setup key is incorrect.', 'defender-security' ) )
-				);
-			}
-			$user_id = get_current_user_id();
-			$result  = TOTP::verify_otp( $otp, $user_id, $setup_key );
-			// OTP result can be a boolean value or WP error.
+		if ( ! is_user_logged_in() ) {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'Authentication required.', 'defender-security' ) )
+			);
+		}
+		$data = $request->get_data();
+		$otp  = isset( $data['otp'] ) ? sanitize_text_field( $data['otp'] ) : false;
+		if ( false === $otp || strlen( $otp ) < 6 ) {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'Please input a valid OTP code.', 'defender-security' ) )
+			);
+		}
+		// Get the setup key.
+		$setup_key = $data['setup_key'] ?? false;
+		if ( ! $setup_key ) {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'The setup key is incorrect.', 'defender-security' ) )
+			);
+		}
+		$user_id = get_current_user_id();
+		$result  = TOTP::verify_otp( $otp, $user_id, $setup_key );
+		// OTP result can be a boolean value or WP error.
+		if ( is_wp_error( $result ) ) {
+			return new Response(
+				false,
+				array( 'message' => $result->get_error_message() )
+			);
+		}
+		if ( $result ) {
+			// Save a setup key.
+			$result = Totp::save_setup_key( $user_id, $setup_key );
 			if ( is_wp_error( $result ) ) {
 				return new Response(
 					false,
 					array( 'message' => $result->get_error_message() )
 				);
 			}
-			if ( $result ) {
-				// Save a setup key.
-				$result = Totp::save_setup_key( $user_id, $setup_key );
-				if ( is_wp_error( $result ) ) {
-					return new Response(
-						false,
-						array( 'message' => $result->get_error_message() )
-					);
+			// Enable OTP.
+			$this->service->enable_otp( $user_id );
+			$totp_slug = Totp::$slug;
+			// Add TOTP to enabled providers.
+			$enabled_providers = get_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, true );
+			if ( is_array( $enabled_providers ) && array() !== $enabled_providers ) {
+				// Array of enabled providers is not empty now.
+				if ( ! in_array( Totp::$slug, $enabled_providers, true ) ) {
+					$enabled_providers[] = $totp_slug;
+					update_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, $enabled_providers );
 				}
-				// Enable OTP.
-				$this->service->enable_otp( $user_id );
-				$totp_slug = Totp::$slug;
-				// Add TOTP to enabled providers.
-				$enabled_providers = get_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, true );
-				if ( is_array( $enabled_providers ) && array() !== $enabled_providers ) {
-					// Array of enabled providers is not empty now.
-					if ( ! in_array( Totp::$slug, $enabled_providers, true ) ) {
-						$enabled_providers[] = $totp_slug;
-						update_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, $enabled_providers );
-					}
-				} else {
-					// Array of enabled providers is empty now.
-					update_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, array( $totp_slug ) );
-				}
-				// If no default provider then add TOTP as it.
-				$default_provider = get_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, true );
-				if ( ! is_string( $default_provider ) || '' === trim( $default_provider ) ) {
-					update_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, $totp_slug );
-				}
-
-				return new Response( true, array() );
 			} else {
-				return new Response(
-					false,
-					array( 'message' => esc_html__( 'Your OTP code is incorrect. Please try again.', 'defender-security' ) )
-				);
+				// Array of enabled providers is empty now.
+				update_user_meta( $user_id, Two_Fa_Component::ENABLED_PROVIDERS_USER_KEY, array( $totp_slug ) );
 			}
+			// If no default provider then add TOTP as it.
+			$default_provider = get_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, true );
+			if ( ! is_string( $default_provider ) || '' === trim( $default_provider ) ) {
+				update_user_meta( $user_id, Two_Fa_Component::DEFAULT_PROVIDER_USER_KEY, $totp_slug );
+			}
+
+			return new Response( true, array() );
+		} else {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'Your OTP code is incorrect. Please try again.', 'defender-security' ) )
+			);
 		}
-		return new Response( true, array() );
 	}
 
 	/**
@@ -730,6 +911,8 @@ class Two_Factor extends Event {
 	 */
 	public function profile_update( int $user_id ) {
 		$post_data = defender_get_data_from_request( null, 'p' );
+		// If the request does not provide the nonce, the method skips the update.
+		// Missing error messages alone do not cause CSRF. A CSRF vulnerability requires state modification without nonce verification.
 		if ( isset( $post_data['_wpdef_2fa_nonce_user_options'] ) ) {
 			check_admin_referer( 'wpdef_2fa_user_options', '_wpdef_2fa_nonce_user_options' );
 
@@ -1299,7 +1482,16 @@ class Two_Factor extends Event {
 	 * @is_public
 	 */
 	public function generate_backup_codes(): Response {
+		// The @is_public tag skips the general permission checks of Central. The method verifies authentication internally.
+		// Public registration alone does not permit unauthorized access.
+		// Before you remove the tag, make sure that the capability checks of Central allow standard users to configure their own 2FA.
 		$user = wp_get_current_user();
+		if ( ! $user instanceof WP_User || ! $user->exists() ) {
+			return new Response(
+				false,
+				array( 'message' => esc_html__( 'Unauthorized.', 'defender-security' ) )
+			);
+		}
 
 		return new Response(
 			true,

@@ -42,6 +42,7 @@ class Strong_Password extends Setting {
 	 *
 	 * @defender_property
 	 * @var string
+	 * @sanitize_textarea_field
 	 */
 	public $message = '';
 
@@ -93,6 +94,16 @@ class Strong_Password extends Setting {
 	}
 
 	/**
+	 * Runs after the data is loaded.
+	 *
+	 * @return void
+	 */
+	protected function after_load(): void {
+		// Older versions saved the message with "&#039;" instead of "'". Change it back to plain text.
+		$this->message = wp_specialchars_decode( (string) $this->message, ENT_QUOTES );
+	}
+
+	/**
 	 * Get applicable user roles.
 	 */
 	protected function get_default_roles(): array {
@@ -119,7 +130,8 @@ class Strong_Password extends Setting {
 	 * Get localized default message.
 	 */
 	protected function get_default_message(): string {
-		return esc_html__(
+		// Not escaped here. It is escaped when shown.
+		return __(
 			"You are required to change your password because your password doesn't meet the strong password guidelines set by the administrator.",
 			'defender-security'
 		);

@@ -290,7 +290,6 @@ END;
 					<input type="hidden" name="auth_method" value="<?php echo esc_attr( $slug ); ?>"/>
 					<input type="hidden" name="login_token" value="<?php echo esc_attr( $token ); ?>"/>
 					<input type="hidden" name="redirect_to" value="<?php echo esc_attr( $redirect_to ); ?>"/>
-					<input type="hidden" name="password" value="<?php echo esc_attr( $password ); ?>"/>
 					<input type="hidden" name="requested_user" value="<?php echo esc_attr( $user_id ); ?>"/>
 					<input type="hidden" id="_wpnonce_<?php echo esc_attr( $slug ); ?>" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>" />
 				<?php

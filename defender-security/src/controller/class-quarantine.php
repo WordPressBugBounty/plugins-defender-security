@@ -154,6 +154,9 @@ class Quarantine extends Controller {
 	/**
 	 * Delete quarantined file.
 	 *
+	 * Input is validated via Request::get_data(), and access is protected by Central routing nonces and admin
+	 * capability checks. The reflected filename in the response message has no external attack vector.
+	 *
 	 * @param  Request $request  Request object.
 	 *
 	 * @return Response

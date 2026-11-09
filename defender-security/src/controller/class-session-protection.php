@@ -11,6 +11,7 @@ use WP_Defender\Event;
 use WP_Defender\Traits\User;
 use Calotes\Component\Request;
 use Calotes\Component\Response;
+use WP_Defender\Component\Config\Config_Hub_Helper;
 use WP_Defender\Component\Session_Protection as Service;
 use WP_Defender\Model\Setting\Session_Protection as Settings;
 
@@ -46,7 +47,8 @@ class Session_Protection extends Event {
 			add_action( 'wp_enqueue_scripts', array( $this->service, 'enqueue_idle_scripts' ) );
 			add_action( 'admin_enqueue_scripts', array( $this->service, 'enqueue_idle_scripts' ) );
 			add_action( 'wp_ajax_wpdef_logout', array( $this->service, 'logout' ) );
-			add_action( 'wp_login', array( $this->service, 'update_last_activity' ) );
+			// Initialize activity with the newly issued token; $_COOKIE has no token yet during login.
+			add_action( 'set_logged_in_cookie', array( $this, 'init_activity_on_login' ), 10, 6 );
 
 			// Show login modal with custom message.
 			add_filter( 'wp_login_errors', array( $this->service, 'login_modal_message' ) );
@@ -89,8 +91,9 @@ class Session_Protection extends Event {
 		$this->model->import( $model_data );
 		if ( $this->model->validate() ) {
 			$this->model->save();
+			$this->service->attach_lock_data_to_current_session();
 			// Changes for Hub.
-			\WP_Defender\Component\Config\Config_Hub_Helper::set_clear_active_flag();
+			Config_Hub_Helper::set_clear_active_flag();
 
 			// Maybe track if any settings have changed except user roles.
 			if ( $this->maybe_track() && array() !== $prev_data &&
@@ -135,6 +138,25 @@ class Session_Protection extends Event {
 	}
 
 	/**
+	 * Seed last activity for a freshly created session.
+	 *
+	 * @param string $logged_in_cookie The logged-in cookie value.
+	 * @param int    $expire           Unused.
+	 * @param int    $expiration       Unused.
+	 * @param int    $user_id          User ID.
+	 * @param string $scheme           Unused.
+	 * @param string $token            The session token.
+	 *
+	 * @return void
+	 */
+	public function init_activity_on_login( $logged_in_cookie, $expire, $expiration, $user_id, $scheme = '', $token = '' ) {
+		if ( '' === $token || ! $user_id ) {
+			return;
+		}
+		$this->service->update_last_activity( $token, (int) $user_id );
+	}
+
+	/**
 	 * Export the data of this module, we will use this for export to HUB, create a preset etc.
 	 *
 	 * @return array
@@ -152,6 +174,7 @@ class Session_Protection extends Event {
 		$this->model->import( $data );
 		if ( $this->model->validate() ) {
 			$this->model->save();
+			$this->service->attach_lock_data_to_current_session();
 			$this->service->update_last_activity();
 		}
 	}
@@ -164,9 +187,21 @@ class Session_Protection extends Event {
 
 	/**
 	 * Remove all data.
+	 *
+	 * Context: update_last_activity() (src/component/class-session-protection.php) stores one wpdef_last_act_{sha256
+	 * of token} user meta row per session.
 	 */
 	public function remove_data() {
+		global $wpdb;
+
 		delete_site_transient( Service::LOGOUT_MSG_TRANSIENT_KEY );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Keys are per-session hashes; delete_metadata() cannot match a prefix. One-time cleanup on data removal.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE %s",
+				$wpdb->esc_like( 'wpdef_last_act_' ) . '%'
+			)
+		);
 	}
 
 	/**

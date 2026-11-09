@@ -168,6 +168,8 @@ class Hub_Connector extends Component {
 	/**
 	 * Get feature's name.
 	 *
+	 * The defender_get_data_from_request sanitizes module_name and strips HTML; this is not raw request data.
+	 *
 	 * @return string
 	 */
 	public static function get_feature_name(): string {

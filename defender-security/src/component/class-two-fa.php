@@ -18,7 +18,6 @@ use WP_Defender\Traits\User;
 use Calotes\Helper\Array_Cache;
 use WP_Defender\Controller\Two_Factor;
 use WordfenceLS\Controller_WordfenceLS;
-use WP_Defender\Model\Setting\Login_Lockout;
 use WP_Defender\Component\Two_Factor\Providers\Totp;
 use WP_Defender\Model\Setting\Two_Fa as Two_Fa_Model;
 use WP_Defender\Component\Two_Factor\Providers\Webauthn;
@@ -46,6 +45,13 @@ class Two_Fa extends Component {
 	 * @var string
 	 */
 	public const ENABLED_PROVIDERS_USER_KEY = 'wd_2fa_enabled_providers';
+
+	/**
+	 * The user meta key holding the last fallback-email dispatch timestamp.
+	 *
+	 * @var string
+	 */
+	public const FALLBACK_EMAIL_SENT_KEY = 'wd_2fa_fallback_email_sent';
 
 	/**
 	 * Default limit for failed 2FA attempts.
@@ -339,7 +345,28 @@ class Two_Fa extends Component {
 			 */
 			$classes = apply_filters( 'wd_2fa_providers', $classes );
 			foreach ( $classes as $class ) {
-				$providers[ $class::$slug ] = new $class();
+				if (
+					! is_string( $class ) || ! class_exists( $class ) ||
+					! is_subclass_of( $class, \WP_Defender\Component\Two_Factor\Two_Factor_Provider::class )
+				) {
+					continue;
+				}
+				$ref = new \ReflectionClass( $class );
+				if ( ! $ref->hasProperty( 'slug' ) ) {
+					continue;
+				}
+
+				$slug_property = $ref->getProperty( 'slug' );
+				if ( ! $slug_property->isPublic() ) {
+					continue;
+				}
+
+				$slug = $slug_property->getValue();
+				// Validation to ensure $slug is a non-empty string, e.g., for a custom third-party provider.
+				if ( ! is_string( $slug ) || '' === $slug ) {
+					continue;
+				}
+				$providers[ $slug ] = new $class();
 			}
 			Array_Cache::set( 'providers', $providers, 'two_fa' );
 		}
@@ -453,6 +480,63 @@ class Two_Fa extends Component {
 	}
 
 	/**
+	 * Atomically claim the right to send a fallback-email passcode.
+	 *
+	 * A conditional UPDATE guards an existing row, but the first-ever request has no row to
+	 * guard and wp_usermeta carries no unique index on ( user_id, meta_key ), so a bare
+	 * INSERT ... WHERE NOT EXISTS can still double-insert. A named advisory lock closes
+	 * that window without a schema change. add_user_meta()'s $unique flag is no
+	 * substitute: it runs SELECT COUNT(*) then INSERT as separate statements.
+	 *
+	 * @param  int $user_id  User ID, already validated by the caller.
+	 *
+	 * @return int The claim timestamp when this request owns the send, otherwise 0.
+	 */
+	private function claim_fallback_email_slot( int $user_id ): int {
+		global $wpdb;
+
+		$cooldown = (int) apply_filters( 'wd_2fa_fallback_email_cooldown', 60 );
+		if ( $cooldown <= 0 ) {
+			return time();
+		}
+
+		// Scope the lock name to this install so sites sharing a server cannot collide.
+		$lock = 'wd_2fa_fb_email_' . md5( $wpdb->usermeta . '_' . $user_id );
+		/**
+		 * Zero timeout: a request that cannot take the lock is a concurrent resend. Only an
+		 * explicit 1 proceeds; GET_LOCK() returns 0 on timeout and NULL on error, and both
+		 * cast to 0 here, so neither is treated as a successful claim.
+		 */
+		if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 0 )', $lock ) ) ) {
+			return 0;
+		}
+
+		try {
+			$now  = time();
+			$last = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key = %s",
+					$user_id,
+					self::FALLBACK_EMAIL_SENT_KEY
+				)
+			);
+			if ( $last > 0 && ( $now - $last ) < $cooldown ) {
+				return 0;
+			}
+			/**
+			 * Reject the send if the cooldown cannot be recorded, otherwise an unwritable
+			 * meta row would let every later request through unthrottled. Safe to
+			 * read-then-write: the lock serialises claims for this user.
+			 */
+			$stored = update_user_meta( $user_id, self::FALLBACK_EMAIL_SENT_KEY, $now );
+
+			return false === $stored ? 0 : $now;
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock ) );
+		}
+	}
+
+	/**
 	 * Send emergency email to users.
 	 *
 	 * @param  string $login_token  This will be generated randomly on frontend each time user refresh, an internal
@@ -469,6 +553,15 @@ class Two_Fa extends Component {
 		$hashed_token = get_user_meta( $user_id, self::TOKEN_USER_KEY, true );
 		if ( ! Crypt::compare_lines( $hashed_token, wp_hash( $user_id . $login_token ) ) ) {
 			return new WP_Error( Error_Code::INVALID, esc_html__( 'Your token is invalid.', 'defender-security' ) );
+		}
+
+		// Cooldown, claimed before any existing code is replaced.
+		$claim = $this->claim_fallback_email_slot( $user_id );
+		if ( 0 === $claim ) {
+			return new WP_Error(
+				Error_Code::INVALID,
+				esc_html__( 'A passcode was sent recently. Please check your inbox and wait a moment before requesting another.', 'defender-security' )
+			);
 		}
 
 		$code = wp_generate_password( 20, false );
@@ -517,7 +610,17 @@ class Two_Fa extends Component {
 		$headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 		$headers[]  = sprintf( 'From: %s <%s>', $settings->email_sender, $from_email );
 
-		return wp_mail( Fallback_Email::get_backup_email( $user->ID ), $settings->email_subject, $body, $headers );
+		$sent = wp_mail( Fallback_Email::get_backup_email( $user->ID ), $settings->email_subject, $body, $headers );
+		if ( ! $sent ) {
+			/**
+			 * Delivery failed: release the cooldown so the user can retry at once, but only
+			 * while the stored timestamp is still the one this request wrote. Passing the
+			 * value makes delete_user_meta() a no-op once a newer claim has replaced it.            *
+			 */
+			delete_user_meta( $user_id, self::FALLBACK_EMAIL_SENT_KEY, $claim );
+		}
+
+		return $sent;
 	}
 
 	/**
@@ -579,29 +682,12 @@ class Two_Fa extends Component {
 	 */
 	public function verify_attempt( int $user_id, string $slug ): string {
 		$lockout_message = '';
-		$login_settings  = wd_di()->get( Login_Lockout::class );
-
-		$firewall_component = wd_di()->get( Firewall::class );
-
-		$skip_priority_lockout_checks = true;
-		foreach ( $this->get_user_ip() as $ip ) {
-			if ( ! $firewall_component->skip_priority_lockout_checks( $ip ) ) {
-				$skip_priority_lockout_checks = false;
-				break;
-			}
-		}
-
 		/**
 		 * Required rules:
-		 * hook returns true (since v3.3.0),
-		 * if Login Protection is enabled,
-		 * the current IP is not in priority points: no allowlisted, no staff and the country is not from allowlisted.
+		 * hook to enable/disable the counter of 2FA failed attempts for flexibility (since v3.3.0),
+		 * no privileges for allowlisted or staff IP, for allowlisted country.
 		 */
-		if (
-			apply_filters( 'wd_2fa_enable_attempts', true )
-			&& $login_settings->enabled
-			&& ! $skip_priority_lockout_checks
-		) {
+		if ( apply_filters( 'wd_2fa_enable_attempts', true ) ) {
 			$line = get_user_meta( $user_id, 'wd_2fa_attempt_' . $slug, true );
 			// Fresh start or there's a record.
 			if ( in_array( $line, array( false, '', array() ), true ) ) {
@@ -644,7 +730,7 @@ class Two_Fa extends Component {
 			$lockout_message .= '<br/><br/>';
 			$lockout_message .= sprintf(
 				/* translators: %d: Count. */
-				_n( 'You have %d login attempt remaining.', 'You have %d login attempts remaining.', $count, 'defender-security' ),
+				_n( 'You have %d 2FA attempt remaining.', 'You have %d 2FA attempts remaining.', $count, 'defender-security' ),
 				$count
 			);
 			$lockout_message .= '</span>';

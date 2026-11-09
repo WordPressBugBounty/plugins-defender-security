@@ -8,6 +8,7 @@
 namespace WP_Defender\Model;
 
 use WP_Defender\DB;
+use WP_Defender\Component\Crypt;
 use ReflectionException;
 
 /**
@@ -40,6 +41,13 @@ class Audit_Log extends DB {
 	 * @defender_property
 	 */
 	public $timestamp;
+	/**
+	 * Persisted experimental fractional key, kept as a decimal string.
+	 *
+	 * @var string|null
+	 * @defender_property
+	 */
+	public $fractional_timestamp;
 	/**
 	 * Table column for event type.
 	 *
@@ -118,6 +126,7 @@ class Audit_Log extends DB {
 	public $safe = array(
 		'id',
 		'timestamp',
+		'fractional_timestamp',
 		'event_type',
 		'action_type',
 		'site_url',
@@ -129,6 +138,167 @@ class Audit_Log extends DB {
 		'synced',
 		'ttl',
 	);
+
+	/**
+	 * Generate a key only for a new queued event, before persisting it.
+	 *
+	 * @return bool|int The save result.
+	 */
+	public function save(): bool|int {
+		if ( 0 === (int) $this->synced
+			&& ( null === $this->fractional_timestamp || '' === $this->fractional_timestamp ) ) {
+			global $wpdb;
+			$table = $wpdb->base_prefix . $this->table;
+			// Include synced rows too, to avoid reusing a recently flushed key.
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$keys = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT fractional_timestamp FROM `{$table}` WHERE timestamp = %d AND site_url = %s AND fractional_timestamp IS NOT NULL",
+					$this->timestamp,
+					$this->site_url
+				)
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			if ( ! is_array( $keys ) || $wpdb->last_error ) {
+				return false;
+			}
+			$used = array_fill_keys( $keys, true );
+			if ( count( $used ) >= 999999 ) {
+				return false;
+			}
+			$fraction = Crypt::random_int( 1, 999999 );
+			do {
+				$key      = $this->timestamp . '.' . sprintf( '%06d', $fraction );
+				$fraction = $fraction % 999999 + 1;
+			} while ( isset( $used[ $key ] ) );
+			$this->fractional_timestamp = $key;
+		}
+
+		return parent::save();
+	}
+
+	/**
+	 * Give keyless logs unique fractional keys and mark them unsynced: one key lookup and one UPDATE per batch.
+	 *
+	 * @param self[] $logs Logs without a fractional key.
+	 *
+	 * @return self[] Logs persisted with a key; empty when a query fails.
+	 */
+	public static function assign_keys( array $logs ): array {
+		if ( array() === $logs ) {
+			return array();
+		}
+		global $wpdb;
+		$table = $wpdb->base_prefix . 'defender_audit_log';
+
+		$groups = array();
+		foreach ( $logs as $log ) {
+			$group_key = $log->site_url . '|' . $log->timestamp;
+			if ( ! isset( $groups[ $group_key ] ) ) {
+				$groups[ $group_key ] = array(
+					'site_url'  => $log->site_url,
+					'timestamp' => $log->timestamp,
+				);
+			}
+		}
+
+		$where_clauses = array();
+		$params        = array();
+		foreach ( $groups as $group ) {
+			$where_clauses[] = '( site_url = %s AND timestamp = %d )';
+			$params[]        = $group['site_url'];
+			$params[]        = $group['timestamp'];
+		}
+
+		$where_sql = implode( ' OR ', $where_clauses );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$existing_rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT site_url, timestamp, fractional_timestamp FROM `{$table}`
+				WHERE fractional_timestamp IS NOT NULL AND fractional_timestamp != ''
+				AND ( {$where_sql} )",
+				$params
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		if ( ! is_array( $existing_rows ) || $wpdb->last_error ) {
+			return array();
+		}
+
+		$used_keys = array();
+		foreach ( $existing_rows as $row ) {
+			$group_key = $row->site_url . '|' . $row->timestamp;
+			$used_keys[ $group_key ][ (string) $row->fractional_timestamp ] = true;
+		}
+
+		$keys       = array();
+		$ready_logs = array();
+		foreach ( $logs as $log ) {
+			$group_key = $log->site_url . '|' . $log->timestamp;
+			if ( ! isset( $used_keys[ $group_key ] ) ) {
+				$used_keys[ $group_key ] = array();
+			}
+			if ( count( $used_keys[ $group_key ] ) >= 999999 ) {
+				continue;
+			}
+			$fraction = Crypt::random_int( 1, 999999 );
+			do {
+				$key      = $log->timestamp . '.' . sprintf( '%06d', $fraction );
+				$fraction = $fraction % 999999 + 1;
+			} while ( isset( $used_keys[ $group_key ][ $key ] ) );
+
+			$used_keys[ $group_key ][ $key ] = true;
+			$keys[ $log->id ]                = $key;
+			$ready_logs[]                    = $log;
+		}
+
+		if ( array() === $ready_logs ) {
+			return array();
+		}
+
+		$cases  = array();
+		$params = array();
+		foreach ( $keys as $id => $key ) {
+			$cases[]  = 'WHEN %d THEN %s';
+			$params[] = $id;
+			$params[] = $key;
+		}
+		$ids_placeholder = implode( ', ', array_fill( 0, count( $keys ), '%d' ) );
+		$params          = array_merge( $params, array_keys( $keys ) );
+		$cases_sql       = implode( ' ', $cases );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$res = $wpdb->query(
+			$wpdb->prepare( "UPDATE `$table` SET synced = 0, fractional_timestamp = CASE id $cases_sql END WHERE id IN ($ids_placeholder)", $params )
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		if ( false === $res || $wpdb->last_error ) {
+			return array();
+		}
+
+		// Set keys only after the UPDATE succeeds, so callers never send unsaved keys.
+		foreach ( $ready_logs as $log ) {
+			$log->fractional_timestamp = $keys[ $log->id ];
+			$log->synced               = 0;
+		}
+
+		return $ready_logs;
+	}
+
+	/**
+	 * Mark logs synced in a single query.
+	 *
+	 * @param int[] $ids Row IDs.
+	 */
+	public static function mark_synced( array $ids ): void {
+		if ( array() === $ids ) {
+			return;
+		}
+		global $wpdb;
+		$table        = $wpdb->base_prefix . 'defender_audit_log';
+		$placeholders = implode( ', ', array_fill( 0, count( $ids ), '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		$wpdb->query( $wpdb->prepare( "UPDATE `$table` SET synced = 1 WHERE id IN ($placeholders)", $ids ) );
+	}
 
 	/**
 	 * Truncate the table, as this is mostly use for cache, when we fetch new data, old data should be removed for
@@ -178,6 +348,17 @@ class Audit_Log extends DB {
 		$orm = self::get_orm();
 
 		return $orm->get_repository( self::class )->where( 'synced', 0 )->limit( 50 )->get();
+	}
+
+	/**
+	 * Get log models by IDs.
+	 *
+	 * @param  int[] $ids  Row IDs.
+	 *
+	 * @return self[]
+	 */
+	public static function get_by_ids( array $ids ): array {
+		return self::get_orm()->get_repository( self::class )->where( 'id', 'in', $ids )->order_by( 'id' )->get();
 	}
 
 	/**
@@ -299,9 +480,16 @@ class Audit_Log extends DB {
 	public static function mass_insert( $data, $synced = 1 ) {
 		// Use raw sql for faster.
 		foreach ( $data as $datum ) {
+			// Cloud timestamps may contain fractions; local dates remain in seconds.
+			if ( isset( $datum['timestamp'] ) ) {
+				$datum['timestamp'] = (int) $datum['timestamp'];
+			}
 			$item = new Audit_Log();
 			$item->import( $datum );
-			$item->synced = $synced;
+			$item->fractional_timestamp = isset( $datum['fractional_timestamp'] )
+				? (string) $datum['fractional_timestamp']
+				: null;
+			$item->synced               = $synced;
 			$item->save();
 		}
 	}

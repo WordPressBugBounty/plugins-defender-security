@@ -148,6 +148,7 @@ class Firewall_Logs extends Controller {
 
 	/**
 	 * Export all logs matching the current filter to CSV.
+	 * Csv::to_browser() neutralizes formula prefixes (=, +, -, @), including after leading whitespace/control characters, in all string cells before CSV output.
 	 *
 	 * @return void
 	 * @defender_route

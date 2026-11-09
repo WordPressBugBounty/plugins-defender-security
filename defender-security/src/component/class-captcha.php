@@ -354,11 +354,14 @@ class Captcha extends Component {
 	 * @return WP_Error|WP_User
 	 */
 	public function validate_captcha_field_on_login( $user ) {
-		if ( $this->woo && $this->woo->is_woocommerce_page() ) {
-			return $user;
+		// Block XML-RPC password authentication because CAPTCHA cannot be solved there.
+		if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
+			return new WP_Error(
+				'xmlrpc_captcha_required',
+				__( 'XML-RPC password authentication is disabled because CAPTCHA is required for login. Please use an Application Password.', 'defender-security' )
+			);
 		}
-		// Skip check if connecting to XMLRPC.
-		if ( defined( 'XMLRPC_REQUEST' ) ) {
+		if ( $this->woo && $this->woo->is_woocommerce_page() ) {
 			return $user;
 		}
 		// Skip turnstile verification for current sprint plan.
@@ -387,7 +390,7 @@ class Captcha extends Component {
 	 */
 	public function validate_captcha_field_on_registration( WP_Error $errors ) {
 		// Skip check if connecting to XMLRPC.
-		if ( defined( 'XMLRPC_REQUEST' ) ) {
+		if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
 			return $errors;
 		}
 
@@ -456,7 +459,7 @@ class Captcha extends Component {
 	 */
 	public function validate_captcha_field_on_woo_login( WP_Error $errors ) {
 		// Skip check if connecting to XMLRPC.
-		if ( defined( 'XMLRPC_REQUEST' ) ) {
+		if ( defined( 'XMLRPC_REQUEST' ) && XMLRPC_REQUEST ) {
 			return $errors;
 		}
 

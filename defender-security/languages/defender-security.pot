@@ -2,14 +2,14 @@
 # This file is distributed under the GNU General Public License (Version 2 - GPLv2).
 msgid ""
 msgstr ""
-"Project-Id-Version: Defender Pro 6.3.0\n"
+"Project-Id-Version: Defender Pro 6.4.1\n"
 "Report-Msgid-Bugs-To: https://wpmudev.com\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-22T07:46:57+00:00\n"
+"POT-Creation-Date: 2026-11-05T09:30:32+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wpdef\n"
@@ -17,7 +17,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: wp-defender.php
 #: src/class-admin.php:159
-#: src/component/class-scan.php:677
+#: src/component/class-scan.php:679
 #: src/traits/defender-dashboard-client.php:88
 #: assets/js/core-ui.js:1
 msgid "Defender Pro"
@@ -64,10 +64,10 @@ msgstr ""
 #: src/component/ip/class-global-ip.php:268
 #: src/component/ip/class-global-ip.php:272
 #: src/component/ip/class-global-ip.php:275
-#: src/controller/class-firewall.php:902
-#: src/model/class-notification.php:384
-#: src/model/class-notification.php:399
-#: src/model/notification/class-malware-report.php:159
+#: src/controller/class-firewall.php:913
+#: src/model/class-notification.php:377
+#: src/model/class-notification.php:392
+#: src/model/notification/class-malware-report.php:158
 #: src/traits/formats.php:349
 #: assets/js/core-ui.js:1
 msgid "Never"
@@ -83,7 +83,7 @@ msgstr ""
 #: free/component/class-notification.php:105
 #: src/component/class-backup-settings.php:1407
 #: src/component/class-notification.php:173
-#: src/controller/class-main-setting.php:1227
+#: src/controller/class-main-setting.php:1401
 #: src/controller/class-security-tweaks.php:100
 #: assets/js/core-ui.js:1
 msgid "Hardening"
@@ -117,7 +117,7 @@ msgstr ""
 #: free/model/notification/class-audit-report.php:38
 #: free/model/notification/class-audit-report.php:55
 #: src/model/notification/class-audit-report.php:42
-#: src/model/notification/class-audit-report.php:194
+#: src/model/notification/class-audit-report.php:193
 msgid "Audit Logging - Reporting"
 msgstr ""
 
@@ -130,11 +130,11 @@ msgstr ""
 #: free/model/notification/class-firewall-report.php:60
 #: free/model/notification/class-malware-report.php:62
 #: free/model/notification/class-tweak-reminder.php:76
-#: src/model/notification/class-audit-report.php:195
+#: src/model/notification/class-audit-report.php:194
 #: src/model/notification/class-firewall-notification.php:416
 #: src/model/notification/class-firewall-report.php:184
 #: src/model/notification/class-malware-notification.php:320
-#: src/model/notification/class-malware-report.php:143
+#: src/model/notification/class-malware-report.php:142
 #: src/model/notification/class-tweak-reminder.php:221
 #: assets/js/core-ui.js:1
 msgid "Recipients"
@@ -146,12 +146,12 @@ msgstr ""
 #: free/model/notification/class-firewall-report.php:57
 #: free/model/notification/class-malware-report.php:63
 #: free/model/notification/class-malware-report.php:64
+#: src/model/notification/class-audit-report.php:195
 #: src/model/notification/class-audit-report.php:196
-#: src/model/notification/class-audit-report.php:197
 #: src/model/notification/class-firewall-report.php:180
 #: src/model/notification/class-firewall-report.php:181
+#: src/model/notification/class-malware-report.php:143
 #: src/model/notification/class-malware-report.php:144
-#: src/model/notification/class-malware-report.php:145
 msgid "Day of"
 msgstr ""
 
@@ -159,9 +159,9 @@ msgstr ""
 #: free/model/notification/class-firewall-report.php:58
 #: free/model/notification/class-malware-report.php:65
 #: free/model/setting/class-scan.php:150
-#: src/model/notification/class-audit-report.php:198
+#: src/model/notification/class-audit-report.php:197
 #: src/model/notification/class-firewall-report.php:182
-#: src/model/notification/class-malware-report.php:146
+#: src/model/notification/class-malware-report.php:145
 #: src/model/setting/class-scan.php:153
 msgid "Time of day"
 msgstr ""
@@ -171,9 +171,9 @@ msgstr ""
 #: free/model/notification/class-malware-report.php:66
 #: free/model/notification/class-tweak-reminder.php:75
 #: free/model/setting/class-scan.php:147
-#: src/model/notification/class-audit-report.php:199
+#: src/model/notification/class-audit-report.php:198
 #: src/model/notification/class-firewall-report.php:183
-#: src/model/notification/class-malware-report.php:147
+#: src/model/notification/class-malware-report.php:146
 #: src/model/notification/class-tweak-reminder.php:220
 #: src/model/setting/class-scan.php:150
 #: src/view/email/audit-report-table.php:48
@@ -195,7 +195,7 @@ msgstr ""
 #: free/model/notification/class-malware-report.php:38
 #: free/model/notification/class-malware-report.php:60
 #: src/model/notification/class-malware-report.php:44
-#: src/model/notification/class-malware-report.php:141
+#: src/model/notification/class-malware-report.php:140
 msgid "Issue - Reporting"
 msgstr ""
 
@@ -206,7 +206,7 @@ msgstr ""
 
 #: free/model/notification/class-malware-report.php:61
 #: src/model/notification/class-malware-notification.php:309
-#: src/model/notification/class-malware-report.php:142
+#: src/model/notification/class-malware-report.php:141
 msgid "Send alerts when no issues are detected"
 msgstr ""
 
@@ -645,8 +645,8 @@ msgstr ""
 #: src/controller/class-webauthn.php:249
 #: src/controller/class-webauthn.php:335
 #: src/controller/class-webauthn.php:384
-#: src/controller/class-webauthn.php:422
-#: src/controller/class-webauthn.php:525
+#: src/controller/class-webauthn.php:457
+#: src/controller/class-webauthn.php:564
 msgid "Missing field(s)."
 msgstr ""
 
@@ -659,8 +659,9 @@ msgid "Invalid API request."
 msgstr ""
 
 #: src/class-central.php:92
-#: src/controller/class-main-setting.php:952
-#: src/controller/class-main-setting.php:1112
+#: src/controller/class-main-setting.php:132
+#: src/controller/class-main-setting.php:1051
+#: src/controller/class-main-setting.php:1277
 #: src/controller/class-notification.php:339
 #: src/controller/class-notification.php:343
 #: src/controller/class-recipients.php:309
@@ -681,53 +682,53 @@ msgstr ""
 msgid "We have detected that your %1$s is disabled on your hosting. For Defender to function properly, please contact your hosting provider and ask them to enable %2$s."
 msgstr ""
 
-#: src/class-upgrader.php:811
+#: src/class-upgrader.php:820
 msgid "Basic config"
 msgstr ""
 
-#: src/class-upgrader.php:812
+#: src/class-upgrader.php:821
 #: src/component/class-backup-settings.php:673
 msgid "Basic Config"
 msgstr ""
 
-#: src/class-upgrader.php:1440
+#: src/class-upgrader.php:1449
 msgid "Scan of {SITE_URL} complete."
 msgstr ""
 
-#: src/class-upgrader.php:1441
+#: src/class-upgrader.php:1450
 msgid "Malware Scan of {SITE_URL} is complete."
 msgstr ""
 
-#: src/class-upgrader.php:1446
+#: src/class-upgrader.php:1455
 msgid "{ISSUES_COUNT} issues found."
 msgstr ""
 
-#: src/class-upgrader.php:1447
+#: src/class-upgrader.php:1456
 msgid "{ISSUES_COUNT} issue(s) found."
 msgstr ""
 
-#: src/class-upgrader.php:1481
+#: src/class-upgrader.php:1490
 msgid "{ISSUES_COUNT} vulnerabilities were identified for {SITE_URL} during a Malware Scan."
 msgstr ""
 
-#: src/class-upgrader.php:1482
+#: src/class-upgrader.php:1491
 msgid "Malware Scan identified {ISSUES_COUNT} issue(s) on {SITE_URL}."
 msgstr ""
 
-#: src/class-upgrader.php:1487
+#: src/class-upgrader.php:1496
 msgid "See details for each issue below."
 msgstr ""
 
-#: src/class-upgrader.php:1488
+#: src/class-upgrader.php:1497
 msgid "The identified issue(s) is/are listed below."
 msgstr ""
 
-#: src/class-upgrader.php:2349
+#: src/class-upgrader.php:2358
 #: src/traits/scan-email-template.php:21
 msgid "Issues Report for {SITE_URL}: {ISSUES_COUNT} issue(s) found."
 msgstr ""
 
-#: src/class-upgrader.php:2350
+#: src/class-upgrader.php:2359
 #: src/traits/scan-email-template.php:25
 msgid ""
 "Hi {USER_NAME},\n"
@@ -1694,18 +1695,18 @@ msgstr ""
 #: src/component/class-backup-settings.php:1340
 #: src/controller/class-audit-logging.php:680
 #: src/controller/class-audit-logging.php:718
-#: src/controller/class-captcha.php:531
+#: src/controller/class-captcha.php:548
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-password-protection.php:394
 #: src/controller/class-password-protection.php:400
-#: src/controller/class-scan.php:1076
-#: src/controller/class-scan.php:1116
-#: src/controller/class-session-protection.php:179
+#: src/controller/class-scan.php:1157
+#: src/controller/class-scan.php:1197
+#: src/controller/class-session-protection.php:214
 #: src/controller/class-strong-password.php:252
 #: src/controller/class-strong-password.php:271
 #: src/controller/class-strong-password.php:277
-#: src/controller/class-two-factor.php:1176
-#: src/controller/class-two-factor.php:1189
+#: src/controller/class-two-factor.php:1359
+#: src/controller/class-two-factor.php:1372
 #: assets/js/core-ui.js:1
 msgid "Inactive"
 msgstr ""
@@ -1717,13 +1718,13 @@ msgid "Issue"
 msgstr ""
 
 #: src/component/class-backup-settings.php:1417
-#: src/controller/class-two-factor.php:1383
+#: src/controller/class-two-factor.php:1575
 msgid "2FA"
 msgstr ""
 
 #: src/component/class-backup-settings.php:1423
 #: src/controller/class-blocklist-monitor.php:292
-#: src/controller/class-main-setting.php:520
+#: src/controller/class-main-setting.php:521
 #: assets/js/core-ui.js:1
 msgid "Blocklist Monitor"
 msgstr ""
@@ -1769,11 +1770,15 @@ msgstr ""
 msgid "Please verify that you are not a robot."
 msgstr ""
 
-#: src/component/class-captcha.php:465
-#: src/component/class-captcha.php:485
-#: src/component/class-captcha.php:517
-#: src/component/class-login-lockout.php:117
-#: src/component/class-login-lockout.php:172
+#: src/component/class-captcha.php:361
+msgid "XML-RPC password authentication is disabled because CAPTCHA is required for login. Please use an Application Password."
+msgstr ""
+
+#: src/component/class-captcha.php:468
+#: src/component/class-captcha.php:488
+#: src/component/class-captcha.php:520
+#: src/component/class-login-lockout.php:116
+#: src/component/class-login-lockout.php:171
 msgid "Error"
 msgstr ""
 
@@ -1837,94 +1842,94 @@ msgstr ""
 msgid "Log in with your WPMU DEV account credentials to activate %s."
 msgstr ""
 
-#: src/component/class-hub-connector.php:182
+#: src/component/class-hub-connector.php:184
 msgid "Custom IP Allow/Block list"
 msgstr ""
 
-#: src/component/class-hub-connector.php:184
+#: src/component/class-hub-connector.php:186
 #: src/model/setting/class-antibot-global-firewall-setting.php:93
 #: assets/js/core-ui.js:1
 msgid "AntiBot Global Firewall"
 msgstr ""
 
 #. translators: %s Account detail URL.
-#: src/component/class-hub-connector.php:419
+#: src/component/class-hub-connector.php:421
 #, php-format
 msgid "You are currently using your Google account as your preferred login method. If you wish to login with your WPMU DEV email & password instead, please change the <strong>Login Method</strong> in <a href=\"%s\" target=\"_blank\">your WPMU DEV account</a>."
 msgstr ""
 
 #. translators: %s Account detail URL.
-#: src/component/class-hub-connector.php:429
+#: src/component/class-hub-connector.php:431
 #, php-format
 msgid "You are currently using your WPMU DEV email & password as your preferred login method. If you wish to login with your Google account instead, please change the <strong>Login Method</strong> in <a href=\"%s\" target=\"_blank\">your WPMU DEV account</a>."
 msgstr ""
 
 #. translators: %1$s Account detail URL, %2$s Reset URL.
-#: src/component/class-hub-connector.php:439
+#: src/component/class-hub-connector.php:441
 #, php-format
 msgid "Due to security improvements, you will need to re-link your Google account in the Hub. Please log in with your WPMU DEV email & password for now, then set up your preferred <strong>Login Method</strong> in <a href=\"%1$s\" target=\"_blank\">your WPMU DEV account</a>. Forgot your password? You can <a href=\"%2$s\" target=\"_blank\">reset it here</a>."
 msgstr ""
 
-#: src/component/class-hub-connector.php:451
+#: src/component/class-hub-connector.php:453
 #: assets/js/core-ui.js:1
 msgid "Your login details were incorrect. Please make sure you're using your WPMU DEV email and password and try again."
 msgstr ""
 
-#: src/component/class-hub-connector.php:453
+#: src/component/class-hub-connector.php:455
 msgid "Forgot your password?"
 msgstr ""
 
 #. translators: %1$s Rest URL, %2$s Upgrade URL, %3$s Trial URL.
-#: src/component/class-hub-connector.php:464
+#: src/component/class-hub-connector.php:466
 #, php-format
 msgid "This domain has previously been registered with us by the user %1$s. To use WPMU DEV on this domain, you can either log in with the original account (you can <a target=\"_blank\" href=\"%2$s\">reset your password</a>) or <a target=\"_blank\" href=\"%3$s\">upgrade your trial</a> to a full membership. Trial accounts can't use previously registered domains - <a target=\"_blank\" href=\"%4$s\">here's why</a>."
 msgstr ""
 
-#: src/component/class-hub-connector.php:474
+#: src/component/class-hub-connector.php:476
 msgid "Contact support if you need further assistance &raquo;"
 msgstr ""
 
 #. translators: %1$d Account name, %2$s Security info, %3$s Hub URL, %4$s Support URL.
-#: src/component/class-hub-connector.php:480
+#: src/component/class-hub-connector.php:482
 #, php-format
 msgid "This site is currently registered to %1$s. For <a target=\"_blank\" href=\"%2$s\">security reasons</a> they will need to go to the <a target=\"_blank\" href=\"%3$s\">WPMU DEV Hub</a> and remove this domain before you can log in. If you do not have access to that account, and have no way of contacting that user, please <a target=\"_blank\" href=\"%4$s\">contact support for assistance</a>."
 msgstr ""
 
 #. translators: %s Support URL.
-#: src/component/class-hub-connector.php:493
+#: src/component/class-hub-connector.php:495
 #, php-format
 msgid "This domain cannot be registered to your WPMU DEV account.<br><a href=\"%s\">Contact Accounts & Billing if you need further assistance »</a>"
 msgstr ""
 
 #. translators: %1$s Hub Account URL, %2$s: Switch to Free URL.
-#: src/component/class-hub-connector.php:500
+#: src/component/class-hub-connector.php:502
 #, php-format
 msgid "Login failed — your WPMU DEV membership has expired. Renew now to regain full access, or switch to our free plan to continue managing all your site in the Hub.<br/><br/><a class=\"sui-button sui-button-blue\" href=\"%1$s\" target=\"_blank\">Renew Membership</a>&nbsp;<a class=\"sui-button sui-button-ghost\" href=\"%2$s\" target=\"_blank\">Switch to Free</a>"
 msgstr ""
 
-#: src/component/class-hub-connector.php:512
+#: src/component/class-hub-connector.php:514
 msgid "Google login failed. Please try again."
 msgstr ""
 
-#: src/component/class-hub-connector.php:519
+#: src/component/class-hub-connector.php:521
 msgid "Unknown error. Please update the WPMU DEV Dashboard plugin and try again."
 msgstr ""
 
-#: src/component/class-hub-connector.php:528
+#: src/component/class-hub-connector.php:530
 msgid "Your server had a problem connecting to WPMU DEV. Please try again."
 msgstr ""
 
-#: src/component/class-hub-connector.php:529
+#: src/component/class-hub-connector.php:531
 msgid "If this problem continues, please contact your host with this error message and ask:"
 msgstr ""
 
 #. translators: url to API.
-#: src/component/class-hub-connector.php:532
+#: src/component/class-hub-connector.php:534
 #, php-format
 msgid "\"Is PHP on my server properly configured to be able to contact %s with a POST HTTP request via fsockopen or CURL?\""
 msgstr ""
 
-#: src/component/class-hub-connector.php:538
+#: src/component/class-hub-connector.php:540
 msgid "Your API Key was invalid. Please try again."
 msgstr ""
 
@@ -1933,12 +1938,12 @@ msgid "You have been locked out by the administrator for attempting to login wit
 msgstr ""
 
 #. translators: %d: Count of attempts.
-#: src/component/class-login-lockout.php:147
+#: src/component/class-login-lockout.php:146
 #, php-format
 msgid "%d login attempts remaining"
 msgstr ""
 
-#: src/component/class-login-lockout.php:177
+#: src/component/class-login-lockout.php:176
 msgid "Dummy data."
 msgstr ""
 
@@ -1989,9 +1994,9 @@ msgid "Unsubscription"
 msgstr ""
 
 #: src/component/class-mail.php:73
-#: src/component/class-two-fa.php:508
-#: src/controller/class-main-setting.php:524
-#: src/model/setting/class-two-fa.php:326
+#: src/component/class-two-fa.php:601
+#: src/controller/class-main-setting.php:525
+#: src/model/setting/class-two-fa.php:366
 #: src/view/two-fa/user-options.php:16
 #: assets/js/core-ui.js:1
 msgid "Two-Factor Authentication"
@@ -2002,44 +2007,44 @@ msgid "Lockout occurred: Bot ignored robots.txt rules."
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:335
-#: src/component/class-notfound-lockout.php:343
+#: src/component/class-notfound-lockout.php:411
+#: src/component/class-notfound-lockout.php:419
 #, php-format
 msgid "Request for file %s which doesn`t exist"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:352
+#: src/component/class-notfound-lockout.php:428
 #, php-format
 msgid "Possible XSS attempt detected in request: %s"
 msgstr ""
 
-#: src/component/class-notfound-lockout.php:358
+#: src/component/class-notfound-lockout.php:434
 msgid "Lockout occurred: Multiple XSS attempt requests detected"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:364
+#: src/component/class-notfound-lockout.php:440
 #, php-format
 msgid "Attempt to access non-installed plugin: %s"
 msgstr ""
 
-#: src/component/class-notfound-lockout.php:371
+#: src/component/class-notfound-lockout.php:447
 msgid "Lockout occurred: Multiple requests for non-installed plugin"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:377
+#: src/component/class-notfound-lockout.php:453
 #, php-format
 msgid "Attempt to access non-installed theme: %s"
 msgstr ""
 
-#: src/component/class-notfound-lockout.php:384
+#: src/component/class-notfound-lockout.php:460
 msgid "Lockout occurred: Multiple requests for non-installed theme"
 msgstr ""
 
 #. translators: %s: URI.
-#: src/component/class-notfound-lockout.php:391
+#: src/component/class-notfound-lockout.php:467
 #, php-format
 msgid "Lockout occurred:  Too many 404 requests for %s"
 msgstr ""
@@ -2205,7 +2210,10 @@ msgstr ""
 #: src/component/class-recipient-verification.php:47
 #: src/component/class-recipient-verification.php:291
 #: src/controller/class-notification.php:353
-#: src/controller/class-two-factor.php:309
+#: src/controller/class-two-factor.php:343
+#: src/controller/class-webauthn.php:478
+#: src/controller/class-webauthn.php:483
+#: src/controller/class-webauthn.php:577
 msgid "Invalid request."
 msgstr ""
 
@@ -2214,7 +2222,7 @@ msgid "Recipient not found."
 msgstr ""
 
 #: src/component/class-recipient-verification.php:63
-#: src/controller/class-notification.php:983
+#: src/controller/class-notification.php:998
 msgid "Module not found."
 msgstr ""
 
@@ -2227,35 +2235,35 @@ msgid "Could not send verification email, please try again."
 msgstr ""
 
 #. translators: %s: Plugin name.
-#: src/component/class-scan.php:673
+#: src/component/class-scan.php:675
 #, php-format
 msgid "%s has detected a vulnerability in this plugin that may cause harm to your site."
 msgstr ""
 
 #. translators: %s: Version number.
-#: src/component/class-scan.php:690
-#: src/component/class-scan.php:711
+#: src/component/class-scan.php:692
+#: src/component/class-scan.php:713
 #, php-format
 msgid "The vulnerability has been fixed in version %s. We recommend that you update this plugin accordingly."
 msgstr ""
 
-#: src/component/class-scan.php:697
+#: src/component/class-scan.php:699
 msgid "Important! We recommend that you deactivate this plugin until the vulnerability has been fixed."
 msgstr ""
 
-#: src/component/class-scan.php:705
+#: src/component/class-scan.php:707
 msgid "We recommend that you deactivate this plugin until the vulnerability has been fixed."
 msgstr ""
 
-#: src/component/class-scan.php:786
+#: src/component/class-scan.php:788
 msgid "Action scheduler is not setup"
 msgstr ""
 
-#: src/component/class-scan.php:833
+#: src/component/class-scan.php:835
 msgid "Malware scan logs are cleared"
 msgstr ""
 
-#: src/component/class-scan.php:959
+#: src/component/class-scan.php:961
 msgid "Scan aborted. No scan types are enabled. Enable at least one scan type under Defender > Settings > Tools before running a scan."
 msgstr ""
 
@@ -2271,32 +2279,32 @@ msgstr ""
 msgid "Couldn't change the %s in your wp-config.php file. Please change it manually:"
 msgstr ""
 
-#: src/component/class-session-protection.php:76
+#: src/component/class-session-protection.php:75
 msgid "Browser"
 msgstr ""
 
-#: src/component/class-session-protection.php:77
+#: src/component/class-session-protection.php:76
 msgid "Hostname"
 msgstr ""
 
-#: src/component/class-session-protection.php:78
+#: src/component/class-session-protection.php:77
 #: src/component/class-table-lockout.php:120
 #: assets/js/core-ui.js:1
 msgid "IP Address"
 msgstr ""
 
-#: src/component/class-session-protection.php:270
+#: src/component/class-session-protection.php:318
 msgid "You've been logged out due to inactivity. Please sign in to continue."
 msgstr ""
 
 #. translators: 1. IP header. 2. IP.
-#: src/component/class-smart-ip-detection.php:129
+#: src/component/class-smart-ip-detection.php:131
 #, php-format
 msgid "IP header detected: %1$s with IP: %2$s."
 msgstr ""
 
 #. translators: 1. IP(s)
-#: src/component/class-smart-ip-detection.php:146
+#: src/component/class-smart-ip-detection.php:148
 #, php-format
 msgid "Not able to find any IP header via IP(s): %s."
 msgstr ""
@@ -2448,51 +2456,55 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: src/component/class-two-fa.php:466
+#: src/component/class-two-fa.php:550
 msgid "The user is invalid."
 msgstr ""
 
-#: src/component/class-two-fa.php:471
+#: src/component/class-two-fa.php:555
 msgid "Your token is invalid."
 msgstr ""
 
-#: src/component/class-two-fa.php:537
+#: src/component/class-two-fa.php:563
+msgid "A passcode was sent recently. Please check your inbox and wait a moment before requesting another."
+msgstr ""
+
+#: src/component/class-two-fa.php:640
 msgid "ERROR: Cheatin&#8217; uh?"
 msgstr ""
 
 #. translators: %s: 2FA method slug.
-#: src/component/class-two-fa.php:626
+#: src/component/class-two-fa.php:712
 #, php-format
 msgid "Lockout occurred: Too many failed 2fa attempts for %s method."
 msgstr ""
 
-#: src/component/class-two-fa.php:639
+#: src/component/class-two-fa.php:725
 msgid "INVALID CODE: "
 msgstr ""
 
-#: src/component/class-two-fa.php:640
+#: src/component/class-two-fa.php:726
 msgid "The two-factor authentication code you entered is incorrect or has expired. Please try again."
 msgstr ""
 
 #. translators: %d: Count.
-#: src/component/class-two-fa.php:647
+#: src/component/class-two-fa.php:733
 #, php-format
-msgid "You have %d login attempt remaining."
-msgid_plural "You have %d login attempts remaining."
+msgid "You have %d 2FA attempt remaining."
+msgid_plural "You have %d 2FA attempts remaining."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/component/class-two-fa.php:777
+#: src/component/class-two-fa.php:863
 msgid "Two Factor"
 msgstr ""
 
 #. translators: %s: User name.
-#: src/component/class-two-fa.php:826
+#: src/component/class-two-fa.php:912
 #, php-format
 msgid "Two factor authentication has been reset for %s."
 msgstr ""
 
-#: src/component/class-two-fa.php:855
+#: src/component/class-two-fa.php:941
 msgid "Reset two factor"
 msgstr ""
 
@@ -2562,7 +2574,7 @@ msgstr ""
 #: src/component/ip/class-global-ip.php:193
 #: src/controller/class-hub.php:744
 #: src/controller/class-hub.php:835
-#: src/controller/class-two-factor.php:297
+#: src/controller/class-two-factor.php:331
 msgid "Missing parameter(s)"
 msgstr ""
 
@@ -2671,7 +2683,7 @@ msgstr ""
 
 #: src/component/security-tweaks/class-change-admin.php:172
 #: src/component/security-tweaks/class-security-key.php:162
-#: src/controller/class-main-setting.php:831
+#: src/controller/class-main-setting.php:850
 msgid "re-login"
 msgstr ""
 
@@ -2754,39 +2766,39 @@ msgstr ""
 msgid "Trackbacks and pingbacks"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:193
+#: src/component/security-tweaks/class-disable-xml-rpc.php:175
 #: src/component/security-tweaks/class-prevent-enum-users.php:119
 #: src/controller/class-mask-login.php:537
 msgid "Forbidden"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:214
+#: src/component/security-tweaks/class-disable-xml-rpc.php:196
 msgid "Turn off XML-RPC"
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:223
+#: src/component/security-tweaks/class-disable-xml-rpc.php:205
 msgid "XML-RPC is currently enabled."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:233
+#: src/component/security-tweaks/class-disable-xml-rpc.php:215
 #: assets/js/core-ui.js:1
 msgid "XML-RPC is turned off."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:249
+#: src/component/security-tweaks/class-disable-xml-rpc.php:234
 msgid "You can manage the XML-RPC settings in the Hosting Settings."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:255
+#: src/component/security-tweaks/class-disable-xml-rpc.php:244
 msgid "XML-RPC is currently disabled on plugin side."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:257
+#: src/component/security-tweaks/class-disable-xml-rpc.php:253
 msgid "XML-RPC is currently disabled on plugin side, we suggest disabling it from server side by clicking on this link."
 msgstr ""
 
-#: src/component/security-tweaks/class-disable-xml-rpc.php:272
-#: src/component/security-tweaks/class-disable-xml-rpc.php:286
+#: src/component/security-tweaks/class-disable-xml-rpc.php:273
+#: src/component/security-tweaks/class-disable-xml-rpc.php:287
 msgid "XML-RPC lets you publish to your WordPress site remotely using apps like the mobile app or services like IFTTT. If you don’t use remote publishing, turn off XML-RPC to help reduce security risk."
 msgstr ""
 
@@ -3001,7 +3013,7 @@ msgid "Generate non-expirable backup codes that can be used to log in once."
 msgstr ""
 
 #: src/component/two-factor/providers/class-backup-codes.php:95
-#: src/controller/class-two-factor.php:1315
+#: src/controller/class-two-factor.php:1507
 msgid "Each backup code can only be used to log in once."
 msgstr ""
 
@@ -3038,23 +3050,28 @@ msgid "Generate Backup Codes"
 msgstr ""
 
 #: src/component/two-factor/providers/class-backup-codes.php:256
-#: src/controller/class-two-factor.php:1314
+#: src/controller/class-two-factor.php:1506
 msgid "Get New Codes"
 msgstr ""
 
 #. translators: %s: count
-#: src/component/two-factor/providers/class-backup-codes.php:357
+#: src/component/two-factor/providers/class-backup-codes.php:358
 #, php-format
 msgid "%s unused code remaining"
 msgid_plural "%s unused codes remaining"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/component/two-factor/providers/class-backup-codes.php:387
+#: src/component/two-factor/providers/class-backup-codes.php:382
+#: src/component/two-factor/providers/class-backup-codes.php:397
+msgid "ERROR: Please try again."
+msgstr ""
+
+#: src/component/two-factor/providers/class-backup-codes.php:409
 msgid "ERROR: Invalid verification code."
 msgstr ""
 
-#: src/component/two-factor/providers/class-backup-codes.php:404
+#: src/component/two-factor/providers/class-backup-codes.php:426
 msgid "ERROR: Invalid backup code."
 msgstr ""
 
@@ -3108,7 +3125,7 @@ msgstr ""
 
 #: src/component/two-factor/providers/class-totp.php:323
 #: src/component/two-factor/providers/class-totp.php:331
-#: src/controller/class-two-factor.php:380
+#: src/controller/class-two-factor.php:454
 msgid "Whoops, the passcode you entered was incorrect or expired."
 msgstr ""
 
@@ -3289,7 +3306,7 @@ msgid "%1$sThanks for your feedback!%2$s It helps us make Defender even better."
 msgstr ""
 
 #: src/controller/class-audit-logging.php:71
-#: src/model/notification/class-audit-report.php:169
+#: src/model/notification/class-audit-report.php:168
 #: assets/js/core-ui.js:1
 msgid "Audit Log"
 msgstr ""
@@ -3299,7 +3316,7 @@ msgid "Summary"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:227
-#: src/controller/class-firewall-logs.php:183
+#: src/controller/class-firewall-logs.php:184
 msgid "Date / Time"
 msgstr ""
 
@@ -3309,7 +3326,7 @@ msgid "Context"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:229
-#: src/controller/class-firewall-logs.php:184
+#: src/controller/class-firewall-logs.php:185
 #: src/view/two-fa/user-options.php:101
 #: src/view/two-fa/user-options.php:115
 #: assets/js/core-ui.js:1
@@ -3318,7 +3335,7 @@ msgid "Type"
 msgstr ""
 
 #: src/controller/class-audit-logging.php:230
-#: src/controller/class-firewall-logs.php:185
+#: src/controller/class-firewall-logs.php:186
 #: assets/js/core-ui.js:1
 msgid "IP address"
 msgstr ""
@@ -3332,16 +3349,16 @@ msgid "Invalid data."
 msgstr ""
 
 #: src/controller/class-audit-logging.php:535
-#: src/controller/class-blacklist.php:243
+#: src/controller/class-blacklist.php:242
 #: src/controller/class-firewall.php:346
 #: src/controller/class-login-access.php:101
-#: src/controller/class-main-setting.php:251
+#: src/controller/class-main-setting.php:262
 #: src/controller/class-mask-login.php:348
 #: src/controller/class-mask-login.php:1238
 #: src/controller/class-password-reset.php:218
-#: src/controller/class-scan.php:642
+#: src/controller/class-scan.php:723
 #: src/controller/class-security-headers.php:104
-#: src/controller/class-two-factor.php:925
+#: src/controller/class-two-factor.php:1108
 #: src/traits/setting.php:24
 #: src/traits/setting.php:29
 msgid "Your settings have been updated."
@@ -3349,16 +3366,16 @@ msgstr ""
 
 #: src/controller/class-audit-logging.php:679
 #: src/controller/class-audit-logging.php:717
-#: src/controller/class-captcha.php:531
+#: src/controller/class-captcha.php:548
 #: src/controller/class-password-protection.php:375
 #: src/controller/class-password-protection.php:399
-#: src/controller/class-scan.php:1074
-#: src/controller/class-scan.php:1115
-#: src/controller/class-session-protection.php:179
+#: src/controller/class-scan.php:1155
+#: src/controller/class-scan.php:1196
+#: src/controller/class-session-protection.php:214
 #: src/controller/class-strong-password.php:252
 #: src/controller/class-strong-password.php:276
-#: src/controller/class-two-factor.php:1176
-#: src/controller/class-two-factor.php:1189
+#: src/controller/class-two-factor.php:1359
+#: src/controller/class-two-factor.php:1372
 #: assets/js/core-ui.js:1
 msgid "Active"
 msgstr ""
@@ -3366,8 +3383,8 @@ msgstr ""
 #. translators: %s: Frequency value.
 #: src/controller/class-audit-logging.php:689
 #: src/controller/class-audit-logging.php:725
-#: src/controller/class-firewall.php:1066
-#: src/controller/class-firewall.php:1133
+#: src/controller/class-firewall.php:1077
+#: src/controller/class-firewall.php:1144
 #, php-format
 msgid "Email reports sending %s"
 msgstr ""
@@ -3375,50 +3392,54 @@ msgstr ""
 #. translators: %s: Html for Pro-tag.
 #: src/controller/class-audit-logging.php:698
 #: src/controller/class-audit-logging.php:733
-#: src/controller/class-firewall.php:1074
-#: src/controller/class-firewall.php:1140
+#: src/controller/class-firewall.php:1085
+#: src/controller/class-firewall.php:1151
 #, php-format
 msgid "Email report inactive %s"
 msgstr ""
 
-#: src/controller/class-blacklist.php:130
+#: src/controller/class-blacklist.php:129
 msgid "Block all"
 msgstr ""
 
-#: src/controller/class-blacklist.php:134
+#: src/controller/class-blacklist.php:133
 msgid "Allow all"
 msgstr ""
 
-#: src/controller/class-blacklist.php:355
+#: src/controller/class-blacklist.php:336
+msgid "Failed to extract the Geo IP database. The archive may be corrupted or contain unsafe content."
+msgstr ""
+
+#: src/controller/class-blacklist.php:360
 msgid "You have successfully downloaded Geo IP Database. You can now use this feature to ban any countries to access any area of your website."
 msgstr ""
 
-#: src/controller/class-blacklist.php:364
+#: src/controller/class-blacklist.php:371
 msgid "The license key you entered isn't valid. If you recently created it, allow up to 5 minutes for activation before trying again."
 msgstr ""
 
 #. translators: 1. Opening support link, 2. Closing support link.
-#: src/controller/class-blacklist.php:372
+#: src/controller/class-blacklist.php:379
 #, php-format
 msgid "The license key you entered isn't valid. If you recently created it, allow up to 5 minutes for activation before trying again. Need help? %1$sContact support%2$s."
 msgstr ""
 
-#: src/controller/class-blacklist.php:400
+#: src/controller/class-blacklist.php:408
 msgid "Maxmind GeoLite2 database license successfully disconnected."
 msgstr ""
 
-#: src/controller/class-blacklist.php:692
-#: src/controller/class-blacklist.php:709
+#: src/controller/class-blacklist.php:702
+#: src/controller/class-blacklist.php:719
 #: src/controller/class-ua-lockout.php:402
 #: src/controller/class-ua-lockout.php:417
 msgid "Your file is invalid!"
 msgstr ""
 
-#: src/controller/class-blacklist.php:719
+#: src/controller/class-blacklist.php:729
 msgid "Your file content is invalid!"
 msgstr ""
 
-#: src/controller/class-blacklist.php:733
+#: src/controller/class-blacklist.php:743
 msgid "Your allowlist/blocklist has been successfully imported."
 msgstr ""
 
@@ -3431,32 +3452,32 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/controller/class-captcha.php:100
+#: src/controller/class-captcha.php:101
 msgid "This hook is deprecated and will be removed in future versions."
 msgstr ""
 
-#: src/controller/class-captcha.php:267
+#: src/controller/class-captcha.php:268
 msgid "This hook is deprecated and will be removed in a future version."
 msgstr ""
 
-#: src/controller/class-captcha.php:333
+#: src/controller/class-captcha.php:350
 msgid "If you see any errors in the preview, make sure the keys you’ve entered are valid, and you've listed your domain name while generating the keys."
 msgstr ""
 
-#: src/controller/class-captcha.php:381
-#: src/controller/class-captcha.php:554
+#: src/controller/class-captcha.php:398
+#: src/controller/class-captcha.php:571
 msgid "Settings saved successfully!"
 msgstr ""
 
-#: src/controller/class-captcha.php:430
+#: src/controller/class-captcha.php:447
 msgid "Missing CAPTCHA verification data."
 msgstr ""
 
-#: src/controller/class-captcha.php:557
+#: src/controller/class-captcha.php:574
 msgid "CAPTCHA module is enabled successfully!"
 msgstr ""
 
-#: src/controller/class-captcha.php:559
+#: src/controller/class-captcha.php:576
 msgid "CAPTCHA module is disabled successfully!"
 msgstr ""
 
@@ -3468,27 +3489,27 @@ msgstr ""
 msgid "Unsupported feature toggle request."
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:182
+#: src/controller/class-firewall-logs.php:183
 msgid "Log"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:186
+#: src/controller/class-firewall-logs.php:187
 msgid "IP Status"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:187
+#: src/controller/class-firewall-logs.php:188
 msgid "User Agent Name"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:188
+#: src/controller/class-firewall-logs.php:189
 msgid "User Agent Status"
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:374
+#: src/controller/class-firewall-logs.php:375
 msgid "Start and end date are required."
 msgstr ""
 
-#: src/controller/class-firewall-logs.php:380
+#: src/controller/class-firewall-logs.php:381
 msgid "Wrong start and end date."
 msgstr ""
 
@@ -3504,58 +3525,58 @@ msgstr ""
 msgid "Request to Unblock IP Address"
 msgstr ""
 
-#: src/controller/class-firewall.php:877
+#: src/controller/class-firewall.php:888
 msgid "Your logs have been successfully deleted."
 msgstr ""
 
-#: src/controller/class-firewall.php:886
-#: src/controller/class-firewall.php:1283
+#: src/controller/class-firewall.php:897
+#: src/controller/class-firewall.php:1294
 msgid "Failed remove!"
 msgstr ""
 
-#: src/controller/class-firewall.php:1059
-#: src/controller/class-firewall.php:1125
-#: src/controller/class-scan.php:1081
-#: src/controller/class-scan.php:1119
+#: src/controller/class-firewall.php:1070
+#: src/controller/class-firewall.php:1136
+#: src/controller/class-scan.php:1162
+#: src/controller/class-scan.php:1200
 #: src/controller/class-security-tweaks.php:1137
 #: src/controller/class-security-tweaks.php:1171
 msgid "Email notifications active"
 msgstr ""
 
 #. translators: %s: Html for Pro-tag.
-#: src/controller/class-firewall.php:1079
-#: src/controller/class-firewall.php:1157
+#: src/controller/class-firewall.php:1090
+#: src/controller/class-firewall.php:1168
 #, php-format
 msgid "Web Application Firewall (WAF) inactive %s"
 msgstr ""
 
-#: src/controller/class-firewall.php:1149
+#: src/controller/class-firewall.php:1160
 #: src/controller/class-waf.php:179
 msgid "Web Application Firewall (WAF) active"
 msgstr ""
 
-#: src/controller/class-firewall.php:1151
+#: src/controller/class-firewall.php:1162
 #: src/controller/class-waf.php:184
 msgid "Web Application Firewall (WAF) inactive"
 msgstr ""
 
-#: src/controller/class-firewall.php:1274
+#: src/controller/class-firewall.php:1285
 msgid "Deleted lockout records successfully."
 msgstr ""
 
-#: src/controller/class-firewall.php:1392
+#: src/controller/class-firewall.php:1403
 msgid "Invalid nonce."
 msgstr ""
 
-#: src/controller/class-firewall.php:1404
+#: src/controller/class-firewall.php:1415
 msgid "IP detection process completed."
 msgstr ""
 
-#: src/controller/class-firewall.php:1430
+#: src/controller/class-firewall.php:1441
 msgid "You have reached the maximum limit of verification attempts. Please try again later or contact your web administrator for assistance."
 msgstr ""
 
-#: src/controller/class-firewall.php:1475
+#: src/controller/class-firewall.php:1486
 msgid "Captcha verification failed. Please try again."
 msgstr ""
 
@@ -3598,14 +3619,14 @@ msgid "Missing parameter: id."
 msgstr ""
 
 #: src/controller/class-hub.php:416
-#: src/controller/class-main-setting.php:607
-#: src/controller/class-main-setting.php:620
-#: src/controller/class-main-setting.php:776
-#: src/controller/class-main-setting.php:789
-#: src/controller/class-main-setting.php:880
-#: src/controller/class-main-setting.php:893
-#: src/controller/class-main-setting.php:1043
-#: src/controller/class-main-setting.php:1091
+#: src/controller/class-main-setting.php:626
+#: src/controller/class-main-setting.php:639
+#: src/controller/class-main-setting.php:795
+#: src/controller/class-main-setting.php:808
+#: src/controller/class-main-setting.php:900
+#: src/controller/class-main-setting.php:910
+#: src/controller/class-main-setting.php:1204
+#: src/controller/class-main-setting.php:1256
 msgid "Invalid config"
 msgstr ""
 
@@ -3626,7 +3647,7 @@ msgid "Login & Access"
 msgstr ""
 
 #: src/controller/class-login-access.php:306
-#: src/controller/class-main-setting.php:525
+#: src/controller/class-main-setting.php:526
 #: src/model/setting/class-mask-login.php:271
 #: assets/js/core-ui.js:1
 msgid "Hide Login URL"
@@ -3744,157 +3765,157 @@ msgstr ""
 msgid "Permission denied."
 msgstr ""
 
-#: src/controller/class-main-setting.php:306
+#: src/controller/class-main-setting.php:317
 msgid "Your settings have been reset."
 msgstr ""
 
-#: src/controller/class-main-setting.php:468
+#: src/controller/class-main-setting.php:479
 msgid "The file is corrupted."
 msgstr ""
 
-#: src/controller/class-main-setting.php:477
+#: src/controller/class-main-setting.php:488
 msgid "An error occurred while importing the file. Please check your file or upload another file."
 msgstr ""
 
 #. translators: %s: Config name.
-#: src/controller/class-main-setting.php:494
+#: src/controller/class-main-setting.php:505
 #, php-format
 msgid "%s config has been uploaded successfully – you can now apply it to this site."
 msgstr ""
 
-#: src/controller/class-main-setting.php:518
+#: src/controller/class-main-setting.php:519
 #: assets/js/core-ui.js:1
 msgid "Audit Logs"
 msgstr ""
 
-#: src/controller/class-main-setting.php:519
+#: src/controller/class-main-setting.php:520
 msgid "Web Application Firewall (WAF)"
 msgstr ""
 
-#: src/controller/class-main-setting.php:521
+#: src/controller/class-main-setting.php:522
 #: src/model/setting/class-password-protection.php:115
 #: assets/js/core-ui.js:1
 msgid "Pwned Passwords"
 msgstr ""
 
-#: src/controller/class-main-setting.php:522
+#: src/controller/class-main-setting.php:523
 #: assets/js/core-ui.js:1
 msgid "Strong Passwords"
 msgstr ""
 
-#: src/controller/class-main-setting.php:523
+#: src/controller/class-main-setting.php:524
 #: assets/js/core-ui.js:1
 msgid "Session Protection"
 msgstr ""
 
-#: src/controller/class-main-setting.php:526
+#: src/controller/class-main-setting.php:527
 #: assets/js/core-ui.js:1
 msgid "Security Policies"
 msgstr ""
 
 #. translators: %s: Comma-separated list of Pro-only feature names.
-#: src/controller/class-main-setting.php:536
+#: src/controller/class-main-setting.php:547
 #, php-format
 msgid "This config included features not available in the Free version: %s. Only the available settings were imported."
 msgstr ""
 
-#: src/controller/class-main-setting.php:566
+#: src/controller/class-main-setting.php:582
 msgid "Invalid config name"
 msgstr ""
 
 #. translators: %s: Config name.
-#: src/controller/class-main-setting.php:587
-#: src/controller/class-main-setting.php:915
+#: src/controller/class-main-setting.php:604
+#: src/controller/class-main-setting.php:940
 #, php-format
 msgid "%s config saved successfully."
 msgstr ""
 
-#: src/controller/class-main-setting.php:643
-#: src/controller/class-main-setting.php:666
-#: src/controller/class-main-setting.php:962
-#: src/controller/class-main-setting.php:973
-#: src/controller/class-main-setting.php:994
-#: src/controller/class-main-setting.php:1122
-#: src/controller/class-main-setting.php:1134
-#: src/controller/class-main-setting.php:1153
+#: src/controller/class-main-setting.php:662
+#: src/controller/class-main-setting.php:685
+#: src/controller/class-main-setting.php:1061
+#: src/controller/class-main-setting.php:1072
+#: src/controller/class-main-setting.php:1086
+#: src/controller/class-main-setting.php:1287
+#: src/controller/class-main-setting.php:1299
+#: src/controller/class-main-setting.php:1318
 msgid "Invalid config list"
 msgstr ""
 
-#: src/controller/class-main-setting.php:675
+#: src/controller/class-main-setting.php:694
 msgid "Zip archive is not supported on this server."
 msgstr ""
 
-#: src/controller/class-main-setting.php:685
-#: src/controller/class-main-setting.php:731
+#: src/controller/class-main-setting.php:704
+#: src/controller/class-main-setting.php:750
 msgid "Could not prepare zip file."
 msgstr ""
 
-#: src/controller/class-main-setting.php:703
+#: src/controller/class-main-setting.php:722
 msgid "Could not create zip file."
 msgstr ""
 
-#: src/controller/class-main-setting.php:747
+#: src/controller/class-main-setting.php:766
 msgid "No valid configs found to export."
 msgstr ""
 
 #. translators: %s: Config name.
-#: src/controller/class-main-setting.php:812
+#: src/controller/class-main-setting.php:831
 #, php-format
 msgid "%s config has been applied successfully."
 msgstr ""
 
 #. translators: %s: Login link.
-#: src/controller/class-main-setting.php:827
+#: src/controller/class-main-setting.php:846
 #, php-format
 msgid "Due to currently applied security recommendations, you will now need to %s."
 msgstr ""
 
-#: src/controller/class-main-setting.php:834
+#: src/controller/class-main-setting.php:853
 msgid "This will auto reload now."
 msgstr ""
 
-#: src/controller/class-main-setting.php:926
+#: src/controller/class-main-setting.php:953
 msgid "An error occurred while saving your config. Please try it again."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1021
+#: src/controller/class-main-setting.php:1097
 msgid "Configs synced successfully."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1056
+#: src/controller/class-main-setting.php:1217
 msgid "Config can't be removed"
 msgstr ""
 
-#: src/controller/class-main-setting.php:1065
-#: src/controller/class-main-setting.php:1081
+#: src/controller/class-main-setting.php:1230
+#: src/controller/class-main-setting.php:1246
 msgid "Config removed successfully."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1166
+#: src/controller/class-main-setting.php:1340
 msgid "Config list synced successfully."
 msgstr ""
 
 #. translators: 1: Hardening tab, 2: wp-config.php file, 3: Documentation.
-#: src/controller/class-main-setting.php:1223
+#: src/controller/class-main-setting.php:1397
 #, php-format
 msgid "There was an issue with applying some of the tweaks from the %1$s tab because we cannot make changes to your %2$s file. Please see our %3$s to apply the changes manually."
 msgstr ""
 
-#: src/controller/class-main-setting.php:1228
+#: src/controller/class-main-setting.php:1402
 msgid "wp-config.php"
 msgstr ""
 
-#: src/controller/class-main-setting.php:1229
+#: src/controller/class-main-setting.php:1403
 msgid "documentation"
 msgstr ""
 
 #: src/controller/class-mask-login.php:73
-#: src/controller/class-two-factor.php:126
+#: src/controller/class-two-factor.php:140
 msgid "We`ve detected a conflict with Jetpack`s Wordpress.com Log In feature. Please disable it and return to this page to continue setup."
 msgstr ""
 
 #: src/controller/class-mask-login.php:79
-#: src/controller/class-two-factor.php:132
+#: src/controller/class-two-factor.php:146
 msgid "We`ve detected a conflict with Theme my login. Please disable it and return to this page to continue setup."
 msgstr ""
 
@@ -3981,25 +4002,25 @@ msgid "You have deactivated the notification successfully."
 msgstr ""
 
 #. translators: %s - module title, %s - module status
-#: src/controller/class-notification.php:925
+#: src/controller/class-notification.php:940
 #, php-format
 msgid "%1$s: %2$s"
 msgstr ""
 
-#: src/controller/class-notification.php:930
+#: src/controller/class-notification.php:945
 msgid "Enabled"
 msgstr ""
 
-#: src/controller/class-notification.php:933
-#: src/controller/class-notification.php:939
+#: src/controller/class-notification.php:948
+#: src/controller/class-notification.php:954
 msgid "Disabled"
 msgstr ""
 
-#: src/controller/class-notification.php:998
+#: src/controller/class-notification.php:1013
 msgid "Invitation sent successfully."
 msgstr ""
 
-#: src/controller/class-notification.php:1004
+#: src/controller/class-notification.php:1019
 msgid "Sorry! We could not send the invitation, Please try again later."
 msgstr ""
 
@@ -4022,13 +4043,13 @@ msgid "Force Reset Password has been disabled."
 msgstr ""
 
 #. translators: 1: Filename with extension
-#: src/controller/class-quarantine.php:182
+#: src/controller/class-quarantine.php:185
 #, php-format
 msgid "Deleted %1$s permanently."
 msgstr ""
 
 #. translators: %s: Filename with extension
-#: src/controller/class-quarantine.php:198
+#: src/controller/class-quarantine.php:201
 #, php-format
 msgid "Deleting %s failed."
 msgstr ""
@@ -4073,16 +4094,16 @@ msgstr ""
 msgid "A scan is already in progress"
 msgstr ""
 
-#: src/controller/class-scan.php:278
+#: src/controller/class-scan.php:355
 msgid "Malware scan completed successfully!"
 msgstr ""
 
-#: src/controller/class-scan.php:294
+#: src/controller/class-scan.php:371
 msgid "Error during scanning"
 msgstr ""
 
 #. translators: %s: Vulnerability item(es)
-#: src/controller/class-scan.php:583
+#: src/controller/class-scan.php:664
 #, php-format
 msgid "Defender doesn't have enough permission to remove this file: %s"
 msgid_plural "Defender doesn't have enough permission to remove these files: %s"
@@ -4090,37 +4111,37 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: Vulnerability item(es)
-#: src/controller/class-scan.php:594
+#: src/controller/class-scan.php:675
 #, php-format
 msgid "%s has (have) been deleted"
 msgstr ""
 
 #. translators: 1. Open tag. 2. Close tag. 3. Open tag. 4. Close tag.
-#: src/controller/class-scan.php:630
+#: src/controller/class-scan.php:711
 #, php-format
 msgid "To reduce false-positive results, we recommend enabling %1$sFile change detection%2$s options for all scan types while the %3$sSuspicious code%4$s option is enabled."
 msgstr ""
 
-#: src/controller/class-scan.php:739
+#: src/controller/class-scan.php:820
 msgid "Wrong scan issue data."
 msgstr ""
 
 #. translators: %s: human-readable time difference, e.g. "5 minutes ago"
-#: src/controller/class-scan.php:817
+#: src/controller/class-scan.php:898
 #, php-format
 msgid "Scanned %s ago"
 msgstr ""
 
 #. translators: %s: Frequency value.
-#: src/controller/class-scan.php:1088
-#: src/controller/class-scan.php:1125
+#: src/controller/class-scan.php:1169
+#: src/controller/class-scan.php:1206
 #, php-format
 msgid "Scheduled scan sending %s"
 msgstr ""
 
 #. translators: %s: Html for Pro-tag.
-#: src/controller/class-scan.php:1095
-#: src/controller/class-scan.php:1134
+#: src/controller/class-scan.php:1176
+#: src/controller/class-scan.php:1215
 #, php-format
 msgid "Scheduled scan inactive %s"
 msgstr ""
@@ -4222,18 +4243,18 @@ msgstr ""
 msgid "User enumeration option(s) updated successfully."
 msgstr ""
 
-#: src/controller/class-session-protection.php:111
+#: src/controller/class-session-protection.php:114
 msgid "Settings updated successfully!"
 msgstr ""
 
 #. translators: 1. tag open, 2. tag close
-#: src/controller/class-session-protection.php:114
+#: src/controller/class-session-protection.php:117
 #, php-format
 msgid "%1$s Session Protection %2$s deactivated successfully!"
 msgstr ""
 
 #. translators: 1. tag open, 2. tag close
-#: src/controller/class-session-protection.php:117
+#: src/controller/class-session-protection.php:120
 #, php-format
 msgid "%1$s Session Protection %2$s activated successfully!"
 msgstr ""
@@ -4271,69 +4292,85 @@ msgstr ""
 msgid "You need to check at least one of the %1$sStrong Passwords checks preferences below%2$s and save your settings to enable Strong Password Protection."
 msgstr ""
 
-#: src/controller/class-two-factor.php:260
+#: src/controller/class-two-factor.php:276
+msgid "Invalid request parameters."
+msgstr ""
+
+#: src/controller/class-two-factor.php:283
 #: assets/js/core-ui.js:1
 msgid "Please try again."
 msgstr ""
 
-#: src/controller/class-two-factor.php:273
+#: src/controller/class-two-factor.php:296
 msgid "Your code has been sent to your email."
 msgstr ""
 
-#: src/controller/class-two-factor.php:289
+#: src/controller/class-two-factor.php:324
 msgid "Nonce verification failed."
 msgstr ""
 
-#: src/controller/class-two-factor.php:303
-#: src/controller/class-webauthn.php:555
+#: src/controller/class-two-factor.php:337
+#: src/controller/class-webauthn.php:601
 msgid "Invalid user."
 msgstr ""
 
-#: src/controller/class-two-factor.php:359
+#: src/controller/class-two-factor.php:393
+msgid "Your login session has expired. Please log in again."
+msgstr ""
+
+#: src/controller/class-two-factor.php:431
 msgid "You have logged in successfully."
 msgstr ""
 
-#: src/controller/class-two-factor.php:515
+#: src/controller/class-two-factor.php:686
 msgid "No providers."
 msgstr ""
 
-#: src/controller/class-two-factor.php:653
+#: src/controller/class-two-factor.php:828
+msgid "Authentication required."
+msgstr ""
+
+#: src/controller/class-two-factor.php:836
 msgid "Please input a valid OTP code."
 msgstr ""
 
-#: src/controller/class-two-factor.php:661
+#: src/controller/class-two-factor.php:844
 msgid "The setup key is incorrect."
 msgstr ""
 
-#: src/controller/class-two-factor.php:707
+#: src/controller/class-two-factor.php:890
 msgid "Your OTP code is incorrect. Please try again."
 msgstr ""
 
-#: src/controller/class-two-factor.php:995
+#: src/controller/class-two-factor.php:1178
 msgid "Sender value cannot be empty."
 msgstr ""
 
-#: src/controller/class-two-factor.php:1014
+#: src/controller/class-two-factor.php:1197
 msgid "Test email has been sent to your email."
 msgstr ""
 
-#: src/controller/class-two-factor.php:1019
+#: src/controller/class-two-factor.php:1202
 msgid "Test email failed."
 msgstr ""
 
+#: src/controller/class-two-factor.php:1492
+msgid "Unauthorized."
+msgstr ""
+
 #. translators: %s: count
-#: src/controller/class-two-factor.php:1311
+#: src/controller/class-two-factor.php:1503
 #, php-format
 msgid "2FA Backup Codes for %s:"
 msgstr ""
 
-#: src/controller/class-two-factor.php:1337
-#: src/controller/class-two-factor.php:1341
+#: src/controller/class-two-factor.php:1529
+#: src/controller/class-two-factor.php:1533
 #: assets/js/core-ui.js:1
 msgid "Save changes"
 msgstr ""
 
-#: src/controller/class-two-factor.php:1416
+#: src/controller/class-two-factor.php:1608
 msgid "Two-Factor settings updated successfully."
 msgstr ""
 
@@ -4349,14 +4386,14 @@ msgstr ""
 #: src/controller/class-webauthn.php:244
 #: src/controller/class-webauthn.php:330
 #: src/controller/class-webauthn.php:379
-#: src/controller/class-webauthn.php:417
-#: src/controller/class-webauthn.php:515
+#: src/controller/class-webauthn.php:452
+#: src/controller/class-webauthn.php:554
+#: src/controller/class-webauthn.php:750
 msgid "Bad nonce."
 msgstr ""
 
 #: src/controller/class-webauthn.php:171
-#: src/controller/class-webauthn.php:444
-#: src/controller/class-webauthn.php:560
+#: src/controller/class-webauthn.php:606
 msgid "User does not exist."
 msgstr ""
 
@@ -4373,85 +4410,85 @@ msgstr ""
 msgid "Authenticator identifier renamed."
 msgstr ""
 
-#: src/controller/class-webauthn.php:455
+#: src/controller/class-webauthn.php:494
 msgid "Please register a device first to authenticate it."
 msgstr ""
 
-#: src/controller/class-webauthn.php:541
+#: src/controller/class-webauthn.php:587
 msgid "Invalid response data."
 msgstr ""
 
-#: src/controller/class-webauthn.php:546
+#: src/controller/class-webauthn.php:592
 msgid "Invalid assertion payload."
 msgstr ""
 
-#: src/controller/class-webauthn.php:551
+#: src/controller/class-webauthn.php:597
 msgid "Invalid credential id."
 msgstr ""
 
-#: src/controller/class-webauthn.php:596
+#: src/controller/class-webauthn.php:642
 msgid "Authenticator verified successfully."
 msgstr ""
 
-#: src/controller/class-webauthn.php:633
+#: src/controller/class-webauthn.php:679
 msgid "Registering a new authenticator is in process."
 msgstr ""
 
-#: src/controller/class-webauthn.php:637
+#: src/controller/class-webauthn.php:683
 msgid "Registered new authenticator."
 msgstr ""
 
-#: src/controller/class-webauthn.php:641
+#: src/controller/class-webauthn.php:687
 msgid "ERROR: Something went wrong."
 msgstr ""
 
-#: src/controller/class-webauthn.php:645
+#: src/controller/class-webauthn.php:691
 msgid "Registration failed! The authenticator you are trying to register is already registered with your account."
 msgstr ""
 
-#: src/controller/class-webauthn.php:649
+#: src/controller/class-webauthn.php:695
 msgid "Authenticating"
 msgstr ""
 
-#: src/controller/class-webauthn.php:650
+#: src/controller/class-webauthn.php:696
 msgid "Authenticated device successfully."
 msgstr ""
 
-#: src/controller/class-webauthn.php:654
+#: src/controller/class-webauthn.php:700
 msgid "Authentication verification failed! Please make sure that biometric functionality is configured on your phone."
 msgstr ""
 
 #. translators: %s is the name of the authenticator.
-#: src/controller/class-webauthn.php:660
+#: src/controller/class-webauthn.php:706
 #, php-format
 msgid "Due to some Biometric Authentication security improvements, the %s device will not work. Please delete this device and re-register it."
 msgstr ""
 
-#: src/controller/class-webauthn.php:663
+#: src/controller/class-webauthn.php:709
 msgid "Are you sure you want to remove authenticator?"
 msgstr ""
 
-#: src/controller/class-webauthn.php:667
+#: src/controller/class-webauthn.php:713
 msgid "ERROR: Verification failed."
 msgstr ""
 
-#: src/controller/class-webauthn.php:671
+#: src/controller/class-webauthn.php:717
 msgid "ERROR: Due to some Biometric Authentication security improvements, some of your registered devices might not work. Please ask your website administrator to reset 2FA for your account. Then navigate to your profile page to check which devices need re-registration."
 msgstr ""
 
-#: src/controller/class-webauthn.php:675
+#: src/controller/class-webauthn.php:721
 msgid "WebAuth is not supported by your web browser. Please install an updated version, or try another browser."
 msgstr ""
 
-#: src/controller/class-webauthn.php:679
+#: src/controller/class-webauthn.php:725
 msgid "This device might not work. Please delete the device and re-register it."
 msgstr ""
 
-#: src/controller/class-webauthn.php:683
+#: src/controller/class-webauthn.php:729
 msgid "Due to some biometric authentication security improvements, some of your registered devices might not work. Please click the Authenticate Device button to check which devices you need to delete and re-registered."
 msgstr ""
 
-#: src/controller/class-webauthn.php:704
+#: src/controller/class-webauthn.php:753
 msgid "Notice disabled!"
 msgstr ""
 
@@ -4527,6 +4564,14 @@ msgstr ""
 msgid "The WPMU DEV Team."
 msgstr ""
 
+#: src/integrations/class-maxmind-geolocation.php:116
+msgid "MaxMind archive contains unsafe paths and was not extracted."
+msgstr ""
+
+#: src/integrations/class-maxmind-geolocation.php:128
+msgid "MaxMind archive does not contain the expected database file."
+msgstr ""
+
 #: src/integrations/class-woocommerce.php:93
 #: assets/js/core-ui.js:1
 msgid "Checkout"
@@ -4543,25 +4588,25 @@ msgid "Not banned or in allowlist"
 msgstr ""
 
 #. translators: 1: Notification sending frequency, 2: Time of a day.
-#: src/model/class-notification.php:348
+#: src/model/class-notification.php:341
 #, php-format
 msgid "%1$s at %2$s"
 msgstr ""
 
 #. translators: 1: Notification sending frequency, 2: Day of the week, 3: Time of a day.
-#: src/model/class-notification.php:355
+#: src/model/class-notification.php:348
 #, php-format
 msgid "%1$s on %2$s at %3$s"
 msgstr ""
 
 #. translators: 1: Notification sending frequency, 2: Day of the month, 3: Time of a day.
-#: src/model/class-notification.php:364
+#: src/model/class-notification.php:357
 #, php-format
 msgid "%1$s/%2$d, %3$s"
 msgstr ""
 
 #. translators: %s: Email address of a recipient.
-#: src/model/class-notification.php:414
+#: src/model/class-notification.php:407
 #, php-format
 msgid "Email %s is invalid format"
 msgstr ""
@@ -4610,18 +4655,18 @@ msgid "Scanning..."
 msgstr ""
 
 #. translators: %s: Site URL.
-#: src/model/notification/class-audit-report.php:127
+#: src/model/notification/class-audit-report.php:126
 #, php-format
 msgid "Here's what's been happening at %s"
 msgstr ""
 
 #. translators: 1. Plugin label. 2. Site URL.
-#: src/model/notification/class-audit-report.php:140
+#: src/model/notification/class-audit-report.php:139
 #, php-format
 msgid "Audit Update From %1$s! %2$s"
 msgstr ""
 
-#: src/model/notification/class-audit-report.php:220
+#: src/model/notification/class-audit-report.php:219
 #: assets/js/core-ui.js:1
 msgid "Audit log report"
 msgstr ""
@@ -4742,7 +4787,7 @@ msgid "Get email alerts when Defender has finished manual scans."
 msgstr ""
 
 #: src/model/notification/class-malware-notification.php:283
-#: src/model/notification/class-malware-report.php:182
+#: src/model/notification/class-malware-report.php:181
 msgid "Issues report"
 msgstr ""
 
@@ -4871,7 +4916,7 @@ msgid "CAPTCHA Locations"
 msgstr ""
 
 #: src/model/setting/class-captcha.php:374
-#: src/model/setting/class-two-fa.php:304
+#: src/model/setting/class-two-fa.php:344
 #: assets/js/core-ui.js:1
 msgid "WooCommerce"
 msgstr ""
@@ -5169,78 +5214,78 @@ msgstr ""
 msgid "Idle timeout cannot exceed %d hours (30 days)."
 msgstr ""
 
-#: src/model/setting/class-strong-password.php:122
+#: src/model/setting/class-strong-password.php:134
 msgid "You are required to change your password because your password doesn't meet the strong password guidelines set by the administrator."
 msgstr ""
 
-#: src/model/setting/class-strong-password.php:162
+#: src/model/setting/class-strong-password.php:174
 msgid "You have enabled Strong password rule for WooCommerce but you've not selected any form yet. Please select at least one form to proceed."
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:175
+#: src/model/setting/class-two-fa.php:191
 msgid "Your OTP code"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:182
+#: src/model/setting/class-two-fa.php:198
 msgid "You are required to setup two-factor authentication to use this site."
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:215
+#: src/model/setting/class-two-fa.php:231
 msgid "Open your authentication app and type the 6 digit passcode to log in to your account."
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:291
+#: src/model/setting/class-two-fa.php:331
 msgid "Enabled user roles"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:292
+#: src/model/setting/class-two-fa.php:332
 msgid "Allow lost phone recovery option"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:293
+#: src/model/setting/class-two-fa.php:333
 #: assets/js/core-ui.js:1
 msgid "Subject"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:294
+#: src/model/setting/class-two-fa.php:334
 #: assets/js/core-ui.js:1
 msgid "Body"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:295
+#: src/model/setting/class-two-fa.php:335
 #: assets/js/core-ui.js:1
 msgid "Sender"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:296
+#: src/model/setting/class-two-fa.php:336
 msgid "Force 2FA on user roles"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:297
+#: src/model/setting/class-two-fa.php:337
 msgid "Force users to log in with two-factor authentication"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:298
+#: src/model/setting/class-two-fa.php:338
 msgid "Force 2FA login warning message"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:299
+#: src/model/setting/class-two-fa.php:339
 msgid "Custom Graphic"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:300
+#: src/model/setting/class-two-fa.php:340
 msgid "Enable custom graphics above login fields"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:301
+#: src/model/setting/class-two-fa.php:341
 msgid "Upload Graphic"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:302
+#: src/model/setting/class-two-fa.php:342
 msgid "Link Graphic"
 msgstr ""
 
-#: src/model/setting/class-two-fa.php:303
+#: src/model/setting/class-two-fa.php:343
 msgid "App Title"
 msgstr ""
 
@@ -5371,7 +5416,7 @@ msgstr ""
 msgid "Polynesia"
 msgstr ""
 
-#: src/traits/defender-bootstrap.php:591
+#: src/traits/defender-bootstrap.php:592
 msgid "UPGRADE TO PRO"
 msgstr ""
 
@@ -5910,12 +5955,12 @@ msgstr ""
 msgid "Powered by WordPress"
 msgstr ""
 
-#: src/view/two-fa/otp.php:309
+#: src/view/two-fa/otp.php:308
 msgid "Having problems? Try another way to log in"
 msgstr ""
 
 #. translators: %s: site title
-#: src/view/two-fa/otp.php:455
+#: src/view/two-fa/otp.php:454
 #, php-format
 msgctxt "site"
 msgid "&larr; Back to %s"
@@ -6473,6 +6518,14 @@ msgid "Loading file…"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "The file could not be loaded."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "We were unable to read or locate the file. Please rerun the scan to check if the issue has been resolved."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Potential risk"
 msgstr ""
 
@@ -6545,14 +6598,6 @@ msgid "This action will permanently remove this item and can't be undone."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Scan started."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scan cancelled."
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "OK"
 msgstr ""
 
@@ -6570,6 +6615,18 @@ msgid "Unable to remove files"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Selected scan issues ignored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Selected scan issues restored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Selected scan issues deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Unable to remove file"
 msgstr ""
 
@@ -6578,7 +6635,35 @@ msgid "Defender needs permission to remove this file."
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Scan issue ignored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan issue restored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan issue deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan issue resolved."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan issue repaired and quarantined."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "to use Safe Repair"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantined file restored."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quarantined file deleted."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -6688,6 +6773,11 @@ msgid "Every"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+#, js-format
+msgid "Scheduled Scan: schedule changed to %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "At least one Malware Scan type must remain enabled."
 msgstr ""
 
@@ -6710,6 +6800,45 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Unable to update Scheduled Scanning."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%1$s report %2$s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Firewall Alert enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Firewall Alert disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Firewall Alert: threshold changed to %s lockouts."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Firewall Alert: cooldown changed to %s hours."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reports & Alerts recipient added."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reports & Alerts recipient details and subscriptions updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Reports & Alerts recipient deleted."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Recipient verification email resent."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7190,6 +7319,164 @@ msgid "Hardening item details"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Monitors changes to keep your site visible and secure."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Finish setup"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disable XML-RPC & hide error reporting"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hide detailed errors so sensitive paths and server data are not exposed."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disable trackbacks pingbacks"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Turn off trackbacks and pingbacks to reduce spam and abuse."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Turn off the file editor"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Disable the built-in file editor to prevent unauthorized code changes."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Manage the duration of user login sessions to enhance security."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Automatically regenerate keys"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Refresh WordPress security keys to invalidate old sessions."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "WordPress Hardening"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Strengthens your site by reducing potential vulnerabilities."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Local Firewall"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Stops malicious traffic before it reaches your site."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quick scan your site"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scanning in progress"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Quick scan complete!"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Security actions required"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "View results"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Welcome to %s"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "Configure %s with recommended settings for optimal protection."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Start wizard"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Skip start up wizard"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please enter your password."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Please enter your email address."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Email"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Signing in…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sign in"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Forgot password?"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "or"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Sign in with your"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "WPMU DEV account"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Connect to WPMU DEV"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "to run a security scan"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Create free account"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Continue with Google"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Exit wizard"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Auto-saved changes"
 msgstr ""
 
@@ -7323,10 +7610,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Last name"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Email"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -7494,6 +7777,11 @@ msgid "Scan frequency"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+#, js-format
+msgid "Next scan and reports: %1$s (%2$s)"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Set schedule"
 msgstr ""
 
@@ -7564,6 +7852,18 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Toggle all config selection"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Updating the config list…"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Created or updated the configs via the Hub? Re-check to get the updated list."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Re-check configs"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -8220,10 +8520,6 @@ msgid "Scans installed software against Defender vulnerability intelligence."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Connect to WPMU DEV"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Looks for risky or obfuscated code patterns inside site files."
 msgstr ""
 
@@ -8441,6 +8737,41 @@ msgid "Understood, dismiss future warnings"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Just now"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Today"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Yesterday"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%dm ago"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%dh ago"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%dd ago"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Close panel"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Hide"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Add to 'Site allow list'"
 msgstr ""
 
@@ -8531,6 +8862,10 @@ msgid "Failed to add IP address."
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Trusted IP review requested."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Request sent"
 msgstr ""
 
@@ -8568,6 +8903,16 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Submit request"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "AntiBot Global Firewall mode changed to %s."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "AntiBot Global Firewall is now managed by %s."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -8672,15 +9017,27 @@ msgid "This user agent is considered bad bots and may harm your site."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Today"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Last 7 days"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "This week"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "IP blocklist updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "IP allowlist updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "User agent blocklist updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "User agent allowlist updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -8894,14 +9251,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Banned usernames updated."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "IP blocklist updated."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "IP allowlist updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -9174,6 +9523,14 @@ msgid "Learn about WAF"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "GeoIP database downloaded."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "GeoIP database license disconnected."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "<account>Create a free MaxMind account</account> to access the GeoLite2 database."
 msgstr ""
 
@@ -9322,10 +9679,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "duration"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "message"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -9564,10 +9917,6 @@ msgid "WAF"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Local Firewall"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Custom Rules"
 msgstr ""
 
@@ -9577,18 +9926,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Firewalls sections"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sign in"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Create free account"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "or"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -9789,120 +10126,6 @@ msgid "Turn on AntiBot"
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Monitors changes to keep your site visible and secure."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Finish setup"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disable XML-RPC & hide error reporting"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide detailed errors so sensitive paths and server data are not exposed."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disable trackbacks pingbacks"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Turn off trackbacks and pingbacks to reduce spam and abuse."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Turn off the file editor"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Disable the built-in file editor to prevent unauthorized code changes."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Manage the duration of user login sessions to enhance security."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Automatically regenerate keys"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Refresh WordPress security keys to invalidate old sessions."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "WordPress Hardening"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Strengthens your site by reducing potential vulnerabilities."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Stops malicious traffic before it reaches your site."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quick scan your site"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Scanning in progress"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Quick scan complete!"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Security actions required"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "View results"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Welcome to %s"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-#, js-format
-msgid "Configure %s with recommended settings for optimal protection."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Start wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Skip start up wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Sign in with your"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "WPMU DEV account"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "to run a security scan"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Continue with Google"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Exit wizard"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Disconnect this site?"
 msgstr ""
 
@@ -9943,6 +10166,10 @@ msgid "Sign in with your WPMU DEV account"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Show"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Help & Support"
 msgstr ""
 
@@ -9964,22 +10191,6 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "No Activity log"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Just now"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Yesterday"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Close panel"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Hide"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10170,10 +10381,6 @@ msgid "Ensure you have installed, activated and logged into the WPMU DEV Dashboa
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Scan completed."
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Nothing new found"
 msgstr ""
 
@@ -10215,31 +10422,23 @@ msgid "Processing continues in the background."
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Scan completed."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan cancelled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Scan started."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Checking security recommendations…"
 msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Gathering information…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please enter your password."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please enter a valid email address."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Please enter your email address."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Signing in…"
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Forgot password?"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10277,7 +10476,7 @@ msgid "Your site has been scanned successfully."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Settings updated."
+msgid "Session Security updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10289,15 +10488,15 @@ msgid "Session Security deactivated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Idle timeout updated."
+msgid "Session Security: idle timeout updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Session lock settings updated."
+msgid "Session Security: session lock properties updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "User roles updated."
+msgid "Session Security: user roles updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10409,6 +10608,14 @@ msgid "Force reset password"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Strong passwords"
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Pwned passwords"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Customize the message shown to users when a Pwned password is detected. Passwords are checked with <a>Have I Been Pwned API</a>."
 msgstr ""
 
@@ -10421,19 +10628,46 @@ msgid "Users will create a new password the next time they log in."
 msgstr ""
 
 #: assets/js/core-ui.js:1
+#, js-format
+msgid "%s enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s: user roles updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s: password change message updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s: WooCommerce integration enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s: WooCommerce integration disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+#, js-format
+msgid "%s: WooCommerce forms updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Password reset initiated for selected users."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Pwned passwords"
-msgstr ""
-
-#: assets/js/core-ui.js:1
 msgid "Protect your site from security breaches by preventing the use of passwords found in publicly exposed \"pwned\" password databases."
-msgstr ""
-
-#: assets/js/core-ui.js:1
-msgid "Strong passwords"
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10509,6 +10743,11 @@ msgid "Dark"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+#, js-format
+msgid "Bot Protection (%1$s): %2$s"
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Bot Protection enabled."
 msgstr ""
 
@@ -10522,6 +10761,10 @@ msgstr ""
 
 #: assets/js/core-ui.js:1
 msgid "Add human verification to block malicious activity while keeping access simple for legitimate users."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "CAPTCHA keys verified."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10821,6 +11064,10 @@ msgid "Bot Protection is off"
 msgstr ""
 
 #: assets/js/core-ui.js:1
+msgid "Hide Login URL: settings updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
 msgid "Failed to save settings."
 msgstr ""
 
@@ -10833,19 +11080,19 @@ msgid "Hide Login URL deactivated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Login URL slug updated."
+msgid "Hide Login URL: login URL slug updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Redirect traffic settings updated."
+msgid "Hide Login URL: redirect traffic settings updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Redirection URL updated."
+msgid "Hide Login URL: redirection URL updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Redirect page updated."
+msgid "Hide Login URL: redirect page updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
@@ -10857,39 +11104,87 @@ msgid "Two-Factor Authentication deactivated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Lost phone settings updated."
+msgid "Two-Factor Authentication: user roles updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Force authentication settings updated."
+msgid "Two-Factor Authentication: lost phone recovery enabled."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Force authentication roles updated."
+msgid "Two-Factor Authentication: lost phone recovery disabled."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Force authentication message saved."
+msgid "Two-Factor Authentication: forced authentication enabled."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "WooCommerce integration settings updated."
+msgid "Two-Factor Authentication: forced authentication disabled."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Custom graphic settings updated."
+msgid "Two-Factor Authentication: forced authentication roles updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "App title settings saved."
+msgid "Two-Factor Authentication: forced authentication message updated."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Email settings saved."
+msgid "Two-Factor Authentication: WooCommerce integration enabled."
 msgstr ""
 
 #: assets/js/core-ui.js:1
-msgid "Test email sent."
+msgid "Two-Factor Authentication: WooCommerce integration disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom app title enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom app title disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom authentication emails enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom authentication emails disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom graphic enabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom graphic disabled."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom graphic type updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom graphic image updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: custom graphic link updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: app title text updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: authentication email template updated."
+msgstr ""
+
+#: assets/js/core-ui.js:1
+msgid "Two-Factor Authentication: test email sent."
 msgstr ""
 
 #: assets/js/core-ui.js:1

@@ -867,6 +867,7 @@ return array(
     'WP_Defender\\Component\\Audit\\Post_Audit' => $baseDir . '/src/component/audit/class-post-audit.php',
     'WP_Defender\\Component\\Audit\\Theme_Audit' => $baseDir . '/src/component/audit/class-theme-audit.php',
     'WP_Defender\\Component\\Audit\\User_Audit' => $baseDir . '/src/component/audit/class-user-audit.php',
+    'WP_Defender\\Component\\Audit_Log_Recovery' => $baseDir . '/src/component/class-audit-log-recovery.php',
     'WP_Defender\\Component\\Backup_Settings' => $baseDir . '/src/component/class-backup-settings.php',
     'WP_Defender\\Component\\Blacklist_Lockout' => $baseDir . '/src/component/class-blacklist-lockout.php',
     'WP_Defender\\Component\\Captcha' => $baseDir . '/src/component/class-captcha.php',

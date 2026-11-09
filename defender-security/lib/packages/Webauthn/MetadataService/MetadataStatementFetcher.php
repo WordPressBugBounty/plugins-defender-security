@@ -20,6 +20,7 @@ use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use WP_DEFENDER_VENDOR\Psr\Http\Client\ClientInterface;
 use WP_DEFENDER_VENDOR\Psr\Http\Message\RequestFactoryInterface;
+use WP_DEFENDER_VENDOR\Webauthn\CertificateToolbox;
 use function WP_DEFENDER_VENDOR\Safe\json_decode;
 use function WP_DEFENDER_VENDOR\Safe\sprintf;
 
@@ -28,10 +29,13 @@ use function WP_DEFENDER_VENDOR\Safe\sprintf;
  */
 class MetadataStatementFetcher
 {
-    public static function fetchTableOfContent(string $uri, ClientInterface $client, RequestFactoryInterface $requestFactory, array $additionalHeaders = []): MetadataTOCPayload
+    /**
+     * @param string[] $trustedCertificates PEM encoded trust anchors for the Metadata Service signing chain.
+     */
+    public static function fetchTableOfContent(string $uri, ClientInterface $client, RequestFactoryInterface $requestFactory, array $additionalHeaders = [], array $trustedCertificates = []): MetadataTOCPayload
     {
         $content = self::fetch($uri, $client, $requestFactory, $additionalHeaders);
-        $payload = self::getJwsPayload($content);
+        $payload = self::getJwsPayload($content, $trustedCertificates);
         $data = json_decode($payload, true);
 
         return MetadataTOCPayload::createFromArray($data);
@@ -63,8 +67,12 @@ class MetadataStatementFetcher
         return $content;
     }
 
-    private static function getJwsPayload(string $token): string
+    /**
+     * @param string[] $trustedCertificates
+     */
+    private static function getJwsPayload(string $token, array $trustedCertificates): string
     {
+        Assertion::notEmpty($trustedCertificates, 'Unable to verify the response from the metadata service. No trust anchor has been provided.');
         $jws = (new CompactSerializer())->unserialize($token);
         Assertion::eq(1, $jws->countSignatures(), 'Invalid response from the metadata service. Only one signature shall be present.');
         $signature = $jws->getSignature(0);
@@ -75,6 +83,10 @@ class MetadataStatementFetcher
         Assertion::eq($header['alg'], 'ES256', 'The expected "alg" parameter value should be "ES256".');
         Assertion::keyExists($header, 'x5c', 'The "x5c" parameter is missing.');
         Assertion::isArray($header['x5c'], 'The "x5c" parameter should be an array.');
+        CertificateToolbox::checkChain(
+            CertificateToolbox::convertAllDERToPEM($header['x5c']),
+            $trustedCertificates
+        );
         $key = JWKFactory::createFromX5C($header['x5c']);
         $algorithm = new ES256();
         $isValid = $algorithm->verify($key, $signature->getEncodedProtectedHeader().'.'.$jws->getEncodedPayload(), $signature->getSignature());

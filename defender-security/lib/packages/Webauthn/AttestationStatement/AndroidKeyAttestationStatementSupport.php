@@ -131,7 +131,7 @@ final class AndroidKeyAttestationStatementSupport implements AttestationStatemen
         $this->checkAbsenceOfAllApplicationsTag($softwareEnforcedFlags);
 
         Assertion::keyExists($objects, 7, 'The certificate extension "1.3.6.1.4.1.11129.2.1.17" is invalid');
-        $teeEnforcedFlags = $objects[6];
+        $teeEnforcedFlags = $objects[7];
         Assertion::isInstanceOf($teeEnforcedFlags, Sequence::class, 'The certificate extension "1.3.6.1.4.1.11129.2.1.17" is invalid');
         $this->checkAbsenceOfAllApplicationsTag($teeEnforcedFlags);
     }

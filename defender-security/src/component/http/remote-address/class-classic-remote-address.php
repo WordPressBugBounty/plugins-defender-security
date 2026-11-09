@@ -34,6 +34,44 @@ class Classic_Remote_Address {
 	);
 
 	/**
+	 * Whether the immediate peer (REMOTE_ADDR) is a configured trusted proxy.
+	 *
+	 * Mirrors the trust gate in Remote_Address::get_ip_address_from_proxy(). With no trusted
+	 * proxies configured nothing is trusted, so only REMOTE_ADDR is used and a spoofed
+	 * forwarded header can no longer attribute a request to another IP.
+	 *
+	 * @param  array $server  The raw $_SERVER data.
+	 *
+	 * @return bool
+	 * @since 5.7.1
+	 */
+	protected function is_peer_trusted_proxy( array $server ): bool {
+		$remote_address = isset( $server['REMOTE_ADDR'] ) ? trim( (string) $server['REMOTE_ADDR'] ) : '';
+		if ( false === filter_var( $remote_address, FILTER_VALIDATE_IP ) ) {
+			return false;
+		}
+
+		$trusted_proxies = wd_di()->get( \WP_Defender\Model\Setting\Firewall::class )->get_trusted_proxies_ip();
+		$trusted_proxies = apply_filters( 'wpdef_firewall_trusted_proxies', $trusted_proxies );
+		$trusted_proxies = is_array( $trusted_proxies ) ? $trusted_proxies : (array) $trusted_proxies;
+
+		foreach ( $trusted_proxies as $trusted_proxy ) {
+			$trusted_proxy = trim( (string) $trusted_proxy );
+			if ( '' === $trusted_proxy ) {
+				continue;
+			}
+			if (
+				( str_contains( $trusted_proxy, '/' ) && $this->compare_cidr( $remote_address, $trusted_proxy ) ) ||
+				$trusted_proxy === $remote_address
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Returns client IP addresses.
 	 *
 	 * @return array IP addresses
@@ -41,7 +79,12 @@ class Classic_Remote_Address {
 	public function get_ip_address(): array {
 		$ip_list = array();
 		$server  = defender_get_data_from_request( null, 's' );
+		$trusted = $this->is_peer_trusted_proxy( $server );
 		foreach ( $this->accepted_header as $key ) {
+			// Forwarded headers are attacker-controlled unless the immediate peer is a trusted proxy.
+			if ( 'REMOTE_ADDR' !== $key && ! $trusted ) {
+				continue;
+			}
 			if ( array_key_exists( $key, $server ) && is_string( $server[ $key ] ) && '' !== $server[ $key ] ) {
 				$ip_array = explode( ',', $server[ $key ] );
 				foreach ( $ip_array as $ip ) {
@@ -64,7 +107,12 @@ class Classic_Remote_Address {
 	public function get_ip_header(): array {
 		$header_array = array();
 		$server       = defender_get_data_from_request( null, 's' );
+		$trusted      = $this->is_peer_trusted_proxy( $server );
 		foreach ( $this->accepted_header as $key ) {
+			// Keep in step with get_ip_address(): skip untrusted forwarded headers.
+			if ( 'REMOTE_ADDR' !== $key && ! $trusted ) {
+				continue;
+			}
 			if ( array_key_exists( $key, $server ) && is_string( $server[ $key ] ) && '' !== $server[ $key ] ) {
 				$ip_array = explode( ',', $server[ $key ] );
 				foreach ( $ip_array as $ip ) {

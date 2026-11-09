@@ -258,7 +258,7 @@ class Strong_Password extends Component {
 
 		// Check if the submitted password is weak.
 		if ( '' !== $login_password && $this->is_weak_password( $login_password ) ) {
-			$errors->add( self::CODE, $this->model->get_message() );
+			$errors->add( self::CODE, $this->get_error_message() );
 		}
 	}
 
@@ -287,7 +287,7 @@ class Strong_Password extends Component {
 
 		// If the cookie is set, show the warning message.
 		if ( '' !== $cookie_value ) {
-			$errors->add( self::CODE, $this->model->get_message() );
+			$errors->add( self::CODE, $this->get_error_message() );
 
 			// Remove the cookie.
 			$this->helper->remove_cookie_notice( self::COOKIE_KEY );
@@ -302,7 +302,7 @@ class Strong_Password extends Component {
 			$this->is_weak_password( $submitted_password ) &&
 			! in_array( self::CODE, $errors->get_error_codes(), true )
 		) {
-			$errors->add( self::CODE, $this->model->get_message() );
+			$errors->add( self::CODE, $this->get_error_message() );
 		}
 	}
 
@@ -342,6 +342,15 @@ class Strong_Password extends Component {
 	}
 
 	/**
+	 * Get the message to show to users, made safe for HTML.
+	 *
+	 * @return string
+	 */
+	private function get_error_message(): string {
+		return esc_html( $this->model->get_message() );
+	}
+
+	/**
 	 * Add WooCommerce error message for password reset warnings.
 	 *
 	 * @param  string $wc_message  WooCommerce default error message.
@@ -353,7 +362,7 @@ class Strong_Password extends Component {
 		}
 
 		if ( isset( $_COOKIE[ self::COOKIE_KEY ] ) && function_exists( 'wc_print_notice' ) && ! $this->cookie_handled ) {
-			$message = $this->model->get_message();
+			$message = $this->get_error_message();
 			wc_print_notice( $message, 'error' );
 			$this->helper->remove_cookie_notice( self::COOKIE_KEY );
 		}
@@ -379,7 +388,7 @@ class Strong_Password extends Component {
 			$this->is_weak_password( $password ) &&
 			! in_array( self::CODE, $errors->get_error_codes(), true )
 		) {
-			$errors->add( self::CODE, $this->model->get_message() );
+			$errors->add( self::CODE, $this->get_error_message() );
 		}
 
 		return $errors;
@@ -411,7 +420,7 @@ class Strong_Password extends Component {
 			$this->is_weak_password( $password ) &&
 			! in_array( self::CODE, $errors->get_error_codes(), true )
 		) {
-			$errors->add( self::CODE, $this->model->get_message() );
+			$errors->add( self::CODE, $this->get_error_message() );
 		}
 	}
 

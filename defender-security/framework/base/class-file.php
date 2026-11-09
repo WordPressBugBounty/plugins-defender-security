@@ -454,47 +454,47 @@ class File {
 	 */
 	private function filter_exclude( $path, $filetype = null ): bool {
 		$exclude = $this->exclude;
-		// First filer dir, or file inside dir.
+		// First, filter dir, or file inside dir.
 		if ( ! is_null( $filetype ) ) {
 			$type = $filetype;
 		} else {
 			$type = filetype( $path );
 		}
-		$dir_exclude = isset( $exclude['dir'] ) ? $exclude['dir'] : array();
+		$dir_exclude = $exclude['dir'] ?? array();
 		if ( is_array( $dir_exclude ) && count( $dir_exclude ) ) {
 			foreach ( $dir_exclude as $dir ) {
-				if ( strpos( $path, $dir ) === 0 ) {
+				if ( 0 === strpos( $path, $dir ) ) {
 					return false;
 				}
 			}
 		}
 
 		// Next extension.
-		$ext_exclude = isset( $exclude['ext'] ) ? $exclude['ext'] : array();
+		$ext_exclude = $exclude['ext'] ?? array();
 		if ( is_array( $ext_exclude ) && count( $ext_exclude ) && 'file' === $type ) {
-			// We use foreach() and strcasecmp() instead of regex cause it faster.
 			foreach ( $ext_exclude as $ext ) {
 				if ( strcasecmp( pathinfo( $path, PATHINFO_EXTENSION ), $ext ) === 0 ) {
-					// Match.
 					return false;
 				}
 			}
 		}
-		// Now filename.
-		$filename_exclude = isset( $exclude['filename'] ) ? $exclude['filename'] : array();
+
+		// Now filename — treat as a literal substring/basename match, not a regex (e.g. ^backup_.*) that will be as a literal substring match.
+		$filename_exclude = $exclude['filename'] ?? array();
 		if ( is_array( $filename_exclude ) && count( $filename_exclude ) && 'file' === $type ) {
+			$basename = pathinfo( $path, PATHINFO_BASENAME );
 			foreach ( $filename_exclude as $filename ) {
-				if ( preg_match( '/' . $filename . '/', pathinfo( $path, PATHINFO_BASENAME ) ) ) {
+				if ( false !== stripos( $basename, $filename ) ) {
 					return false;
 				}
 			}
 		}
 
 		// Now abs path.
-		$path_exclude = isset( $exclude['path'] ) ? $exclude['path'] : array();
+		$path_exclude = $exclude['path'] ?? array();
 		if ( is_array( $path_exclude ) && count( $path_exclude ) && 'file' === $type ) {
 			foreach ( $path_exclude as $p ) {
-				if ( strcmp( $p, $path ) === 0 ) {
+				if ( 0 === strcmp( $p, $path ) ) {
 					return false;
 				}
 			}

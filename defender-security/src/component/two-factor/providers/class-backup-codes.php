@@ -332,16 +332,17 @@ class Backup_Codes extends Two_Factor_Provider {
 	 * @param  WP_User $user  The user object.
 	 * @param  string  $code_hashed  The hashed code to delete.
 	 *
-	 * @return void
+	 * @return bool True when the removal was persisted, false otherwise.
 	 */
-	public function delete_code( WP_User $user, string $code_hashed ): void {
+	public function delete_code( WP_User $user, string $code_hashed ): bool {
 		$backup_codes = get_user_meta( $user->ID, self::BACKUP_CODE_VALUES, true );
 		// Delete the current code from the list since it's been used.
 		$backup_codes = array_flip( $backup_codes );
 		unset( $backup_codes[ $code_hashed ] );
 		$backup_codes = array_values( array_flip( $backup_codes ) );
+
 		// Update the backup code master list.
-		update_user_meta( $user->ID, self::BACKUP_CODE_VALUES, $backup_codes );
+		return (bool) update_user_meta( $user->ID, self::BACKUP_CODE_VALUES, $backup_codes );
 	}
 
 	/**
@@ -368,16 +369,37 @@ class Backup_Codes extends Two_Factor_Provider {
 	 * @return bool|WP_Error
 	 */
 	protected function validate_code( WP_User $user, string $code ) {
-		$backup_codes = get_user_meta( $user->ID, self::BACKUP_CODE_VALUES, true );
+		global $wpdb;
 
-		if ( is_array( $backup_codes ) && array() !== $backup_codes ) {
-			foreach ( $backup_codes as $code_hashed ) {
-				if ( wp_check_password( $code, $code_hashed, $user->ID ) ) {
-					$this->delete_code( $user, $code_hashed );
+		/*
+		 * A code is verified and consumed in separate statements, so two concurrent requests
+		 * could both match the same code and both authenticate. Serialise the whole
+		 * verify-and-consume per user, and only the request that persists the removal wins.
+		 * ponytail: named lock, per-row consumption if wp_usermeta ever stores one code per row.
+		 */
+		$lock = 'wd_2fa_bc_' . md5( $wpdb->usermeta . '_' . $user->ID );
+		if ( 1 !== (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK( %s, 5 )', $lock ) ) ) {
+			return new WP_Error( 'opt_fail', esc_html__( 'ERROR: Please try again.', 'defender-security' ) );
+		}
 
-					return true;
+		try {
+			// Drop anything cached before the lock was held; it may list an already-used code.
+			wp_cache_delete( $user->ID, 'user_meta' );
+			$backup_codes = get_user_meta( $user->ID, self::BACKUP_CODE_VALUES, true );
+
+			if ( is_array( $backup_codes ) && array() !== $backup_codes ) {
+				foreach ( $backup_codes as $code_hashed ) {
+					if ( wp_check_password( $code, $code_hashed, $user->ID ) ) {
+						// The fresh read found the code, so removing it must change the stored
+						// list. A failed write means this request did not consume it.
+						return $this->delete_code( $user, $code_hashed )
+							? true
+							: new WP_Error( 'opt_fail', esc_html__( 'ERROR: Please try again.', 'defender-security' ) );
+					}
 				}
 			}
+		} finally {
+			$wpdb->query( $wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock ) );
 		}
 
 		$lockout_message = $this->get_component()->verify_attempt( $user->ID, self::$slug );

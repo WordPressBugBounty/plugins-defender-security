@@ -1,13 +1,13 @@
 === Defender Security - Malware Scanner, Login Security & Firewall ===
 Plugin Name: Defender Security - Malware Scanner, Login Security & Firewall
-Version: 6.3.0
+Version: 6.4.1
 Author: WPMU DEV
 Author URI: https://wpmudev.com/
 Contributors: WPMUDEV
 Tags: security, malware, firewall, malware scanner, login security
 Requires at least: 6.4
 Tested up to: 7.1.1
-Stable tag: 6.3.0
+Stable tag: 6.4.1
 Requires PHP: 8.0.0
 License: GPL v2 - http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -236,6 +236,37 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 
 == Changelog ==
 
+= 6.4.1 ( 2026-11-05 ) =
+
+- Fix: Client IP address can be spoofed through Smart IP Detection (props: Karthik Ramakrishnan)
+- Fix: Two-factor code verification is not rate limited by default (props: Karthik Ramakrishnan)
+- Fix: Audit Log recovery query blocks the database
+- Fix: Session Protection: Immediate logout after logging in with memory-only transients
+
+= 6.4.0 ( 2026-10-27 ) =
+
+- Enhancement: Update malware signatures
+- Enhancement: Improve Hub experience
+- Enhancement: Sanitize dangerouslySetInnerHTML content using DOMPurify with allowed tags and attributes
+- Enhancement: Ensure session locking does not bypass idle-timeout validation
+- Enhancement: Improvements to Audit Logging in both API and plugin
+- Enhancement: Add an option to synchronize plugin configs with the Hub
+- Enhancement: Improve page skeleton loader
+- Enhancement: Update Hub Connector submodule
+- Enhancement: Banning location improvements
+- Enhancement: Activity Log improvements
+- Enhancement: Style improvements on Setup Wizard page
+- Fix: Warnings on Defender WP CLI
+- Fix: Schedule Scan and Reporting feature not working on multisite
+- Fix: XML-RPC showing as forbidden
+- Fix: Fix an error due to failure in downloading the MaxMind DB
+- Fix: Many requests from "Defender Self Ping"
+- Fix: Pro is missing from Defender Card title in Settings > Other Settings page
+- Fix: Info tooltips don't open from the keyboard
+- Fix: Apostrophe appears as wrong HTML characters in strong password custom message
+- Fix: Docs button does not navigate to the relevant documentation section
+- Fix: Custom app title and Custom authentication emails toggles don't save changes
+
 = 6.3.0 ( 2026-09-22 ) =
 
 - Enhancement: Update malware signatures
@@ -320,28 +351,6 @@ Please open a new thread in Defender's [support forum](https://wordpress.org/sup
 - Fix: Pagination remains visible after ignoring all files and only disappears after clicking a page
 - Fix: Defender Audit Logs creates incorrect and duplicate entries when updating General Settings
 - Fix: Minor code improvements
-
-= 6.1.0 ( 2026-07-22 ) =
-
-- Enhancement: Improved compatibility of Central IP list status with Unlimited Hosting environments
-- Enhancement: Extended Whitelabel support to cover Global Firewall branding
-- Enhancement: User Agent lockout features reflected in the overall lockout count alongside 404 and Login lockouts
-- Enhancement: Added tooltip for the "Security actions required" badge and confirmation notice after applying configuration presets
-- Enhancement: Improved recipient name validation in Reports & Alerts and smarter alert scheduling for months with fewer than 31 days
-- Enhancement: Users remain on the current page after connecting to the Hub
-- Enhancement: Updated CVSS score handling for outdated plugin issues
-- Enhancement: Updated Defender icon, configuration branding, dropdown design, and Hub Connector submodule
-- Fix: Resolved multiple v5 to v6 upgrade issues where notification, 2FA, and Usage Tracking settings were incorrectly reset or disabled
-- Fix: Fixed errors triggered by third-party plugin conflicts and Notification model properties
-- Fix: Fixed WP-CLI command handling, including duplicate scan lines and missing subcommands
-- Fix: Resolved AntiBot and Bot Protection state issues, including Unlock Me button and feature activation modal
-- Fix: Fixed Firewall Logs status filter, IPv6 Blocklist lookup, and custom IP block/allow list sync
-- Fix: Fixed UI issues including pagination, file details panel truncation, and config dialog behavior
-- Fix: Minor code improvements, PHP warning fixes, and performance refinements
-
-= 6.0.1 ( 2026-07-08 ) =
-
-- Fix: Resolved a fatal error caused by legacy null date values
 
 [Changelog for previous versions](https://wpmudev.com/project/wp-defender/#view-changelog).
 

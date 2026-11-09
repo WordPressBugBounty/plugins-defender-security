@@ -124,7 +124,18 @@ class Main_Setting extends Event {
 	 * @defender_route
 	 */
 	public function check_configs(): Response {
+		// Defense in depth: central routing already enforces nonce and private access checks.
+		if ( ! $this->check_permission() ) {
+			return new Response(
+				false,
+				array(
+					'message' => esc_html__( 'You shall not pass.', 'defender-security' ),
+				)
+			);
+		}
+
 		Config_Hub_Helper::clear_config_transient();
+		Config_Hub_Helper::sync_with_hub( $this->local_store, $this->service );
 
 		return new Response( true, array() );
 	}
@@ -480,7 +491,7 @@ class Main_Setting extends Event {
 		}
 
 		// Do not use wp_strip_all_tags() to prevent XSS attack.
-		$name = sanitize_text_field( $importer['name'] );
+		$name = isset( $importer['name'] ) ? sanitize_text_field( $importer['name'] ) : '';
 		$this->local_store->add_imported( $importer );
 
 		// Detect Pro-only modules that were skipped during validation
@@ -492,7 +503,7 @@ class Main_Setting extends Event {
 					'%s config has been uploaded successfully – you can now apply it to this site.',
 					'defender-security'
 				),
-				'<strong>' . $name . '</strong>'
+				'<strong>' . esc_html( $name ) . '</strong>'
 			),
 			'configs' => $this->local_store->get_frontend_configs(),
 		);
@@ -501,29 +512,29 @@ class Main_Setting extends Event {
 			$sample      = $this->service->gather_data();
 			$pro_modules = array();
 
+			$allowed_pro_modules = array(
+				'audit'                 => esc_html__( 'Audit Logs', 'defender-security' ),
+				'waf'                   => esc_html__( 'Web Application Firewall (WAF)', 'defender-security' ),
+				'blocklist_monitor'     => esc_html__( 'Blocklist Monitor', 'defender-security' ),
+				'pwned_passwords'       => esc_html__( 'Pwned Passwords', 'defender-security' ),
+				'force_strong_password' => esc_html__( 'Strong Passwords', 'defender-security' ),
+				'session_protection'    => esc_html__( 'Session Protection', 'defender-security' ),
+				'two_factor'            => esc_html__( 'Two-Factor Authentication', 'defender-security' ),
+				'mask_login'            => esc_html__( 'Hide Login URL', 'defender-security' ),
+				'security_headers'      => esc_html__( 'Security Policies', 'defender-security' ),
+			);
+
 			foreach ( $importer['configs'] as $slug => $module ) {
 				// Modules present in the imported config but NOT in Free's sample data are Pro-only.
-				if ( ! isset( $sample[ $slug ] ) ) {
+				if ( ! isset( $sample[ $slug ] ) && array_key_exists( $slug, $allowed_pro_modules ) ) {
 					$pro_modules[] = $slug;
 				}
 			}
 
 			if ( array() !== $pro_modules ) {
 				$module_names = array_map(
-					function ( $slug ) {
-						$names = array(
-							'audit'                 => esc_html__( 'Audit Logs', 'defender-security' ),
-							'waf'                   => esc_html__( 'Web Application Firewall (WAF)', 'defender-security' ),
-							'blocklist_monitor'     => esc_html__( 'Blocklist Monitor', 'defender-security' ),
-							'pwned_passwords'       => esc_html__( 'Pwned Passwords', 'defender-security' ),
-							'force_strong_password' => esc_html__( 'Strong Passwords', 'defender-security' ),
-							'session_protection'    => esc_html__( 'Session Protection', 'defender-security' ),
-							'two_factor'            => esc_html__( 'Two-Factor Authentication', 'defender-security' ),
-							'mask_login'            => esc_html__( 'Hide Login URL', 'defender-security' ),
-							'security_headers'      => esc_html__( 'Security Policies', 'defender-security' ),
-						);
-
-						return $names[ $slug ] ?? $slug;
+					function ( $slug ) use ( $allowed_pro_modules ) {
+						return $allowed_pro_modules[ $slug ] ?? $slug;
 					},
 					$pro_modules
 				);
@@ -538,6 +549,11 @@ class Main_Setting extends Event {
 				);
 			}
 		}
+
+		$response_data['message'] = wp_kses(
+			$response_data['message'],
+			array( 'strong' => array() )
+		);
 
 		return new Response(
 			true,
@@ -579,10 +595,13 @@ class Main_Setting extends Event {
 		return new Response(
 			true,
 			array(
-				'message' => sprintf(
-					/* translators: %s: Config name. */
-					esc_html__( '%s config saved successfully.', 'defender-security' ),
-					'<strong>' . $name . '</strong>'
+				'message' => wp_kses(
+					sprintf(
+						/* translators: %s: Config name. */
+						esc_html__( '%s config saved successfully.', 'defender-security' ),
+						'<strong>' . esc_html( $name ) . '</strong>'
+					),
+					array( 'strong' => array() )
 				),
 				'configs' => $this->local_store->get_frontend_configs(),
 			)
@@ -810,7 +829,7 @@ class Main_Setting extends Event {
 				'%s config has been applied successfully.',
 				'defender-security'
 			),
-			'<strong>' . $config['name'] . '</strong>'
+			'<strong>' . esc_html( $config['name'] ) . '</strong>'
 		);
 		$return = array();
 		if ( $restore_result ) {
@@ -843,7 +862,16 @@ class Main_Setting extends Event {
 			$return['interval'] = 2;
 		}
 
-		$return['message']    = $message;
+		$return['message']    = wp_kses(
+			$message,
+			array(
+				'strong' => array(),
+				'br'     => array(),
+				'a'      => array(
+					'href' => array(),
+				),
+			)
+		);
 		$return['auto_close'] = true;
 		$return['configs']    = $this->local_store->get_frontend_configs();
 
@@ -859,17 +887,9 @@ class Main_Setting extends Event {
 	 * @defender_route
 	 */
 	public function update_config( Request $request ) {
-		$data        = $request->get_data();
-		$key         = trim( $data['key'] );
-		$key         = $this->resolve_config_key( $key );
-		$name        = trim( $data['name'] );
-		$description = isset( $data['desc'] ) ? trim( (string) $data['desc'] ) : '';
-		if ( '' === $description && isset( $data['description'] ) ) {
-			$description = trim( (string) $data['description'] );
-		}
-		$note_added_time = isset( $data['note_added_time'] ) && is_scalar( $data['note_added_time'] )
-			? sanitize_text_field( (string) $data['note_added_time'] )
-			: null;
+		$parsed = $this->parse_config_update_payload( $request->get_data() );
+		$key    = $parsed['key'];
+		$name   = $parsed['name'];
 		if ( '' === $name || '' === $key ) {
 			return new Response(
 				false,
@@ -879,10 +899,7 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$config = $this->local_store->get_one( $key );
-		if ( null === $config ) {
-			$config = get_site_option( $key );
-		}
+		$config = $this->load_config_for_update( $key );
 		if ( false === $config || null === $config ) {
 			return new Response(
 				false,
@@ -892,7 +909,11 @@ class Main_Setting extends Event {
 			);
 		}
 
-		$option_updated = $this->local_store->update_metadata( $key, $name, $description, $note_added_time );
+		$description     = $parsed['description'];
+		$note_added_time = $parsed['note_added_time'];
+		$prev_name       = (string) ( $config['name'] ?? '' );
+		$prev_desc       = (string) ( $config['description'] ?? '' );
+		$option_updated  = $this->local_store->update_metadata( $key, $name, $description, $note_added_time );
 		if ( ! $option_updated ) {
 			$old_config            = $config;
 			$config['name']        = sanitize_text_field( $name );
@@ -903,14 +924,20 @@ class Main_Setting extends Event {
 			$option_updated = update_site_option( $key, $config );
 		}
 
+		$hub_desc = sanitize_textarea_field( $description );
 		if ( $option_updated ) {
+			$this->maybe_update_hub_metadata( $config, $name, $hub_desc, $prev_name, $prev_desc );
+
 			return new Response(
 				true,
 				array(
-					'message'    => sprintf(
-						/* translators: %s: Config name. */
-						esc_html__( '%s config saved successfully.', 'defender-security' ),
-						'<strong>' . $name . '</strong>'
+					'message'    => wp_kses(
+						sprintf(
+							/* translators: %s: Config name. */
+							esc_html__( '%s config saved successfully.', 'defender-security' ),
+							'<strong>' . esc_html( $name ) . '</strong>'
+						),
+						array( 'strong' => array() )
 					),
 					'auto_close' => true,
 					'configs'    => $this->local_store->get_frontend_configs(),
@@ -927,6 +954,78 @@ class Main_Setting extends Event {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Pushes config metadata to the Hub if the config has a hub_id and metadata changed.
+	 *
+	 * @param  array       $config       Pre-update config data.
+	 * @param  string      $name         New name.
+	 * @param  string      $description  New description (sanitized).
+	 * @param  string|null $prev_name  Optional previous name for comparison.
+	 * @param  string|null $prev_desc  Optional previous description for comparison.
+	 */
+	private function maybe_update_hub_metadata( array $config, string $name, string $description, ?string $prev_name = null, ?string $prev_desc = null ): void {
+		if ( ! isset( $config['hub_id'] ) ) {
+			return;
+		}
+
+		$current_name = $prev_name ?? (string) ( $config['name'] ?? '' );
+		$current_desc = $prev_desc ?? (string) ( $config['description'] ?? '' );
+
+		if ( $name === $current_name && $description === $current_desc ) {
+			return;
+		}
+
+		Config_Hub_Helper::update_on_hub(
+			array(
+				'hub_id'      => $config['hub_id'],
+				'name'        => $name,
+				'description' => $description,
+			)
+		);
+	}
+
+	/**
+	 * Parses and normalizes request data for updating a config.
+	 *
+	 * @param  array $data  Raw request data.
+	 *
+	 * @return array
+	 */
+	private function parse_config_update_payload( array $data ): array {
+		$key         = isset( $data['key'] ) ? trim( (string) $data['key'] ) : '';
+		$name        = isset( $data['name'] ) ? sanitize_text_field( trim( (string) $data['name'] ) ) : '';
+		$description = isset( $data['desc'] ) ? trim( (string) $data['desc'] ) : '';
+		if ( '' === $description && isset( $data['description'] ) ) {
+			$description = trim( (string) $data['description'] );
+		}
+		$note_added_time = isset( $data['note_added_time'] ) && is_scalar( $data['note_added_time'] )
+			? sanitize_text_field( (string) $data['note_added_time'] )
+			: null;
+
+		return array(
+			'key'             => $this->resolve_config_key( $key ),
+			'name'            => $name,
+			'description'     => $description,
+			'note_added_time' => $note_added_time,
+		);
+	}
+
+	/**
+	 * Loads a config for update from local store or site option.
+	 *
+	 * @param  string $key  Config key.
+	 *
+	 * @return array|null|false
+	 */
+	private function load_config_for_update( string $key ) {
+		$config = $this->local_store->get_one( $key );
+		if ( null === $config ) {
+			$config = get_site_option( $key );
+		}
+
+		return $config;
 	}
 
 	/**
@@ -972,17 +1071,10 @@ class Main_Setting extends Event {
 				);
 			}
 
-			$key = '';
-			if ( isset( $item['key'] ) && is_string( $item['key'] ) ) {
-				$key = trim( $item['key'] );
-			} elseif ( isset( $item['id'] ) && is_string( $item['id'] ) ) {
-				$key = trim( $item['id'] );
-			}
-			$key = $this->resolve_config_key( $key, $stored_configs );
-
+			$key = $this->resolve_metadata_sync_key( $item, $stored_configs );
 			if (
 				'' === $key ||
-				0 !== strpos( $key, 'wp_defender_config' ) ||
+				! str_starts_with( $key, 'wp_defender_config' ) ||
 				! isset( $stored_configs[ $key ] )
 			) {
 				return new Response(
@@ -993,23 +1085,7 @@ class Main_Setting extends Event {
 				);
 			}
 
-			$config = $this->local_store->get_one( $key );
-			if ( null === $config ) {
-				continue;
-			}
-
-			$name            = isset( $item['name'] ) ? (string) $item['name'] : null;
-			$description     = null;
-			$note_added_time = null;
-			if ( isset( $item['description'] ) && is_string( $item['description'] ) ) {
-				$description = $item['description'];
-			} elseif ( isset( $item['desc'] ) && is_string( $item['desc'] ) ) {
-				$description = $item['desc'];
-			}
-			if ( isset( $item['note_added_time'] ) && is_scalar( $item['note_added_time'] ) ) {
-				$note_added_time = (string) $item['note_added_time'];
-			}
-			$this->local_store->update_metadata( $key, $name, $description, $note_added_time );
+			$this->apply_config_metadata_sync( $key, $item );
 		}
 
 		return new Response(
@@ -1019,6 +1095,91 @@ class Main_Setting extends Event {
 				'configs' => $this->local_store->get_frontend_configs(),
 			)
 		);
+	}
+
+	/**
+	 * Resolves config key from metadata sync item.
+	 *
+	 * @param  array $item            Sync item.
+	 * @param  array $stored_configs  Stored configs.
+	 *
+	 * @return string
+	 */
+	private function resolve_metadata_sync_key( array $item, array $stored_configs ): string {
+		$key = '';
+		if ( isset( $item['key'] ) && is_string( $item['key'] ) ) {
+			$key = trim( $item['key'] );
+		} elseif ( isset( $item['id'] ) && is_string( $item['id'] ) ) {
+			$key = trim( $item['id'] );
+		}
+
+		return $this->resolve_config_key( $key, $stored_configs );
+	}
+
+	/**
+	 * Resolves description from metadata sync item.
+	 *
+	 * @param  array $item  Metadata item.
+	 *
+	 * @return string|null
+	 */
+	private function resolve_metadata_sync_description( array $item ): ?string {
+		if ( isset( $item['description'] ) && is_string( $item['description'] ) ) {
+			return $item['description'];
+		}
+		if ( isset( $item['desc'] ) && is_string( $item['desc'] ) ) {
+			return $item['desc'];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Parses field values from a metadata sync item.
+	 *
+	 * @param  array $item  Metadata item.
+	 *
+	 * @return array
+	 */
+	private function parse_metadata_sync_item_fields( array $item ): array {
+		$name            = isset( $item['name'] ) ? (string) $item['name'] : null;
+		$note_added_time = isset( $item['note_added_time'] ) && is_scalar( $item['note_added_time'] )
+			? (string) $item['note_added_time']
+			: null;
+
+		return array(
+			'name'            => $name,
+			'description'     => $this->resolve_metadata_sync_description( $item ),
+			'note_added_time' => $note_added_time,
+		);
+	}
+
+	/**
+	 * Updates config metadata locally and pushes to Hub if configured.
+	 *
+	 * @param  string $key   Config key.
+	 * @param  array  $item  Metadata item.
+	 */
+	private function apply_config_metadata_sync( string $key, array $item ): void {
+		$config = $this->local_store->get_one( $key );
+		if ( null === $config ) {
+			return;
+		}
+
+		$fields          = $this->parse_metadata_sync_item_fields( $item );
+		$name            = $fields['name'];
+		$description     = $fields['description'];
+		$note_added_time = $fields['note_added_time'];
+
+		$this->local_store->update_metadata( $key, $name, $description, $note_added_time );
+
+		$hub_name = null !== $name && '' !== trim( $name )
+			? sanitize_text_field( $name )
+			: (string) ( $config['name'] ?? '' );
+		$hub_desc = null !== $description
+			? sanitize_textarea_field( $description )
+			: (string) ( $config['description'] ?? '' );
+		$this->maybe_update_hub_metadata( $config, $hub_name, $hub_desc );
 	}
 
 	/**
@@ -1056,6 +1217,10 @@ class Main_Setting extends Event {
 		}
 
 		if ( $this->local_store->delete_one( $key ) ) {
+			if ( isset( $config['hub_id'] ) ) {
+				Config_Hub_Helper::delete_configs_from_hub( (int) $config['hub_id'] );
+			}
+
 			return new Response(
 				true,
 				array(
@@ -1066,7 +1231,7 @@ class Main_Setting extends Event {
 			);
 		}
 
-		if ( 0 === strpos( $key, 'wp_defender_config' ) ) {
+		if ( str_starts_with( $key, 'wp_defender_config' ) ) {
 			delete_site_option( $key );
 			$this->service->remove_index( $key );
 			$this->service->clear_keys();
@@ -1141,7 +1306,7 @@ class Main_Setting extends Event {
 
 			if (
 				'' === $key ||
-				0 !== strpos( $key, 'wp_defender_config' ) ||
+				! str_starts_with( $key, 'wp_defender_config' ) ||
 				! isset( $stored_configs[ $key ] )
 			) {
 				return new Response(
@@ -1156,6 +1321,15 @@ class Main_Setting extends Event {
 		}
 
 		$this->local_store->sync_keep_list( array_keys( $keep_keys ) );
+
+		foreach ( array_diff_key( $stored_configs, $this->local_store->get_all() )
+			as $removed_config ) {
+			if ( ! is_array( $removed_config ) || ! isset( $removed_config['hub_id'] ) ) {
+				continue;
+			}
+
+			Config_Hub_Helper::delete_configs_from_hub( (int) $removed_config['hub_id'] );
+		}
 
 		return new Response(
 			true,
@@ -1192,7 +1366,7 @@ class Main_Setting extends Event {
 			return '';
 		}
 
-		if ( 0 === strpos( $key, 'wp_defender_config' ) ) {
+		if ( str_starts_with( $key, 'wp_defender_config' ) ) {
 			return $key;
 		}
 

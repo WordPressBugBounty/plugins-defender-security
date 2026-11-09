@@ -7,8 +7,8 @@
 
 namespace WP_Defender\Component;
 
-use PharData;
 use WP_Defender\Component;
+use WP_Defender\Controller\Firewall as Firewall_Controller;
 use WP_Defender\Traits\IP;
 use Calotes\Helper\Array_Cache;
 use WP_Defender\Traits\Country;
@@ -31,6 +31,11 @@ class Blacklist_Lockout extends Component {
 
 	// Define the transient key.
 	const IP_LIST_KEY = 'wpmu_dev_ip_list';
+
+	/**
+	 * Transient key set when the MaxMind database download fails.
+	 */
+	const GEODB_DOWNLOAD_FAILED_KEY = 'wpdef_geodb_download_failed';
 
 	/**
 	 * Check if a country code belongs to a continent.
@@ -98,12 +103,13 @@ class Blacklist_Lockout extends Component {
 	 */
 	private function get_default_ip_whitelisted(): array {
 		$server_addr = defender_get_data_from_request( 'SERVER_ADDR', 's' );
-		$remote_addr = defender_get_data_from_request( 'REMOTE_ADDR', 's' );
 		$ips         = array(
 			...self::fetch_latest_ips(),
 			'127.0.0.1',
-			$server_addr ?? $remote_addr,
 		);
+		if ( false !== filter_var( $server_addr, FILTER_VALIDATE_IP ) ) {
+			$ips[] = $server_addr;
+		}
 
 		$whitelist_ips = apply_filters( 'ip_lockout_default_whitelist_ip', $ips );
 		return is_array( $whitelist_ips ) ? $whitelist_ips : (array) $whitelist_ips;
@@ -307,40 +313,30 @@ class Blacklist_Lockout extends Component {
 		}
 
 		// Likely the case after the config import with the existed MaxMind license key.
+		// Skip the download if it failed recently. This runs on every request.
 		if (
 			'' !== $license_key
 			&& ( ! is_string( $model->geodb_path ) || ! is_file( $model->geodb_path ) )
+			&& wp_hash( $license_key ) !== get_transient( self::GEODB_DOWNLOAD_FAILED_KEY )
 		) {
 			$service_geo = wd_di()->get( MaxMind_Geolocation::class );
 			$tmp         = $service_geo->get_downloaded_url( $license_key );
-			if ( ! is_wp_error( $tmp ) ) {
-				$phar = new PharData( $tmp );
-				$path = $service_geo->get_db_base_path();
-				if ( ! is_dir( $path ) ) {
-					wp_mkdir_p( $path );
-				}
-				$phar->extractTo( $path, null, true );
-				$model->geodb_path = $path . DIRECTORY_SEPARATOR . $phar->current()->getFileName() . DIRECTORY_SEPARATOR . $service_geo->get_db_full_name();
+			$geodb_path  = is_wp_error( $tmp ) ? $tmp : $service_geo->extract_db_archive( $tmp );
+			if ( is_wp_error( $geodb_path ) ) {
+				$this->log( 'Error getting MaxMind database: ' . $geodb_path->get_error_message(), Firewall_Controller::FIREWALL_LOG );
+				set_transient( self::GEODB_DOWNLOAD_FAILED_KEY, wp_hash( $license_key ), HOUR_IN_SECONDS );
+			} else {
+				$model->geodb_path = $geodb_path;
 				// Save because we'll check for a saved path.
 				$model->save();
 
-				if ( file_exists( $tmp ) ) {
-					wp_delete_file( $tmp );
-				}
-
 				if ( array() === $model->country_whitelist ) {
-					$is_country = false;
 					foreach ( $this->get_user_ip() as $ip ) {
 						$country = $this->get_current_country( $ip );
 
 						if ( isset( $country['iso'] ) && '' !== $country['iso'] ) {
-							$model      = $this->add_default_whitelisted_country( $model, $country['iso'] );
-							$is_country = true;
+							$model = $this->add_default_whitelisted_country( $model, $country['iso'] );
 						}
-					}
-
-					if ( false === $is_country ) {
-						return false;
 					}
 				}
 				$model->save();

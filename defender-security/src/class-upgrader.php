@@ -340,6 +340,9 @@ class Upgrader {
 		if ( ! is_string( $db_version ) || '' === $db_version ) {
 			self::cache_event_time( 'plugin_installed' );
 			$this->create_database_tables_common();
+			if ( ! $this->upgrade_6_4_0() || ! $this->upgrade_6_4_1() ) {
+				return;
+			}
 			update_site_option( 'wd_db_version', DEFENDER_DB_VERSION );
 			update_site_option( Feature_Modal::FEATURE_SLUG, true );
 
@@ -486,6 +489,12 @@ class Upgrader {
 		}
 		if ( version_compare( $db_version, '6.2.0', '<' ) ) {
 			$this->upgrade_6_2_0();
+		}
+		if ( version_compare( $db_version, '6.4.0', '<' ) && ! $this->upgrade_6_4_0() ) {
+			return;
+		}
+		if ( version_compare( $db_version, '6.4.1', '<' ) && ! $this->upgrade_6_4_1() ) {
+			return;
 		}
 		// This is not a new installation. Make a mark.
 		defender_no_fresh_install();
@@ -2060,8 +2069,62 @@ To complete your login, copy and paste the temporary password into the Password 
 	}
 
 	/**
+	 * Sync all report schedules to match Malware Report.
+	 *
+	 * Since 6.0.0 the UI enforces a single shared schedule for all reports via sync_report_schedule.
+	 * Sites upgrading from older versions may have each report on a different schedule.
+	 * This migration copies Malware_Report's schedule to Scan_Settings (the UI master) and to
+	 * all four report models, then recomputes est_timestamp on each so all report emails
+	 * arrive at the same time.
+	 *
+	 * @return void
+	 */
+	private function sync_all_report_schedules(): void {
+		// Get the schedule from Malware_Report.
+		$malware_report = wd_di()->get( Malware_Report::class );
+		$frequency      = $malware_report->frequency;
+		$day            = $malware_report->day;
+		$day_n          = (int) $malware_report->day_n;
+		$time           = $malware_report->time;
+
+		// Update Scan_Settings so the schedule pill shows the correct label.
+		$scan_settings            = wd_di()->get( Scan_Settings::class );
+		$scan_settings->frequency = $frequency;
+		$scan_settings->day       = $day;
+		$scan_settings->day_n     = $day_n;
+		$scan_settings->time      = $time;
+		$scan_settings->save();
+
+		// Apply the same schedule to all report models and recompute est_timestamp
+		// so every report fires at the same next occurrence.
+		$report_models = array(
+			$malware_report,
+			wd_di()->get( Firewall_Report::class ),
+			wd_di()->get( Audit_Report::class ),
+			wd_di()->get( Tweak_Reminder::class ),
+		);
+
+		foreach ( $report_models as $model ) {
+			$model->frequency = $frequency;
+			$model->day       = $day;
+			$model->day_n     = $day_n;
+			$model->time      = $time;
+
+			$next_run = $model->get_next_run();
+			if ( $next_run instanceof \DateTime ) {
+				$model->est_timestamp = $next_run->getTimestamp();
+			}
+
+			$model->save();
+		}
+
+		// Show a one-time dashboard bubble so users know about the shared schedule.
+		update_site_option( \WP_Defender\Controller\Dashboard::REPORT_SCHEDULE_NOTICE_OPTION, true );
+	}
+
+	/**
 	 * Upgrade to 6.1.0: Fix Tweak Reminder est_timestamp left as 0 by the 6.0.0 migration.
-	 * Also sync all report schedules to match Malware Report.
+	 * Also, sync all report schedules to match Malware Report.
 	 *
 	 * @return void
 	 */
@@ -2074,16 +2137,6 @@ To complete your login, copy and paste the temporary password into the Password 
 		}
 
 		$this->sync_all_report_schedules();
-	}
-
-	/**
-	 * Upgrade to 6.2.0.
-	 *
-	 * @return void
-	 */
-	private function upgrade_6_2_0(): void {
-		$this->fix_notification_recipients_format();
-		$this->cancel_recipients_of_inactive_reports();
 	}
 
 	/**
@@ -2181,57 +2234,13 @@ To complete your login, copy and paste the temporary password into the Password 
 	}
 
 	/**
-	 * Sync all report schedules to match Malware Report.
-	 *
-	 * Since 6.0.0 the UI enforces a single shared schedule for all reports via sync_report_schedule.
-	 * Sites upgrading from older versions may have each report on a different schedule.
-	 * This migration copies Malware_Report's schedule to Scan_Settings (the UI master) and to
-	 * all four report models, then recomputes est_timestamp on each so all report emails
-	 * arrive at the same time.
+	 * Upgrade to 6.2.0.
 	 *
 	 * @return void
 	 */
-	private function sync_all_report_schedules(): void {
-		// Get the schedule from Malware_Report.
-		$malware_report = wd_di()->get( Malware_Report::class );
-		$frequency      = $malware_report->frequency;
-		$day            = $malware_report->day;
-		$day_n          = (int) $malware_report->day_n;
-		$time           = $malware_report->time;
-
-		// Update Scan_Settings so the schedule pill shows the correct label.
-		$scan_settings            = wd_di()->get( Scan_Settings::class );
-		$scan_settings->frequency = $frequency;
-		$scan_settings->day       = $day;
-		$scan_settings->day_n     = $day_n;
-		$scan_settings->time      = $time;
-		$scan_settings->save();
-
-		// Apply the same schedule to all report models and recompute est_timestamp
-		// so every report fires at the same next occurrence.
-		$report_models = array(
-			$malware_report,
-			wd_di()->get( Firewall_Report::class ),
-			wd_di()->get( Audit_Report::class ),
-			wd_di()->get( Tweak_Reminder::class ),
-		);
-
-		foreach ( $report_models as $model ) {
-			$model->frequency = $frequency;
-			$model->day       = $day;
-			$model->day_n     = $day_n;
-			$model->time      = $time;
-
-			$next_run = $model->get_next_run();
-			if ( $next_run instanceof \DateTime ) {
-				$model->est_timestamp = $next_run->getTimestamp();
-			}
-
-			$model->save();
-		}
-
-		// Show a one-time dashboard bubble so users know about the shared schedule.
-		update_site_option( \WP_Defender\Controller\Dashboard::REPORT_SCHEDULE_NOTICE_OPTION, true );
+	private function upgrade_6_2_0(): void {
+		$this->fix_notification_recipients_format();
+		$this->cancel_recipients_of_inactive_reports();
 	}
 
 	/**
@@ -2357,5 +2366,52 @@ A scan of {SITE_URL} identified {ISSUES_COUNT} issue(s). The issue(s) found is/a
 			$model->configs['template']['found']['body']    = $default_body;
 			$model->save();
 		}
+	}
+
+	/**
+	 * Upgrade to 6.4.0: persist fractional audit keys without changing integer timestamps.
+	 *
+	 * @return bool Whether the queue column is available.
+	 */
+	private function upgrade_6_4_0(): bool {
+		global $wpdb;
+		$table = $wpdb->base_prefix . 'defender_audit_log';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$column = $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'fractional_timestamp'" );
+		if ( ! $column ) {
+			// Nullable with a default: older versions can still insert their original columns.
+			// Append the column so existing column positions are preserved on downgrade.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `fractional_timestamp` varchar(32) DEFAULT NULL" );
+			// Accept a concurrent migration, but never mark a failed migration complete.
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$column = $wpdb->get_var( "SHOW COLUMNS FROM `{$table}` LIKE 'fractional_timestamp'" );
+		}
+		if ( ! $column ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Upgrade to 6.4.1: index the audit-log columns used by the fractional-key lookups.
+	 *
+	 * @return bool Whether the index is available.
+	 */
+	private function upgrade_6_4_1(): bool {
+		global $wpdb;
+		$table = $wpdb->base_prefix . 'defender_audit_log';
+		$check = "SHOW INDEX FROM `{$table}` WHERE Key_name = 'timestamp_site_url'";
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		if ( $wpdb->get_var( $check ) ) {
+			return true;
+		}
+		// The 191-char prefix keeps the key under MyISAM's 1000-byte limit on utf8mb4.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "ALTER TABLE `{$table}` ADD INDEX `timestamp_site_url` (`timestamp`, `site_url`(191))" );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+		return (bool) $wpdb->get_var( $check );
 	}
 }

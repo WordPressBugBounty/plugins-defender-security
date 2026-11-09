@@ -227,6 +227,10 @@ final class OpenSSLCertificateChainChecker implements CertificateChainChecker
         }
 
         $endpoint = trim(mb_substr($endpoint, $pos + 4));
+        if (!$this->isPubliclyRoutableUrl($endpoint)) {
+            return '';
+        }
+
         $request = $this->requestFactory->createRequest('GET', $endpoint);
         $response = $this->client->sendRequest($request);
 
@@ -235,5 +239,61 @@ final class OpenSSLCertificateChainChecker implements CertificateChainChecker
         }
 
         return $response->getBody()->getContents();
+    }
+
+    /**
+     * Certificates are untrusted input, so the CRL endpoint they name must not
+     * be used to reach hosts that are not publicly routable.
+     *
+     * Only the URL given here is checked. The injected PSR-18 client performs
+     * the request, so this cannot prevent a public host from redirecting to an
+     * internal one, nor a DNS entry that resolves differently between this
+     * check and the request itself. A client configured to refuse redirects
+     * and pin the resolved address is required to close those gaps.
+     */
+    private function isPubliclyRoutableUrl(string $endpoint): bool
+    {
+        $parts = parse_url($endpoint);
+        if (false === $parts || !isset($parts['scheme'], $parts['host'])) {
+            return false;
+        }
+        if (!in_array(mb_strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $host = trim($parts['host'], '[]');
+        $addresses = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : $this->resolveHost($host);
+        if ([] === $addresses) {
+            return false;
+        }
+
+        foreach ($addresses as $address) {
+            if (false === filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function resolveHost(string $host): array
+    {
+        $records = @dns_get_record($host, DNS_A | DNS_AAAA);
+        if (false === $records) {
+            return [];
+        }
+
+        $addresses = [];
+        foreach ($records as $record) {
+            $address = $record['ip'] ?? $record['ipv6'] ?? null;
+            if (null !== $address) {
+                $addresses[] = $address;
+            }
+        }
+
+        return $addresses;
     }
 }

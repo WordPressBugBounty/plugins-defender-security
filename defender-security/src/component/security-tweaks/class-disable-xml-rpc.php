@@ -35,9 +35,9 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 	/**
 	 * This class contains everything relate to WPMUDEV.
 	 *
-	 * @var WPMUDEV|null
+	 * @var WPMUDEV
 	 */
-	private ?WPMUDEV $wpmudev;
+	private WPMUDEV $wpmudev;
 
 	/**
 	 * Class constructor to initialize the Disable_XML_RPC component.
@@ -121,8 +121,15 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 		$plugin_xmlrpc_status = $this->is_tweak_enabled_in_site();
 		// Check if user is using WPMUDEV hosting.
 		if ( $this->wpmudev->is_wpmu_hosting() ) {
-			return $this->determine_status( $plugin_xmlrpc_status, $this->is_tweak_enabled_in_server() ) !== 3;
+			$hosting_xmlrpc_status = $this->is_tweak_enabled_in_server();
+
+			if ( $plugin_xmlrpc_status && $hosting_xmlrpc_status ) {
+				return $this->revert();
+			} else {
+				return $plugin_xmlrpc_status || $hosting_xmlrpc_status;
+			}
 		}
+
 		// Return the status of XML-RPC.
 		return $plugin_xmlrpc_status;
 	}
@@ -153,34 +160,9 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 			// Something went wrong.
 			return false;
 		}
+
 		// Return whether the XML-RPC is enabled or disabled based on the XML-RPC status.
 		return ! $server_xmlrpc_status;
-	}
-
-	/**
-	 * Determines the status of the XML-RPC feature based on plugin and hosting settings.
-	 *
-	 * @param bool $is_plugin_xmlrpc_enabled Indicates if the plugin's XML-RPC is enabled.
-	 * @param bool $is_hosting_xmlrpc_enabled Indicates if the hosting's XML-RPC is enabled.
-	 *
-	 * @return int The status of the XML-RPC feature.
-	 */
-	public function determine_status( bool $is_plugin_xmlrpc_enabled, bool $is_hosting_xmlrpc_enabled ): int {
-		if ( $is_plugin_xmlrpc_enabled && ! $is_hosting_xmlrpc_enabled ) {
-			return 1; // Case 1: Defender ON, Hosting OFF.
-		}
-
-		if ( ! $is_plugin_xmlrpc_enabled && $is_hosting_xmlrpc_enabled ) {
-			return 2; // Case 2: Defender OFF, Hosting ON.
-		}
-
-		if ( ! $is_plugin_xmlrpc_enabled && ! $is_hosting_xmlrpc_enabled ) {
-			return 3; // Case 3: Defender OFF, Hosting OFF.
-		}
-
-		// If ON both sides then turn it OFF on Defender side.
-		$this->revert();
-		return 2; // Case 2: Defender OFF, Hosting ON.
 	}
 
 	/**
@@ -239,24 +221,43 @@ class Disable_XML_RPC extends Abstract_Security_Tweaks {
 		// If the site is not hosted on WPMU DEV's hosting, return the summary data.
 		if ( $this->wpmudev->is_wpmu_hosting() && $this->wpmudev->is_dash_activated() && $this->wpmudev->get_site_id() ) {
 			// If the site is hosted on WPMU DEV's hosting, construct the URL to the hosting settings page.
-			$url = 'https://wpmudev.com/hub2/site/' . $this->wpmudev->get_site_id() . '/hosting/tools#block-xml-rpc';
+			$url           = 'https://wpmudev.com/hub2/site/' . $this->wpmudev->get_site_id() . '/hosting/tools#block-xml-rpc';
+			$is_whitelabel = $this->wpmudev->is_whitelabel_enabled();
 
-			$hosting_settings_url = null;
-
-			// If the XML-RPC feature is enabled on the server side, construct the message to display.
-			if ( $in_server ) {
-				if ( $this->wpmudev->is_whitelabel_enabled() ) {
-					$enabled = wp_strip_all_tags( __( 'You can manage the XML-RPC settings in the Hosting Settings.', 'defender-security' ) );
-				} else {
-					$enabled              = ''; // React composes this string via createInterpolateElement using hosting_settings_url.
-					$hosting_settings_url = $url;
-				}
-			} elseif ( $this->wpmudev->is_whitelabel_enabled() ) {
-				$enabled = wp_strip_all_tags( __( 'XML-RPC is currently disabled on plugin side.', 'defender-security' ) );
-			} else {
-				$enabled              = wp_strip_all_tags( __( 'XML-RPC is currently disabled on plugin side, we suggest disabling it from server side by clicking on this link.', 'defender-security' ) );
-				$hosting_settings_url = $url;
+			if ( $in_site && $in_server ) {
+				$this->revert();
 			}
+
+			[ $enabled, $hosting_settings_url ] = match ( true ) {
+				$in_server && $is_whitelabel => array(
+					wp_strip_all_tags(
+						__(
+							'You can manage the XML-RPC settings in the Hosting Settings.',
+							'defender-security'
+						)
+					),
+					null,
+				),
+				$in_server => array( '', $url ),
+				$is_whitelabel => array(
+					wp_strip_all_tags(
+						__(
+							'XML-RPC is currently disabled on plugin side.',
+							'defender-security'
+						)
+					),
+					null,
+				),
+				default => array(
+					wp_strip_all_tags(
+						__(
+							'XML-RPC is currently disabled on plugin side, we suggest disabling it from server side by clicking on this link.',
+							'defender-security'
+						)
+					),
+					$url,
+				),
+			};
 
 			// Return the summary data.
 			return array(

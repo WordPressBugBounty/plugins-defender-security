@@ -59,6 +59,8 @@ class Login_Lockout extends Event {
 		if ( $this->model->enabled && ! $service->are_ips_whitelisted( $ip ) ) {
 			$this->service->add_hooks();
 		}
+		// The 2FA counter works regardless of the Login protection status.
+		add_action( 'wd_2fa_lockout', array( $this->service, 'two_factor_lockout' ), 10, 3 );
 	}
 
 	/**

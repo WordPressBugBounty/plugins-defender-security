@@ -230,20 +230,6 @@ class Audit extends Component {
 	}
 
 	/**
-	 * Strips the protocol from a URL.
-	 *
-	 * @param  string $url  URL to process.
-	 *
-	 * @return string Returns the URL without the protocol.
-	 */
-	private function strip_protocol( $url ) {
-		$parts = wp_parse_url( $url );
-		$host  = $parts['host'] . ( $parts['path'] ?? null );
-
-		return rtrim( $host, '/' );
-	}
-
-	/**
 	 * Returns the API endpoint.
 	 *
 	 * @return string Returns the API endpoint URL.
@@ -330,6 +316,8 @@ class Audit extends Component {
 		}
 
 		foreach ( $events as $event ) {
+			// Fresh instance per event to ensure a new INSERT and prevent state leakage.
+			$model = new Audit_Log();
 			$model->import( $event );
 			$model->synced = 0;
 			$model->save();

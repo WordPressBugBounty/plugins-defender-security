@@ -663,11 +663,22 @@ class Firewall extends Event {
 	): void {
 		$action = HTTP::get( 'action', false );
 
-		if ( defender_base_action() === $action ) {
-			$nonce = HTTP::get( '_def_nonce', false );
-			$route = HTTP::get( 'route', '' );
-			$route = wp_unslash( $route );
-			if ( wp_verify_nonce( $nonce, $route ) ) {
+		if ( wp_doing_ajax() && defender_base_action() === $action ) {
+			$nonce          = HTTP::get( '_def_nonce', false );
+			$route          = HTTP::get( 'route', '' );
+			$route          = wp_unslash( $route );
+			$collection     = $this->dump_routes_and_nonces();
+			$routes         = $collection['routes'];
+			$allowed_routes = array(
+				$routes['verify_blocked_user'],
+				$this->check_route( $routes['verify_blocked_user'] ),
+				$routes['send_again'],
+				$this->check_route( $routes['send_again'] ),
+				$routes['agf_unlock_user'],
+				$this->check_route( $routes['agf_unlock_user'] ),
+			);
+
+			if ( in_array( $route, $allowed_routes, true ) && wp_verify_nonce( $nonce, $route ) ) {
 				return;
 			}
 		}
@@ -680,7 +691,7 @@ class Firewall extends Event {
 			// We follow the default naming process to find the required cookie later.
 			$cookie_name = str_replace( '.', '_', $ips[0] );
 			$cookie_name = 'wpdef_lockout_' . $cookie_name;
-			if ( ! isset( $_COOKIE[ $cookie_name ] ) ) {
+			if ( ! isset( $_COOKIE[ $cookie_name ] ) && ! headers_sent() ) {
 				setcookie( $cookie_name, true, time() + HOUR_IN_SECONDS, '/', '', is_ssl(), true );
 			}
 		}

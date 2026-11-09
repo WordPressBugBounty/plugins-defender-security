@@ -64,6 +64,11 @@ class MetadataService
      */
     private $logger;
 
+    /**
+     * @var string[]
+     */
+    private $trustedCertificates = [];
+
     public function __construct(string $serviceUri, ClientInterface $httpClient, RequestFactoryInterface $requestFactory, array $additionalQueryStringValues = [], array $additionalHeaders = [], ?LoggerInterface $logger = null)
     {
         if (0 !== count($additionalQueryStringValues)) {
@@ -93,6 +98,17 @@ class MetadataService
     public function addHeaders(array $additionalHeaders): self
     {
         $this->additionalHeaders = $additionalHeaders;
+
+        return $this;
+    }
+
+    /**
+     * Adds a PEM encoded trust anchor for the Metadata Service signing chain.
+     * These anchors are independent from the attestation root certificates published by the TOC.
+     */
+    public function addTrustedCertificate(string $certificate): self
+    {
+        $this->trustedCertificates[] = CertificateToolbox::fixPEMStructure($certificate);
 
         return $this;
     }
@@ -260,6 +276,7 @@ class MetadataService
 
     private function getJwsPayload(string $token, array &$rootCertificates): string
     {
+        Assertion::notEmpty($this->trustedCertificates, 'Unable to verify the response from the metadata service. No trust anchor has been provided.');
         $jws = (new CompactSerializer())->unserialize($token);
         Assertion::eq(1, $jws->countSignatures(), 'Invalid response from the metadata service. Only one signature shall be present.');
         $signature = $jws->getSignature(0);
@@ -270,6 +287,10 @@ class MetadataService
         Assertion::eq($header['alg'], 'ES256', 'The expected "alg" parameter value should be "ES256".');
         Assertion::keyExists($header, 'x5c', 'The "x5c" parameter is missing.');
         Assertion::isArray($header['x5c'], 'The "x5c" parameter should be an array.');
+        CertificateToolbox::checkChain(
+            CertificateToolbox::convertAllDERToPEM($header['x5c']),
+            $this->trustedCertificates
+        );
         $key = JWKFactory::createFromX5C($header['x5c']);
         $rootCertificates = array_map(static function (string $x509): string {
             return CertificateToolbox::fixPEMStructure($x509);

@@ -40,177 +40,304 @@ class IP_Helper {
 // netmasks, it is easier to ensure that the binary strings are padded
 // with zeros out to 32 characters - IP addresses are 32 bit numbers
 	function decbin32( $dec ) {
-		return str_pad( decbin( $dec ), 32, '0', STR_PAD_LEFT );
+		return str_pad( decbin( (int) $dec ), 32, '0', STR_PAD_LEFT );
 	}
 
-// ipv4_in_range
-// This function takes 2 arguments, an IP address and a "range" in several
-// different formats.
-// Network ranges can be specified as:
-// 1. Wildcard format:     1.2.3.*
-// 2. CIDR format:         1.2.3/24  OR  1.2.3.4/255.255.255.0
-// 3. Start-End IP format: 1.2.3.0-1.2.3.255
-// The function will return true if the supplied IP is within the range.
-// Note little validation is done on the range inputs - it expects you to
-// use one of the above 3 formats.
+	/**
+	 * Determine if an IPv4 address is within a specified range.
+	 *
+	 * Supports:
+	 * - Wildcard format:     1.2.3.* or 1.2.*.*
+	 * - CIDR format:         1.2.3/24, 1.2.3.4/24 or 1.2.3.4/255.255.255.0
+	 * - Start-End IP format: 1.2.3.0-1.2.3.255
+	 * - Exact IP format:     1.2.3.4
+	 *
+	 * Rejects invalid addresses, prefixes outside 0-32, noncontiguous dotted masks, and reversed ranges.
+	 *
+	 * @param string $ip    IPv4 address to test.
+	 * @param string $range IPv4 range expression.
+	 *
+	 * @return bool True if $ip is within $range, false otherwise.
+	 */
 	function ipv4_in_range( $ip, $range ) {
-		if ( strpos( $range, '/' ) !== false ) {
-			// $range is in IP/NETMASK format
-			list( $range, $netmask ) = explode( '/', $range, 2 );
-			if ( strpos( $netmask, '.' ) !== false ) {
-				// $netmask is a 255.255.0.0 format
-				$netmask     = str_replace( '*', '0', $netmask );
-				$netmask_dec = ip2long( $netmask );
-
-				return ( ( ip2long( $ip ) & $netmask_dec ) == ( ip2long( $range ) & $netmask_dec ) );
-			} else {
-				// $netmask is a CIDR size block
-				// fix the range argument
-				$x = explode( '.', $range );
-				while ( count( $x ) < 4 ) {
-					$x[] = '0';
-				}
-				list( $a, $b, $c, $d ) = $x;
-				$range     = sprintf( "%u.%u.%u.%u", empty( $a ) ? '0' : $a, empty( $b ) ? '0' : $b, empty( $c ) ? '0' : $c, empty( $d ) ? '0' : $d );
-				$range_dec = ip2long( $range );
-				$ip_dec    = ip2long( $ip );
-
-				# Strategy 1 - Create the netmask with 'netmask' 1s and then fill it to 32 with 0s
-				#$netmask_dec = bindec(str_pad('', $netmask, '1') . str_pad('', 32-$netmask, '0'));
-
-				# Strategy 2 - Use math to create it
-				$wildcard_dec = pow( 2, ( 32 - $netmask ) ) - 1;
-				$netmask_dec  = ~$wildcard_dec;
-
-				return ( ( $ip_dec & $netmask_dec ) == ( $range_dec & $netmask_dec ) );
-			}
-		} else {
-			// range might be 255.255.*.* or 1.2.3.0-1.2.3.255
-			if ( strpos( $range, '*' ) !== false ) { // a.b.*.* format
-				// Just convert to A-B format by setting * to 0 for A and 255 for B
-				$lower = str_replace( '*', '0', $range );
-				$upper = str_replace( '*', '255', $range );
-				$range = "$lower-$upper";
-			}
-
-			if ( strpos( $range, '-' ) !== false ) { // A-B format
-				list( $lower, $upper ) = explode( '-', $range, 2 );
-				$lower_dec = (float) sprintf( "%u", ip2long( $lower ) );
-				$upper_dec = (float) sprintf( "%u", ip2long( $upper ) );
-				$ip_dec    = (float) sprintf( "%u", ip2long( $ip ) );
-
-				return ( ( $ip_dec >= $lower_dec ) && ( $ip_dec <= $upper_dec ) );
-			}
-
+		if ( ! is_string( $ip ) || ! is_string( $range ) || '' === trim( $ip ) || '' === trim( $range ) ) {
 			return false;
 		}
+
+		$ip    = trim( $ip );
+		$range = trim( $range );
+
+		// Validate target IP as a valid IPv4 address.
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+			return false;
+		}
+
+		$ip_long = ip2long( $ip );
+		$ip_dec  = (float) sprintf( '%u', $ip_long );
+
+		if ( strpos( $range, '/' ) !== false ) {
+			if ( substr_count( $range, '/' ) !== 1 ) {
+				return false;
+			}
+
+			list( $range_ip, $netmask ) = explode( '/', $range, 2 );
+			$range_ip = trim( $range_ip );
+			$netmask  = trim( $netmask );
+
+			if ( strpos( $netmask, '.' ) !== false ) {
+				// Dotted netmask format: e.g. 1.2.3.4/255.255.255.0
+				if ( false === filter_var( $netmask, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+					return false;
+				}
+				if ( false === filter_var( $range_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+					return false;
+				}
+
+				$netmask_long = ip2long( $netmask );
+				// Ensure the netmask is contiguous (1s followed by 0s in 32-bit binary).
+				$bin_mask = sprintf( '%032b', $netmask_long );
+				if ( ! preg_match( '/^1*0*$/', $bin_mask ) ) {
+					return false;
+				}
+
+				$range_long = ip2long( $range_ip );
+
+				return ( ( $ip_long & $netmask_long ) === ( $range_long & $netmask_long ) );
+			} else {
+				// CIDR prefix format: e.g. 1.2.3/24 or 1.2.3.4/24
+				if ( ! preg_match( '/^\d+$/', $netmask ) ) {
+					return false;
+				}
+
+				$prefix = (int) $netmask;
+				if ( $prefix < 0 || $prefix > 32 ) {
+					return false;
+				}
+
+				// Shorthand support: pad shorthand octets (e.g. 1.2.3 -> 1.2.3.0).
+				$normalized_range_ip = implode( '.', array_pad( explode( '.', $range_ip ), 4, '0' ) );
+				if ( false === filter_var( $normalized_range_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+					return false;
+				}
+
+				if ( 0 === $prefix ) {
+					return true;
+				}
+
+				$range_long = ip2long( $normalized_range_ip );
+
+				$netmask_long = ( ~0 << ( 32 - $prefix ) ) & 0xFFFFFFFF;
+
+				return ( ( $ip_long & $netmask_long ) === ( $range_long & $netmask_long ) );
+			}
+		}
+
+		if ( strpos( $range, '*' ) !== false ) {
+			// Wildcard format: 1.2.3.* or 1.2.*.*
+			$octets = explode( '.', $range );
+			if ( 4 !== count( $octets ) ) {
+				return false;
+			}
+
+			$seen_wildcard = false;
+			$lower_parts   = array();
+			$upper_parts   = array();
+
+			foreach ( $octets as $part ) {
+				$part = trim( $part );
+				if ( '*' === $part ) {
+					$seen_wildcard = true;
+					$lower_parts[] = '0';
+					$upper_parts[] = '255';
+				} else {
+					if ( $seen_wildcard ) {
+						// Wildcards must be trailing; e.g. 1.*.3.* is invalid.
+						return false;
+					}
+					if ( ! preg_match( '/^(?:0|[1-9]\d*)$/', $part ) || (int) $part < 0 || (int) $part > 255 ) {
+						return false;
+					}
+					$lower_parts[] = $part;
+					$upper_parts[] = $part;
+				}
+			}
+
+			$lower_ip = implode( '.', $lower_parts );
+			$upper_ip = implode( '.', $upper_parts );
+
+			if ( false === filter_var( $lower_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ||
+			     false === filter_var( $upper_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+				return false;
+			}
+
+			$lower_long = ip2long( $lower_ip );
+			$upper_long = ip2long( $upper_ip );
+
+			$lower_dec = (float) sprintf( '%u', $lower_long );
+			$upper_dec = (float) sprintf( '%u', $upper_long );
+
+			return ( $ip_dec >= $lower_dec && $ip_dec <= $upper_dec );
+		}
+
+		if ( strpos( $range, '-' ) !== false ) {
+			// Start-End format: 1.2.3.0-1.2.3.255
+			if ( substr_count( $range, '-' ) !== 1 ) {
+				return false;
+			}
+
+			list( $lower, $upper ) = explode( '-', $range, 2 );
+			$lower = trim( $lower );
+			$upper = trim( $upper );
+
+			if ( false === filter_var( $lower, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ||
+			     false === filter_var( $upper, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+				return false;
+			}
+
+			$lower_dec = (float) sprintf( '%u', ip2long( $lower ) );
+			$upper_dec = (float) sprintf( '%u', ip2long( $upper ) );
+
+			return ( $ip_dec >= $lower_dec && $ip_dec <= $upper_dec );
+		}
+
+		// Single IP exact match.
+		return $ip === $range;
 	}
 
+	/**
+	 * Convert IPv6 address to an exact decimal string representation without floating-point precision loss.
+	 *
+	 * @deprecated Use inet_pton() binary comparisons directly.
+	 *
+	 * @param string $ip IPv6 address string.
+	 *
+	 * @return string|false Decimal string, or false on failure.
+	 */
 	function ip2long6( $ip ) {
-		if ( substr_count( $ip, '::' ) ) {
-			$ip = str_replace( '::', str_repeat( ':0000', 8 - substr_count( $ip, ':' ) ) . ':', $ip );
+		$bin = $this->ipv6_to_binary( $ip );
+		if ( false === $bin ) {
+			return false;
 		}
 
-		$ip   = explode( ':', $ip );
-		$r_ip = '';
-		foreach ( $ip as $v ) {
-			$r_ip .= str_pad( base_convert( $v, 16, 2 ), 16, 0, STR_PAD_LEFT );
+		$digits = array( 0 );
+		for ( $i = 0; $i < 16; $i++ ) {
+			$carry = ord( $bin[ $i ] );
+			$count = count( $digits );
+			for ( $j = 0; $j < $count; $j++ ) {
+				$val          = $digits[ $j ] * 256 + $carry;
+				$digits[ $j ] = $val % 10;
+				$carry        = intdiv( $val, 10 );
+			}
+			while ( $carry > 0 ) {
+				$digits[] = $carry % 10;
+				$carry    = intdiv( $carry, 10 );
+			}
 		}
 
-		return base_convert( $r_ip, 2, 10 );
+		return implode( '', array_reverse( $digits ) );
 	}
 
-// Get the ipv6 full format and return it as a decimal value.
+	/**
+	 * Get the IPv6 full format and return it as a decimal string value.
+	 *
+	 * @deprecated Use inet_pton() binary comparisons directly.
+	 *
+	 * @param string $ip IPv6 address string (may include CIDR suffix).
+	 *
+	 * @return string|false Decimal string representation of the IP, or false on failure.
+	 */
 	function get_ipv6_full( $ip ) {
-		$pieces      = explode( "/", $ip, 2 );
-		$left_piece  = $pieces[0];
-		$right_piece = $pieces[1];
-
-		// Extract out the main IP pieces
-		$ip_pieces     = explode( "::", $left_piece, 2 );
-		$main_ip_piece = $ip_pieces[0];
-		$last_ip_piece = $ip_pieces[1];
-
-		// Pad out the shorthand entries.
-		$main_ip_pieces = explode( ":", $main_ip_piece );
-		foreach ( $main_ip_pieces as $key => $val ) {
-			$main_ip_pieces[ $key ] = str_pad( $main_ip_pieces[ $key ], 4, "0", STR_PAD_LEFT );
+		if ( ! is_string( $ip ) ) {
+			return false;
 		}
 
-		// Check to see if the last IP block (part after ::) is set
-		$last_piece = "";
-		$size       = count( $main_ip_pieces );
-		if ( trim( $last_ip_piece ) != "" ) {
-			$last_piece = str_pad( $last_ip_piece, 4, "0", STR_PAD_LEFT );
+		$pieces = explode( '/', $ip, 2 );
 
-			// Build the full form of the IPV6 address considering the last IP block set
-			for ( $i = $size; $i < 7; $i ++ ) {
-				$main_ip_pieces[ $i ] = "0000";
-			}
-			$main_ip_pieces[7] = $last_piece;
-		} else {
-			// Build the full form of the IPV6 address
-			for ( $i = $size; $i < 8; $i ++ ) {
-				$main_ip_pieces[ $i ] = "0000";
-			}
-		}
-
-		// Rebuild the final long form IPV6 address
-		$final_ip = implode( ":", $main_ip_pieces );
-
-		return $this->ip2long6( $final_ip );
+		return $this->ip2long6( $pieces[0] );
 	}
 
+	/**
+	 * Convert an IPv6 string to 16-byte binary string.
+	 *
+	 * @param string $ip IPv6 address string.
+	 *
+	 * @return string|false 16-byte binary string or false on failure.
+	 */
+	private function ipv6_to_binary( $ip ) {
+		if ( ! is_string( $ip ) || '' === $ip ) {
+			return false;
+		}
 
-// Determine whether the IPV6 address is within range.
-// $ip is the IPV6 address in decimal format to check if its within the IP range created by the cloudflare IPV6 address, $range_ip.
-// $ip and $range_ip are converted to full IPV6 format.
-// Returns true if the IPV6 address, $ip,  is within the range from $range_ip.  False otherwise.
+		$bin = @inet_pton( trim( $ip ) );
+		if ( false === $bin || 16 !== strlen( $bin ) ) {
+			return false;
+		}
+
+		return $bin;
+	}
+
+	/**
+	 * Determine whether an IPv6 address is within a specified IPv6 CIDR range or matches an IPv6 address.
+	 *
+	 * Uses inet_pton() binary comparisons with exact bitmasking for split-byte prefixes.
+	 *
+	 * @param string $ip       The IPv6 address to test.
+	 * @param string $range_ip The IPv6 address or CIDR range (e.g. 2001:db8::/32 or 2001:db8::1).
+	 *
+	 * @return bool True if $ip is within $range_ip, false otherwise.
+	 */
 	function ipv6_in_range( $ip, $range_ip ) {
-		$pieces      = explode( "/", $range_ip, 2 );
-		$left_piece  = $pieces[0];
-		$right_piece = $pieces[1];
-
-		// Extract out the main IP pieces
-		$ip_pieces     = explode( "::", $left_piece, 2 );
-		$main_ip_piece = $ip_pieces[0];
-		$last_ip_piece = $ip_pieces[1];
-
-		// Pad out the shorthand entries.
-		$main_ip_pieces = explode( ":", $main_ip_piece );
-		foreach ( $main_ip_pieces as $key => $val ) {
-			$main_ip_pieces[ $key ] = str_pad( $main_ip_pieces[ $key ], 4, "0", STR_PAD_LEFT );
+		if ( ! is_string( $ip ) || ! is_string( $range_ip ) || '' === trim( $ip ) || '' === trim( $range_ip ) ) {
+			return false;
 		}
 
-		// Create the first and last pieces that will denote the IPV6 range.
-		$first = $main_ip_pieces;
-		$last  = $main_ip_pieces;
+		$ip       = trim( $ip );
+		$range_ip = trim( $range_ip );
 
-		// Check to see if the last IP block (part after ::) is set
-		$last_piece = "";
-		$size       = count( $main_ip_pieces );
-		if ( trim( $last_ip_piece ) != "" ) {
-			$last_piece = str_pad( $last_ip_piece, 4, "0", STR_PAD_LEFT );
-
-			// Build the full form of the IPV6 address considering the last IP block set
-			for ( $i = $size; $i < 7; $i ++ ) {
-				$first[ $i ] = "0000";
-				$last[ $i ]  = "ffff";
+		if ( strpos( $range_ip, '/' ) !== false ) {
+			if ( substr_count( $range_ip, '/' ) !== 1 ) {
+				return false;
 			}
-			$main_ip_pieces[7] = $last_piece;
+
+			list( $base_ip, $prefix_str ) = explode( '/', $range_ip, 2 );
+			$base_ip    = trim( $base_ip );
+			$prefix_str = trim( $prefix_str );
+
+			if ( ! preg_match( '/^\d+$/', $prefix_str ) ) {
+				return false;
+			}
+
+			$prefix = (int) $prefix_str;
+			if ( $prefix < 0 || $prefix > 128 ) {
+				return false;
+			}
 		} else {
-			// Build the full form of the IPV6 address
-			for ( $i = $size; $i < 8; $i ++ ) {
-				$first[ $i ] = "0000";
-				$last[ $i ]  = "ffff";
+			$base_ip = $range_ip;
+			$prefix  = 128;
+		}
+
+		$ip_bin   = $this->ipv6_to_binary( $ip );
+		$base_bin = $this->ipv6_to_binary( $base_ip );
+
+		// Reject invalid IP strings, non-IPv6 addresses, or cross-family checks.
+		if ( false === $ip_bin || false === $base_bin ) {
+			return false;
+		}
+
+		$full_bytes = intdiv( $prefix, 8 );
+		$rem_bits   = $prefix % 8;
+
+		if ( substr( $ip_bin, 0, $full_bytes ) !== substr( $base_bin, 0, $full_bytes ) ) {
+			return false;
+		}
+
+		if ( $rem_bits > 0 ) {
+			$mask = ( 0xFF << ( 8 - $rem_bits ) ) & 0xFF;
+			if ( ( ord( $ip_bin[ $full_bytes ] ) & $mask ) !== ( ord( $base_bin[ $full_bytes ] ) & $mask ) ) {
+				return false;
 			}
 		}
 
-		// Rebuild the final long form IPV6 address
-		$first    = $this->ip2long6( implode( ":", $first ) );
-		$last     = $this->ip2long6( implode( ":", $last ) );
-		$in_range = ( $ip >= $first && $ip <= $last );
-
-		return $in_range;
+		return true;
 	}
 }

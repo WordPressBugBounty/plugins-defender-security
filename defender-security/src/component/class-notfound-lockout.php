@@ -67,15 +67,45 @@ class Notfound_Lockout extends Component {
 			return;
 		}
 
-		$uri   = defender_get_data_from_request( 'REQUEST_URI', 's' );
-		$uri   = urldecode( $uri );
-		$query = defender_get_data_from_request( 'QUERY_STRING', 's' );
+		/*
+		 * Match against the raw request, not the sanitized one: sanitize_text_field() strips
+		 * tags and percent sequences before urldecode() runs, so %3Cscript%3E would arrive
+		 * here as "script" and never match. Decode twice to cover double-encoding (%253C).
+		 * Values used for logging are re-sanitized at the log/output boundary.
+		 */
+		$server    = defender_get_data_from_request( null, 's' );
+		$raw_uri   = wp_unslash( (string) ( $server['REQUEST_URI'] ?? '' ) );
+		$raw_query = wp_unslash( (string) ( $server['QUERY_STRING'] ?? '' ) );
+		$uri       = rawurldecode( rawurldecode( $raw_uri ) );
+		$query     = rawurldecode( rawurldecode( $raw_query ) );
+
+		/*
+		 * Honour the configured path allowlist here too, the same way standard 404 handling
+		 * does. Derived from the raw URI so the comparison matches process_404_detect().
+		 */
+		$path = (string) wp_parse_url( $raw_uri, PHP_URL_PATH );
+		if ( '' === $path ) {
+			$path = $raw_uri;
+		}
+		$path = rawurldecode( $path );
+		$path = explode( '?', $path, 2 )[0];
+		$path = explode( '#', $path, 2 )[0];
+		$ext  = strtolower( trim( (string) pathinfo( $path, PATHINFO_EXTENSION ) ) );
+
+		if ( false !== $this->match_allowlist( $path, $ext ) ) {
+			return;
+		}
 
 		$service = wd_di()->get( Blacklist_Lockout::class );
 		foreach ( $this->get_user_ip() as $ip ) {
-			if ( ! $service->is_ip_whitelisted( $ip ) ) {
-				$this->detect_suspicious_request( $ip, $uri, $query );
+			if ( $service->is_ip_whitelisted( $ip ) ) {
+				continue;
 			}
+			// Skip legitimate known bots (Google, Bing, Facebook), as standard 404 handling does.
+			if ( Known_Bots_Factory::create()->is_known_bot( $ip ) ) {
+				continue;
+			}
+			$this->detect_suspicious_request( $ip, $uri, $query );
 		}
 	}
 
@@ -153,6 +183,34 @@ class Notfound_Lockout extends Component {
 	}
 
 	/**
+	 * Match a request path against the configured allowlist.
+	 *
+	 * @param  string $path  The decoded request path, without query or fragment.
+	 * @param  string $ext  The lowercased path extension, empty when there is none.
+	 *
+	 * @return string|false 'ext' for an extension match, 'path' for a path match, false when not allowlisted.
+	 * @since 5.7.1
+	 */
+	protected function match_allowlist( string $path, string $ext ) {
+		foreach ( $this->model->get_lockout_list( 'allowlist' ) as $item ) {
+			if ( str_starts_with( $item, '.' ) ) {
+				$whitelist_ext = str_replace( '.', '', strtolower( $item ) );
+				if ( '' !== $ext && $whitelist_ext === $ext ) {
+					return 'ext';
+				}
+			} else {
+				$pattern = preg_quote( $item, '/' );
+				$regex   = str_ends_with( $item, '/' ) ? '/' . $pattern . '/i' : '/' . $pattern . '$/i';
+				if ( preg_match( $regex, $path ) ) {
+					return 'path';
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Processes 404 detection for a single IP address.
 	 *
 	 * @param  string $ip  The IP address to process.
@@ -163,26 +221,47 @@ class Notfound_Lockout extends Component {
 			return;
 		}
 
-		$uri = defender_get_data_from_request( 'REQUEST_URI', 's' );
-		// Strip encode.
-		$uri   = urldecode( $uri );
-		$model = Lockout_Ip::get( $ip );
-		$model = $this->record_fail_attempt( $ip, $model );
+		$raw_uri = defender_get_data_from_request( 'REQUEST_URI', 's' );
+		$uri     = urldecode( $raw_uri );
 
-		$ext = pathinfo( $uri, PATHINFO_EXTENSION );
-		$ext = trim( $ext );
-		// Downfall from match URL to extension.
-		foreach ( $this->model->get_lockout_list( 'allowlist' ) as $pattern ) {
-			$pattern = preg_quote( $pattern, '/' );
-			if ( preg_match( '/' . $pattern . '$/i', $uri ) ) {
-				// Whitelisted, just return.
-				return;
+		$path = (string) wp_parse_url( $raw_uri, PHP_URL_PATH );
+		if ( '' === $path ) {
+			$path = $raw_uri;
+		}
+		$path = rawurldecode( $path );
+		$path = explode( '?', $path, 2 )[0];
+		$path = explode( '#', $path, 2 )[0];
+
+		$ext = strtolower( trim( (string) pathinfo( $path, PATHINFO_EXTENSION ) ) );
+
+		// Check allowlist first before recording any failure attempt.
+		$allowlisted = $this->match_allowlist( $path, $ext );
+		if ( false !== $allowlisted ) {
+			if ( 'ext' === $allowlisted ) {
+				$this->log_event( $ip, $uri, self::SCENARIO_ERROR_404_IGNORE );
 			}
+
+			return;
 		}
 
-		foreach ( $this->model->get_lockout_list( 'blocklist' ) as $pattern ) {
-			$pattern = preg_quote( $pattern, '/' );
-			if ( preg_match( '/' . $pattern . '$/i', $uri ) ) {
+		// Check blocklist.
+		foreach ( $this->model->get_lockout_list( 'blocklist' ) as $item ) {
+			$matched = false;
+			if ( str_starts_with( $item, '.' ) ) {
+				$blacklist_ext = str_replace( '.', '', strtolower( $item ) );
+				if ( '' !== $ext && $blacklist_ext === $ext ) {
+					$matched = true;
+				}
+			} else {
+				$pattern = preg_quote( $item, '/' );
+				$regex   = str_ends_with( $item, '/' ) ? '/' . $pattern . '/i' : '/' . $pattern . '$/i';
+				if ( preg_match( $regex, $path ) ) {
+					$matched = true;
+				}
+			}
+
+			if ( $matched ) {
+				$model = Lockout_Ip::get( $ip );
 				$this->lock( $model, 'blacklist', $uri );
 				$this->log_event( $ip, $uri, self::SCENARIO_LOCKOUT_404 );
 
@@ -190,27 +269,8 @@ class Notfound_Lockout extends Component {
 			}
 		}
 
-		if ( strlen( $ext ) ) {
-			// If ext isn't null.
-			foreach ( $this->model->get_lockout_list( 'allowlist' ) as $whitelist_ext ) {
-				if ( str_replace( '.', '', strtolower( $whitelist_ext ) ) === $ext ) {
-					// Ext is whitelist, log and return.
-					$this->log_event( $ip, $uri, self::SCENARIO_ERROR_404_IGNORE );
-
-					return;
-				}
-			}
-
-			foreach ( $this->model->get_lockout_list( 'blocklist' ) as $blacklist_ext ) {
-				if ( str_replace( '.', '', strtolower( $blacklist_ext ) ) === $ext ) {
-					// Block it.
-					$this->lock( $model, 'blacklist', $uri );
-					$this->log_event( $ip, $uri, self::SCENARIO_LOCKOUT_404 );
-
-					return;
-				}
-			}
-		}
+		$model = Lockout_Ip::get( $ip );
+		$model = $this->record_fail_attempt( $ip, $model );
 
 		$this->log_event( $ip, $uri, self::SCENARIO_ERROR_404 );
 
@@ -294,6 +354,22 @@ class Notfound_Lockout extends Component {
 		$model = $this->check_meta_data( $model );
 		// Cache the time here, so it consumes less memory than query the logs.
 		$model->meta['nf'][] = time();
+
+		/*
+		 * Keep only what the threshold check can actually read: at most `attempt` timestamps,
+		 * and none older than `timeframe`. The whole array is JSON-serialized on every save,
+		 * so without this it grows for the lifetime of a temporary-lockout IP.
+		 */
+		$attempt           = max( 1, (int) $this->model->attempt );
+		$oldest            = time() - max( 0, (int) $this->model->timeframe );
+		$timestamps        = array_filter(
+			$model->meta['nf'],
+			static function ( $timestamp ) use ( $oldest ) {
+				return (int) $timestamp >= $oldest;
+			}
+		);
+		$model->meta['nf'] = array_values( array_slice( $timestamps, $attempt * -1 ) );
+
 		$model->save();
 
 		return $model;

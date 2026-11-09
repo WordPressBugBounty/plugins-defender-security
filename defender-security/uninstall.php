@@ -91,6 +91,7 @@ if ( $uninstall_settings || $uninstall_data ) {
 		delete_site_option( 'wp_defender' );
 		delete_option( 'wd_db_version' );
 		delete_site_option( 'wd_db_version' );
+		delete_site_option( 'wd_audit_recovery_cursor' );
 		delete_site_option( 'wpdefender_config_clear_active_tag' );
 		delete_site_option( 'wpdefender_preset_configs_transient_time' );
 		delete_site_option( 'wp_defender_config_default' );
